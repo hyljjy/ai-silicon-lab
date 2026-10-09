@@ -6,6 +6,7 @@ runs/<ts>-selftest-lmax<N>/selftest.json; before F1 the results are labelled "de
 """
 import argparse
 import datetime
+import hashlib
 import json
 import os
 import subprocess
@@ -66,6 +67,32 @@ def corrupt(lines, kind):
     return out
 
 
+def sha256(path):
+    h = hashlib.sha256()
+    with open(path, "rb") as f:
+        for block in iter(lambda: f.read(1 << 20), b""):
+            h.update(block)
+    return h.hexdigest()
+
+
+def provenance(lmax, generated):
+    """Tool identity and the sha256 of every file this self-test used (final review I5): the TB, every RTL/mutant/
+    fixture of cases(lmax), this script and the code it runs (check_sim, ref/), and the generated vectors, manifests
+    and corrupted vector files. Paths are relative to tasks/CASE-01."""
+    try:
+        out = subprocess.run(["iverilog", "-V"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
+                             errors="replace").stdout
+        iverilog = out.splitlines()[0] if out.strip() else "(no output from iverilog -V)"
+    except OSError as e:
+        iverilog = f"unavailable: {e}"
+    used = (["tb/tb_dot4sat.v"] + sorted({c[1] for c in cases(lmax)}) +
+            [os.path.relpath(os.path.abspath(__file__), CASE), "scripts/check_sim.py", "ref/gen_vectors.py",
+             "ref/model.py", "ref/timeline.py", "ref/coverage.py"])
+    files = {rel: sha256(os.path.join(CASE, rel)) for rel in used}
+    files.update({os.path.relpath(p, CASE): sha256(p) for p in generated})
+    return {"iverilog": iverilog, "python": sys.version, "sha256": files}
+
+
 def lane3_negative_checked(vec_path, L, drain):
     """Activation proof for mut_num: checked transactions whose lane-3 operand is negative."""
     rows = [l.split() for l in open(vec_path)]
@@ -82,7 +109,7 @@ def main(argv=None):
     args = ap.parse_args(argv)
     root = os.path.join(CASE, "runs", f"{datetime.datetime.now():%Y%m%d-%H%M%S}-selftest-lmax{args.lmax}")
     os.makedirs(root)
-    vec, manifests = {}, {}
+    vec, manifests, generated = {}, {}, []
     for L in range(1, args.lmax + 1):
         out = os.path.join(root, f"vec_L{L}")
         rc = subprocess.run([sys.executable, os.path.join(CASE, "ref", "gen_vectors.py"), "--L", str(L),
@@ -93,12 +120,14 @@ def main(argv=None):
         with open(os.path.join(out, "manifest.json")) as f:
             manifests[f"L{L}"] = json.load(f)
         vec[f"L{L}"] = os.path.join(out, "vectors.txt")
+        generated += [vec[f"L{L}"], os.path.join(out, "manifest.json")]
     base_lines = open(vec["L1"]).read().splitlines()
     for kind in ("x_in_valid_row", "split_line", "extra_field", "wide_field", "truncated_tail"):
         path = os.path.join(root, f"vec_{kind}.txt")
         with open(path, "w", newline="\n") as f:
             f.write("\n".join(corrupt(base_lines, kind)) + "\n")
         vec[kind], manifests[kind] = path, manifests["L1"]
+        generated.append(path)
     vec["missing"], manifests["missing"] = os.path.join(root, "missing.txt"), manifests["L1"]
 
     tb = os.path.join(CASE, "tb", "tb_dot4sat.v")
@@ -137,7 +166,8 @@ def main(argv=None):
         print(f"{'ok  ' if entry['ok'] else 'FAIL'} {name:18s} {entry['why']}")
     label = "dev-selftest" if not os.path.exists(os.path.join(CASE, "config", "f1.cfg")) else "selftest"
     with open(os.path.join(root, "selftest.json"), "w") as f:
-        json.dump({"label": label, "lmax": args.lmax, "all_ok": all_ok, "results": results}, f, indent=1)
+        json.dump({"label": label, "lmax": args.lmax, "all_ok": all_ok, "results": results,
+                   **provenance(args.lmax, generated)}, f, indent=1)
     print(f"SELFTEST {'OK' if all_ok else 'FAIL'} ({label}, lmax={args.lmax}, {len(results)} cases) "
           f"-> {os.path.relpath(root, CASE)}")
     return 0 if all_ok else 1
