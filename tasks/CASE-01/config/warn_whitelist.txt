@@ -1,0 +1,3 @@
+# Reviewed warning whitelist (spec 6). One rule per line: <tool><TAB><python regex><TAB><reason>.
+# Entries only before F1 and only with the author's approval; never a blanket pattern. tool: iverilog | yosys | sta
+yosys	^ABC: Warning: Detected 9 multi-output cells \(for example, "sky130_fd_sc_hd__fa_1"\)\.$	Liberty/SCL read-time notice about multi-output cells (e.g. full adders) in the frozen tt library; reviewed in docs/review/CASE01_C3_codex.md section 6; approved by the author on 2026-10-09; does not excuse library parse errors, mapping failures, unlinked cells or functional mismatch
