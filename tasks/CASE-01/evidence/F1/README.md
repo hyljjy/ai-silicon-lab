@@ -229,7 +229,7 @@ b517940e44b8d0a87a7b649f7f3355fa8960759ba436a8acf5684bf9bc674049  scripts/synth_
 
 - 归档结果：`evidence/F1/archive/` 共 1903 个文件（另有 `SHA256SUMS` 一个），大小约 25 MB（`du -sh`）；源目录里有 72 个 `*.vvp` 被排除，其余 1903 个文件都已复制，`sha256sum -c SHA256SUMS` 全部通过。
 - `SHA256SUMS` 的 sha256：`3166178a88ffb5071ff943854ee81b64a71eebe52c47062e6f39bb4e16e1464c`。
-- git 里只纳入 `README.md`、小文件和 `SHA256SUMS`；归档里的大文件是否纳入 git，由作者决定，目前未纳入。
+- git 里只纳入 `README.md`、小文件和 `SHA256SUMS`。作者于 2026-10-09 决定：归档文件不进 git，`.gitignore` 忽略 `archive/` 下除 `SHA256SUMS` 以外的全部文件。备份放在项目外 `D:\study\eda_archive\case01\F1-6880be7\archive\`，已用 `SHA256SUMS` 逐文件核对通过，与本目录完全相同。
 
 ## 14. 本目录的文件
 
