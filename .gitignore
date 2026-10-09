@@ -4,5 +4,8 @@ novas.rc
 verdiLog/
 # grader runs stay on disk; runs used for conclusions are archived under tasks/*/evidence/ (Task 12)
 tasks/*/runs/
+# archived run copies stay out of git (backed up under D:\study\eda_archive); only their SHA256SUMS is tracked
+tasks/*/evidence/*/archive/*
+!tasks/*/evidence/*/archive/SHA256SUMS
 __pycache__/
 *.vvp
