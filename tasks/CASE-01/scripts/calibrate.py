@@ -12,6 +12,7 @@ import hashlib
 import json
 import os
 import shutil
+import signal
 import subprocess
 import sys
 
@@ -29,6 +30,31 @@ MODEL_FILES = ("scripts/sta_run.tcl", "scripts/check_sta.py", "sdc/case01_sdc.tc
 
 class CalibError(Exception):
     pass
+
+
+# Wall-clock limits per subprocess, in seconds: the same values as STEP_TIMEOUT_S in grade.py for these steps
+# (task review of Task 11). A hung tool or an interrupted calibration must not leave orphans or a silent stall.
+TIMEOUT_S = {"env_snapshot": 600, "versions": 120, "sta": 3600, "check_sta": 600}
+
+
+def run_limited(name, argv, log_path, env=None):
+    """Run argv with stdout+stderr to log_path and return its exit code. After TIMEOUT_S[name] seconds, or if this
+    process is interrupted, the whole process group is killed; a timeout raises CalibError."""
+    with open(log_path, "w") as f:
+        proc = subprocess.Popen(argv, env=env, stdin=subprocess.DEVNULL, stdout=f, stderr=subprocess.STDOUT,
+                                start_new_session=True)
+        try:
+            return proc.wait(timeout=TIMEOUT_S[name])
+        except BaseException as e:
+            try:
+                os.killpg(proc.pid, signal.SIGKILL)
+            except ProcessLookupError:
+                pass
+            proc.wait()
+            if isinstance(e, subprocess.TimeoutExpired):
+                raise CalibError(f"{name} timed out after {TIMEOUT_S[name]} s and was killed (see {log_path})") \
+                    from None
+            raise
 
 
 def sha256(path):
@@ -51,9 +77,10 @@ def validate_source(run_root):
     if (impl.get("name"), impl.get("rtl"), impl.get("L"), impl.get("top")) != ("base", "rtl/dot4sat.v", "1", "dot4sat"):
         raise CalibError(f"source run is not the baseline implementation: {impl}")
     recorded = {}
-    for line in open(os.path.join(run_root, "inputs.sha256")):
-        digest, rel = line.split(None, 1)
-        recorded[rel.strip()] = digest
+    with open(os.path.join(run_root, "inputs.sha256")) as f:
+        for line in f:
+            digest, rel = line.split(None, 1)
+            recorded[rel.strip()] = digest
     if recorded.get("rtl/dot4sat.v") != BASELINE_RTL_SHA or recorded.get("scripts/synth_case01.tcl") != RECIPE_SHA:
         raise CalibError("source run's RTL or synthesis recipe is not the frozen baseline/recipe")
     for rel, digest in recorded.items():
@@ -91,15 +118,13 @@ def sta_at(run_root, verdict, session, T, idx):
     env = dict(os.environ, TOP="dot4sat", NETLIST=os.path.join(run_root, "synth", "netlist.v"), T_NS=f"{T:.2f}",
                CLOAD_PF=repr(verdict["C_load_pF"]), SCENESET="std", OUTDIR=out, CASE_DIR=inp)
     fp_before = model_fingerprint(run_root)
-    with open(os.path.join(out, "sta.log"), "w") as f:
-        rc = subprocess.run(["sta", "-no_init", "-no_splash", "-exit", os.path.join(inp, "scripts", "sta_run.tcl")],
-                            env=env, stdout=f, stderr=subprocess.STDOUT).returncode
+    rc = run_limited("sta", ["sta", "-no_init", "-no_splash", "-exit", os.path.join(inp, "scripts", "sta_run.tcl")],
+                     os.path.join(out, "sta.log"), env=env)
     problems, _ = logcheck.scan("sta", os.path.join(out, "sta.log"), rules)
     if rc or problems:
         raise CalibError(f"STA at T={T:.2f}: exit {rc}; " + "; ".join(problems[:5]))
-    with open(os.path.join(out, "check.log"), "w") as f:
-        rc = subprocess.run([sys.executable, "-B", os.path.join(inp, "scripts", "check_sta.py"), out, f"{T:.2f}",
-                             repr(verdict["C_load_pF"]), "std"], stdout=f, stderr=subprocess.STDOUT).returncode
+    rc = run_limited("check_sta", [sys.executable, "-B", os.path.join(inp, "scripts", "check_sta.py"), out,
+                                   f"{T:.2f}", repr(verdict["C_load_pF"]), "std"], os.path.join(out, "check.log"))
     if rc:
         raise CalibError(f"STA analysis invalid at T={T:.2f} (see {out}/check.log)")
     if model_fingerprint(run_root) != fp_before:
@@ -200,8 +225,7 @@ def main(argv=None):
         for name, cmd in (("env_snapshot", ["bash", os.path.join(REPO, "env", "snapshot.sh"), "check"]),
                           ("versions", ["bash", "-c", "set -o pipefail; yosys -V; echo \"OpenSTA $(sta -version)\"; "
                                                       "python3 --version"])):
-            with open(os.path.join(session, f"{name}.log"), "w") as f:
-                rc = subprocess.run(cmd, stdout=f, stderr=subprocess.STDOUT).returncode
+            rc = run_limited(name, cmd, os.path.join(session, f"{name}.log"))
             record["steps"].append({"step": name, "returncode": rc})
             if rc:
                 raise CalibError(f"{name} failed (see {name}.log)")
@@ -211,6 +235,10 @@ def main(argv=None):
         code = 0 if record["status"] == "candidate_found" else 1
     except (CalibError, logcheck.RuleError, OSError, KeyError, ValueError) as e:
         record.update({"status": "failed", "error": f"{type(e).__name__}: {e}"})
+    except BaseException as e:       # interrupted (e.g. Ctrl-C): leave a failed record behind, then stop
+        record.update({"status": "failed", "error": f"interrupted: {type(e).__name__}"})
+        save(record)
+        raise
     save(record)
     msg = (f"T={record['chosen']['T_ns']:.2f} ns, S/T={record['chosen']['S_over_T']:.4f}"
            if "chosen" in record else record.get("error", ""))

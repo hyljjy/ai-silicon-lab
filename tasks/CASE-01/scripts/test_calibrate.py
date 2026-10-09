@@ -1,9 +1,12 @@
-"""Unit tests of calibrate.py (spec 5, P1 M6): search logic with a fake STA, source validation with a fake run.
-No EDA tools are needed."""
+"""Unit tests of calibrate.py (spec 5, P1 M6): search logic with a fake STA, source validation with a fake run,
+the wall-clock limit on subprocesses and the record left by an interrupt. No EDA tools are needed."""
+import contextlib
 import hashlib
+import io
 import json
 import os
 import tempfile
+import time
 import unittest
 
 import calibrate
@@ -18,12 +21,43 @@ def fake_sta(S, category):
 
 
 def sha(path):
-    return hashlib.sha256(open(path, "rb").read()).hexdigest()
+    with open(path, "rb") as f:
+        return hashlib.sha256(f.read()).hexdigest()
 
 
-def make_run(T0, S0, category, impl=None):
+def write(path, text, mode="w"):
+    with open(path, mode) as f:
+        f.write(text)
+
+
+def dump(obj, path):
+    with open(path, "w") as f:
+        json.dump(obj, f)
+
+
+def load(path):
+    with open(path) as f:
+        return json.load(f)
+
+
+def tmpdir(test):
+    """A temporary directory that is removed when the test finishes."""
+    d = tempfile.TemporaryDirectory(prefix="calib_test_")
+    test.addCleanup(d.cleanup)
+    return d.name
+
+
+def alive(pid):
+    try:
+        with open(f"/proc/{pid}/stat") as f:
+            return f.read().rsplit(")", 1)[1].split()[0] != "Z"
+    except FileNotFoundError:
+        return False
+
+
+def make_run(test, T0, S0, category, impl=None):
     """A fake source run with frozen inputs; returns (run_root, verdict)."""
-    root = tempfile.mkdtemp()
+    root = tmpdir(test)
     files = {"rtl/dot4sat.v": "module dot4sat; endmodule\n", "scripts/synth_case01.tcl": "# recipe\n",
              "scripts/sta_run.tcl": "# sta\n", "scripts/check_sta.py": "# check\n", "sdc/case01_sdc.tcl": "# sdc\n",
              "config/warn_whitelist.txt": "# rules\n"}
@@ -31,30 +65,30 @@ def make_run(T0, S0, category, impl=None):
     for rel, text in files.items():
         p = os.path.join(root, "inputs", rel)
         os.makedirs(os.path.dirname(p), exist_ok=True)
-        open(p, "w").write(text)
+        write(p, text)
         lines.append(f"{sha(p)}  {rel}\n")
-    open(os.path.join(root, "inputs.sha256"), "w").writelines(lines)
+    write(os.path.join(root, "inputs.sha256"), "".join(lines))
     os.makedirs(os.path.join(root, "synth"))
-    open(os.path.join(root, "synth", "netlist.v"), "w").write("// netlist\n")
+    write(os.path.join(root, "synth", "netlist.v"), "// netlist\n")
     os.makedirs(os.path.join(root, "sta"))
-    json.dump(fake_sta(S0, category), open(os.path.join(root, "sta", "sta_check.json"), "w"))
+    dump(fake_sta(S0, category), os.path.join(root, "sta", "sta_check.json"))
     verdict = {"functional_pass": True, "analysis_valid": True, "phase": "pre-F1", "sceneset": "std", "T_ns": T0,
                "C_load_pF": 0.0024, "netlist_sha256": sha(os.path.join(root, "synth", "netlist.v")),
                "impl": impl or {"name": "base", "top": "dot4sat", "rtl": "rtl/dot4sat.v", "L": "1"}}
-    json.dump(verdict, open(os.path.join(root, "verdict.json"), "w"))
+    dump(verdict, os.path.join(root, "verdict.json"))
     return root, verdict
 
 
 class TestSearch(unittest.TestCase):
     def run_search(self, slack_of_T, T0, category):
-        root, verdict = make_run(T0, slack_of_T(T0), category)
+        root, verdict = make_run(self, T0, slack_of_T(T0), category)
         calls = []
 
         def sta(run_root, v, session, T, idx):
             calls.append(T)
             return calibrate.trial(T, fake_sta(slack_of_T(T), category), f"fake/{idx}", {})
         record = {"trials": []}
-        calibrate.search(root, verdict, tempfile.mkdtemp(), record, lambda r: None, sta=sta)
+        calibrate.search(root, verdict, tmpdir(self), record, lambda r: None, sta=sta)
         return record, calls
 
     def test_formula_hits_in_one_trial(self):
@@ -91,50 +125,99 @@ class TestValidateSource(unittest.TestCase):
         calibrate.RECIPE_SHA = sha(os.path.join(root, "inputs", "scripts", "synth_case01.tcl"))
 
     def test_good_source(self):
-        root, _ = make_run(20.0, -3.0, "in2reg")
+        root, _ = make_run(self, 20.0, -3.0, "in2reg")
         self.accept_hashes(root)
         self.assertEqual(calibrate.validate_source(root)["impl"]["name"], "base")
 
     def test_rejections(self):
         def wrong_impl(root):
-            v = json.load(open(os.path.join(root, "verdict.json")))
+            v = load(os.path.join(root, "verdict.json"))
             v["impl"]["name"] = "not_base"
-            json.dump(v, open(os.path.join(root, "verdict.json"), "w"))
+            dump(v, os.path.join(root, "verdict.json"))
 
         def wrong_rtl_hash(root):
             calibrate.BASELINE_RTL_SHA = "0" * 64
 
         def modified_input(root):
-            open(os.path.join(root, "inputs", "sdc", "case01_sdc.tcl"), "a").write("# edited\n")
+            write(os.path.join(root, "inputs", "sdc", "case01_sdc.tcl"), "# edited\n", "a")
 
         def netlist_changed(root):
-            open(os.path.join(root, "synth", "netlist.v"), "a").write("// edited\n")
+            write(os.path.join(root, "synth", "netlist.v"), "// edited\n", "a")
 
         def invalid_sta(root):
             s = fake_sta(-3.0, "in2reg")
             s["valid"] = False
-            json.dump(s, open(os.path.join(root, "sta", "sta_check.json"), "w"))
+            dump(s, os.path.join(root, "sta", "sta_check.json"))
 
         for fn in (wrong_impl, wrong_rtl_hash, modified_input, netlist_changed, invalid_sta):
-            root, _ = make_run(20.0, -3.0, "in2reg")
+            root, _ = make_run(self, 20.0, -3.0, "in2reg")
             self.accept_hashes(root)
             fn(root)
             with self.assertRaises(calibrate.CalibError, msg=fn.__name__):
                 calibrate.validate_source(root)
 
 
-class TestMainGuard(unittest.TestCase):
+class TestRunLimited(unittest.TestCase):
+    def setUp(self):
+        self.saved = dict(getattr(calibrate, "TIMEOUT_S", {}))
+        calibrate.TIMEOUT_S = dict(self.saved, sta=2)
+
+    def tearDown(self):
+        calibrate.TIMEOUT_S = self.saved
+
+    def test_hung_step_and_its_children_are_killed(self):
+        d = tmpdir(self)
+        pidfile = os.path.join(d, "child.pid")
+        t0 = time.monotonic()
+        with self.assertRaises(calibrate.CalibError) as cm:
+            calibrate.run_limited("sta", ["bash", "-c", f"sleep 20 & echo $! > {pidfile}; wait"],
+                                  os.path.join(d, "sta.log"))
+        self.assertLess(time.monotonic() - t0, 10)
+        self.assertIn("timed out", str(cm.exception))
+        with open(pidfile) as f:
+            pid = int(f.read())
+        deadline = time.monotonic() + 5
+        while alive(pid) and time.monotonic() < deadline:
+            time.sleep(0.1)
+        self.assertFalse(alive(pid))
+
+    def test_normal_step_returns_its_exit_code(self):
+        d = tmpdir(self)
+        log = os.path.join(d, "x.log")
+        self.assertEqual(calibrate.run_limited("sta", ["bash", "-c", "echo hi; exit 3"], log), 3)
+        with open(log) as f:
+            self.assertEqual(f.read(), "hi\n")
+
+
+class TestMain(unittest.TestCase):
+    def setUp(self):
+        self.case = tmpdir(self)
+        self.orig = (calibrate.CASE, getattr(calibrate, "run_limited", None))
+        calibrate.CASE = self.case
+
+    def tearDown(self):
+        calibrate.CASE, calibrate.run_limited = self.orig
+
     def test_refuses_after_f1(self):
-        case = tempfile.mkdtemp()
-        os.makedirs(os.path.join(case, "config"))
-        open(os.path.join(case, "config", "f1.cfg"), "w").write("T_ns = 20\n")
-        orig = calibrate.CASE
-        calibrate.CASE = case
-        try:
+        os.makedirs(os.path.join(self.case, "config"))
+        write(os.path.join(self.case, "config", "f1.cfg"), "T_ns = 20\n")
+        with contextlib.redirect_stdout(io.StringIO()) as out:
             self.assertEqual(calibrate.main(["--run", "runs/x"]), 1)
-            self.assertFalse(os.path.exists(os.path.join(case, "runs")))
-        finally:
-            calibrate.CASE = orig
+        self.assertIn("CALIBRATION FAIL: config/f1.cfg exists", out.getvalue())
+        self.assertFalse(os.path.exists(os.path.join(self.case, "runs")))
+
+    def test_interrupt_leaves_failed_record(self):
+        def interrupted(*args, **kwargs):
+            raise KeyboardInterrupt
+        calibrate.run_limited = interrupted
+        with contextlib.redirect_stdout(io.StringIO()):
+            with self.assertRaises(KeyboardInterrupt):
+                calibrate.main(["--run", "runs/x"])
+        sessions = os.listdir(os.path.join(self.case, "runs"))
+        self.assertEqual(len(sessions), 1)
+        record = load(os.path.join(self.case, "runs", sessions[0], "calib_record.json"))
+        self.assertEqual(record["status"], "failed")
+        self.assertIn("KeyboardInterrupt", record["error"])
 
 
 if __name__ == "__main__":
