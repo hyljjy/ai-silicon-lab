@@ -49,6 +49,11 @@ class TestLogcheck(unittest.TestCase):
         self.assertEqual(len(problems), 1)
         self.assertIn("Traceback", problems[0])
 
+    def test_python_warning_category_fails(self):
+        for line in ("x.py:3: RuntimeWarning: boom", "x.py:4: DeprecationWarning: old", "x.py:5: UserWarning: hmm"):
+            problems, _ = logcheck.scan("python", tmp(line + "\n"), [])
+            self.assertTrue(problems and "unreviewed warning" in problems[0], line)
+
     def test_plain_lines_pass(self):
         problems, _ = logcheck.scan("yosys", tmp("Chip area for module '\\dot4sat': 1.0\nWarnings: none\n"), [])
         self.assertEqual(problems, [])
