@@ -1,0 +1,1 @@
+{"lib": "sky130_fd_sc_hd__tt_025C_1v80.lib", "lib_sha256": "8e78e14442062dba34d414fca6490b2f6b96038d4510d1438ca44fee31487135", "cell": "sky130_fd_sc_hd__buf_4", "pin": "A", "field": "capacitance", "value_pf": 0.0024, "unit": "pF"}
