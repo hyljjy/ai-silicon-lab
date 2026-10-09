@@ -1,0 +1,130 @@
+{
+ "source_run": "runs/20261009-073842-base-T20",
+ "session": "runs/20261009-080227-calib-20261009-073842-base-T20",
+ "command": "python3 scripts/calibrate.py --run runs/20261009-073842-base-T20",
+ "calibrate_sha256": "2ca3086a6947cd7522ccb874687625f1749aa2afb5e0edbba09e32e326fe19ab",
+ "steps": [
+  {
+   "step": "env_snapshot",
+   "returncode": 0
+  },
+  {
+   "step": "versions",
+   "returncode": 0
+  }
+ ],
+ "netlist_sha256": "1fa89c975162f4f1f9a2f349bed73b4dae5f53ab921883be842cb0a37763a8d1",
+ "C_load_pF": 0.0024,
+ "trials": [
+  {
+   "T_ns": 20.0,
+   "S_ns": -10.517727431135917,
+   "S_over_T": -0.5258863715567959,
+   "worst_corner": "ss_n40C_1v60",
+   "worst_category": "in2reg",
+   "worst_hold": {
+    "slack": 0.059112952317363035,
+    "corner": "ff_100C_1v95"
+   },
+   "ws_max": {
+    "tt_025C_1v80": 4.857458572859332,
+    "tt_100C_1v80": 4.9892207333267535,
+    "ss_100C_1v60": -7.015282775477704,
+    "ss_n40C_1v60": -10.517727431135917,
+    "ff_n40C_1v95": 9.543504034939163,
+    "ff_100C_1v95": 9.566230744985205
+   },
+   "ws_min": {
+    "tt_025C_1v80": 0.09305387279663745,
+    "tt_100C_1v80": 0.08983023607005908,
+    "ss_100C_1v60": 0.18567888030452087,
+    "ss_n40C_1v60": 0.18500412836443383,
+    "ff_n40C_1v95": 0.06347266641938298,
+    "ff_100C_1v95": 0.059112952317363035
+   },
+   "sta_dir": "runs/20261009-073842-base-T20/sta",
+   "model": {
+    "scripts/sta_run.tcl": "6728b0a4ea02ec959460654cf739131f5a4a5c48c789be926922dae93ace9fa8",
+    "scripts/check_sta.py": "d20ebb8f01cf3f32a5f396e9ff92d9c675d5c03a25571fbbf7f91f338b6e66db",
+    "sdc/case01_sdc.tcl": "b8d1aab60d137dc39dc7cb55b2ec314b952538dfee8f5be627a140dcca09300c",
+    "config/warn_whitelist.txt": "35f1ef4b8940b67295cb8c2877658e72aff81658b9dd1bf7f054644beead52f6",
+    "netlist": "1fa89c975162f4f1f9a2f349bed73b4dae5f53ab921883be842cb0a37763a8d1"
+   }
+  },
+  {
+   "T_ns": 27.91,
+   "S_ns": -4.189726018044011,
+   "S_over_T": -0.1501155864580441,
+   "worst_corner": "ss_n40C_1v60",
+   "worst_category": "in2reg",
+   "worst_hold": {
+    "slack": 0.059112952317363035,
+    "corner": "ff_100C_1v95"
+   },
+   "ws_max": {
+    "tt_025C_1v80": 11.185458209594348,
+    "tt_100C_1v80": 11.317221258240215,
+    "ss_100C_1v60": -0.687277809672019,
+    "ss_n40C_1v60": -4.189726018044011,
+    "ff_n40C_1v95": 15.871505448031069,
+    "ff_100C_1v95": 15.894228605363333
+   },
+   "ws_min": {
+    "tt_025C_1v80": 0.09305387279663745,
+    "tt_100C_1v80": 0.08983023607005908,
+    "ss_100C_1v60": 0.18567888030452087,
+    "ss_n40C_1v60": 0.18500412836443383,
+    "ff_n40C_1v95": 0.06347266641938298,
+    "ff_100C_1v95": 0.059112952317363035
+   },
+   "sta_dir": "runs/20261009-080227-calib-20261009-073842-base-T20/trials/01_T27.91",
+   "model": {
+    "scripts/sta_run.tcl": "6728b0a4ea02ec959460654cf739131f5a4a5c48c789be926922dae93ace9fa8",
+    "scripts/check_sta.py": "d20ebb8f01cf3f32a5f396e9ff92d9c675d5c03a25571fbbf7f91f338b6e66db",
+    "sdc/case01_sdc.tcl": "b8d1aab60d137dc39dc7cb55b2ec314b952538dfee8f5be627a140dcca09300c",
+    "config/warn_whitelist.txt": "35f1ef4b8940b67295cb8c2877658e72aff81658b9dd1bf7f054644beead52f6",
+    "netlist": "1fa89c975162f4f1f9a2f349bed73b4dae5f53ab921883be842cb0a37763a8d1"
+   }
+  }
+ ],
+ "T0_ns": 20.0,
+ "S0_ns": -10.517727431135917,
+ "formula_applicable": true,
+ "D_eff_ns": 26.517727431135917,
+ "status": "candidate_found",
+ "chosen": {
+  "T_ns": 27.91,
+  "S_ns": -4.189726018044011,
+  "S_over_T": -0.1501155864580441,
+  "worst_corner": "ss_n40C_1v60",
+  "worst_category": "in2reg",
+  "worst_hold": {
+   "slack": 0.059112952317363035,
+   "corner": "ff_100C_1v95"
+  },
+  "ws_max": {
+   "tt_025C_1v80": 11.185458209594348,
+   "tt_100C_1v80": 11.317221258240215,
+   "ss_100C_1v60": -0.687277809672019,
+   "ss_n40C_1v60": -4.189726018044011,
+   "ff_n40C_1v95": 15.871505448031069,
+   "ff_100C_1v95": 15.894228605363333
+  },
+  "ws_min": {
+   "tt_025C_1v80": 0.09305387279663745,
+   "tt_100C_1v80": 0.08983023607005908,
+   "ss_100C_1v60": 0.18567888030452087,
+   "ss_n40C_1v60": 0.18500412836443383,
+   "ff_n40C_1v95": 0.06347266641938298,
+   "ff_100C_1v95": 0.059112952317363035
+  },
+  "sta_dir": "runs/20261009-080227-calib-20261009-073842-base-T20/trials/01_T27.91",
+  "model": {
+   "scripts/sta_run.tcl": "6728b0a4ea02ec959460654cf739131f5a4a5c48c789be926922dae93ace9fa8",
+   "scripts/check_sta.py": "d20ebb8f01cf3f32a5f396e9ff92d9c675d5c03a25571fbbf7f91f338b6e66db",
+   "sdc/case01_sdc.tcl": "b8d1aab60d137dc39dc7cb55b2ec314b952538dfee8f5be627a140dcca09300c",
+   "config/warn_whitelist.txt": "35f1ef4b8940b67295cb8c2877658e72aff81658b9dd1bf7f054644beead52f6",
+   "netlist": "1fa89c975162f4f1f9a2f349bed73b4dae5f53ab921883be842cb0a37763a8d1"
+  }
+ }
+}

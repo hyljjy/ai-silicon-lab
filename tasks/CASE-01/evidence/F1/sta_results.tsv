@@ -1,0 +1,265 @@
+BIND	tt_025C_1v80	-liberty	sky130_fd_sc_hd__tt_025C_1v80
+BIND	tt_100C_1v80	-liberty	sky130_fd_sc_hd__tt_100C_1v80
+BIND	ss_100C_1v60	-liberty	sky130_fd_sc_hd__ss_100C_1v60
+BIND	ss_n40C_1v60	-liberty	sky130_fd_sc_hd__ss_n40C_1v60
+BIND	ff_n40C_1v95	-liberty	sky130_fd_sc_hd__ff_n40C_1v95
+BIND	ff_100C_1v95	-liberty	sky130_fd_sc_hd__ff_100C_1v95
+MODE	default
+SCENES	tt_025C_1v80	tt_100C_1v80	ss_100C_1v60	ss_n40C_1v60	ff_n40C_1v95	ff_100C_1v95
+LIB	sky130_fd_sc_hd__tt_025C_1v80	/home/eda/pdk/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib
+LIB	sky130_fd_sc_hd__tt_100C_1v80	/home/eda/pdk/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_100C_1v80.lib
+LIB	sky130_fd_sc_hd__ss_100C_1v60	/home/eda/pdk/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__ss_100C_1v60.lib
+LIB	sky130_fd_sc_hd__ss_n40C_1v60	/home/eda/pdk/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__ss_n40C_1v60.lib
+LIB	sky130_fd_sc_hd__ff_n40C_1v95	/home/eda/pdk/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__ff_n40C_1v95.lib
+LIB	sky130_fd_sc_hd__ff_100C_1v95	/home/eda/pdk/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__ff_100C_1v95.lib
+PORT	clk	input
+PORT	rst	input
+PORT	in_valid	input
+PORT	in_a[63]	input
+PORT	in_a[62]	input
+PORT	in_a[61]	input
+PORT	in_a[60]	input
+PORT	in_a[59]	input
+PORT	in_a[58]	input
+PORT	in_a[57]	input
+PORT	in_a[56]	input
+PORT	in_a[55]	input
+PORT	in_a[54]	input
+PORT	in_a[53]	input
+PORT	in_a[52]	input
+PORT	in_a[51]	input
+PORT	in_a[50]	input
+PORT	in_a[49]	input
+PORT	in_a[48]	input
+PORT	in_a[47]	input
+PORT	in_a[46]	input
+PORT	in_a[45]	input
+PORT	in_a[44]	input
+PORT	in_a[43]	input
+PORT	in_a[42]	input
+PORT	in_a[41]	input
+PORT	in_a[40]	input
+PORT	in_a[39]	input
+PORT	in_a[38]	input
+PORT	in_a[37]	input
+PORT	in_a[36]	input
+PORT	in_a[35]	input
+PORT	in_a[34]	input
+PORT	in_a[33]	input
+PORT	in_a[32]	input
+PORT	in_a[31]	input
+PORT	in_a[30]	input
+PORT	in_a[29]	input
+PORT	in_a[28]	input
+PORT	in_a[27]	input
+PORT	in_a[26]	input
+PORT	in_a[25]	input
+PORT	in_a[24]	input
+PORT	in_a[23]	input
+PORT	in_a[22]	input
+PORT	in_a[21]	input
+PORT	in_a[20]	input
+PORT	in_a[19]	input
+PORT	in_a[18]	input
+PORT	in_a[17]	input
+PORT	in_a[16]	input
+PORT	in_a[15]	input
+PORT	in_a[14]	input
+PORT	in_a[13]	input
+PORT	in_a[12]	input
+PORT	in_a[11]	input
+PORT	in_a[10]	input
+PORT	in_a[9]	input
+PORT	in_a[8]	input
+PORT	in_a[7]	input
+PORT	in_a[6]	input
+PORT	in_a[5]	input
+PORT	in_a[4]	input
+PORT	in_a[3]	input
+PORT	in_a[2]	input
+PORT	in_a[1]	input
+PORT	in_a[0]	input
+PORT	in_b[63]	input
+PORT	in_b[62]	input
+PORT	in_b[61]	input
+PORT	in_b[60]	input
+PORT	in_b[59]	input
+PORT	in_b[58]	input
+PORT	in_b[57]	input
+PORT	in_b[56]	input
+PORT	in_b[55]	input
+PORT	in_b[54]	input
+PORT	in_b[53]	input
+PORT	in_b[52]	input
+PORT	in_b[51]	input
+PORT	in_b[50]	input
+PORT	in_b[49]	input
+PORT	in_b[48]	input
+PORT	in_b[47]	input
+PORT	in_b[46]	input
+PORT	in_b[45]	input
+PORT	in_b[44]	input
+PORT	in_b[43]	input
+PORT	in_b[42]	input
+PORT	in_b[41]	input
+PORT	in_b[40]	input
+PORT	in_b[39]	input
+PORT	in_b[38]	input
+PORT	in_b[37]	input
+PORT	in_b[36]	input
+PORT	in_b[35]	input
+PORT	in_b[34]	input
+PORT	in_b[33]	input
+PORT	in_b[32]	input
+PORT	in_b[31]	input
+PORT	in_b[30]	input
+PORT	in_b[29]	input
+PORT	in_b[28]	input
+PORT	in_b[27]	input
+PORT	in_b[26]	input
+PORT	in_b[25]	input
+PORT	in_b[24]	input
+PORT	in_b[23]	input
+PORT	in_b[22]	input
+PORT	in_b[21]	input
+PORT	in_b[20]	input
+PORT	in_b[19]	input
+PORT	in_b[18]	input
+PORT	in_b[17]	input
+PORT	in_b[16]	input
+PORT	in_b[15]	input
+PORT	in_b[14]	input
+PORT	in_b[13]	input
+PORT	in_b[12]	input
+PORT	in_b[11]	input
+PORT	in_b[10]	input
+PORT	in_b[9]	input
+PORT	in_b[8]	input
+PORT	in_b[7]	input
+PORT	in_b[6]	input
+PORT	in_b[5]	input
+PORT	in_b[4]	input
+PORT	in_b[3]	input
+PORT	in_b[2]	input
+PORT	in_b[1]	input
+PORT	in_b[0]	input
+PORT	out_valid	output
+PORT	out_data[31]	output
+PORT	out_data[30]	output
+PORT	out_data[29]	output
+PORT	out_data[28]	output
+PORT	out_data[27]	output
+PORT	out_data[26]	output
+PORT	out_data[25]	output
+PORT	out_data[24]	output
+PORT	out_data[23]	output
+PORT	out_data[22]	output
+PORT	out_data[21]	output
+PORT	out_data[20]	output
+PORT	out_data[19]	output
+PORT	out_data[18]	output
+PORT	out_data[17]	output
+PORT	out_data[16]	output
+PORT	out_data[15]	output
+PORT	out_data[14]	output
+PORT	out_data[13]	output
+PORT	out_data[12]	output
+PORT	out_data[11]	output
+PORT	out_data[10]	output
+PORT	out_data[9]	output
+PORT	out_data[8]	output
+PORT	out_data[7]	output
+PORT	out_data[6]	output
+PORT	out_data[5]	output
+PORT	out_data[4]	output
+PORT	out_data[3]	output
+PORT	out_data[2]	output
+PORT	out_data[1]	output
+PORT	out_data[0]	output
+CHECK_SETUP	1
+LOAD	out_valid	2.4000000934092797e-15	2.4000000934092797e-15
+LOAD	out_data[31]	2.4000000934092797e-15	2.4000000934092797e-15
+LOAD	out_data[30]	2.4000000934092797e-15	2.4000000934092797e-15
+LOAD	out_data[29]	2.4000000934092797e-15	2.4000000934092797e-15
+LOAD	out_data[28]	2.4000000934092797e-15	2.4000000934092797e-15
+LOAD	out_data[27]	2.4000000934092797e-15	2.4000000934092797e-15
+LOAD	out_data[26]	2.4000000934092797e-15	2.4000000934092797e-15
+LOAD	out_data[25]	2.4000000934092797e-15	2.4000000934092797e-15
+LOAD	out_data[24]	2.4000000934092797e-15	2.4000000934092797e-15
+LOAD	out_data[23]	2.4000000934092797e-15	2.4000000934092797e-15
+LOAD	out_data[22]	2.4000000934092797e-15	2.4000000934092797e-15
+LOAD	out_data[21]	2.4000000934092797e-15	2.4000000934092797e-15
+LOAD	out_data[20]	2.4000000934092797e-15	2.4000000934092797e-15
+LOAD	out_data[19]	2.4000000934092797e-15	2.4000000934092797e-15
+LOAD	out_data[18]	2.4000000934092797e-15	2.4000000934092797e-15
+LOAD	out_data[17]	2.4000000934092797e-15	2.4000000934092797e-15
+LOAD	out_data[16]	2.4000000934092797e-15	2.4000000934092797e-15
+LOAD	out_data[15]	2.4000000934092797e-15	2.4000000934092797e-15
+LOAD	out_data[14]	2.4000000934092797e-15	2.4000000934092797e-15
+LOAD	out_data[13]	2.4000000934092797e-15	2.4000000934092797e-15
+LOAD	out_data[12]	2.4000000934092797e-15	2.4000000934092797e-15
+LOAD	out_data[11]	2.4000000934092797e-15	2.4000000934092797e-15
+LOAD	out_data[10]	2.4000000934092797e-15	2.4000000934092797e-15
+LOAD	out_data[9]	2.4000000934092797e-15	2.4000000934092797e-15
+LOAD	out_data[8]	2.4000000934092797e-15	2.4000000934092797e-15
+LOAD	out_data[7]	2.4000000934092797e-15	2.4000000934092797e-15
+LOAD	out_data[6]	2.4000000934092797e-15	2.4000000934092797e-15
+LOAD	out_data[5]	2.4000000934092797e-15	2.4000000934092797e-15
+LOAD	out_data[4]	2.4000000934092797e-15	2.4000000934092797e-15
+LOAD	out_data[3]	2.4000000934092797e-15	2.4000000934092797e-15
+LOAD	out_data[2]	2.4000000934092797e-15	2.4000000934092797e-15
+LOAD	out_data[1]	2.4000000934092797e-15	2.4000000934092797e-15
+LOAD	out_data[0]	2.4000000934092797e-15	2.4000000934092797e-15
+OBJECTS	130	33	33	33
+TOPO	in2reg	130
+TOPO	reg2reg	0
+TOPO	reg2out	33
+WS	tt_025C_1v80	max	11.185458209594348
+WS	tt_025C_1v80	min	0.09305387279663745
+CAT	tt_025C_1v80	in2reg	max	11.185458	in_b[35]	_12026_/D
+CAT	tt_025C_1v80	in2reg	min	0.093054	rst	_12058_/D
+CAT	tt_025C_1v80	reg2reg	max	NONE
+CAT	tt_025C_1v80	reg2reg	min	NONE
+CAT	tt_025C_1v80	reg2out	max	22.047794	_12026_/Q	out_data[0]
+CAT	tt_025C_1v80	reg2out	min	0.272520	_12026_/Q	out_data[0]
+WS	tt_100C_1v80	max	11.317221258240215
+WS	tt_100C_1v80	min	0.08983023607005908
+CAT	tt_100C_1v80	in2reg	max	11.317222	in_b[35]	_12026_/D
+CAT	tt_100C_1v80	in2reg	min	0.089830	rst	_12058_/D
+CAT	tt_100C_1v80	reg2reg	max	NONE
+CAT	tt_100C_1v80	reg2reg	min	NONE
+CAT	tt_100C_1v80	reg2out	max	22.045441	_12026_/Q	out_data[0]
+CAT	tt_100C_1v80	reg2out	min	0.278449	_12026_/Q	out_data[0]
+WS	ss_100C_1v60	max	-0.687277809672019
+WS	ss_100C_1v60	min	0.18567888030452087
+CAT	ss_100C_1v60	in2reg	max	-0.687278	in_b[35]	_12026_/D
+CAT	ss_100C_1v60	in2reg	min	0.185679	rst	_12058_/D
+CAT	ss_100C_1v60	reg2reg	max	NONE
+CAT	ss_100C_1v60	reg2reg	min	NONE
+CAT	ss_100C_1v60	reg2out	max	21.742086	_12026_/Q	out_data[0]
+CAT	ss_100C_1v60	reg2out	min	0.538051	_12026_/Q	out_data[0]
+WS	ss_n40C_1v60	max	-4.189726018044011
+WS	ss_n40C_1v60	min	0.18500412836443383
+CAT	ss_n40C_1v60	in2reg	max	-4.189726	in_b[2]	_12026_/D
+CAT	ss_n40C_1v60	in2reg	min	0.185004	rst	_12058_/D
+CAT	ss_n40C_1v60	reg2reg	max	NONE
+CAT	ss_n40C_1v60	reg2reg	min	NONE
+CAT	ss_n40C_1v60	reg2out	max	21.692432	_12026_/Q	out_data[0]
+CAT	ss_n40C_1v60	reg2out	min	0.548442	_12026_/Q	out_data[0]
+WS	ff_n40C_1v95	max	15.871505448031069
+WS	ff_n40C_1v95	min	0.06347266641938298
+CAT	ff_n40C_1v95	in2reg	max	15.871506	in_b[2]	_12026_/D
+CAT	ff_n40C_1v95	in2reg	min	0.063473	rst	_12058_/D
+CAT	ff_n40C_1v95	reg2reg	max	NONE
+CAT	ff_n40C_1v95	reg2reg	min	NONE
+CAT	ff_n40C_1v95	reg2out	max	22.154276	_12026_/Q	out_data[0]
+CAT	ff_n40C_1v95	reg2out	min	0.173251	_12026_/Q	out_data[0]
+WS	ff_100C_1v95	max	15.894228605363333
+WS	ff_100C_1v95	min	0.059112952317363035
+CAT	ff_100C_1v95	in2reg	max	15.894229	in_b[2]	_12026_/D
+CAT	ff_100C_1v95	in2reg	min	0.059113	rst	_12058_/D
+CAT	ff_100C_1v95	reg2reg	max	NONE
+CAT	ff_100C_1v95	reg2reg	min	NONE
+CAT	ff_100C_1v95	reg2out	max	22.143078	_12026_/Q	out_data[0]
+CAT	ff_100C_1v95	reg2out	min	0.179844	_12026_/Q	out_data[0]
+DONE

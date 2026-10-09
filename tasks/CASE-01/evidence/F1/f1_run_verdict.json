@@ -1,0 +1,244 @@
+{
+ "functional_pass": true,
+ "analysis_valid": true,
+ "run_id": "20261009-092827-base-T27.91",
+ "phase": "post-F1",
+ "impl": {
+  "name": "base",
+  "top": "dot4sat",
+  "rtl": "rtl/dot4sat.v",
+  "L": "1"
+ },
+ "T_ns": 27.91,
+ "C_load_pF": 0.0024,
+ "L_max": 3,
+ "seed": 1,
+ "sceneset": "std",
+ "calib_session": "runs/20261009-080227-calib-20261009-073842-base-T20",
+ "timing_target": {
+  "rule": "setup_ge_0_std",
+  "met": false,
+  "worst_setup_std": -4.189726018044011
+ },
+ "area": {
+  "area_um2": 45383.5264,
+  "cap_um2": 56729.408,
+  "within_cap": true
+ },
+ "rtl_lint": [],
+ "env_ids": {
+  "env/SHA256SUMS": "5b9923d297888992dd0bc4b35d5cd675d3cd87ae9095e30aa6b8b5a0c44366eb",
+  "env/tools.sha256": "e26b403cf83dc1397ca3daffb42034ce6869ec7a09b3f229b65225b3fd49594d",
+  "$SKY130_KIT/MANIFEST.txt": "0fa8891a1f3c1dcbdb359cf9d5ba0a62f7aad361c786d2961cbd1f8bdbff994c"
+ },
+ "tool_versions": [
+  "Icarus Verilog version 14.0 (devel) (s20260301-508-g2f296d88a-dirty)",
+  "Yosys 0.69+187 (git sha1 2f08661dd, Release, Clang /usr/bin/clang++ 21.1.8)",
+  "OpenSTA 3.1.0",
+  "Python 3.12.3"
+ ],
+ "frozen_checks": [
+  "rtl_sim",
+  "gl_sim",
+  "end of run"
+ ],
+ "rtl_sim": "checked=2856",
+ "area_um2": 45383.5264,
+ "netlist_sha256": "1fa89c975162f4f1f9a2f349bed73b4dae5f53ab921883be842cb0a37763a8d1",
+ "netlist_checks": [
+  "gate-level simulation",
+  "STA",
+  "after STA"
+ ],
+ "gl_sim": "checked=2856",
+ "latency_L": 1,
+ "throughput": "1 transaction per cycle",
+ "worst_setup": {
+  "slack": -4.189726018044011,
+  "corner": "ss_n40C_1v60",
+  "category": "in2reg"
+ },
+ "worst_hold": {
+  "slack": 0.059112952317363035,
+  "corner": "ff_100C_1v95"
+ },
+ "hold_note": "min hold slack under the ideal-clock, post-synthesis model only (spec 4.4)",
+ "topology": {
+  "in2reg": 130,
+  "reg2reg": 0,
+  "reg2out": 33
+ },
+ "corners": {
+  "tt_025C_1v80": {
+   "ws_max": 11.185458209594348,
+   "ws_min": 0.09305387279663745,
+   "categories": {
+    "in2reg_max": {
+     "slack": 11.185458,
+     "start": "in_b[35]",
+     "end": "_12026_/D"
+    },
+    "in2reg_min": {
+     "slack": 0.093054,
+     "start": "rst",
+     "end": "_12058_/D"
+    },
+    "reg2reg_max": "not_applicable",
+    "reg2reg_min": "not_applicable",
+    "reg2out_max": {
+     "slack": 22.047794,
+     "start": "_12026_/Q",
+     "end": "out_data[0]"
+    },
+    "reg2out_min": {
+     "slack": 0.27252,
+     "start": "_12026_/Q",
+     "end": "out_data[0]"
+    }
+   }
+  },
+  "tt_100C_1v80": {
+   "ws_max": 11.317221258240215,
+   "ws_min": 0.08983023607005908,
+   "categories": {
+    "in2reg_max": {
+     "slack": 11.317222,
+     "start": "in_b[35]",
+     "end": "_12026_/D"
+    },
+    "in2reg_min": {
+     "slack": 0.08983,
+     "start": "rst",
+     "end": "_12058_/D"
+    },
+    "reg2reg_max": "not_applicable",
+    "reg2reg_min": "not_applicable",
+    "reg2out_max": {
+     "slack": 22.045441,
+     "start": "_12026_/Q",
+     "end": "out_data[0]"
+    },
+    "reg2out_min": {
+     "slack": 0.278449,
+     "start": "_12026_/Q",
+     "end": "out_data[0]"
+    }
+   }
+  },
+  "ss_100C_1v60": {
+   "ws_max": -0.687277809672019,
+   "ws_min": 0.18567888030452087,
+   "categories": {
+    "in2reg_max": {
+     "slack": -0.687278,
+     "start": "in_b[35]",
+     "end": "_12026_/D"
+    },
+    "in2reg_min": {
+     "slack": 0.185679,
+     "start": "rst",
+     "end": "_12058_/D"
+    },
+    "reg2reg_max": "not_applicable",
+    "reg2reg_min": "not_applicable",
+    "reg2out_max": {
+     "slack": 21.742086,
+     "start": "_12026_/Q",
+     "end": "out_data[0]"
+    },
+    "reg2out_min": {
+     "slack": 0.538051,
+     "start": "_12026_/Q",
+     "end": "out_data[0]"
+    }
+   }
+  },
+  "ss_n40C_1v60": {
+   "ws_max": -4.189726018044011,
+   "ws_min": 0.18500412836443383,
+   "categories": {
+    "in2reg_max": {
+     "slack": -4.189726,
+     "start": "in_b[2]",
+     "end": "_12026_/D"
+    },
+    "in2reg_min": {
+     "slack": 0.185004,
+     "start": "rst",
+     "end": "_12058_/D"
+    },
+    "reg2reg_max": "not_applicable",
+    "reg2reg_min": "not_applicable",
+    "reg2out_max": {
+     "slack": 21.692432,
+     "start": "_12026_/Q",
+     "end": "out_data[0]"
+    },
+    "reg2out_min": {
+     "slack": 0.548442,
+     "start": "_12026_/Q",
+     "end": "out_data[0]"
+    }
+   }
+  },
+  "ff_n40C_1v95": {
+   "ws_max": 15.871505448031069,
+   "ws_min": 0.06347266641938298,
+   "categories": {
+    "in2reg_max": {
+     "slack": 15.871506,
+     "start": "in_b[2]",
+     "end": "_12026_/D"
+    },
+    "in2reg_min": {
+     "slack": 0.063473,
+     "start": "rst",
+     "end": "_12058_/D"
+    },
+    "reg2reg_max": "not_applicable",
+    "reg2reg_min": "not_applicable",
+    "reg2out_max": {
+     "slack": 22.154276,
+     "start": "_12026_/Q",
+     "end": "out_data[0]"
+    },
+    "reg2out_min": {
+     "slack": 0.173251,
+     "start": "_12026_/Q",
+     "end": "out_data[0]"
+    }
+   }
+  },
+  "ff_100C_1v95": {
+   "ws_max": 15.894228605363333,
+   "ws_min": 0.059112952317363035,
+   "categories": {
+    "in2reg_max": {
+     "slack": 15.894229,
+     "start": "in_b[2]",
+     "end": "_12026_/D"
+    },
+    "in2reg_min": {
+     "slack": 0.059113,
+     "start": "rst",
+     "end": "_12058_/D"
+    },
+    "reg2reg_max": "not_applicable",
+    "reg2reg_min": "not_applicable",
+    "reg2out_max": {
+     "slack": 22.143078,
+     "start": "_12026_/Q",
+     "end": "out_data[0]"
+    },
+    "reg2out_min": {
+     "slack": 0.179844,
+     "start": "_12026_/Q",
+     "end": "out_data[0]"
+    }
+   }
+  }
+ },
+ "whitelist_hits": {
+  "3": 1
+ }
+}

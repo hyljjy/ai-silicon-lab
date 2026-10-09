@@ -1,0 +1,197 @@
+{
+ "label": "selftest",
+ "lmax": 3,
+ "all_ok": true,
+ "results": [
+  {
+   "case": "base_L1",
+   "rtl": "rtl/dot4sat.v",
+   "L_tb": 1,
+   "vectors": "L1",
+   "expect": "PASS",
+   "ok": true,
+   "why": "checked=2856"
+  },
+  {
+   "case": "mut_num",
+   "rtl": "tb/selftest/dot4sat_mut_num.v",
+   "L_tb": 1,
+   "vectors": "L1",
+   "expect": "DATA MISMATCH",
+   "ok": true,
+   "why": "exit 1, expected failure text 'DATA MISMATCH' found",
+   "activation_lane3_negative_checked": 2075
+  },
+  {
+   "case": "mut_valid",
+   "rtl": "tb/selftest/dot4sat_mut_valid.v",
+   "L_tb": 1,
+   "vectors": "L1",
+   "expect": "VALID MISMATCH",
+   "ok": true,
+   "why": "exit 1, expected failure text 'VALID MISMATCH' found"
+  },
+  {
+   "case": "mut_xdata",
+   "rtl": "tb/selftest/dot4sat_mut_xdata.v",
+   "L_tb": 1,
+   "vectors": "L1",
+   "expect": "DATA MISMATCH",
+   "ok": true,
+   "why": "exit 1, expected failure text 'DATA MISMATCH' found"
+  },
+  {
+   "case": "exp_off_by_one",
+   "rtl": "rtl/dot4sat.v",
+   "L_tb": 1,
+   "vectors": "L1",
+   "expect": "!= expected",
+   "ok": true,
+   "why": "exit 1, expected failure text '!= expected' found"
+  },
+  {
+   "case": "missing_L",
+   "rtl": "rtl/dot4sat.v",
+   "L_tb": 1,
+   "vectors": "L1",
+   "expect": "missing or malformed +L",
+   "ok": true,
+   "why": "exit 1, expected failure text 'missing or malformed +L' found"
+  },
+  {
+   "case": "malformed_L",
+   "rtl": "rtl/dot4sat.v",
+   "L_tb": 1,
+   "vectors": "L1",
+   "expect": "missing or malformed +L",
+   "ok": true,
+   "why": "exit 1, expected failure text 'missing or malformed +L' found"
+  },
+  {
+   "case": "L_above_lmax",
+   "rtl": "rtl/dot4sat.v",
+   "L_tb": 4,
+   "vectors": "L1",
+   "expect": "outside 1..LMAX",
+   "ok": true,
+   "why": "exit 1, expected failure text 'outside 1..LMAX' found"
+  },
+  {
+   "case": "no_vector_file",
+   "rtl": "rtl/dot4sat.v",
+   "L_tb": 1,
+   "vectors": "missing",
+   "expect": "cannot open vector file",
+   "ok": true,
+   "why": "exit 1, expected failure text 'cannot open vector file' found"
+  },
+  {
+   "case": "unknown_values",
+   "rtl": "rtl/dot4sat.v",
+   "L_tb": 1,
+   "vectors": "x_in_valid_row",
+   "expect": "not lowercase hex",
+   "ok": true,
+   "why": "exit 1, expected failure text 'not lowercase hex' found"
+  },
+  {
+   "case": "split_line",
+   "rtl": "rtl/dot4sat.v",
+   "L_tb": 1,
+   "vectors": "split_line",
+   "expect": "need exactly 12",
+   "ok": true,
+   "why": "exit 1, expected failure text 'need exactly 12' found"
+  },
+  {
+   "case": "extra_field",
+   "rtl": "rtl/dot4sat.v",
+   "L_tb": 1,
+   "vectors": "extra_field",
+   "expect": "need exactly 12",
+   "ok": true,
+   "why": "exit 1, expected failure text 'need exactly 12' found"
+  },
+  {
+   "case": "wide_field",
+   "rtl": "rtl/dot4sat.v",
+   "L_tb": 1,
+   "vectors": "wide_field",
+   "expect": "not lowercase hex",
+   "ok": true,
+   "why": "exit 1, expected failure text 'not lowercase hex' found"
+  },
+  {
+   "case": "truncated_tail",
+   "rtl": "rtl/dot4sat.v",
+   "L_tb": 1,
+   "vectors": "truncated_tail",
+   "expect": "manifest says",
+   "ok": true,
+   "why": "exit 1, expected failure text 'manifest says' found"
+  },
+  {
+   "case": "watchdog",
+   "rtl": "rtl/dot4sat.v",
+   "L_tb": 1,
+   "vectors": "L1",
+   "expect": "watchdog timeout",
+   "ok": true,
+   "why": "exit 1, expected failure text 'watchdog timeout' found"
+  },
+  {
+   "case": "pipe_L2",
+   "rtl": "tb/selftest/dot4sat_pipe.v",
+   "L_tb": 2,
+   "vectors": "L2",
+   "expect": "PASS",
+   "ok": true,
+   "why": "checked=2835"
+  },
+  {
+   "case": "cfg_L2_on_L1_dut",
+   "rtl": "rtl/dot4sat.v",
+   "L_tb": 2,
+   "vectors": "L2",
+   "expect": "VALID MISMATCH",
+   "ok": true,
+   "why": "exit 1, expected failure text 'VALID MISMATCH' found"
+  },
+  {
+   "case": "pipe_L3",
+   "rtl": "tb/selftest/dot4sat_pipe.v",
+   "L_tb": 3,
+   "vectors": "L3",
+   "expect": "PASS",
+   "ok": true,
+   "why": "checked=2816"
+  }
+ ],
+ "iverilog": "Icarus Verilog version 14.0 (devel) (s20260301-508-g2f296d88a-dirty)",
+ "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+ "sha256": {
+  "tb/tb_dot4sat.v": "61a67e2ab55c719f1bcbc832ee81898d0b94e7ddd2eccaedb0bf221e885012fe",
+  "rtl/dot4sat.v": "422ba000b48903558d797510cd4d0189b3fac9f83ba4ce4a1b22eb497194c802",
+  "tb/selftest/dot4sat_mut_num.v": "bf71c1c8a89d56c70620232efdd9930a01241998780f8f14aa04803d639cd4c5",
+  "tb/selftest/dot4sat_mut_valid.v": "dad25a09f9cb5bddd2116edb8b6e6fe2b8a439f3c063e3f73711dc0be775484d",
+  "tb/selftest/dot4sat_mut_xdata.v": "bcc7b30ca2b16878e3789b113e477a892796eee3a5eb7ef676a38bceb49bb42e",
+  "tb/selftest/dot4sat_pipe.v": "a692dfeb6ac24e8e653be60247b6506e59468060660bff2227052666f5498c09",
+  "scripts/selftest.py": "27908112bd48ffbdc1169d09a31c51418cddbe6a1adf052c18aeb6b53cf98ae9",
+  "scripts/check_sim.py": "f34bb42f82dbe6222f6b2c900a3de1271247ae629c955fe580e07048a5097588",
+  "ref/gen_vectors.py": "bea960510a395395d6533e1fd1848654b24414b5ac135d9ad2ef41fa9eddf338",
+  "ref/model.py": "243fad3ab93a2a5c62abe3d78060aeb7d7bda54b388f5bdb85ace17e0f03d338",
+  "ref/timeline.py": "eb4fac82766c172829c366799c583677aaf91a508e5ea280d04b98e9bef16021",
+  "ref/coverage.py": "77e41009085cae58cccbc38f66767595d608bdda9b52bfd482c120c4a2037b1c",
+  "runs/20261009-092809-selftest-lmax3/vec_L1/vectors.txt": "ba0098b1be26332ff73a4adc54d884ed4c9d47bb00b783964a0d00b5eec57405",
+  "runs/20261009-092809-selftest-lmax3/vec_L1/manifest.json": "8614e258e337c8155d8ee8a888e82114ac21dfb34efd12cc41c58eb70cf0b8f7",
+  "runs/20261009-092809-selftest-lmax3/vec_L2/vectors.txt": "9ad91c6bf83a6e358dfdb186f707af8069dddc4dbe8fa8a5fa0ef442064bba01",
+  "runs/20261009-092809-selftest-lmax3/vec_L2/manifest.json": "169f020921b2bb45f1a015abc768b49a18e7d40a6623c47eea8015068a4268ee",
+  "runs/20261009-092809-selftest-lmax3/vec_L3/vectors.txt": "c79200c03cde6562850cd69c93455bd8130375c0ef7c5f3031824ff7648d5142",
+  "runs/20261009-092809-selftest-lmax3/vec_L3/manifest.json": "e6d1c3b4678bf65fe0060d26765b9a86f5924286061daa438694bcc5d2ac9c3b",
+  "runs/20261009-092809-selftest-lmax3/vec_x_in_valid_row.txt": "dce6eb17a40b60b5f92e108d5f795b71d16c0b812fe13489389af3c14c47917b",
+  "runs/20261009-092809-selftest-lmax3/vec_split_line.txt": "8f88ef3fdf0bd210b0d89dcfa24bc041fcc15da47601b265acb5c43646c22e9f",
+  "runs/20261009-092809-selftest-lmax3/vec_extra_field.txt": "b09c57d3a10f56a5efaef32d8ff0e46abae60a8f643ae443ed81033e4b78b6ae",
+  "runs/20261009-092809-selftest-lmax3/vec_wide_field.txt": "d0f57214f170532dc837b09afba177e039cd7570a9a51990e3e12d19c42a8a89",
+  "runs/20261009-092809-selftest-lmax3/vec_truncated_tail.txt": "292984f09a049ef332ee1809958d6e3212e59890d43b4c1fe811561cee03dfa3"
+ }
+}

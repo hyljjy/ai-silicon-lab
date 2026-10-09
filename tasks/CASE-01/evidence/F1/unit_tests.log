@@ -1,0 +1,21 @@
+.....................
+----------------------------------------------------------------------
+Ran 21 tests in 0.860s
+
+OK
+FAIL: need 1 <= L <= lmax <= 3, got L=3 lmax=2
+OK: 3428 vectors, expected_checked=2856
+OK: 3451 vectors, expected_checked=2816
+OK: 3428 vectors, expected_checked=2856
+OK: 3439 vectors, expected_checked=2835
+OK: 3451 vectors, expected_checked=2816
+OK: 3439 vectors, expected_checked=2867
+OK: 3439 vectors, expected_checked=2867
+OK: 3439 vectors, expected_checked=2886
+OK: 3428 vectors, expected_checked=2856
+OK: 3428 vectors, expected_checked=2856
+......................................................................................
+----------------------------------------------------------------------
+Ran 86 tests in 12.127s
+
+OK
