@@ -1,0 +1,1 @@
+STA VALID: worst setup {'slack': -10.517727431135917, 'corner': 'ss_n40C_1v60', 'category': 'in2reg'} worst hold {'slack': 0.059112952317363035, 'corner': 'ff_100C_1v95'}

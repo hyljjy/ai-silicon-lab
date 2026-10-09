@@ -1,0 +1,789 @@
+
+ /----------------------------------------------------------------------------\
+ |  yosys -- Yosys Open SYnthesis Suite                                       |
+ |  Copyright (C) 2012 - 2026  Claire Xenia Wolf <claire@yosyshq.com>         |
+ |  Distributed under an ISC-like license, type "license" to see terms        |
+ \----------------------------------------------------------------------------/
+ Yosys 0.69+187 (git sha1 2f08661dd, Release, Clang /usr/bin/clang++ 21.1.8)
+[TCL: yosys -import] Command name collision: found pre-existing command `cd' -> skip.
+[TCL: yosys -import] Command name collision: found pre-existing command `eval' -> skip.
+[TCL: yosys -import] Command name collision: found pre-existing command `exec' -> skip.
+[TCL: yosys -import] Command name collision: found pre-existing command `read' -> skip.
+[TCL: yosys -import] Command name collision: found pre-existing command `trace' -> skip.
+
+1. Executing Verilog-2005 frontend: /mnt/c/Users/haoya/AppData/Local/Temp/claude/D--study-ai-native-design/10693d84-7c83-45a7-b9f7-69219272d70f/scratchpad/c01/exp/E2_n16_nofraig/../../rtl/dot4sat.v
+Parsing Verilog input from `/mnt/c/Users/haoya/AppData/Local/Temp/claude/D--study-ai-native-design/10693d84-7c83-45a7-b9f7-69219272d70f/scratchpad/c01/exp/E2_n16_nofraig/../../rtl/dot4sat.v' to AST representation.
+Generating RTLIL representation for module `\dot4sat'.
+Successfully finished Verilog frontend.
+
+2. Executing SYNTH pass.
+
+2.1. Executing HIERARCHY pass (managing design hierarchy).
+
+2.1.1. Analyzing design hierarchy..
+Top module:  \dot4sat
+
+2.1.2. Analyzing design hierarchy..
+Top module:  \dot4sat
+Removed 0 unused modules.
+
+2.2. Executing PROC pass (convert processes to netlists).
+
+2.2.1. Executing PROC_CLEAN pass (remove empty switches from decision trees).
+Cleaned up 0 empty switches.
+
+2.2.2. Executing PROC_RMDEAD pass (remove dead branches from decision trees).
+Marked 1 switch rules as full_case in process $proc$/mnt/c/Users/haoya/AppData/Local/Temp/claude/D--study-ai-native-design/10693d84-7c83-45a7-b9f7-69219272d70f/scratchpad/c01/exp/E2_n16_nofraig/../../rtl/dot4sat.v:37$12 in module dot4sat.
+Removed a total of 0 dead cases.
+
+2.2.3. Executing PROC_PRUNE pass (remove redundant assignments in processes).
+Removed 1 redundant assignment.
+Promoted 1 assignment to connection.
+
+2.2.4. Executing PROC_INIT pass (extract init attributes).
+
+2.2.5. Executing PROC_ARST pass (detect async resets in processes).
+
+2.2.6. Executing PROC_ROM pass (convert switches to ROMs).
+Converted 0 switches.
+<suppressed ~1 debug messages>
+
+2.2.7. Executing PROC_MUX pass (convert decision trees to multiplexers).
+Creating decoders for process `\dot4sat.$proc$/mnt/c/Users/haoya/AppData/Local/Temp/claude/D--study-ai-native-design/10693d84-7c83-45a7-b9f7-69219272d70f/scratchpad/c01/exp/E2_n16_nofraig/../../rtl/dot4sat.v:37$12'.
+     1/1: $0\out_valid[0:0]
+
+2.2.8. Executing PROC_DLATCH pass (convert process syncs to latches).
+
+2.2.9. Executing PROC_DFF pass (convert process syncs to FFs).
+Creating register for signal `\dot4sat.\out_valid' using process `\dot4sat.$proc$/mnt/c/Users/haoya/AppData/Local/Temp/claude/D--study-ai-native-design/10693d84-7c83-45a7-b9f7-69219272d70f/scratchpad/c01/exp/E2_n16_nofraig/../../rtl/dot4sat.v:37$12'.
+  created $dff cell `$procdff$16' with positive edge clock.
+Creating register for signal `\dot4sat.\out_data' using process `\dot4sat.$proc$/mnt/c/Users/haoya/AppData/Local/Temp/claude/D--study-ai-native-design/10693d84-7c83-45a7-b9f7-69219272d70f/scratchpad/c01/exp/E2_n16_nofraig/../../rtl/dot4sat.v:37$12'.
+  created $dff cell `$procdff$17' with positive edge clock.
+
+2.2.10. Executing PROC_MEMWR pass (convert process memory writes to cells).
+
+2.2.11. Executing PROC_CLEAN pass (remove empty switches from decision trees).
+Found and cleaned up 1 empty switch in `\dot4sat.$proc$/mnt/c/Users/haoya/AppData/Local/Temp/claude/D--study-ai-native-design/10693d84-7c83-45a7-b9f7-69219272d70f/scratchpad/c01/exp/E2_n16_nofraig/../../rtl/dot4sat.v:37$12'.
+Removing empty process `dot4sat.$proc$/mnt/c/Users/haoya/AppData/Local/Temp/claude/D--study-ai-native-design/10693d84-7c83-45a7-b9f7-69219272d70f/scratchpad/c01/exp/E2_n16_nofraig/../../rtl/dot4sat.v:37$12'.
+Cleaned up 1 empty switch.
+
+2.2.12. Executing OPT_EXPR pass (perform const folding).
+Optimizing module dot4sat.
+
+2.3. Executing OPT_EXPR pass (perform const folding).
+Optimizing module dot4sat.
+
+2.4. Executing CHECK pass (checking for obvious problems).
+Checking module dot4sat...
+Found and reported 0 problems.
+
+2.5. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \dot4sat..
+Removed 0 unused cells and 9 unused wires.
+<suppressed ~1 debug messages>
+
+2.6. Executing OPT pass (performing simple optimizations).
+
+2.6.1. Executing OPT_EXPR pass (perform const folding).
+Optimizing module dot4sat.
+
+2.6.2. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\dot4sat'.
+Computing hashes of 14 cells of `\dot4sat'.
+Finding duplicate cells in `\dot4sat'.
+Removed a total of 0 cells.
+
+2.6.3. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \dot4sat..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+  Analyzing evaluation results.
+Removed 0 multiplexer ports.
+<suppressed ~5 debug messages>
+
+2.6.4. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \dot4sat.
+Performed a total of 0 changes.
+
+2.6.5. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\dot4sat'.
+Computing hashes of 14 cells of `\dot4sat'.
+Finding duplicate cells in `\dot4sat'.
+Removed a total of 0 cells.
+
+2.6.6. Executing OPT_DFF pass (perform DFF optimizations).
+
+2.6.7. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \dot4sat..
+
+2.6.8. Executing OPT_EXPR pass (perform const folding).
+Optimizing module dot4sat.
+
+2.6.9. Finished fast OPT passes. (There is nothing left to do.)
+
+2.7. Executing FSM pass (extract and optimize FSM).
+
+2.7.1. Executing FSM_DETECT pass (finding FSMs in design).
+
+2.7.2. Executing FSM_EXTRACT pass (extracting FSM from design).
+
+2.7.3. Executing FSM_OPT pass (simple optimizations of FSMs).
+
+2.7.4. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \dot4sat..
+
+2.7.5. Executing FSM_OPT pass (simple optimizations of FSMs).
+
+2.7.6. Executing FSM_RECODE pass (re-assigning FSM state encoding).
+
+2.7.7. Executing FSM_INFO pass (dumping all available information on FSM cells).
+
+2.7.8. Executing FSM_MAP pass (mapping FSMs to basic logic).
+
+2.8. Executing OPT pass (performing simple optimizations).
+
+2.8.1. Executing OPT_EXPR pass (perform const folding).
+Optimizing module dot4sat.
+
+2.8.2. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\dot4sat'.
+Computing hashes of 14 cells of `\dot4sat'.
+Finding duplicate cells in `\dot4sat'.
+Removed a total of 0 cells.
+
+2.8.3. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \dot4sat..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+  Analyzing evaluation results.
+Removed 0 multiplexer ports.
+<suppressed ~5 debug messages>
+
+2.8.4. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \dot4sat.
+Performed a total of 0 changes.
+
+2.8.5. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\dot4sat'.
+Computing hashes of 14 cells of `\dot4sat'.
+Finding duplicate cells in `\dot4sat'.
+Removed a total of 0 cells.
+
+2.8.6. Executing OPT_DFF pass (perform DFF optimizations).
+Adding SRST signal on $procdff$16 ($dff) from module dot4sat (D = \in_valid, Q = \out_valid, rval = 1'0).
+Adding SRST signal on $procdff$17 ($dff) from module dot4sat (D = $ternary$/mnt/c/Users/haoya/AppData/Local/Temp/claude/D--study-ai-native-design/10693d84-7c83-45a7-b9f7-69219272d70f/scratchpad/c01/exp/E2_n16_nofraig/../../rtl/dot4sat.v:35$10_Y, Q = \out_data, rval = 2147483647).
+
+2.8.7. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \dot4sat..
+Removed 2 unused cells and 2 unused wires.
+<suppressed ~4 debug messages>
+
+2.8.8. Executing OPT_EXPR pass (perform const folding).
+Optimizing module dot4sat.
+
+2.8.9. Rerunning OPT passes. (Maybe there is more to do..)
+
+2.8.10. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \dot4sat..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+  Analyzing evaluation results.
+Removed 0 multiplexer ports.
+<suppressed ~2 debug messages>
+
+2.8.11. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \dot4sat.
+Performed a total of 0 changes.
+
+2.8.12. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\dot4sat'.
+Computing hashes of 12 cells of `\dot4sat'.
+Finding duplicate cells in `\dot4sat'.
+Removed a total of 0 cells.
+
+2.8.13. Executing OPT_DFF pass (perform DFF optimizations).
+
+2.8.14. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \dot4sat..
+
+2.8.15. Executing OPT_EXPR pass (perform const folding).
+Optimizing module dot4sat.
+
+2.8.16. Finished fast OPT passes. (There is nothing left to do.)
+
+2.9. Executing WREDUCE pass (reducing word size of cells).
+Removed top 1 bits (of 34) from port Y of cell dot4sat.$add$/mnt/c/Users/haoya/AppData/Local/Temp/claude/D--study-ai-native-design/10693d84-7c83-45a7-b9f7-69219272d70f/scratchpad/c01/exp/E2_n16_nofraig/../../rtl/dot4sat.v:29$5 ($add).
+Removed top 1 bits (of 34) from port A of cell dot4sat.$add$/mnt/c/Users/haoya/AppData/Local/Temp/claude/D--study-ai-native-design/10693d84-7c83-45a7-b9f7-69219272d70f/scratchpad/c01/exp/E2_n16_nofraig/../../rtl/dot4sat.v:29$6 ($add).
+Removed top 2 bits (of 34) from port B of cell dot4sat.$gt$/mnt/c/Users/haoya/AppData/Local/Temp/claude/D--study-ai-native-design/10693d84-7c83-45a7-b9f7-69219272d70f/scratchpad/c01/exp/E2_n16_nofraig/../../rtl/dot4sat.v:34$8 ($gt).
+Removed top 2 bits (of 34) from port B of cell dot4sat.$lt$/mnt/c/Users/haoya/AppData/Local/Temp/claude/D--study-ai-native-design/10693d84-7c83-45a7-b9f7-69219272d70f/scratchpad/c01/exp/E2_n16_nofraig/../../rtl/dot4sat.v:35$9 ($lt).
+
+2.10. Executing PEEPOPT pass (run peephole optimizers).
+
+2.11. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \dot4sat..
+
+2.12. Executing ALUMACC pass (create $alu and $macc cells).
+Extracting $alu and $macc cells in module dot4sat:
+  creating $macc model for $add$/mnt/c/Users/haoya/AppData/Local/Temp/claude/D--study-ai-native-design/10693d84-7c83-45a7-b9f7-69219272d70f/scratchpad/c01/exp/E2_n16_nofraig/../../rtl/dot4sat.v:29$7 ($add).
+  creating $macc model for $add$/mnt/c/Users/haoya/AppData/Local/Temp/claude/D--study-ai-native-design/10693d84-7c83-45a7-b9f7-69219272d70f/scratchpad/c01/exp/E2_n16_nofraig/../../rtl/dot4sat.v:29$6 ($add).
+  creating $macc model for $add$/mnt/c/Users/haoya/AppData/Local/Temp/claude/D--study-ai-native-design/10693d84-7c83-45a7-b9f7-69219272d70f/scratchpad/c01/exp/E2_n16_nofraig/../../rtl/dot4sat.v:29$5 ($add).
+  creating $macc model for $mul$/mnt/c/Users/haoya/AppData/Local/Temp/claude/D--study-ai-native-design/10693d84-7c83-45a7-b9f7-69219272d70f/scratchpad/c01/exp/E2_n16_nofraig/../../rtl/dot4sat.v:26$4 ($mul).
+  creating $macc model for $mul$/mnt/c/Users/haoya/AppData/Local/Temp/claude/D--study-ai-native-design/10693d84-7c83-45a7-b9f7-69219272d70f/scratchpad/c01/exp/E2_n16_nofraig/../../rtl/dot4sat.v:25$3 ($mul).
+  creating $macc model for $mul$/mnt/c/Users/haoya/AppData/Local/Temp/claude/D--study-ai-native-design/10693d84-7c83-45a7-b9f7-69219272d70f/scratchpad/c01/exp/E2_n16_nofraig/../../rtl/dot4sat.v:24$2 ($mul).
+  creating $macc model for $mul$/mnt/c/Users/haoya/AppData/Local/Temp/claude/D--study-ai-native-design/10693d84-7c83-45a7-b9f7-69219272d70f/scratchpad/c01/exp/E2_n16_nofraig/../../rtl/dot4sat.v:23$1 ($mul).
+  merging $macc model for $mul$/mnt/c/Users/haoya/AppData/Local/Temp/claude/D--study-ai-native-design/10693d84-7c83-45a7-b9f7-69219272d70f/scratchpad/c01/exp/E2_n16_nofraig/../../rtl/dot4sat.v:23$1 into $add$/mnt/c/Users/haoya/AppData/Local/Temp/claude/D--study-ai-native-design/10693d84-7c83-45a7-b9f7-69219272d70f/scratchpad/c01/exp/E2_n16_nofraig/../../rtl/dot4sat.v:29$5.
+  merging $macc model for $mul$/mnt/c/Users/haoya/AppData/Local/Temp/claude/D--study-ai-native-design/10693d84-7c83-45a7-b9f7-69219272d70f/scratchpad/c01/exp/E2_n16_nofraig/../../rtl/dot4sat.v:24$2 into $add$/mnt/c/Users/haoya/AppData/Local/Temp/claude/D--study-ai-native-design/10693d84-7c83-45a7-b9f7-69219272d70f/scratchpad/c01/exp/E2_n16_nofraig/../../rtl/dot4sat.v:29$5.
+  merging $macc model for $add$/mnt/c/Users/haoya/AppData/Local/Temp/claude/D--study-ai-native-design/10693d84-7c83-45a7-b9f7-69219272d70f/scratchpad/c01/exp/E2_n16_nofraig/../../rtl/dot4sat.v:29$5 into $add$/mnt/c/Users/haoya/AppData/Local/Temp/claude/D--study-ai-native-design/10693d84-7c83-45a7-b9f7-69219272d70f/scratchpad/c01/exp/E2_n16_nofraig/../../rtl/dot4sat.v:29$6.
+  merging $macc model for $mul$/mnt/c/Users/haoya/AppData/Local/Temp/claude/D--study-ai-native-design/10693d84-7c83-45a7-b9f7-69219272d70f/scratchpad/c01/exp/E2_n16_nofraig/../../rtl/dot4sat.v:25$3 into $add$/mnt/c/Users/haoya/AppData/Local/Temp/claude/D--study-ai-native-design/10693d84-7c83-45a7-b9f7-69219272d70f/scratchpad/c01/exp/E2_n16_nofraig/../../rtl/dot4sat.v:29$6.
+  merging $macc model for $add$/mnt/c/Users/haoya/AppData/Local/Temp/claude/D--study-ai-native-design/10693d84-7c83-45a7-b9f7-69219272d70f/scratchpad/c01/exp/E2_n16_nofraig/../../rtl/dot4sat.v:29$6 into $add$/mnt/c/Users/haoya/AppData/Local/Temp/claude/D--study-ai-native-design/10693d84-7c83-45a7-b9f7-69219272d70f/scratchpad/c01/exp/E2_n16_nofraig/../../rtl/dot4sat.v:29$7.
+  merging $macc model for $mul$/mnt/c/Users/haoya/AppData/Local/Temp/claude/D--study-ai-native-design/10693d84-7c83-45a7-b9f7-69219272d70f/scratchpad/c01/exp/E2_n16_nofraig/../../rtl/dot4sat.v:26$4 into $add$/mnt/c/Users/haoya/AppData/Local/Temp/claude/D--study-ai-native-design/10693d84-7c83-45a7-b9f7-69219272d70f/scratchpad/c01/exp/E2_n16_nofraig/../../rtl/dot4sat.v:29$7.
+  creating $macc cell for $add$/mnt/c/Users/haoya/AppData/Local/Temp/claude/D--study-ai-native-design/10693d84-7c83-45a7-b9f7-69219272d70f/scratchpad/c01/exp/E2_n16_nofraig/../../rtl/dot4sat.v:29$7: $auto$alumacc.cc:427:replace_macc$20
+  creating $alu model for $lt$/mnt/c/Users/haoya/AppData/Local/Temp/claude/D--study-ai-native-design/10693d84-7c83-45a7-b9f7-69219272d70f/scratchpad/c01/exp/E2_n16_nofraig/../../rtl/dot4sat.v:35$9 ($lt): new $alu
+  creating $alu model for $gt$/mnt/c/Users/haoya/AppData/Local/Temp/claude/D--study-ai-native-design/10693d84-7c83-45a7-b9f7-69219272d70f/scratchpad/c01/exp/E2_n16_nofraig/../../rtl/dot4sat.v:34$8 ($gt): new $alu
+  creating $alu cell for $gt$/mnt/c/Users/haoya/AppData/Local/Temp/claude/D--study-ai-native-design/10693d84-7c83-45a7-b9f7-69219272d70f/scratchpad/c01/exp/E2_n16_nofraig/../../rtl/dot4sat.v:34$8: $auto$alumacc.cc:576:replace_alu$23
+  creating $alu cell for $lt$/mnt/c/Users/haoya/AppData/Local/Temp/claude/D--study-ai-native-design/10693d84-7c83-45a7-b9f7-69219272d70f/scratchpad/c01/exp/E2_n16_nofraig/../../rtl/dot4sat.v:35$9: $auto$alumacc.cc:576:replace_alu$36
+  created 2 $alu and 1 $macc cells.
+
+2.13. Executing SHARE pass (SAT-based resource sharing).
+Found 4 cells in module dot4sat that may be considered for resource sharing.
+  Analyzing resource sharing options for $mul$/mnt/c/Users/haoya/AppData/Local/Temp/claude/D--study-ai-native-design/10693d84-7c83-45a7-b9f7-69219272d70f/scratchpad/c01/exp/E2_n16_nofraig/../../rtl/dot4sat.v:23$1 ($mul):
+    Found cell that is never activated: $add$/mnt/c/Users/haoya/AppData/Local/Temp/claude/D--study-ai-native-design/10693d84-7c83-45a7-b9f7-69219272d70f/scratchpad/c01/exp/E2_n16_nofraig/../../rtl/dot4sat.v:29$6
+    Found cell that is never activated: $add$/mnt/c/Users/haoya/AppData/Local/Temp/claude/D--study-ai-native-design/10693d84-7c83-45a7-b9f7-69219272d70f/scratchpad/c01/exp/E2_n16_nofraig/../../rtl/dot4sat.v:29$5
+    Found cell that is never activated: $mul$/mnt/c/Users/haoya/AppData/Local/Temp/claude/D--study-ai-native-design/10693d84-7c83-45a7-b9f7-69219272d70f/scratchpad/c01/exp/E2_n16_nofraig/../../rtl/dot4sat.v:23$1
+    Cell is never active. Sharing is pointless, we simply remove it.
+  Analyzing resource sharing options for $mul$/mnt/c/Users/haoya/AppData/Local/Temp/claude/D--study-ai-native-design/10693d84-7c83-45a7-b9f7-69219272d70f/scratchpad/c01/exp/E2_n16_nofraig/../../rtl/dot4sat.v:24$2 ($mul):
+    Found cell that is never activated: $mul$/mnt/c/Users/haoya/AppData/Local/Temp/claude/D--study-ai-native-design/10693d84-7c83-45a7-b9f7-69219272d70f/scratchpad/c01/exp/E2_n16_nofraig/../../rtl/dot4sat.v:24$2
+    Cell is never active. Sharing is pointless, we simply remove it.
+  Analyzing resource sharing options for $mul$/mnt/c/Users/haoya/AppData/Local/Temp/claude/D--study-ai-native-design/10693d84-7c83-45a7-b9f7-69219272d70f/scratchpad/c01/exp/E2_n16_nofraig/../../rtl/dot4sat.v:25$3 ($mul):
+    Found cell that is never activated: $mul$/mnt/c/Users/haoya/AppData/Local/Temp/claude/D--study-ai-native-design/10693d84-7c83-45a7-b9f7-69219272d70f/scratchpad/c01/exp/E2_n16_nofraig/../../rtl/dot4sat.v:25$3
+    Cell is never active. Sharing is pointless, we simply remove it.
+  Analyzing resource sharing options for $mul$/mnt/c/Users/haoya/AppData/Local/Temp/claude/D--study-ai-native-design/10693d84-7c83-45a7-b9f7-69219272d70f/scratchpad/c01/exp/E2_n16_nofraig/../../rtl/dot4sat.v:26$4 ($mul):
+    Found cell that is never activated: $mul$/mnt/c/Users/haoya/AppData/Local/Temp/claude/D--study-ai-native-design/10693d84-7c83-45a7-b9f7-69219272d70f/scratchpad/c01/exp/E2_n16_nofraig/../../rtl/dot4sat.v:26$4
+    Cell is never active. Sharing is pointless, we simply remove it.
+Removing 6 cells in module dot4sat:
+  Removing cell $mul$/mnt/c/Users/haoya/AppData/Local/Temp/claude/D--study-ai-native-design/10693d84-7c83-45a7-b9f7-69219272d70f/scratchpad/c01/exp/E2_n16_nofraig/../../rtl/dot4sat.v:26$4 ($mul).
+  Removing cell $mul$/mnt/c/Users/haoya/AppData/Local/Temp/claude/D--study-ai-native-design/10693d84-7c83-45a7-b9f7-69219272d70f/scratchpad/c01/exp/E2_n16_nofraig/../../rtl/dot4sat.v:25$3 ($mul).
+  Removing cell $mul$/mnt/c/Users/haoya/AppData/Local/Temp/claude/D--study-ai-native-design/10693d84-7c83-45a7-b9f7-69219272d70f/scratchpad/c01/exp/E2_n16_nofraig/../../rtl/dot4sat.v:24$2 ($mul).
+  Removing cell $mul$/mnt/c/Users/haoya/AppData/Local/Temp/claude/D--study-ai-native-design/10693d84-7c83-45a7-b9f7-69219272d70f/scratchpad/c01/exp/E2_n16_nofraig/../../rtl/dot4sat.v:23$1 ($mul).
+  Removing cell $add$/mnt/c/Users/haoya/AppData/Local/Temp/claude/D--study-ai-native-design/10693d84-7c83-45a7-b9f7-69219272d70f/scratchpad/c01/exp/E2_n16_nofraig/../../rtl/dot4sat.v:29$5 ($add).
+  Removing cell $add$/mnt/c/Users/haoya/AppData/Local/Temp/claude/D--study-ai-native-design/10693d84-7c83-45a7-b9f7-69219272d70f/scratchpad/c01/exp/E2_n16_nofraig/../../rtl/dot4sat.v:29$6 ($add).
+
+2.14. Executing OPT pass (performing simple optimizations).
+
+2.14.1. Executing OPT_EXPR pass (perform const folding).
+Optimizing module dot4sat.
+<suppressed ~1 debug messages>
+
+2.14.2. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\dot4sat'.
+Computing hashes of 13 cells of `\dot4sat'.
+Finding duplicate cells in `\dot4sat'.
+Removed a total of 0 cells.
+
+2.14.3. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \dot4sat..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+  Analyzing evaluation results.
+Removed 0 multiplexer ports.
+<suppressed ~2 debug messages>
+
+2.14.4. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \dot4sat.
+Performed a total of 0 changes.
+
+2.14.5. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\dot4sat'.
+Computing hashes of 13 cells of `\dot4sat'.
+Finding duplicate cells in `\dot4sat'.
+Removed a total of 0 cells.
+
+2.14.6. Executing OPT_DFF pass (perform DFF optimizations).
+
+2.14.7. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \dot4sat..
+Removed 1 unused cells and 5 unused wires.
+<suppressed ~2 debug messages>
+
+2.14.8. Executing OPT_EXPR pass (perform const folding).
+Optimizing module dot4sat.
+
+2.14.9. Rerunning OPT passes. (Maybe there is more to do..)
+
+2.14.10. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \dot4sat..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+  Analyzing evaluation results.
+Removed 0 multiplexer ports.
+<suppressed ~2 debug messages>
+
+2.14.11. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \dot4sat.
+Performed a total of 0 changes.
+
+2.14.12. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\dot4sat'.
+Computing hashes of 12 cells of `\dot4sat'.
+Finding duplicate cells in `\dot4sat'.
+Removed a total of 0 cells.
+
+2.14.13. Executing OPT_DFF pass (perform DFF optimizations).
+
+2.14.14. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \dot4sat..
+
+2.14.15. Executing OPT_EXPR pass (perform const folding).
+Optimizing module dot4sat.
+
+2.14.16. Finished fast OPT passes. (There is nothing left to do.)
+
+2.15. Executing MEMORY pass.
+
+2.15.1. Executing OPT_MEM pass (optimize memories).
+Performed a total of 0 transformations.
+
+2.15.2. Executing OPT_MEM_PRIORITY pass (removing unnecessary memory write priority relations).
+Performed a total of 0 transformations.
+
+2.15.3. Executing OPT_MEM_FEEDBACK pass (finding memory read-to-write feedback paths).
+
+2.15.4. Executing MEMORY_BMUX2ROM pass (converting muxes to ROMs).
+
+2.15.5. Executing MEMORY_DFF pass (merging $dff cells to $memrd).
+
+2.15.6. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \dot4sat..
+
+2.15.7. Executing MEMORY_SHARE pass (consolidating $memrd/$memwr cells).
+
+2.15.8. Executing OPT_MEM_WIDEN pass (optimize memories where all ports are wide).
+Performed a total of 0 transformations.
+
+2.15.9. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \dot4sat..
+
+2.15.10. Executing MEMORY_COLLECT pass (generating $mem cells).
+
+2.16. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \dot4sat..
+
+2.17. Executing OPT pass (performing simple optimizations).
+
+2.17.1. Executing OPT_EXPR pass (perform const folding).
+Optimizing module dot4sat.
+<suppressed ~1 debug messages>
+
+2.17.2. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\dot4sat'.
+Computing hashes of 43 cells of `\dot4sat'.
+Finding duplicate cells in `\dot4sat'.
+Removed a total of 0 cells.
+
+2.17.3. Executing OPT_DFF pass (perform DFF optimizations).
+
+2.17.4. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \dot4sat..
+Removed 31 unused cells and 31 unused wires.
+<suppressed ~32 debug messages>
+
+2.17.5. Finished fast OPT passes.
+
+2.18. Executing MEMORY_MAP pass (converting memories to logic and flip-flops).
+
+2.19. Executing OPT pass (performing simple optimizations).
+
+2.19.1. Executing OPT_EXPR pass (perform const folding).
+Optimizing module dot4sat.
+
+2.19.2. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\dot4sat'.
+Computing hashes of 12 cells of `\dot4sat'.
+Finding duplicate cells in `\dot4sat'.
+Removed a total of 0 cells.
+
+2.19.3. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \dot4sat..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+  Analyzing evaluation results.
+Removed 0 multiplexer ports.
+<suppressed ~2 debug messages>
+
+2.19.4. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \dot4sat.
+Performed a total of 0 changes.
+
+2.19.5. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\dot4sat'.
+Computing hashes of 12 cells of `\dot4sat'.
+Finding duplicate cells in `\dot4sat'.
+Removed a total of 0 cells.
+
+2.19.6. Executing OPT_SHARE pass.
+
+2.19.7. Executing OPT_DFF pass (perform DFF optimizations).
+
+2.19.8. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \dot4sat..
+
+2.19.9. Executing OPT_EXPR pass (perform const folding).
+Optimizing module dot4sat.
+
+2.19.10. Finished fast OPT passes. (There is nothing left to do.)
+
+2.20. Executing TECHMAP pass (map to technology primitives).
+
+2.20.1. Executing Verilog-2005 frontend: /home/eda/tools/oss-cad-suite/lib/../share/yosys/techmap.v
+Parsing Verilog input from `/home/eda/tools/oss-cad-suite/lib/../share/yosys/techmap.v' to AST representation.
+Generating RTLIL representation for module `\_90_simplemap_bool_ops'.
+Generating RTLIL representation for module `\_90_simplemap_reduce_ops'.
+Generating RTLIL representation for module `\_90_simplemap_logic_ops'.
+Generating RTLIL representation for module `\_90_simplemap_compare_ops'.
+Generating RTLIL representation for module `\_90_simplemap_various'.
+Generating RTLIL representation for module `\_90_simplemap_registers'.
+Generating RTLIL representation for module `\_90_shift_ops_shr_shl_sshl_sshr'.
+Generating RTLIL representation for module `\_90_shift_shiftx'.
+Generating RTLIL representation for module `\_90_fa'.
+Generating RTLIL representation for module `\_90_lcu_brent_kung'.
+Generating RTLIL representation for module `\_90_alu'.
+Generating RTLIL representation for module `\_90_macc'.
+Generating RTLIL representation for module `\_90_alumacc'.
+Generating RTLIL representation for module `$__div_mod_u'.
+Generating RTLIL representation for module `$__div_mod_trunc'.
+Generating RTLIL representation for module `\_90_div'.
+Generating RTLIL representation for module `\_90_mod'.
+Generating RTLIL representation for module `$__div_mod_floor'.
+Generating RTLIL representation for module `\_90_divfloor'.
+Generating RTLIL representation for module `\_90_modfloor'.
+Generating RTLIL representation for module `\_90_pow'.
+Generating RTLIL representation for module `\_90_demux'.
+Generating RTLIL representation for module `\_90_lut'.
+Generating RTLIL representation for module `$connect'.
+Generating RTLIL representation for module `$input_port'.
+Successfully finished Verilog frontend.
+
+2.20.2. Continuing TECHMAP pass.
+Using extmapper simplemap for cells of type $xor.
+Using template $paramod$af987c41eb15cea3e227fb6b88cf36e74f01ad31\_90_alu for cells of type $alu.
+Using extmapper simplemap for cells of type $or.
+Using extmapper simplemap for cells of type $reduce_and.
+Using template $paramod$8cc0b32490c97e14dae404d9949eb98107b43c04\_90_alu for cells of type $alu.
+Using extmapper maccmap for cells of type $macc_v2.
+  add \in_a [15:0] * \in_b [15:0] (16x16 bits, signed)
+  add \in_a [31:16] * \in_b [31:16] (16x16 bits, signed)
+  add \in_a [47:32] * \in_b [47:32] (16x16 bits, signed)
+  add \in_a [63:48] * \in_b [63:48] (16x16 bits, signed)
+Using extmapper simplemap for cells of type $sdff.
+Using extmapper simplemap for cells of type $mux.
+Using template $paramod\_90_fa\WIDTH=32'00000000000000000000000000100010 for cells of type $fa.
+Using template $paramod$dbef6e48cd28208af1b77a9bd7dfc80580f16131\_90_alu for cells of type $alu.
+Using extmapper simplemap for cells of type $and.
+Using extmapper simplemap for cells of type $not.
+Using template $paramod\_90_fa\WIDTH=32'00000000000000000000000000000011 for cells of type $fa.
+Using template $paramod\_90_lcu_brent_kung\WIDTH=32'00000000000000000000000000000011 for cells of type $lcu.
+Using extmapper simplemap for cells of type $pos.
+Using template $paramod\_90_lcu_brent_kung\WIDTH=32'00000000000000000000000000100010 for cells of type $lcu.
+No more expansions possible.
+<suppressed ~1172 debug messages>
+
+2.21. Executing OPT pass (performing simple optimizations).
+
+2.21.1. Executing OPT_EXPR pass (perform const folding).
+Optimizing module dot4sat.
+<suppressed ~3898 debug messages>
+
+2.21.2. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\dot4sat'.
+Computing hashes of 10557 cells of `\dot4sat'.
+Finding duplicate cells in `\dot4sat'.
+Computing hashes of 9866 cells of `\dot4sat'.
+Finding duplicate cells in `\dot4sat'.
+Computing hashes of 9468 cells of `\dot4sat'.
+Finding duplicate cells in `\dot4sat'.
+Computing hashes of 9096 cells of `\dot4sat'.
+Finding duplicate cells in `\dot4sat'.
+Computing hashes of 8901 cells of `\dot4sat'.
+Finding duplicate cells in `\dot4sat'.
+Computing hashes of 8703 cells of `\dot4sat'.
+Finding duplicate cells in `\dot4sat'.
+Computing hashes of 8553 cells of `\dot4sat'.
+Finding duplicate cells in `\dot4sat'.
+Computing hashes of 8474 cells of `\dot4sat'.
+Finding duplicate cells in `\dot4sat'.
+Computing hashes of 8394 cells of `\dot4sat'.
+Finding duplicate cells in `\dot4sat'.
+Computing hashes of 8330 cells of `\dot4sat'.
+Finding duplicate cells in `\dot4sat'.
+Computing hashes of 8306 cells of `\dot4sat'.
+Finding duplicate cells in `\dot4sat'.
+Computing hashes of 8293 cells of `\dot4sat'.
+Finding duplicate cells in `\dot4sat'.
+Computing hashes of 8287 cells of `\dot4sat'.
+Finding duplicate cells in `\dot4sat'.
+Computing hashes of 8284 cells of `\dot4sat'.
+Finding duplicate cells in `\dot4sat'.
+<suppressed ~6819 debug messages>
+Removed a total of 2273 cells.
+
+2.21.3. Executing OPT_DFF pass (perform DFF optimizations).
+
+2.21.4. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \dot4sat..
+Removed 143 unused cells and 912 unused wires.
+<suppressed ~144 debug messages>
+
+2.21.5. Finished fast OPT passes.
+
+2.22. Executing HIERARCHY pass (managing design hierarchy).
+Attribute `top' found on module `dot4sat'. Setting top module to dot4sat.
+
+2.22.1. Analyzing design hierarchy..
+Top module:  \dot4sat
+
+2.22.2. Analyzing design hierarchy..
+Top module:  \dot4sat
+Removed 0 unused modules.
+
+2.23. Printing statistics.
+
+=== dot4sat ===
+
+        +----------Local Count, excluding submodules.
+        | 
+      543 wires
+    14212 wire bits
+       20 public wires
+      454 public wire bits
+        7 ports
+      164 port bits
+     8141 cells
+     3877   $_AND_
+       32   $_MUX_
+       67   $_NOT_
+     1329   $_OR_
+        1   $_SDFF_PN0_
+       31   $_SDFF_PN1_
+        1   $_SDFF_PP0_
+     2803   $_XOR_
+
+2.24. Executing CHECK pass (checking for obvious problems).
+Checking module dot4sat...
+Found and reported 0 problems.
+
+3. Executing DFFLIBMAP pass (mapping DFF/DLATCH cells to sequential cells from liberty file).
+  cell sky130_fd_sc_hd__dfxtp_1 (noninv, pins=3, area=20.02) is a direct match for cell type $_DFF_P_.
+  cell sky130_fd_sc_hd__dfrtn_1 (noninv, pins=4, area=25.02) is a direct match for cell type $_DFF_NN0_.
+  cell sky130_fd_sc_hd__dfrtp_1 (noninv, pins=4, area=25.02) is a direct match for cell type $_DFF_PN0_.
+  cell sky130_fd_sc_hd__dfstp_1 (noninv, pins=4, area=26.28) is a direct match for cell type $_DFF_PN1_.
+  cell sky130_fd_sc_hd__edfxtp_1 (noninv, pins=4, area=30.03) is a direct match for cell type $_DFFE_PP_.
+  cell sky130_fd_sc_hd__dfbbn_1 (noninv, pins=6, area=32.53) is a direct match for cell type $_DFFSR_NNN_.
+  cell sky130_fd_sc_hd__dfbbp_1 (noninv, pins=6, area=32.53) is a direct match for cell type $_DFFSR_PNN_.
+  cell sky130_fd_sc_hd__dlxtn_1 (noninv, pins=3, area=15.01) is a direct match for cell type $_DLATCH_N_.
+  cell sky130_fd_sc_hd__dlxtp_1 (noninv, pins=3, area=15.01) is a direct match for cell type $_DLATCH_P_.
+  cell sky130_fd_sc_hd__dlrtn_1 (noninv, pins=4, area=17.52) is a direct match for cell type $_DLATCH_NN0_.
+  cell sky130_fd_sc_hd__dlrtp_1 (noninv, pins=4, area=16.27) is a direct match for cell type $_DLATCH_PN0_.
+  final dff/dlatch cell mappings:
+    unmapped dff/dlatch cell: $_DFF_N_
+    \sky130_fd_sc_hd__dfxtp_1 _DFF_P_ (.CLK( C), .D( D), .Q( Q));
+    \sky130_fd_sc_hd__dfrtn_1 _DFF_NN0_ (.CLK_N( C), .D( D), .Q( Q), .RESET_B( R));
+    unmapped dff/dlatch cell: $_DFF_NN1_
+    unmapped dff/dlatch cell: $_DFF_NP0_
+    unmapped dff/dlatch cell: $_DFF_NP1_
+    \sky130_fd_sc_hd__dfrtp_1 _DFF_PN0_ (.CLK( C), .D( D), .Q( Q), .RESET_B( R));
+    \sky130_fd_sc_hd__dfstp_1 _DFF_PN1_ (.CLK( C), .D( D), .Q( Q), .SET_B( R));
+    unmapped dff/dlatch cell: $_DFF_PP0_
+    unmapped dff/dlatch cell: $_DFF_PP1_
+    unmapped dff/dlatch cell: $_DFFE_NN_
+    unmapped dff/dlatch cell: $_DFFE_NP_
+    unmapped dff/dlatch cell: $_DFFE_PN_
+    \sky130_fd_sc_hd__edfxtp_1 _DFFE_PP_ (.CLK( C), .D( D), .DE( E), .Q( Q));
+    \sky130_fd_sc_hd__dfbbn_1 _DFFSR_NNN_ (.CLK_N( C), .D( D), .Q( Q), .Q_N(~Q), .RESET_B( R), .SET_B( S));
+    unmapped dff/dlatch cell: $_DFFSR_NNP_
+    unmapped dff/dlatch cell: $_DFFSR_NPN_
+    unmapped dff/dlatch cell: $_DFFSR_NPP_
+    \sky130_fd_sc_hd__dfbbp_1 _DFFSR_PNN_ (.CLK( C), .D( D), .Q( Q), .Q_N(~Q), .RESET_B( R), .SET_B( S));
+    unmapped dff/dlatch cell: $_DFFSR_PNP_
+    unmapped dff/dlatch cell: $_DFFSR_PPN_
+    unmapped dff/dlatch cell: $_DFFSR_PPP_
+    \sky130_fd_sc_hd__dlxtn_1 _DLATCH_N_ (.D( D), .GATE_N( E), .Q( Q));
+    \sky130_fd_sc_hd__dlxtp_1 _DLATCH_P_ (.D( D), .GATE( E), .Q( Q));
+    \sky130_fd_sc_hd__dlrtn_1 _DLATCH_NN0_ (.D( D), .GATE_N( E), .Q( Q), .RESET_B( R));
+    unmapped dff/dlatch cell: $_DLATCH_NN1_
+    unmapped dff/dlatch cell: $_DLATCH_NP0_
+    unmapped dff/dlatch cell: $_DLATCH_NP1_
+    \sky130_fd_sc_hd__dlrtp_1 _DLATCH_PN0_ (.D( D), .GATE( E), .Q( Q), .RESET_B( R));
+    unmapped dff/dlatch cell: $_DLATCH_PN1_
+    unmapped dff/dlatch cell: $_DLATCH_PP0_
+    unmapped dff/dlatch cell: $_DLATCH_PP1_
+    unmapped dff/dlatch cell: $_DLATCHSR_NNN_
+    unmapped dff/dlatch cell: $_DLATCHSR_NNP_
+    unmapped dff/dlatch cell: $_DLATCHSR_NPN_
+    unmapped dff/dlatch cell: $_DLATCHSR_NPP_
+    unmapped dff/dlatch cell: $_DLATCHSR_PNN_
+    unmapped dff/dlatch cell: $_DLATCHSR_PNP_
+    unmapped dff/dlatch cell: $_DLATCHSR_PPN_
+    unmapped dff/dlatch cell: $_DLATCHSR_PPP_
+
+3.1. Executing DFFLEGALIZE pass (convert FFs and LATCHes to types supported by the target).
+Mapping DFF/DLATCH cells in module `\dot4sat':
+  mapped 33 $_DFF_P_ cells to \sky130_fd_sc_hd__dfxtp_1 cells.
+
+4. Executing ABC pass (technology mapping using ABC).
+
+4.1. Summary of detected clock domains:
+  8174 cells in clk={ }, en={ }, arst={ }, srst={ }
+
+4.2. Extracting gate netlist of module `\dot4sat' to `<abc-temp-dir>/input.blif'..
+ABC: using cached merged SCL: /tmp/yosys-liberty-scl-cache-1000/yosys_merged_22698ca9.scl (1 files)
+No matching clock domain found. Not extracting any FF cells.
+
+4.2.1. Executed ABC.
+Extracted 8141 gates and 8273 wires to a netlist network with 130 inputs and 33 outputs.
+Running ABC script: <abc-temp-dir>/abc.script
+ABC: UC Berkeley, ABC 1.01 (compiled Oct  3 2026 08:15:02)
+ABC: abc 01> empty
+ABC: abc 01> source <abc-temp-dir>/abc.script
+ABC: + read_blif <abc-temp-dir>/input.blif 
+ABC: + read_scl /tmp/yosys-liberty-scl-cache-1000/yosys_merged_22698ca9.scl 
+ABC: Warning: Detected 9 multi-output cells (for example, "sky130_fd_sc_hd__fa_1").
+ABC: + strash 
+ABC: + &get -n 
+ABC: + &dch -f 
+ABC: + &nf 
+ABC: + &put 
+ABC: + write_blif <abc-temp-dir>/output.blif 
+ABC: 
+ABC: YOSYS_ABC_DONE 
+
+4.2.2. Re-integrating ABC results.
+ABC RESULTS:   sky130_fd_sc_hd__a211oi_1 cells:        2
+ABC RESULTS:   sky130_fd_sc_hd__a21bo_1 cells:        1
+ABC RESULTS:   sky130_fd_sc_hd__a21boi_0 cells:       10
+ABC RESULTS:   sky130_fd_sc_hd__a21o_1 cells:       28
+ABC RESULTS:   sky130_fd_sc_hd__a21oi_1 cells:      222
+ABC RESULTS:   sky130_fd_sc_hd__a22o_1 cells:       27
+ABC RESULTS:   sky130_fd_sc_hd__a22oi_1 cells:       22
+ABC RESULTS:   sky130_fd_sc_hd__a2bb2oi_1 cells:        4
+ABC RESULTS:   sky130_fd_sc_hd__a31o_1 cells:        1
+ABC RESULTS:   sky130_fd_sc_hd__a31oi_1 cells:       12
+ABC RESULTS:   sky130_fd_sc_hd__a32oi_1 cells:        1
+ABC RESULTS:   sky130_fd_sc_hd__a41o_1 cells:        1
+ABC RESULTS:   sky130_fd_sc_hd__and2_0 cells:       89
+ABC RESULTS:   sky130_fd_sc_hd__and3_1 cells:       12
+ABC RESULTS:   sky130_fd_sc_hd__and4_1 cells:        1
+ABC RESULTS:   sky130_fd_sc_hd__inv_1 cells:      197
+ABC RESULTS:   sky130_fd_sc_hd__maj3_1 cells:      800
+ABC RESULTS:   sky130_fd_sc_hd__mux2_1 cells:        1
+ABC RESULTS:   sky130_fd_sc_hd__mux2i_1 cells:        1
+ABC RESULTS:   sky130_fd_sc_hd__nand2_1 cells:     1040
+ABC RESULTS:   sky130_fd_sc_hd__nand2b_1 cells:      141
+ABC RESULTS:   sky130_fd_sc_hd__nand3_1 cells:       27
+ABC RESULTS:   sky130_fd_sc_hd__nand4_1 cells:       23
+ABC RESULTS:   sky130_fd_sc_hd__nor2_1 cells:      247
+ABC RESULTS:   sky130_fd_sc_hd__nor2b_1 cells:      161
+ABC RESULTS:   sky130_fd_sc_hd__nor3_1 cells:       10
+ABC RESULTS:   sky130_fd_sc_hd__nor3b_1 cells:        1
+ABC RESULTS:   sky130_fd_sc_hd__o2111ai_1 cells:        1
+ABC RESULTS:   sky130_fd_sc_hd__o211ai_1 cells:        2
+ABC RESULTS:   sky130_fd_sc_hd__o21a_1 cells:       34
+ABC RESULTS:   sky130_fd_sc_hd__o21ai_0 cells:      141
+ABC RESULTS:   sky130_fd_sc_hd__o21bai_1 cells:        3
+ABC RESULTS:   sky130_fd_sc_hd__o221ai_1 cells:        2
+ABC RESULTS:   sky130_fd_sc_hd__o22a_1 cells:       36
+ABC RESULTS:   sky130_fd_sc_hd__o22ai_1 cells:        5
+ABC RESULTS:   sky130_fd_sc_hd__o311a_1 cells:        1
+ABC RESULTS:   sky130_fd_sc_hd__o31ai_1 cells:        2
+ABC RESULTS:   sky130_fd_sc_hd__o32a_1 cells:        1
+ABC RESULTS:   sky130_fd_sc_hd__o32ai_1 cells:        2
+ABC RESULTS:   sky130_fd_sc_hd__or2_0 cells:       15
+ABC RESULTS:   sky130_fd_sc_hd__or3_1 cells:        3
+ABC RESULTS:   sky130_fd_sc_hd__xnor2_1 cells:     1323
+ABC RESULTS:   sky130_fd_sc_hd__xnor3_1 cells:      325
+ABC RESULTS:   sky130_fd_sc_hd__xor2_1 cells:      617
+ABC RESULTS:   sky130_fd_sc_hd__xor3_1 cells:      100
+ABC RESULTS:        internal signals:     8110
+ABC RESULTS:           input signals:      130
+ABC RESULTS:          output signals:       33
+Removing temp directory.
+Removing global temp directory.
+
+5. Executing SETUNDEF pass (replace undef values with defined constants).
+
+6. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \dot4sat..
+Removed 0 unused cells and 699 unused wires.
+<suppressed ~14 debug messages>
+
+7. Executing HILOMAP pass (mapping to constant drivers).
+
+8. Printing statistics.
+
+=== dot4sat ===
+
+        +----------Local Count, excluding submodules.
+        |        +-Local Area, excluding submodules.
+        |        | 
+     5702        - wires
+     5859        - wire bits
+        7        - public wires
+      164        - public wire bits
+        7        - ports
+      164        - port bits
+     5728 4.73E+04 cells
+        2   15.014   sky130_fd_sc_hd__a211oi_1
+        1    10.01   sky130_fd_sc_hd__a21bo_1
+       10   75.072   sky130_fd_sc_hd__a21boi_0
+       28  210.202   sky130_fd_sc_hd__a21o_1
+      222 1.11E+03   sky130_fd_sc_hd__a21oi_1
+       27  236.477   sky130_fd_sc_hd__a22o_1
+       22  165.158   sky130_fd_sc_hd__a22oi_1
+        4   35.034   sky130_fd_sc_hd__a2bb2oi_1
+        1    8.758   sky130_fd_sc_hd__a31o_1
+       12   75.072   sky130_fd_sc_hd__a31oi_1
+        1    8.758   sky130_fd_sc_hd__a32oi_1
+        1    10.01   sky130_fd_sc_hd__a41o_1
+       89  556.784   sky130_fd_sc_hd__and2_0
+       12   75.072   sky130_fd_sc_hd__and3_1
+        1    8.758   sky130_fd_sc_hd__and4_1
+       33  660.634   sky130_fd_sc_hd__dfxtp_1
+      197  739.459   sky130_fd_sc_hd__inv_1
+      800  8007.68   sky130_fd_sc_hd__maj3_1
+        1   11.261   sky130_fd_sc_hd__mux2_1
+        1    10.01   sky130_fd_sc_hd__mux2i_1
+     1040  3.9E+03   sky130_fd_sc_hd__nand2_1
+      141  882.096   sky130_fd_sc_hd__nand2b_1
+       27   135.13   sky130_fd_sc_hd__nand3_1
+       23  143.888   sky130_fd_sc_hd__nand4_1
+      247  927.139   sky130_fd_sc_hd__nor2_1
+      161 1.01E+03   sky130_fd_sc_hd__nor2b_1
+       10   50.048   sky130_fd_sc_hd__nor3_1
+        1    7.507   sky130_fd_sc_hd__nor3b_1
+        1    8.758   sky130_fd_sc_hd__o2111ai_1
+        2   15.014   sky130_fd_sc_hd__o211ai_1
+       34  255.245   sky130_fd_sc_hd__o21a_1
+      141  705.677   sky130_fd_sc_hd__o21ai_0
+        3   22.522   sky130_fd_sc_hd__o21bai_1
+        2   17.517   sky130_fd_sc_hd__o221ai_1
+       36  315.302   sky130_fd_sc_hd__o22a_1
+        5    31.28   sky130_fd_sc_hd__o22ai_1
+        1    10.01   sky130_fd_sc_hd__o311a_1
+        2   15.014   sky130_fd_sc_hd__o31ai_1
+        1    10.01   sky130_fd_sc_hd__o32a_1
+        2   17.517   sky130_fd_sc_hd__o32ai_1
+       15    93.84   sky130_fd_sc_hd__or2_0
+        3   18.768   sky130_fd_sc_hd__or3_1
+     1323 1.16E+04   sky130_fd_sc_hd__xnor2_1
+      325  7319.52   sky130_fd_sc_hd__xnor3_1
+      617  5.4E+03   sky130_fd_sc_hd__xor2_1
+      100  2377.28   sky130_fd_sc_hd__xor3_1
+
+   Chip area for module '\dot4sat': 47311.625600
+     of which used for sequential elements: 660.633600 (1.40%)
+
+9. Executing Verilog backend.
+Dumping module `\dot4sat'.
+
+End of script. Logfile hash: 75d6dc76d1, time: 5.07s, user: 1.20s, system: 0.14s, MEM: 51.37 MB peak
+Yosys 0.69+187 (git sha1 2f08661dd, Release, Clang /usr/bin/clang++ 21.1.8)
+Time spent: 74% 1x abc (3 sec), 4% 18x opt_expr (0 sec), ...

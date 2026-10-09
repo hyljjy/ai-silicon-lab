@@ -1,0 +1,13 @@
+21c21
+< synth -top $::env(TOP)
+---
+> synth -top $::env(TOP) -noabc
+23c23
+< abc -liberty $lib {*}$dont_use
+---
+> abc -script {+strash;&get -n;&dch -f;&nf;&put} -liberty $lib {*}$dont_use
+E2_n16_nofraig exit=0 time=5s    Chip area for module '\dot4sat': 47311.625600
+Yosys 0.69+187 (git sha1 2f08661dd, Release, Clang /usr/bin/clang++ 21.1.8)
+Time spent: 74% 1x abc (3 sec), 4% 18x opt_expr (0 sec), ...
+
+[exited with code 0]

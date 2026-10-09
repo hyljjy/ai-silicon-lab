@@ -1,0 +1,58 @@
+{
+ "L": 1,
+ "coverage": {
+  "counts": {
+   "accepted": 2856,
+   "bubble_patterns": 3,
+   "burst_max_run": 235,
+   "cancel": 64,
+   "cancelled": 0,
+   "checked": 2856,
+   "generated_valid": 2886,
+   "rand_checked": 2513,
+   "rst_after_delivery": 29,
+   "rst_block": 30,
+   "rst_cancel": 0,
+   "rst_multi_pulse": 1,
+   "rst_recover": 25,
+   "rst_single_pulse": 30,
+   "sat_hi_exact": 1,
+   "sat_hi_over1": 1,
+   "sat_lo_exact": 1,
+   "sat_lo_over1": 1,
+   "sat_neg": 13,
+   "sat_pos": 11,
+   "sign_bins": 100,
+   "undelivered": 0
+  },
+  "failures": [],
+  "not_applicable": {
+   "rst_cancel": "L=1: an accepted transaction is delivered before the next edge, so no edge can cancel it"
+  },
+  "ok": true,
+  "required": {
+   "bubble_patterns": 3,
+   "burst_max_run": 32,
+   "cancel": 1,
+   "rand_checked": 1,
+   "rst_after_delivery": 1,
+   "rst_block": 1,
+   "rst_multi_pulse": 1,
+   "rst_recover": 1,
+   "rst_single_pulse": 1,
+   "sat_hi_exact": 1,
+   "sat_hi_over1": 1,
+   "sat_lo_exact": 1,
+   "sat_lo_over1": 1,
+   "sat_neg": 1,
+   "sat_pos": 1,
+   "sign_bins": 100
+  }
+ },
+ "drain": 4,
+ "expected_checked": 2856,
+ "lmax": 3,
+ "n_vectors": 3428,
+ "seed": 1,
+ "vectors_sha256": "ba0098b1be26332ff73a4adc54d884ed4c9d47bb00b783964a0d00b5eec57405"
+}

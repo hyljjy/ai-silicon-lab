@@ -1,0 +1,17 @@
+21c21
+< synth -top $::env(TOP)
+---
+> synth -top $::env(TOP) -noabc
+21c21
+< synth -top $::env(TOP)
+---
+> synth -top $::env(TOP) -noabc
+23c23
+< abc -liberty $lib {*}$dont_use
+---
+> abc -fast -liberty $lib {*}$dont_use
+E2_n16_fast exit=1 time=1s 
+E1_n8_frozen exit=0 time=60s    Chip area for module '\dot4sat': 12595.830400
+E3_n16_noabc exit=124 time=1132s 
+
+[exited with code 0]

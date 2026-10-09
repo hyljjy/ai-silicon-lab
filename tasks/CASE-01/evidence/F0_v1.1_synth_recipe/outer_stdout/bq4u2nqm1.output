@@ -1,0 +1,14 @@
+yosys exit=0 (4572s)
+     7878 cells
+     6059 4.51E+04 cells
+   Chip area for module '\dot4sat': 45083.238400
+yosys warnings: 3
+ABC: Warning: The network is combinational (run "fraig" or "fraig_sweep").
+ABC: Warning: Detected 9 multi-output cells (for example, "sky130_fd_sc_hd__fa_1").
+ABC: Warning: The network is combinational (run "fraig" or "fraig_sweep").
+gl compile exit=0 (1s) lines=0
+gl sim exit=0 (9s) SIM PASS checked=2856
+33
+     33 sky130_fd_sc_hd__dfxtp_1
+
+[exited with code 0]

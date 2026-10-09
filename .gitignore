@@ -1,0 +1,8 @@
+# Verdi working files at the repo root
+novas.conf
+novas.rc
+verdiLog/
+# grader runs stay on disk; runs used for conclusions are archived under tasks/*/evidence/ (Task 12)
+tasks/*/runs/
+__pycache__/
+*.vvp

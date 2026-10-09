@@ -1,0 +1,6 @@
+start 2026-10-08 07:53:36
+end   2026-10-08 09:04:06 exit=0
+   Chip area for module '\dot4sat': 45083.238400
+Time spent: 99% 2x abc (4229 sec), 0% 19x opt_expr (0 sec), ...
+
+[exited with code 0]

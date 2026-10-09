@@ -1,0 +1,2 @@
+STA INVALID: forbidden constraint: set_false_path\
+STA INVALID: unrecognized constraint line: -from [get_ports {rst}]
