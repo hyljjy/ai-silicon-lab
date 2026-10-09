@@ -15,6 +15,7 @@ import json
 import os
 import re
 import shutil
+import signal
 import subprocess
 import sys
 
@@ -32,6 +33,10 @@ IN_PROCESS = ["scripts/grade.py", "scripts/check_sim.py", "scripts/logcheck.py"]
 STEP_TOOL = {"env_snapshot": "shell", "versions": "shell", "gen_vectors": "python", "rtl_compile": "iverilog",
              "rtl_sim": "iverilog", "synth": "yosys", "gl_compile": "iverilog", "gl_sim": "iverilog",
              "sta": "sta", "check_sta": "python"}
+# Wall-clock limit per step, in seconds. The TB watchdog only counts simulation time, so a zero-time hang
+# (e.g. a combinational loop in a candidate design) or a hung tool is stopped here (task review of Task 9).
+STEP_TIMEOUT_S = {"env_snapshot": 600, "versions": 120, "gen_vectors": 600, "rtl_compile": 600, "rtl_sim": 1800,
+                  "synth": 3600, "gl_compile": 600, "gl_sim": 3600, "sta": 3600, "check_sta": 600}
 
 
 class GradeError(Exception):
@@ -69,19 +74,36 @@ class Run:
         self.hits = {}
 
     def cmd(self, name, argv, log, env=None, extra_logs=()):
-        """Run argv in the run dir, stdout+stderr to <root>/<log>, then check this step's logs immediately."""
+        """Run argv in the run dir, stdout+stderr to <root>/<log>, then check this step's logs immediately.
+        A step that outlives STEP_TIMEOUT_S[name] is killed together with its whole process group and fails."""
         path = os.path.join(self.root, log)
         os.makedirs(os.path.dirname(path), exist_ok=True)
+        limit = STEP_TIMEOUT_S[name]
+        timed_out = False
         with open(path, "w") as f:
-            rc = subprocess.run(argv, cwd=self.root, env=env, stdout=f, stderr=subprocess.STDOUT).returncode
+            proc = subprocess.Popen(argv, cwd=self.root, env=env, stdin=subprocess.DEVNULL, stdout=f,
+                                    stderr=subprocess.STDOUT, start_new_session=True)
+            try:
+                rc = proc.wait(timeout=limit)
+            except subprocess.TimeoutExpired:
+                timed_out = True
+                try:
+                    os.killpg(proc.pid, signal.SIGKILL)
+                except ProcessLookupError:
+                    pass
+                rc = proc.wait()
         problems = []
         for lg in (log,) + tuple(extra_logs):
+            if timed_out and not os.path.exists(os.path.join(self.root, lg)):
+                continue                                  # a step killed early may not have written its extra logs
             p, hits = logcheck.scan(STEP_TOOL[name], os.path.join(self.root, lg), self.rules)
             problems += p
             for k, v in hits.items():
                 self.hits[k] = self.hits.get(k, 0) + v
-        self.steps.append({"step": name, "argv": argv, "returncode": rc, "logs": [log, *extra_logs],
-                           "log_problems": problems})
+        self.steps.append({"step": name, "argv": argv, "returncode": rc, "timed_out": timed_out,
+                           "timeout_s": limit, "logs": [log, *extra_logs], "log_problems": problems})
+        if timed_out:
+            raise GradeError(f"{name} timed out after {limit} s and was killed (see {log})")
         with open(path, errors="replace") as f:
             return rc, f.read(), problems
 
