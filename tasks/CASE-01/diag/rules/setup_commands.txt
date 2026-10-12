@@ -1,0 +1,19 @@
+# Environment-building commands: never executed in a diag query; each call prints
+# "CASE01-<nonce>-CODE: SETUP_SKIPPED <command>" (protocol v0.5 section 8 b: the frozen environment already provides it).
+# create_clock is listed here for query mode (period equal to T); in whatif mode allow_whatif.txt replaces this stub.
+# Commands that execute scripts or write files (include, with_output_to_variable, define_property, log_begin,
+# log_end, write_*) are in none of the lists: the safe interpreter simply does not have them.
+create_clock
+define_corners
+define_scene
+link_design
+read_liberty
+read_power_activities
+read_saif
+read_sdc
+read_sdf
+read_spef
+read_vcd
+read_verilog
+sky130_define_scenes
+sky130_read_libs
