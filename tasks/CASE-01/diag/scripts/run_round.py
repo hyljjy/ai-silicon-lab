@@ -50,6 +50,8 @@ CODES = ("A", "B", "C")
 TIMEOUT_S = 1800
 HIDDEN = "<已隐去>"
 SMOKE_CANARIES = ("青松-0427", "白鹭-1010")
+CAP_PROBE_TOKENS = 64          # smoke cap probe: a cap this small must cut off "count to 300" for every model
+CAP_HIT = "output token maximum"
 CLI_PATH = r"D:\study\diag_sandbox\bin\claude-2.1.296.exe"
 CLI_VERSION = "2.1.296"
 RUN_DIR = re.compile(r"run-[0-9a-f]{8}")
@@ -180,7 +182,7 @@ class RoundRunner:
             dirs[i], dirs[j] = dirs[j], dirs[i]
         return dirs
 
-    def attempt(self, entry, system_bytes, user_bytes, prompt_ok, sealed_dir, label, workdir):
+    def attempt(self, entry, system_bytes, user_bytes, prompt_ok, sealed_dir, label, workdir, env=None):
         argv = self.claude_cmd + ["-p", "--model", entry["model"], "--tools", "", "--system-prompt",
                                   system_bytes.decode("utf-8"), "--settings", os.path.expandvars(entry["settings"]),
                                   "--setting-sources", "project", "--strict-mcp-config", "--no-session-persistence",
@@ -188,7 +190,8 @@ class RoundRunner:
         out_path, err_path = (os.path.join(sealed_dir, f"{label}.{x}") for x in ("jsonl", "err"))
         start = datetime.datetime.now().isoformat(timespec="seconds")
         with open(out_path, "wb") as out, open(err_path, "wb") as err:
-            proc = subprocess.Popen(argv, cwd=workdir, env=self.env, stdin=subprocess.PIPE, stdout=out, stderr=err)
+            proc = subprocess.Popen(argv, cwd=workdir, env=env or self.env, stdin=subprocess.PIPE, stdout=out,
+                                    stderr=err)
             try:
                 proc.communicate(input=user_bytes, timeout=TIMEOUT_S)
                 exit_code = proc.returncode
@@ -219,7 +222,8 @@ class RoundRunner:
                 "valid": not problems, "problems": problems, "categories": vc.categories(problems),
                 "per_turn_effort_active": init.get("per_turn_effort_active"),
                 "max_output_tokens": usage.get("maxOutputTokens"), "hidden_in_answer": hidden,
-                "api_retries": sum(e.get("subtype") == "api_retry" for e in events)}
+                "api_retries": sum(e.get("subtype") == "api_retry" for e in events),
+                "num_turns": result.get("num_turns"), "is_error": result.get("is_error")}
         with open(os.path.join(sealed_dir, f"{label}.meta.json"), "w", encoding="utf-8", newline="\n") as f:
             json.dump(meta, f, ensure_ascii=False, indent=1)
         with open(os.path.join(sealed_dir, f"{label}.answer.md"), "w", encoding="utf-8", newline="\n") as f:
@@ -417,6 +421,20 @@ class RoundRunner:
                   f"maxOutputTokens={meta['max_output_tokens']} exit={meta['exit']} retries={meta['api_retries']}")
             for cat, detail in meta["problems"]:
                 print(f"  {cat}: {detail}")
+        # cap probe: modelUsage.maxOutputTokens does not show the effective cap, so prove the cap works instead: with
+        # CLAUDE_CODE_MAX_OUTPUT_TOKENS=64, "count to 300" must be cut off (auto-continued, or the cap error)
+        with open(os.path.join(self.diag, "prompts", "cap_probe_user.md"), "rb") as f:
+            probe = f.read()
+        capped_env = dict(self.env, CLAUDE_CODE_MAX_OUTPUT_TOKENS=str(CAP_PROBE_TOKENS))
+        for entry, workdir in zip(self.models, self.make_workdirs(len(self.models))):
+            label = f"{entry['name']}-cap{CAP_PROBE_TOKENS}"
+            meta = self.attempt(entry, system, probe, True, sealed_dir, label, workdir, env=capped_env)
+            with open(os.path.join(sealed_dir, f"{label}.answer.md"), encoding="utf-8") as f:
+                answer = f.read()
+            capped = (meta["num_turns"] or 0) > 1 or CAP_HIT in answer
+            all_ok &= capped
+            print(f"{entry['name']}: cap_probe capped={capped} turns={meta['num_turns']} is_error={meta['is_error']} "
+                  f"exit={meta['exit']}")
         print(f"SMOKE {'OK' if all_ok else 'FAIL'} -> {sealed_dir}")
         return 0 if all_ok else 1
 

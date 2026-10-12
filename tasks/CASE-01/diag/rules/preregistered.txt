@@ -23,6 +23,7 @@ tasks/CASE-01/diag/prompts/round1_user.md
 tasks/CASE-01/diag/prompts/round2_template.md
 tasks/CASE-01/diag/prompts/smoke_system.md
 tasks/CASE-01/diag/prompts/smoke_user.md
+tasks/CASE-01/diag/prompts/cap_probe_user.md
 tasks/CASE-01/diag/models/claude.json
 tasks/CASE-01/diag/models/kimi.json
 tasks/CASE-01/diag/models/deepseek.json

@@ -51,6 +51,8 @@ class Base(unittest.TestCase):
         write(os.path.join(self.diag, "prompts", "round1_user.md"), "第 1 轮题目\n")
         write(os.path.join(self.diag, "prompts", "smoke_system.md"), "系统暗号是：青松-0427。\n")
         write(os.path.join(self.diag, "prompts", "smoke_user.md"), "本题的暗号是：白鹭-1010。\n")
+        shutil.copyfile(os.path.join(HERE, "..", "prompts", "cap_probe_user.md"),      # the real probe prompt
+                        os.path.join(self.diag, "prompts", "cap_probe_user.md"))
         self.mkdir("outputs")
         self.profile = os.path.join(self.tmp, "profile")
         sums = []
@@ -347,8 +349,19 @@ class TestSmoke(Base):
 
     def test_smoke_ok(self):
         rc, out = self.smoke()
-        self.assertEqual(rc, 0)
-        self.assertIn("maxOutputTokens=32000", out)
+        self.assertEqual(rc, 0, out)
+        # the reported field is Claude Code's per-model value, not the cap (diagnosed 2026-10-12)
+        self.assertIn("claude: valid=True canaries=True per_turn_effort_active=True maxOutputTokens=128000", out)
+        self.assertIn("kimi: valid=True canaries=True per_turn_effort_active=False maxOutputTokens=32000", out)
+        for name in NAMES:                       # the 64-token cap probe must cut every model off
+            self.assertIn(f"{name}: cap_probe capped=True", out)
+
+    def test_smoke_detects_a_model_that_ignores_the_cap(self):
+        self.scenarios({"deepseek-v4-pro[1M]": "nocap"})
+        rc, out = self.smoke()
+        self.assertEqual(rc, 1)
+        self.assertIn("deepseek: cap_probe capped=False", out)
+        self.assertIn("SMOKE FAIL", out)
 
     def test_smoke_detects_prompt_not_read_from_stdin(self):
         self.scenarios({"k3[1M]": "nostdin"})
