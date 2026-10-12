@@ -1,0 +1,73 @@
+# Files that must be committed and unchanged before any model run (protocol v0.5 section 3 step 3).
+# run_round.py refuses to run otherwise: each path must be tracked, equal to HEAD, have no untracked files under it,
+# and be unchanged since the tag of its tier. Plain lines are the smoke tier (tag diag-prereg, impl_plan Task 10).
+# Lines starting with "round " are the round tier (tag diag-prereg-round, impl_plan Task 12): produced in protocol
+# step 5 (base checks, mapping commitment), after the smoke retest of step 4. Progress is never ticked in
+# impl_plan.md (it is pre-registered); the execution ledger lives outside git.
+tasks/CASE-01/diag/protocol.md
+tasks/CASE-01/diag/impl_plan.md
+tasks/CASE-01/diag/reference/answer.md
+tasks/CASE-01/diag/package_src/context_extra.md
+tasks/CASE-01/diag/package_src/slack_notes.txt
+tasks/CASE-01/diag/package/context.md
+tasks/CASE-01/diag/package/path_report.rpt
+tasks/CASE-01/diag/package/case01_sdc.tcl
+tasks/CASE-01/diag/package/values.txt
+tasks/CASE-01/diag/package/slack_summary.tsv
+tasks/CASE-01/diag/package/dot4sat.v
+tasks/CASE-01/diag/package/SHA256SUMS
+tasks/CASE-01/diag/package/SOURCES.tsv
+tasks/CASE-01/diag/prompts/system.md
+tasks/CASE-01/diag/prompts/round1_template.md
+tasks/CASE-01/diag/prompts/round1_user.md
+tasks/CASE-01/diag/prompts/round2_template.md
+tasks/CASE-01/diag/prompts/smoke_system.md
+tasks/CASE-01/diag/prompts/smoke_user.md
+tasks/CASE-01/diag/models/claude.json
+tasks/CASE-01/diag/models/kimi.json
+tasks/CASE-01/diag/models/deepseek.json
+tasks/CASE-01/diag/models/originals.sha256
+tasks/CASE-01/diag/rules/allow_query.txt
+tasks/CASE-01/diag/rules/allow_whatif.txt
+tasks/CASE-01/diag/rules/setup_commands.txt
+tasks/CASE-01/diag/rules/expected.json
+tasks/CASE-01/diag/rules/run_order.json
+tasks/CASE-01/diag/rules/rewrite_table.md
+tasks/CASE-01/diag/rules/base_checks/B01_units.tcl
+tasks/CASE-01/diag/rules/base_checks/B02_worst_path_d6.tcl
+tasks/CASE-01/diag/rules/base_checks/B03_top100_endpoints.tcl
+tasks/CASE-01/diag/rules/base_checks/B04_check_setup.tcl
+tasks/CASE-01/diag/rules/base_checks/B05_worst_per_corner_d6.tcl
+tasks/CASE-01/diag/rules/base_checks/B06_paths_to_12026_D.tcl
+tasks/CASE-01/diag/rules/executor.sha256
+tasks/CASE-01/diag/rules/cli.sha256
+tasks/CASE-01/diag/rules/preregistered.txt
+tasks/CASE-01/diag/scripts/build_package.py
+tasks/CASE-01/diag/scripts/build_prompt.py
+tasks/CASE-01/diag/scripts/build_results.py
+tasks/CASE-01/diag/scripts/claims_stats.py
+tasks/CASE-01/diag/scripts/collect_runs.py
+tasks/CASE-01/diag/scripts/diag_commit.sh
+tasks/CASE-01/diag/scripts/diag_query.tcl
+tasks/CASE-01/diag/scripts/diagpaths.py
+tasks/CASE-01/diag/scripts/extract_queries.py
+tasks/CASE-01/diag/scripts/fake_claude.py
+tasks/CASE-01/diag/scripts/privacy_check.py
+tasks/CASE-01/diag/scripts/redact_settings.py
+tasks/CASE-01/diag/scripts/rewrite_query.py
+tasks/CASE-01/diag/scripts/run_query.py
+tasks/CASE-01/diag/scripts/run_round.py
+tasks/CASE-01/diag/scripts/selftest_query.py
+tasks/CASE-01/diag/scripts/test_build.py
+tasks/CASE-01/diag/scripts/test_claims_stats.py
+tasks/CASE-01/diag/scripts/test_collect_results.py
+tasks/CASE-01/diag/scripts/test_extract_rewrite.py
+tasks/CASE-01/diag/scripts/test_privacy_check.py
+tasks/CASE-01/diag/scripts/test_redact_settings.py
+tasks/CASE-01/diag/scripts/test_run_query.py
+tasks/CASE-01/diag/scripts/test_run_round.py
+tasks/CASE-01/diag/scripts/test_void_check.py
+tasks/CASE-01/diag/scripts/void_check.py
+tasks/CASE-01/diag/scripts/wsl.sh
+round tasks/CASE-01/diag/queries/base/SHA256SUMS
+round tasks/CASE-01/diag/outputs/mapping.sha256
