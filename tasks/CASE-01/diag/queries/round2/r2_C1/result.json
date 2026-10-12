@@ -1,0 +1,45 @@
+{
+ "id": "r2_C1",
+ "mode": "whatif",
+ "strict_log": false,
+ "query_sha256": "fceb2522222ad0ac23742f8c5166acb0147d3c82f3ff738be1d01d367d1cf65b",
+ "selftest": false,
+ "netlist_sha256": "1fa89c975162f4f1f9a2f349bed73b4dae5f53ab921883be842cb0a37763a8d1",
+ "f1_cfg_sha256": "652c1f1f25be0e0996b841ba371fef5bb667d1609eb92c8e4691c9df4a63bf89",
+ "executor": {
+  "scripts/run_query.py": "33086a4545c3c07fcce0decf9ddcf429b73ebd9cd17ca8e758264d38b8d5f02a",
+  "scripts/diag_query.tcl": "da0974324cf65403898775c3651f2ecfc4223269bb3cd3cf90b2bf6c19c38f33",
+  "scripts/diagpaths.py": "ef252825bb9c93e1b70b42408dfac7ec79d419d814fd4fd1eca794f4c626140a",
+  "rules/allow_query.txt": "a2b351510216e1ab0349233e774dd97cc85c571c83ebdf0d20326674a753dd21",
+  "rules/allow_whatif.txt": "97fbfbf7ed2a440346868d548a58bdd7795b7af3f2035f32c3c9f5911a70849d",
+  "rules/setup_commands.txt": "0ddde6e8825043dc09096a2bddef79736a85a1b0ec3abe96eaf3b91863b7afff",
+  "@case/scripts/logcheck.py": "46369c783983b4c1f46cda7650f461ce56f7008519a2d6bd1de608c12604726e"
+ },
+ "executor_committed": true,
+ "head": "0cde6e8e6ba01501ea931f56cfb421a5d6e6aa1a",
+ "snapshot_rc": 0,
+ "env_ok": true,
+ "env_problems": [],
+ "sta_rc": 0,
+ "timed_out": false,
+ "query_status": "completed",
+ "query_rc": 1,
+ "codes": [
+  "改变冻结模型的查询（已在单独运行中执行）",
+  "语法错误"
+ ],
+ "query_log_ok": false,
+ "query_log_problems": [
+  "sta error: CASE01-ERROR: Error 514: diag_query.tcl line 1, '-nworst' is not a known keyword or flag.",
+  "sta error: CASE01-ERROR: Error 514: diag_query.tcl line 1, '-nworst' is not a known keyword or flag.",
+  "sta error: CASE01-ERROR: invalid command name \"2\"",
+  "sta error: CASE01-ERROR: Error 514: diag_query.tcl line 1, '-nworst' is not a known keyword or flag.",
+  "sta error: CASE01-ERROR: Error 562: diag_query.tcl line 1, report_net -connections is not a known keyword or flag.",
+  "sta error: CASE01-ERROR: invalid command name \"report_driver\"",
+  "sta error: CASE01-ERROR: Error 514: diag_query.tcl line 1, '-nworst' is not a known keyword or flag.",
+  "sta error: CASE01-ERROR: Error 514: diag_query.tcl line 1, '-nworst' is not a known keyword or flag."
+ ],
+ "lines": 225,
+ "truncated": true,
+ "run_dir": "runs/20261012-110804-diag-r2_C1"
+}

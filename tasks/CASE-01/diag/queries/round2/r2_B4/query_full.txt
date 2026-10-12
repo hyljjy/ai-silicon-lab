@@ -1,0 +1,115 @@
+CASE01-CMD: foreach scene [list \
+===== tt_025C_1v80 in2reg =====
+max_delay/setup group clk
+
+                                        Required      Actual
+Endpoint                                   Delay       Delay       Slack
+------------------------------------------------------------------------
+_12026_/D (sky130_fd_sc_hd__dfxtp_1)   27.708145   16.522688   11.185458 (MET)
+
+===== tt_025C_1v80 reg2reg =====
+No paths found.
+
+===== tt_025C_1v80 reg2out =====
+max_delay/setup group clk
+
+                                        Required      Actual
+Endpoint                                   Delay       Delay       Slack
+------------------------------------------------------------------------
+out_data[0] (output)                   22.327999    0.280206   22.047794 (MET)
+
+===== tt_100C_1v80 in2reg =====
+max_delay/setup group clk
+
+                                        Required      Actual
+Endpoint                                   Delay       Delay       Slack
+------------------------------------------------------------------------
+_12026_/D (sky130_fd_sc_hd__dfxtp_1)   27.721409   16.404186   11.317222 (MET)
+
+===== tt_100C_1v80 reg2reg =====
+No paths found.
+
+===== tt_100C_1v80 reg2out =====
+max_delay/setup group clk
+
+                                        Required      Actual
+Endpoint                                   Delay       Delay       Slack
+------------------------------------------------------------------------
+out_data[0] (output)                   22.327999    0.282560   22.045441 (MET)
+
+===== ss_100C_1v60 in2reg =====
+max_delay/setup group clk
+
+                                        Required      Actual
+Endpoint                                   Delay       Delay       Slack
+------------------------------------------------------------------------
+_12026_/D (sky130_fd_sc_hd__dfxtp_1)   27.474070   28.161348   -0.687278 (VIOLATED)
+
+===== ss_100C_1v60 reg2reg =====
+No paths found.
+
+===== ss_100C_1v60 reg2out =====
+max_delay/setup group clk
+
+                                        Required      Actual
+Endpoint                                   Delay       Delay       Slack
+------------------------------------------------------------------------
+out_data[0] (output)                   22.327999    0.585913   21.742086 (MET)
+
+===== ss_n40C_1v60 in2reg =====
+max_delay/setup group clk
+
+                                        Required      Actual
+Endpoint                                   Delay       Delay       Slack
+------------------------------------------------------------------------
+_12026_/D (sky130_fd_sc_hd__dfxtp_1)   27.354149   31.543875   -4.189726 (VIOLATED)
+
+===== ss_n40C_1v60 reg2reg =====
+No paths found.
+
+===== ss_n40C_1v60 reg2out =====
+max_delay/setup group clk
+
+                                        Required      Actual
+Endpoint                                   Delay       Delay       Slack
+------------------------------------------------------------------------
+out_data[0] (output)                   22.327999    0.635566   21.692432 (MET)
+
+===== ff_n40C_1v95 in2reg =====
+max_delay/setup group clk
+
+                                        Required      Actual
+Endpoint                                   Delay       Delay       Slack
+------------------------------------------------------------------------
+_12026_/D (sky130_fd_sc_hd__dfxtp_1)   27.796181   11.924675   15.871506 (MET)
+
+===== ff_n40C_1v95 reg2reg =====
+No paths found.
+
+===== ff_n40C_1v95 reg2out =====
+max_delay/setup group clk
+
+                                        Required      Actual
+Endpoint                                   Delay       Delay       Slack
+------------------------------------------------------------------------
+out_data[0] (output)                   22.327999    0.173725   22.154276 (MET)
+
+===== ff_100C_1v95 in2reg =====
+max_delay/setup group clk
+
+                                        Required      Actual
+Endpoint                                   Delay       Delay       Slack
+------------------------------------------------------------------------
+_12026_/D (sky130_fd_sc_hd__dfxtp_1)   27.804602   11.910374   15.894229 (MET)
+
+===== ff_100C_1v95 reg2reg =====
+No paths found.
+
+===== ff_100C_1v95 reg2out =====
+max_delay/setup group clk
+
+                                        Required      Actual
+Endpoint                                   Delay       Delay       Slack
+------------------------------------------------------------------------
+out_data[0] (output)                   22.327999    0.184922   22.143078 (MET)
+

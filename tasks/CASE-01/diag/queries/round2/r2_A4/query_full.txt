@@ -1,0 +1,23 @@
+CASE01-CMD: foreach p {_11340_/X _11434_/Y _11451_/Y _11507_/Y _11509_/Y} {
+Startpoint                           Endpoint                                 Slack
+----------------------------------------------------------------------------------
+in_b[2] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -4.1897
+
+Startpoint                           Endpoint                                 Slack
+----------------------------------------------------------------------------------
+in_b[2] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -4.1897
+
+Startpoint                           Endpoint                                 Slack
+----------------------------------------------------------------------------------
+in_b[2] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -4.1897
+
+Startpoint                           Endpoint                                 Slack
+----------------------------------------------------------------------------------
+in_b[2] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -4.1897
+
+Startpoint                           Endpoint                                 Slack
+----------------------------------------------------------------------------------
+in_b[2] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -4.1897
+
+CASE01-CMD: report_net [get_nets -of_objects [get_pins _11421_/X]]   ;# 看进位链单元的扇入扇出
+CASE01-ERROR: Error 232: diag_query.tcl line 1, net _b06b4fc30d5b0000_p_Net not found.

@@ -1,0 +1,2 @@
+CASE01-CMD: set_input_delay -clock clk -max 5.582 $ins
+CASE01-ERROR: can't read "ins": no such variable

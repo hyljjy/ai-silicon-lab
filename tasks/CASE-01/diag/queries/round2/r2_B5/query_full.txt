@@ -1,0 +1,2 @@
+CASE01-CMD: report_worst_slack
+worst slack max -4.19
