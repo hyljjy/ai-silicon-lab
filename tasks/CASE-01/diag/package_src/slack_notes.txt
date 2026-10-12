@@ -1,0 +1,7 @@
+# slack_summary.tsv：F1 基线运行 sta/sta_results.tsv 中 WS、CAT、TOPO 三类原始行，按原顺序保留，字段之间用制表符分隔。
+# WS   <corner> <max|min> <slack>：该 corner 的最差 slack。max 对应 setup 检查，min 对应 hold 检查。
+# CAT  <corner> <类别> <max|min> <slack> <起点> <终点>：该 corner 下这一类路径中最差的一条。
+#      类别：in2reg = 输入到寄存器，reg2reg = 寄存器到寄存器，reg2out = 寄存器到输出。
+#      slack 写作 NONE 时，表示拓扑中不存在这一类路径，此时没有起点和终点。
+# TOPO <类别> <数目>：在结构上能到达该类终点的起点数目。
+# slack 与 path_report.rpt 使用同一时间单位。min（hold）一栏是理想时钟、综合后模型下的值。
