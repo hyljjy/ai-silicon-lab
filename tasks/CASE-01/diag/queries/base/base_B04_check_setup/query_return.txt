@@ -1,0 +1,2 @@
+CASE01-CMD: puts "check_setup returned: [check_setup -verbose]"
+check_setup returned: 1
