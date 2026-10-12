@@ -1,0 +1,54 @@
+CASE01-CMD: set insts {_10621_ _10905_ _10907_ _11029_ _11087_ _11113_ _11186_ _11255_ _11257_ _11302_ _11306_ _11338_ _11340_
+_10621_ _10905_ _10907_ _11029_ _11087_ _11113_ _11186_ _11255_ _11257_ _11302_ _11306_ _11338_ _11340_
+  _11416_ _11418_ _11420_ _11421_ _11422_ _11423_ _11424_ _11426_ _11427_ _11428_ _11429_ _11430_ _11431_ _11433_
+  _11434_ _11438_ _11440_ _11443_ _11446_ _11451_ _11453_ _11507_ _11509_ _11512_
+CASE01-CMD: set done 0
+0
+CASE01-CMD: foreach i $insts {
+upsize _10621_ sky130_fd_sc_hd__nand2_1 -> sky130_fd_sc_hd__nand2_4
+upsize _10905_ sky130_fd_sc_hd__xnor3_1 -> sky130_fd_sc_hd__xnor3_4
+upsize _10907_ sky130_fd_sc_hd__xnor2_1 -> sky130_fd_sc_hd__xnor2_4
+upsize _11029_ sky130_fd_sc_hd__xnor3_1 -> sky130_fd_sc_hd__xnor3_4
+upsize _11087_ sky130_fd_sc_hd__xnor2_1 -> sky130_fd_sc_hd__xnor2_4
+upsize _11113_ sky130_fd_sc_hd__xnor2_1 -> sky130_fd_sc_hd__xnor2_4
+upsize _11186_ sky130_fd_sc_hd__xor3_1 -> sky130_fd_sc_hd__xor3_4
+upsize _11255_ sky130_fd_sc_hd__xnor3_1 -> sky130_fd_sc_hd__xnor3_4
+upsize _11257_ sky130_fd_sc_hd__xor2_1 -> sky130_fd_sc_hd__xor2_4
+upsize _11302_ sky130_fd_sc_hd__xor3_1 -> sky130_fd_sc_hd__xor3_4
+upsize _11306_ sky130_fd_sc_hd__maj3_1 -> sky130_fd_sc_hd__maj3_4
+upsize _11338_ sky130_fd_sc_hd__xor3_1 -> sky130_fd_sc_hd__xor3_4
+upsize _11340_ sky130_fd_sc_hd__xor2_1 -> sky130_fd_sc_hd__xor2_4
+upsize _11416_ sky130_fd_sc_hd__a21oi_1 -> sky130_fd_sc_hd__a21oi_4
+upsize _11418_ sky130_fd_sc_hd__maj3_1 -> sky130_fd_sc_hd__maj3_4
+upsize _11420_ sky130_fd_sc_hd__o21ai_0 -> sky130_fd_sc_hd__o21ai_4
+upsize _11421_ sky130_fd_sc_hd__maj3_1 -> sky130_fd_sc_hd__maj3_4
+upsize _11422_ sky130_fd_sc_hd__a21oi_1 -> sky130_fd_sc_hd__a21oi_4
+upsize _11423_ sky130_fd_sc_hd__maj3_1 -> sky130_fd_sc_hd__maj3_4
+upsize _11424_ sky130_fd_sc_hd__maj3_1 -> sky130_fd_sc_hd__maj3_4
+upsize _11426_ sky130_fd_sc_hd__o21ai_0 -> sky130_fd_sc_hd__o21ai_4
+upsize _11427_ sky130_fd_sc_hd__a21oi_1 -> sky130_fd_sc_hd__a21oi_4
+upsize _11428_ sky130_fd_sc_hd__maj3_1 -> sky130_fd_sc_hd__maj3_4
+upsize _11429_ sky130_fd_sc_hd__maj3_1 -> sky130_fd_sc_hd__maj3_4
+upsize _11430_ sky130_fd_sc_hd__o21bai_1 -> sky130_fd_sc_hd__o21bai_4
+upsize _11431_ sky130_fd_sc_hd__a21oi_1 -> sky130_fd_sc_hd__a21oi_4
+upsize _11433_ sky130_fd_sc_hd__o21ai_0 -> sky130_fd_sc_hd__o21ai_4
+upsize _11434_ sky130_fd_sc_hd__a21oi_1 -> sky130_fd_sc_hd__a21oi_4
+upsize _11438_ sky130_fd_sc_hd__o31ai_1 -> sky130_fd_sc_hd__o31ai_4
+upsize _11440_ sky130_fd_sc_hd__a221oi_1 -> sky130_fd_sc_hd__a221oi_4
+upsize _11443_ sky130_fd_sc_hd__o311ai_0 -> sky130_fd_sc_hd__o311ai_4
+upsize _11446_ sky130_fd_sc_hd__a311oi_1 -> sky130_fd_sc_hd__a311oi_4
+upsize _11451_ sky130_fd_sc_hd__o311ai_0 -> sky130_fd_sc_hd__o311ai_4
+upsize _11453_ sky130_fd_sc_hd__nand2_1 -> sky130_fd_sc_hd__nand2_4
+upsize _11507_ sky130_fd_sc_hd__xnor2_1 -> sky130_fd_sc_hd__xnor2_4
+upsize _11509_ sky130_fd_sc_hd__o21ai_0 -> sky130_fd_sc_hd__o21ai_4
+upsize _11512_ sky130_fd_sc_hd__o21ai_0 -> sky130_fd_sc_hd__o21ai_4
+CASE01-CMD: puts "upsized $done of [llength $insts] cells"
+upsized 37 of 37 cells
+CASE01-CMD: report_checks -from [get_ports {in_b[2]}] -to [get_pins _12026_/D] -path_delay max -scenes ss_n40C_1v60 -format end -digits 4
+max_delay/setup group clk
+
+                                      Required    Actual
+Endpoint                                 Delay     Delay     Slack
+------------------------------------------------------------------
+_12026_/D (sky130_fd_sc_hd__dfxtp_1)   27.4634   29.5789   -2.1155 (VIOLATED)
+

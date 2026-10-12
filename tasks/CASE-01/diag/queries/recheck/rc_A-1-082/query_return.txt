@@ -1,0 +1,8 @@
+CASE01-CMD: set total 0
+0
+CASE01-CMD: foreach c [get_cells *] {
+CASE01-CMD: foreach s [lsort [array names cnt]] { puts "size _$s: $cnt($s)" }
+size _0: 361
+size _1: 5652
+CASE01-CMD: puts "non-register cells: $total"
+non-register cells: 6013

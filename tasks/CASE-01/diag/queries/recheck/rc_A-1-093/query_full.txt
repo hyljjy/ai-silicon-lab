@@ -1,0 +1,138 @@
+CASE01-CMD: report_instance _11509_
+Instance _11509_
+ Cell: sky130_fd_sc_hd__o21ai_0
+ Library: sky130_fd_sc_hd__tt_025C_1v80
+ Path cells: sky130_fd_sc_hd__o21ai_0
+ Input pins:
+  A1 input _05585_
+  A2 input _05586_
+  B1 input _05584_
+ Output pins:
+  Y output _05587_
+ Other pins:
+  VGND ground (unconnected)
+  VPWR power (unconnected)
+CASE01-CMD: set net [get_nets -of_objects [get_pins _11509_/Y]]
+_4020facd60570000_p_Net
+CASE01-CMD: report_net -digits 4 [get_full_name $net]
+Net _05587_
+ Pin capacitance: 0.0568-0.0593
+ Wire capacitance: 0.0000
+ Total capacitance: 0.0568-0.0593
+ Number of drivers: 1
+ Number of loads: 31
+ Number of pins: 32
+
+Driver pins
+ _11509_/Y output (sky130_fd_sc_hd__o21ai_0)
+
+Load pins
+ _11512_/B1 input (sky130_fd_sc_hd__o21ai_0) 0.0018-0.0018
+ _11515_/B1 input (sky130_fd_sc_hd__o21ai_0) 0.0018-0.0018
+ _11517_/B1 input (sky130_fd_sc_hd__o31ai_1) 0.0024-0.0025
+ _11519_/B1 input (sky130_fd_sc_hd__o21ai_0) 0.0018-0.0018
+ _11521_/B1 input (sky130_fd_sc_hd__o31ai_1) 0.0024-0.0025
+ _11523_/B1 input (sky130_fd_sc_hd__o31ai_1) 0.0024-0.0025
+ _11526_/B1 input (sky130_fd_sc_hd__o21ai_0) 0.0018-0.0018
+ _11528_/B1 input (sky130_fd_sc_hd__o21ai_0) 0.0018-0.0018
+ _11530_/B1 input (sky130_fd_sc_hd__o21ai_0) 0.0018-0.0018
+ _11532_/B1 input (sky130_fd_sc_hd__o21ai_0) 0.0018-0.0018
+ _11534_/B1 input (sky130_fd_sc_hd__o21ai_0) 0.0018-0.0018
+ _11537_/B1 input (sky130_fd_sc_hd__o21ai_0) 0.0018-0.0018
+ _11539_/B1 input (sky130_fd_sc_hd__o21ai_0) 0.0018-0.0018
+ _11541_/B1 input (sky130_fd_sc_hd__o21ai_0) 0.0018-0.0018
+ _11543_/B1 input (sky130_fd_sc_hd__o21ai_0) 0.0018-0.0018
+ _11545_/B1 input (sky130_fd_sc_hd__o21ai_0) 0.0018-0.0018
+ _11548_/B1 input (sky130_fd_sc_hd__o21ai_0) 0.0018-0.0018
+ _11550_/B1 input (sky130_fd_sc_hd__o21ai_0) 0.0018-0.0018
+ _11552_/B1 input (sky130_fd_sc_hd__o21ai_0) 0.0018-0.0018
+ _11554_/B1 input (sky130_fd_sc_hd__o21ai_0) 0.0018-0.0018
+ _11556_/B1 input (sky130_fd_sc_hd__o31ai_1) 0.0024-0.0025
+ _11559_/B1 input (sky130_fd_sc_hd__o21ai_0) 0.0018-0.0018
+ _11561_/B1 input (sky130_fd_sc_hd__o21ai_0) 0.0018-0.0018
+ _11564_/B1 input (sky130_fd_sc_hd__o21ai_0) 0.0018-0.0018
+ _11566_/B1 input (sky130_fd_sc_hd__o21ai_0) 0.0018-0.0018
+ _11572_/B1 input (sky130_fd_sc_hd__o21ai_0) 0.0018-0.0018
+ _11574_/B1 input (sky130_fd_sc_hd__o21ai_0) 0.0018-0.0018
+ _11577_/B1 input (sky130_fd_sc_hd__o21ai_0) 0.0018-0.0018
+ _11579_/B1 input (sky130_fd_sc_hd__o21ai_0) 0.0018-0.0018
+ _11581_/B1 input (sky130_fd_sc_hd__o21ai_0) 0.0018-0.0018
+ _11585_/B1 input (sky130_fd_sc_hd__o21ai_0) 0.0018-0.0018
+
+CASE01-CMD: set loads {}
+CASE01-CMD: foreach p [get_pins -of_objects $net] {
+CASE01-CMD: puts "load pins: [llength $loads]"
+load pins: 31
+CASE01-CMD: foreach p $loads {
+load _11585_/B1 (sky130_fd_sc_hd__o21ai_0) -> endpoints 1: _12056_/D -> ports {out_data[30]}
+load _11581_/B1 (sky130_fd_sc_hd__o21ai_0) -> endpoints 1: _12055_/D -> ports {out_data[29]}
+load _11579_/B1 (sky130_fd_sc_hd__o21ai_0) -> endpoints 1: _12054_/D -> ports {out_data[28]}
+load _11577_/B1 (sky130_fd_sc_hd__o21ai_0) -> endpoints 1: _12053_/D -> ports {out_data[27]}
+load _11574_/B1 (sky130_fd_sc_hd__o21ai_0) -> endpoints 1: _12052_/D -> ports {out_data[26]}
+load _11572_/B1 (sky130_fd_sc_hd__o21ai_0) -> endpoints 1: _12051_/D -> ports {out_data[25]}
+load _11566_/B1 (sky130_fd_sc_hd__o21ai_0) -> endpoints 1: _12050_/D -> ports {out_data[24]}
+load _11564_/B1 (sky130_fd_sc_hd__o21ai_0) -> endpoints 1: _12049_/D -> ports {out_data[23]}
+load _11561_/B1 (sky130_fd_sc_hd__o21ai_0) -> endpoints 1: _12048_/D -> ports {out_data[22]}
+load _11559_/B1 (sky130_fd_sc_hd__o21ai_0) -> endpoints 1: _12047_/D -> ports {out_data[21]}
+load _11556_/B1 (sky130_fd_sc_hd__o31ai_1) -> endpoints 1: _12046_/D -> ports {out_data[20]}
+load _11554_/B1 (sky130_fd_sc_hd__o21ai_0) -> endpoints 1: _12045_/D -> ports {out_data[19]}
+load _11552_/B1 (sky130_fd_sc_hd__o21ai_0) -> endpoints 1: _12044_/D -> ports {out_data[18]}
+load _11550_/B1 (sky130_fd_sc_hd__o21ai_0) -> endpoints 1: _12043_/D -> ports {out_data[17]}
+load _11548_/B1 (sky130_fd_sc_hd__o21ai_0) -> endpoints 1: _12042_/D -> ports {out_data[16]}
+load _11545_/B1 (sky130_fd_sc_hd__o21ai_0) -> endpoints 1: _12041_/D -> ports {out_data[15]}
+load _11543_/B1 (sky130_fd_sc_hd__o21ai_0) -> endpoints 1: _12040_/D -> ports {out_data[14]}
+load _11541_/B1 (sky130_fd_sc_hd__o21ai_0) -> endpoints 1: _12039_/D -> ports {out_data[13]}
+load _11539_/B1 (sky130_fd_sc_hd__o21ai_0) -> endpoints 1: _12038_/D -> ports {out_data[12]}
+load _11537_/B1 (sky130_fd_sc_hd__o21ai_0) -> endpoints 1: _12037_/D -> ports {out_data[11]}
+load _11534_/B1 (sky130_fd_sc_hd__o21ai_0) -> endpoints 1: _12036_/D -> ports {out_data[10]}
+load _11532_/B1 (sky130_fd_sc_hd__o21ai_0) -> endpoints 1: _12035_/D -> ports {out_data[9]}
+load _11530_/B1 (sky130_fd_sc_hd__o21ai_0) -> endpoints 1: _12034_/D -> ports {out_data[8]}
+load _11528_/B1 (sky130_fd_sc_hd__o21ai_0) -> endpoints 1: _12033_/D -> ports {out_data[7]}
+load _11526_/B1 (sky130_fd_sc_hd__o21ai_0) -> endpoints 1: _12032_/D -> ports {out_data[6]}
+load _11523_/B1 (sky130_fd_sc_hd__o31ai_1) -> endpoints 1: _12031_/D -> ports {out_data[5]}
+load _11521_/B1 (sky130_fd_sc_hd__o31ai_1) -> endpoints 1: _12030_/D -> ports {out_data[4]}
+load _11519_/B1 (sky130_fd_sc_hd__o21ai_0) -> endpoints 1: _12029_/D -> ports {out_data[3]}
+load _11517_/B1 (sky130_fd_sc_hd__o31ai_1) -> endpoints 1: _12028_/D -> ports {out_data[2]}
+load _11515_/B1 (sky130_fd_sc_hd__o21ai_0) -> endpoints 1: _12027_/D -> ports {out_data[1]}
+load _11512_/B1 (sky130_fd_sc_hd__o21ai_0) -> endpoints 1: _12026_/D -> ports {out_data[0]}
+CASE01-CMD: set worst {}
+CASE01-CMD: foreach pe [find_timing_paths -from [all_inputs -no_clocks] -to [all_registers -data_pins] -path_delay max \
+CASE01-CMD: foreach pe [find_timing_paths -from [all_inputs -no_clocks] -through [get_pins _11509_/Y] -to [all_registers -data_pins] \
+CASE01-CMD: set n 0
+0
+CASE01-CMD: foreach es $worst {
+top50 endpoint _12026_/D worst -4.189726 through_11509 -4.189726 worst_path_through_11509 1
+top50 endpoint _12027_/D worst -4.189726 through_11509 -4.189726 worst_path_through_11509 1
+top50 endpoint _12029_/D worst -4.189726 through_11509 -4.189726 worst_path_through_11509 1
+top50 endpoint _12032_/D worst -4.189726 through_11509 -4.189726 worst_path_through_11509 1
+top50 endpoint _12033_/D worst -4.189726 through_11509 -4.189726 worst_path_through_11509 1
+top50 endpoint _12034_/D worst -4.189726 through_11509 -4.189726 worst_path_through_11509 1
+top50 endpoint _12035_/D worst -4.189726 through_11509 -4.189726 worst_path_through_11509 1
+top50 endpoint _12036_/D worst -4.189726 through_11509 -4.189726 worst_path_through_11509 1
+top50 endpoint _12037_/D worst -4.189726 through_11509 -4.189726 worst_path_through_11509 1
+top50 endpoint _12038_/D worst -4.189726 through_11509 -4.189726 worst_path_through_11509 1
+top50 endpoint _12039_/D worst -4.189726 through_11509 -4.189726 worst_path_through_11509 1
+top50 endpoint _12040_/D worst -4.189726 through_11509 -4.189726 worst_path_through_11509 1
+top50 endpoint _12041_/D worst -4.189726 through_11509 -4.189726 worst_path_through_11509 1
+top50 endpoint _12042_/D worst -4.189726 through_11509 -4.189726 worst_path_through_11509 1
+top50 endpoint _12043_/D worst -4.189726 through_11509 -4.189726 worst_path_through_11509 1
+top50 endpoint _12044_/D worst -4.189726 through_11509 -4.189726 worst_path_through_11509 1
+top50 endpoint _12045_/D worst -4.189726 through_11509 -4.189726 worst_path_through_11509 1
+top50 endpoint _12047_/D worst -4.189726 through_11509 -4.189726 worst_path_through_11509 1
+top50 endpoint _12048_/D worst -4.189726 through_11509 -4.189726 worst_path_through_11509 1
+top50 endpoint _12049_/D worst -4.189726 through_11509 -4.189726 worst_path_through_11509 1
+top50 endpoint _12050_/D worst -4.189726 through_11509 -4.189726 worst_path_through_11509 1
+top50 endpoint _12051_/D worst -4.189726 through_11509 -4.189726 worst_path_through_11509 1
+top50 endpoint _12052_/D worst -4.189726 through_11509 -4.189726 worst_path_through_11509 1
+top50 endpoint _12053_/D worst -4.189726 through_11509 -4.189726 worst_path_through_11509 1
+top50 endpoint _12054_/D worst -4.189726 through_11509 -4.189726 worst_path_through_11509 1
+top50 endpoint _12055_/D worst -4.189726 through_11509 -4.189726 worst_path_through_11509 1
+top50 endpoint _12056_/D worst -4.189726 through_11509 -4.189726 worst_path_through_11509 1
+top50 endpoint _12028_/D worst -4.099661 through_11509 -4.099661 worst_path_through_11509 1
+top50 endpoint _12030_/D worst -4.099661 through_11509 -4.099661 worst_path_through_11509 1
+top50 endpoint _12031_/D worst -4.099661 through_11509 -4.099661 worst_path_through_11509 1
+top50 endpoint _12046_/D worst -4.099661 through_11509 -4.099661 worst_path_through_11509 1
+top50 endpoint _12057_/D worst -0.967606 through_11509 none worst_path_through_11509 0
+top50 endpoint _12058_/D worst 21.704105 through_11509 none worst_path_through_11509 0
+CASE01-CMD: puts "top50 endpoints whose worst path goes through _11509_/Y: $n of [llength $worst]"
+top50 endpoints whose worst path goes through _11509_/Y: 31 of 33

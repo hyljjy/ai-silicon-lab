@@ -1,0 +1,111 @@
+CASE01-CMD: report_dcalc -from [get_pins _11512_/B1] -to [get_pins _11512_/Y] -scene ss_n40C_1v60 -max -digits 4
+Library: sky130_fd_sc_hd__tt_025C_1v80
+Cell: sky130_fd_sc_hd__o21ai_0
+Arc sense: negative_unate
+Arc type: combinational
+B1 ^ -> Y v
+P = 1.0000 V = 1.6000 T = -40.0000
+------- input_net_transition = 3.2455
+|       total_output_net_capacitance = 0.0015
+|        0.0012     0.0027
+v      --------------------
+1.7748 | 0.5879     0.6737
+5.0000 | 1.1375     1.3035
+Table value = 0.8625
+PVT scale factor = 1.0000
+Delay = 0.8625
+
+------- input_net_transition = 3.2455
+|       total_output_net_capacitance = 0.0015
+|        0.0012     0.0027
+v      --------------------
+1.7748 | 0.2417     0.2934
+5.0000 | 0.5037     0.6087
+Table value = 0.3761
+PVT scale factor = 1.0000
+Slew = 0.3761
+Driver waveform slew = 0.3761
+
+.............................................
+
+B1 v -> Y ^
+P = 1.0000 V = 1.6000 T = -40.0000
+------- input_net_transition = 0.9742
+|       total_output_net_capacitance = 0.0015
+|        0.0012     0.0027
+v      --------------------
+0.6300 | 0.3975     0.4543
+1.7748 | 0.8556     0.9639
+Table value = 0.5497
+PVT scale factor = 1.0000
+Delay = 0.5497
+
+------- input_net_transition = 0.9742
+|       total_output_net_capacitance = 0.0015
+|        0.0012     0.0027
+v      --------------------
+0.6300 | 0.1394     0.1679
+1.7748 | 0.2822     0.3348
+Table value = 0.1895
+PVT scale factor = 1.0000
+Slew = 0.1895
+Driver waveform slew = 0.1895
+
+.............................................
+
+CASE01-CMD: set_assigned_transition -scene ss_n40C_1v60 -max 0.1 [get_pins _11512_/B1]
+CASE01-CMD: report_dcalc -from [get_pins _11512_/B1] -to [get_pins _11512_/Y] -scene ss_n40C_1v60 -max -digits 4
+Library: sky130_fd_sc_hd__tt_025C_1v80
+Cell: sky130_fd_sc_hd__o21ai_0
+Arc sense: negative_unate
+Arc type: combinational
+B1 ^ -> Y v
+P = 1.0000 V = 1.6000 T = -40.0000
+------- input_net_transition = 0.1000
+|       total_output_net_capacitance = 0.0015
+|        0.0012     0.0027
+v      --------------------
+0.0794 | 0.0973     0.1213
+0.2236 | 0.1656     0.1913
+Table value = 0.1118
+PVT scale factor = 1.0000
+Delay = 0.1118
+
+------- input_net_transition = 0.1000
+|       total_output_net_capacitance = 0.0015
+|        0.0012     0.0027
+v      --------------------
+0.0794 | 0.0546     0.0849
+0.2236 | 0.0665     0.0914
+Table value = 0.0621
+PVT scale factor = 1.0000
+Slew = 0.0621
+Driver waveform slew = 0.0621
+
+.............................................
+
+B1 v -> Y ^
+P = 1.0000 V = 1.6000 T = -40.0000
+------- input_net_transition = 0.1000
+|       total_output_net_capacitance = 0.0015
+|        0.0012     0.0027
+v      --------------------
+0.0794 | 0.1094     0.1421
+0.2236 | 0.1929     0.2252
+Table value = 0.1279
+PVT scale factor = 1.0000
+Delay = 0.1279
+
+------- input_net_transition = 0.1000
+|       total_output_net_capacitance = 0.0015
+|        0.0012     0.0027
+v      --------------------
+0.0794 | 0.0673     0.1105
+0.2236 | 0.0742     0.1142
+Table value = 0.0769
+PVT scale factor = 1.0000
+Slew = 0.0769
+Driver waveform slew = 0.0769
+
+.............................................
+
