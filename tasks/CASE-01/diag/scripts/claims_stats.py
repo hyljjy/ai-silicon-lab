@@ -15,7 +15,8 @@ Rules checked (besides allowed values):
     (query_ids "-"): a fact whose content is the material text itself (protocol 7.3); every such citation must name
     lines that exist in diag/package/<file>;
   * 未判定 needs a reason in note; a retyped row needs retype_reason;
-  * round-2 rows carry r2_action 保持|修改|撤回|新增, and r1_ref (a round-1 id) unless 新增.
+  * round-2 rows carry r2_action 保持|修改|撤回|新增, and r1_ref (a round-1 id) unless 新增; a round-2 证据引用 row
+    carries neither (it belongs to its fact) and is not counted as a transition.
 The final label is author_label when the author changed it, else label. Counts are per code (or per model with
 --mapping), per round, per type and per final label, always with their denominators; no totals across models.
 """
@@ -127,7 +128,10 @@ def problems(rows, diag=DIAG):
                     out.append(f"{rid}: query {q} does not meet the minimum conditions of section 7.3 d")
                 if r["type"] == "事实" and res.get("mode") == "whatif":
                     out.append(f"{rid}: a fact cannot be confirmed by a whatif run ({q})")
-        if r["round"] == "2":
+        if r["round"] == "2" and r["type"] == "证据引用":
+            if r["r2_action"].strip() or r["r1_ref"].strip():
+                out.append(f"{rid}: a 证据引用 row carries no r2_action or r1_ref (it belongs to its fact)")
+        elif r["round"] == "2":
             if r["r2_action"] not in ACTIONS:
                 out.append(f"{rid}: r2_action must be one of {sorted(ACTIONS)}")
             elif r["r2_action"] != "新增" and by_id.get(r["r1_ref"], {}).get("round") != "1":
@@ -148,7 +152,7 @@ def stats(rows, names=None):
     trans = defaultdict(Counter)
     by_id = {r["id"]: r for r in rows}
     for r in rows:
-        if r["round"] == "2" and r["r2_action"] in ACTIONS:
+        if r["round"] == "2" and r["type"] != "证据引用" and r["r2_action"] in ACTIONS:
             before = final(by_id[r["r1_ref"]]) if r["r1_ref"] in by_id else "（新增）"
             trans[who(r)][(before, r["r2_action"])] += 1
     if trans:

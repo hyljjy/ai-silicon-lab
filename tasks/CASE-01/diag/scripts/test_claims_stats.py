@@ -103,11 +103,15 @@ class TestClaims(Base):
                 row(id="A-2-003", round="2", type_initial="查询", type="查询", label="语法错误", query_ids="",
                     r2_action="新增")]
         rows[3]["round"] = "2"
-        rows[3]["r2_action"] = "新增"
         self.assertEqual(cs.problems(rows, self.diag), [])
-        self.assertIn("| A | 证实 → 保持 | 1 |", cs.stats(rows))
+        out = cs.stats(rows)
+        self.assertIn("| A | 证实 → 保持 | 1 |", out)
+        # a citation row is evidence for its fact, not a judgment of its own: it is not a transition (section 6)
+        self.assertIn("| A | （新增） → 新增 | 1 |", out)
         bad = [row(), cite("A-1-001", "A-1-002"), row(id="A-2-001", round="2", r2_action="改了", r1_ref="")]
         self.assertIn("r2_action must be", self.problems(bad))
+        rows[3]["r2_action"] = "新增"
+        self.assertIn("a 证据引用 row carries no r2_action or r1_ref", self.problems(rows))
 
     def test_mapping_names(self):
         self.assertIn("| kimi | 1 | 事实 |", cs.stats([row()], {"A": "kimi"}))
