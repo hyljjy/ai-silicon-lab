@@ -221,8 +221,34 @@ def check_frozen_inputs(case_dir, f1_sha_path):
     return problems
 
 
+def kill_tree(proc):
+    """Kill proc and every process it started, on Windows as well as POSIX. Incident 2026-10-12: os.killpg does not
+    exist on Windows; the AttributeError skipped the kill and an orphaned `yes` filled the system disk."""
+    try:
+        if os.name == "nt":
+            subprocess.run(["taskkill", "/F", "/T", "/PID", str(proc.pid)], stdin=subprocess.DEVNULL,
+                           stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=30)
+        else:
+            os.killpg(proc.pid, signal.SIGKILL)      # start_new_session=True: the group id is the child's pid
+    except (OSError, subprocess.SubprocessError):
+        pass
+    if proc.poll() is None:
+        try:
+            proc.kill()
+        except OSError:
+            pass
+
+
+def reap(proc, cause):
+    """Wait for a killed process; one that survives is an error, never a silent orphan."""
+    try:
+        proc.wait(timeout=60)
+    except subprocess.TimeoutExpired:
+        raise RuntimeError(f"pid {proc.pid} survived the kill; stop it by hand") from cause
+
+
 def run_limited(argv, log_path, env, cwd, timeout=TIMEOUT_S, max_bytes=MAX_LOG_BYTES):
-    """Wall-clock and log-size limits with process-group kill (same pattern as grade.py).
+    """Wall-clock and log-size limits with a kill of the whole process tree (same pattern as grade.py).
     Returns (rc, stop): stop is None, "timed_out" or "output_limit" (rc is None when stopped)."""
     with open(log_path, "w") as f:
         proc = subprocess.Popen(argv, cwd=cwd, env=env, stdin=subprocess.DEVNULL, stdout=f,
@@ -240,11 +266,8 @@ def run_limited(argv, log_path, env, cwd, timeout=TIMEOUT_S, max_bytes=MAX_LOG_B
                     if stop:
                         raise
         except BaseException as e:
-            try:
-                os.killpg(proc.pid, signal.SIGKILL)
-            except ProcessLookupError:
-                pass
-            proc.wait()
+            kill_tree(proc)
+            reap(proc, e)
             if isinstance(e, subprocess.TimeoutExpired):
                 return None, stop
             raise

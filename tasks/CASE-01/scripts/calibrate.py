@@ -37,20 +37,38 @@ class CalibError(Exception):
 TIMEOUT_S = {"env_snapshot": 600, "versions": 120, "sta": 3600, "check_sta": 600}
 
 
+def kill_tree(proc):
+    """Kill proc and every process it started, on Windows as well as POSIX. Incident 2026-10-12: os.killpg does not
+    exist on Windows; the AttributeError skipped the kill and an orphaned `yes` filled the system disk."""
+    try:
+        if os.name == "nt":
+            subprocess.run(["taskkill", "/F", "/T", "/PID", str(proc.pid)], stdin=subprocess.DEVNULL,
+                           stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=30)
+        else:
+            os.killpg(proc.pid, signal.SIGKILL)      # start_new_session=True: the group id is the child's pid
+    except (OSError, subprocess.SubprocessError):
+        pass
+    if proc.poll() is None:
+        try:
+            proc.kill()
+        except OSError:
+            pass
+
+
 def run_limited(name, argv, log_path, env=None):
     """Run argv with stdout+stderr to log_path and return its exit code. After TIMEOUT_S[name] seconds, or if this
-    process is interrupted, the whole process group is killed; a timeout raises CalibError."""
+    process is interrupted, the whole process tree is killed; a timeout raises CalibError."""
     with open(log_path, "w") as f:
         proc = subprocess.Popen(argv, env=env, stdin=subprocess.DEVNULL, stdout=f, stderr=subprocess.STDOUT,
                                 start_new_session=True)
         try:
             return proc.wait(timeout=TIMEOUT_S[name])
         except BaseException as e:
+            kill_tree(proc)
             try:
-                os.killpg(proc.pid, signal.SIGKILL)
-            except ProcessLookupError:
-                pass
-            proc.wait()
+                proc.wait(timeout=60)
+            except subprocess.TimeoutExpired:
+                raise RuntimeError(f"pid {proc.pid} survived the kill; stop it by hand") from e
             if isinstance(e, subprocess.TimeoutExpired):
                 raise CalibError(f"{name} timed out after {TIMEOUT_S[name]} s and was killed (see {log_path})") \
                     from None
