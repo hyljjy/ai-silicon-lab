@@ -1,0 +1,27 @@
+CASE01-CMD: report_instance [get_cells {_12026_}]
+Instance _12026_
+ Cell: sky130_fd_sc_hd__dfxtp_1
+ Library: sky130_fd_sc_hd__tt_025C_1v80
+ Path cells: sky130_fd_sc_hd__dfxtp_1
+ Input pins:
+  CLK input clk
+  D input _00030_
+ Output pins:
+  Q output out_data[0]
+ Other pins:
+  VGND ground (unconnected)
+  VPWR power (unconnected)
+  IQ internal (unconnected)
+  IQ_N internal (unconnected)
+CASE01-CMD: report_pin [get_pins {_12026_/D}]
+CASE01-ERROR: invalid command name "report_pin"
+CASE01-CMD: report_pin [get_pins {_12026_/Q}]
+CASE01-ERROR: invalid command name "report_pin"
+CASE01-CMD: set qnet_12026 [get_nets -of_objects [get_pins {_12026_/Q}]]
+_9028c005b1620000_p_Net
+CASE01-CMD: report_net -connections -verbose $qnet_12026
+CASE01-ERROR: Error 562: diag_query.tcl line 1, report_net -connections is not a known keyword or flag.
+CASE01-CMD: set out0net [get_nets -of_objects [get_ports {out_data[0]}]]
+CASE01-ERROR: Error 100: diag_query.tcl line 1, unsupported object type Port.
+CASE01-CMD: report_net -connections -verbose $out0net
+CASE01-ERROR: can't read "out0net": no such variable

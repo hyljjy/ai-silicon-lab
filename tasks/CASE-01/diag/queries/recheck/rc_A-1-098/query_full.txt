@@ -1,0 +1,55 @@
+CASE01-CMD: foreach s {tt_025C_1v80 tt_100C_1v80 ss_100C_1v60 ss_n40C_1v60 ff_n40C_1v95 ff_100C_1v95} {
+=== scene tt_025C_1v80
+max_delay/setup group clk
+
+                                        Required      Actual
+Endpoint                                   Delay       Delay       Slack
+------------------------------------------------------------------------
+_12026_/D (sky130_fd_sc_hd__dfxtp_1)   27.708145   16.506783   11.201364 (MET)
+
+scene tt_025C_1v80 violating in2reg endpoints: 0
+=== scene tt_100C_1v80
+max_delay/setup group clk
+
+                                        Required      Actual
+Endpoint                                   Delay       Delay       Slack
+------------------------------------------------------------------------
+_12026_/D (sky130_fd_sc_hd__dfxtp_1)   27.721409   16.367531   11.353878 (MET)
+
+scene tt_100C_1v80 violating in2reg endpoints: 0
+=== scene ss_100C_1v60
+max_delay/setup group clk
+
+                                        Required      Actual
+Endpoint                                   Delay       Delay       Slack
+------------------------------------------------------------------------
+_12026_/D (sky130_fd_sc_hd__dfxtp_1)   27.474070   27.974394   -0.500323 (VIOLATED)
+
+scene ss_100C_1v60 violating in2reg endpoints: 31
+=== scene ss_n40C_1v60
+max_delay/setup group clk
+
+                                        Required      Actual
+Endpoint                                   Delay       Delay       Slack
+------------------------------------------------------------------------
+_12026_/D (sky130_fd_sc_hd__dfxtp_1)   27.354149   31.543875   -4.189726 (VIOLATED)
+
+scene ss_n40C_1v60 violating in2reg endpoints: 32
+=== scene ff_n40C_1v95
+max_delay/setup group clk
+
+                                        Required      Actual
+Endpoint                                   Delay       Delay       Slack
+------------------------------------------------------------------------
+_12026_/D (sky130_fd_sc_hd__dfxtp_1)   27.796181   11.924675   15.871506 (MET)
+
+scene ff_n40C_1v95 violating in2reg endpoints: 0
+=== scene ff_100C_1v95
+max_delay/setup group clk
+
+                                        Required      Actual
+Endpoint                                   Delay       Delay       Slack
+------------------------------------------------------------------------
+_12026_/D (sky130_fd_sc_hd__dfxtp_1)   27.804602   11.910374   15.894229 (MET)
+
+scene ff_100C_1v95 violating in2reg endpoints: 0

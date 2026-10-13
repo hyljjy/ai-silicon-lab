@@ -1,0 +1,36 @@
+CASE01-CMD: report_lib_cell sky130_fd_sc_hd__dfxtp_1   ;# 是否支持此命令不确定
+Cell sky130_fd_sc_hd__dfxtp_1
+Library sky130_fd_sc_hd__tt_025C_1v80
+File /home/eda/pdk/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib
+ VGND ground
+ VNB well
+ VPB well
+ VPWR power
+ CLK input 0.00-0.00
+ D input 0.00-0.00
+ Q output function=IQ
+ IQ internal
+ IQ_N internal
+
+Timing arcs
+ CLK -> CLK
+  width
+  ^ -> v
+  v -> ^
+ CLK -> D
+  setup
+  ^ -> ^
+  ^ -> v
+ CLK -> D
+  hold
+  ^ -> ^
+  ^ -> v
+ CLK -> Q
+  Reg Clk to Q
+  ^ -> ^
+  ^ -> v
+CASE01-CMD: set a 0
+0
+CASE01-CMD: foreach c [get_cells *] { set a [expr {$a + [get_property [get_property $c liberty_cell] area]}] }
+CASE01-CMD: puts $a
+45383.526497997744

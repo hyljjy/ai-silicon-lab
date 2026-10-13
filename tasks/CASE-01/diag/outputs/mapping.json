@@ -1,0 +1,8 @@
+{
+ "salt": "f20a6622fbe59de18367bbe45d90d44ad99b6e1e0506cd276e72cd32c918a0be",
+ "codes": {
+  "A": "claude",
+  "B": "kimi",
+  "C": "deepseek"
+ }
+}

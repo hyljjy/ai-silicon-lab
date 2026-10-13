@@ -1,0 +1,20 @@
+CASE01-CMD: report_instance [get_cells {_11509_}]
+Instance _11509_
+ Cell: sky130_fd_sc_hd__o21ai_0
+ Library: sky130_fd_sc_hd__tt_025C_1v80
+ Path cells: sky130_fd_sc_hd__o21ai_0
+ Input pins:
+  A1 input _05585_
+  A2 input _05586_
+  B1 input _05584_
+ Output pins:
+  Y output _05587_
+ Other pins:
+  VGND ground (unconnected)
+  VPWR power (unconnected)
+CASE01-CMD: report_pin [get_pins {_11509_/Y}]
+CASE01-ERROR: invalid command name "report_pin"
+CASE01-CMD: set net_11509_y [get_nets -of_objects [get_pins {_11509_/Y}]]
+_40102beaaa620000_p_Net
+CASE01-CMD: report_net -connections -verbose $net_11509_y
+CASE01-ERROR: Error 562: diag_query.tcl line 1, report_net -connections is not a known keyword or flag.

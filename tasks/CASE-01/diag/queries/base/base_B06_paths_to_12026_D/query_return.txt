@@ -1,0 +1,11 @@
+CASE01-CMD: report_checks -to [get_pins _12026_/D] -path_delay max -scene ss_n40C_1v60 -group_path_count 10 -endpoint_path_count 10 -unique_paths_to_endpoint -format summary -digits 6
+Startpoint                           Endpoint                                   Slack
+------------------------------------------------------------------------------------
+in_b[2] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -4.189726
+in_b[35] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -4.180809
+in_a[34] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -4.172595
+in_a[4] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -4.152089
+in_a[32] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -4.106447
+in_a[33] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -4.098006
+in_b[35] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -4.005944
+

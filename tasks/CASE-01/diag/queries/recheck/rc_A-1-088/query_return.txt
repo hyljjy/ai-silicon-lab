@@ -1,0 +1,77 @@
+CASE01-CMD: create_clock -name clk -period 33.15 -waveform {0 16.575} [get_ports clk]
+CASE01-CMD: set_input_delay -clock clk -max 6.63 [all_inputs -no_clocks]
+CASE01-CMD: set_output_delay -clock clk -max 6.63 [all_outputs]
+CASE01-CMD: report_checks -from [get_ports {in_b[2]}] -to [get_pins _12026_/D] -path_delay max -scenes ss_n40C_1v60 -digits 4
+Startpoint: in_b[2] (input port clocked by clk)
+Endpoint: _12026_ (rising edge-triggered flip-flop clocked by clk)
+Path Group: clk
+Path Type: max
+Corner: ss_n40C_1v60
+
+    Delay      Time   Description
+-------------------------------------------------------------
+   0.0000    0.0000   clock clk (rise edge)
+   0.0000    0.0000   clock network delay (ideal)
+   6.6300    6.6300 ^ input external delay
+   0.3091    6.9391 ^ in_b[2] (in)
+   0.2453    7.1845 v _10621_/Y (sky130_fd_sc_hd__nand2_1)
+   0.9804    8.1648 v _10905_/X (sky130_fd_sc_hd__xnor3_1)
+   0.6267    8.7916 ^ _10907_/Y (sky130_fd_sc_hd__xnor2_1)
+   1.0379    9.8294 v _11029_/X (sky130_fd_sc_hd__xnor3_1)
+   0.2727   10.1022 v _11087_/Y (sky130_fd_sc_hd__xnor2_1)
+   0.6601   10.7622 ^ _11113_/Y (sky130_fd_sc_hd__xnor2_1)
+   1.0917   11.8539 v _11186_/X (sky130_fd_sc_hd__xor3_1)
+   0.9265   12.7804 v _11255_/X (sky130_fd_sc_hd__xnor3_1)
+   0.3997   13.1801 ^ _11257_/X (sky130_fd_sc_hd__xor2_1)
+   0.7300   13.9100 v _11302_/X (sky130_fd_sc_hd__xor3_1)
+   0.9433   14.8533 v _11306_/X (sky130_fd_sc_hd__maj3_1)
+   0.9799   15.8333 v _11338_/X (sky130_fd_sc_hd__xor3_1)
+   0.4077   16.2410 ^ _11340_/X (sky130_fd_sc_hd__xor2_1)
+   0.2608   16.5018 v _11416_/Y (sky130_fd_sc_hd__a21oi_1)
+   0.9285   17.4303 v _11418_/X (sky130_fd_sc_hd__maj3_1)
+   0.5449   17.9752 ^ _11420_/Y (sky130_fd_sc_hd__o21ai_0)
+   0.5349   18.5101 ^ _11421_/X (sky130_fd_sc_hd__maj3_1)
+   0.1799   18.6900 v _11422_/Y (sky130_fd_sc_hd__a21oi_1)
+   0.9453   19.6353 v _11423_/X (sky130_fd_sc_hd__maj3_1)
+   0.9406   20.5758 v _11424_/X (sky130_fd_sc_hd__maj3_1)
+   0.5289   21.1047 ^ _11426_/Y (sky130_fd_sc_hd__o21ai_0)
+   0.3197   21.4244 v _11427_/Y (sky130_fd_sc_hd__a21oi_1)
+   0.9447   22.3691 v _11428_/X (sky130_fd_sc_hd__maj3_1)
+   0.9456   23.3147 v _11429_/X (sky130_fd_sc_hd__maj3_1)
+   0.4391   23.7539 ^ _11430_/Y (sky130_fd_sc_hd__o21bai_1)
+   0.2517   24.0056 v _11431_/Y (sky130_fd_sc_hd__a21oi_1)
+   0.5119   24.5175 ^ _11433_/Y (sky130_fd_sc_hd__o21ai_0)
+   0.3357   24.8532 v _11434_/Y (sky130_fd_sc_hd__a21oi_1)
+   0.8462   25.6994 ^ _11438_/Y (sky130_fd_sc_hd__o31ai_1)
+   0.4326   26.1320 v _11440_/Y (sky130_fd_sc_hd__a221oi_1)
+   1.0241   27.1561 ^ _11443_/Y (sky130_fd_sc_hd__o311ai_0)
+   0.4919   27.6480 v _11446_/Y (sky130_fd_sc_hd__a311oi_1)
+   0.8376   28.4856 ^ _11451_/Y (sky130_fd_sc_hd__o311ai_0)
+   0.3533   28.8388 v _11453_/Y (sky130_fd_sc_hd__nand2_1)
+   0.2543   29.0932 v _11507_/Y (sky130_fd_sc_hd__xnor2_1)
+   2.6362   31.7294 ^ _11509_/Y (sky130_fd_sc_hd__o21ai_0)
+   0.8625   32.5919 v _11512_/Y (sky130_fd_sc_hd__o21ai_0)
+   0.0000   32.5919 v _12026_/D (sky130_fd_sc_hd__dfxtp_1)
+            32.5919   data arrival time
+
+  33.1500   33.1500   clock clk (rise edge)
+   0.0000   33.1500   clock network delay (ideal)
+   0.0000   33.1500   clock reconvergence pessimism
+            33.1500 ^ _12026_/CLK (sky130_fd_sc_hd__dfxtp_1)
+  -0.5559   32.5942   library setup time
+            32.5942   data required time
+-------------------------------------------------------------
+            32.5942   data required time
+           -32.5919   data arrival time
+-------------------------------------------------------------
+             0.0023   slack (MET)
+
+
+CASE01-CMD: report_checks -from [all_inputs -no_clocks] -to [all_registers -data_pins] -path_delay max -scenes ss_n40C_1v60 -format end -digits 4
+max_delay/setup group clk
+
+                                      Required    Actual
+Endpoint                                 Delay     Delay     Slack
+------------------------------------------------------------------
+_12026_/D (sky130_fd_sc_hd__dfxtp_1)   32.5942   32.5919    0.0023 (MET)
+

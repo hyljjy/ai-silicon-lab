@@ -1,0 +1,29 @@
+[
+ {
+  "code": "A",
+  "model": "claude",
+  "attempt": 1,
+  "label": "claude-1",
+  "state": "done",
+  "valid": true,
+  "categories": []
+ },
+ {
+  "code": "B",
+  "model": "kimi",
+  "attempt": 1,
+  "label": "kimi-1",
+  "state": "done",
+  "valid": true,
+  "categories": []
+ },
+ {
+  "code": "C",
+  "model": "deepseek",
+  "attempt": 1,
+  "label": "deepseek-1",
+  "state": "done",
+  "valid": true,
+  "categories": []
+ }
+]

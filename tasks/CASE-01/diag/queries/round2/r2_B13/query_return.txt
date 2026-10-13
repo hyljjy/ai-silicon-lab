@@ -1,0 +1,201 @@
+CASE01-CMD: foreach scene [list \
+===== tt_025C_1v80 setup =====
+Warning 502: diag_query.tcl line 1, report_checks -endpoint_count is deprecated. Use -endpoint_path_count instead.
+Warning 503: diag_query.tcl line 1, report_checks -group_count is deprecated. Use -group_path_count instead.
+max_delay/setup group clk
+
+                                        Required      Actual
+Endpoint                                   Delay       Delay       Slack
+------------------------------------------------------------------------
+_12026_/D (sky130_fd_sc_hd__dfxtp_1)   27.708145   16.522688   11.185458 (MET)
+_12027_/D (sky130_fd_sc_hd__dfxtp_1)   27.708145   16.522688   11.185458 (MET)
+_12029_/D (sky130_fd_sc_hd__dfxtp_1)   27.708145   16.522688   11.185458 (MET)
+_12032_/D (sky130_fd_sc_hd__dfxtp_1)   27.708145   16.522688   11.185458 (MET)
+_12033_/D (sky130_fd_sc_hd__dfxtp_1)   27.708145   16.522688   11.185458 (MET)
+_12034_/D (sky130_fd_sc_hd__dfxtp_1)   27.708145   16.522688   11.185458 (MET)
+_12035_/D (sky130_fd_sc_hd__dfxtp_1)   27.708145   16.522688   11.185458 (MET)
+_12036_/D (sky130_fd_sc_hd__dfxtp_1)   27.708145   16.522688   11.185458 (MET)
+_12037_/D (sky130_fd_sc_hd__dfxtp_1)   27.708145   16.522688   11.185458 (MET)
+_12038_/D (sky130_fd_sc_hd__dfxtp_1)   27.708145   16.522688   11.185458 (MET)
+_12039_/D (sky130_fd_sc_hd__dfxtp_1)   27.708145   16.522688   11.185458 (MET)
+_12040_/D (sky130_fd_sc_hd__dfxtp_1)   27.708145   16.522688   11.185458 (MET)
+_12041_/D (sky130_fd_sc_hd__dfxtp_1)   27.708145   16.522688   11.185458 (MET)
+_12042_/D (sky130_fd_sc_hd__dfxtp_1)   27.708145   16.522688   11.185458 (MET)
+_12043_/D (sky130_fd_sc_hd__dfxtp_1)   27.708145   16.522688   11.185458 (MET)
+_12044_/D (sky130_fd_sc_hd__dfxtp_1)   27.708145   16.522688   11.185458 (MET)
+_12045_/D (sky130_fd_sc_hd__dfxtp_1)   27.708145   16.522688   11.185458 (MET)
+_12047_/D (sky130_fd_sc_hd__dfxtp_1)   27.708145   16.522688   11.185458 (MET)
+_12048_/D (sky130_fd_sc_hd__dfxtp_1)   27.708145   16.522688   11.185458 (MET)
+_12049_/D (sky130_fd_sc_hd__dfxtp_1)   27.708145   16.522688   11.185458 (MET)
+
+===== tt_025C_1v80 hold =====
+Warning 502: diag_query.tcl line 1, report_checks -endpoint_count is deprecated. Use -endpoint_path_count instead.
+Warning 503: diag_query.tcl line 1, report_checks -group_count is deprecated. Use -group_path_count instead.
+min_delay/hold group clk
+
+                                        Required      Actual
+Endpoint                                   Delay       Delay       Slack
+------------------------------------------------------------------------
+_12058_/D (sky130_fd_sc_hd__dfxtp_1)   -0.052770    0.040283    0.093054 (MET)
+_12058_/D (sky130_fd_sc_hd__dfxtp_1)   -0.041341    0.089207    0.130547 (MET)
+_12058_/D (sky130_fd_sc_hd__dfxtp_1)   -0.041341    0.102878    0.144219 (MET)
+_12058_/D (sky130_fd_sc_hd__dfxtp_1)   -0.052770    0.114969    0.167740 (MET)
+out_data[0] (output)                    0.000000    0.272520    0.272520 (MET)
+out_data[10] (output)                   0.000000    0.272520    0.272520 (MET)
+out_data[11] (output)                   0.000000    0.272520    0.272520 (MET)
+out_data[12] (output)                   0.000000    0.272520    0.272520 (MET)
+out_data[13] (output)                   0.000000    0.272520    0.272520 (MET)
+out_data[14] (output)                   0.000000    0.272520    0.272520 (MET)
+out_data[15] (output)                   0.000000    0.272520    0.272520 (MET)
+out_data[16] (output)                   0.000000    0.272520    0.272520 (MET)
+out_data[17] (output)                   0.000000    0.272520    0.272520 (MET)
+out_data[18] (output)                   0.000000    0.272520    0.272520 (MET)
+out_data[19] (output)                   0.000000    0.272520    0.272520 (MET)
+out_data[1] (output)                    0.000000    0.272520    0.272520 (MET)
+out_data[20] (output)                   0.000000    0.272520    0.272520 (MET)
+out_data[21] (output)                   0.000000    0.272520    0.272520 (MET)
+out_data[22] (output)                   0.000000    0.272520    0.272520 (MET)
+out_data[23] (output)                   0.000000    0.272520    0.272520 (MET)
+
+===== tt_100C_1v80 setup =====
+Warning 502: diag_query.tcl line 1, report_checks -endpoint_count is deprecated. Use -endpoint_path_count instead.
+Warning 503: diag_query.tcl line 1, report_checks -group_count is deprecated. Use -group_path_count instead.
+max_delay/setup group clk
+
+                                        Required      Actual
+Endpoint                                   Delay       Delay       Slack
+------------------------------------------------------------------------
+_12026_/D (sky130_fd_sc_hd__dfxtp_1)   27.721409   16.404186   11.317222 (MET)
+_12027_/D (sky130_fd_sc_hd__dfxtp_1)   27.721409   16.404186   11.317222 (MET)
+_12029_/D (sky130_fd_sc_hd__dfxtp_1)   27.721409   16.404186   11.317222 (MET)
+_12032_/D (sky130_fd_sc_hd__dfxtp_1)   27.721409   16.404186   11.317222 (MET)
+_12033_/D (sky130_fd_sc_hd__dfxtp_1)   27.721409   16.404186   11.317222 (MET)
+_12034_/D (sky130_fd_sc_hd__dfxtp_1)   27.721409   16.404186   11.317222 (MET)
+_12035_/D (sky130_fd_sc_hd__dfxtp_1)   27.721409   16.404186   11.317222 (MET)
+_12036_/D (sky130_fd_sc_hd__dfxtp_1)   27.721409   16.404186   11.317222 (MET)
+_12037_/D (sky130_fd_sc_hd__dfxtp_1)   27.721409   16.404186   11.317222 (MET)
+_12038_/D (sky130_fd_sc_hd__dfxtp_1)   27.721409   16.404186   11.317222 (MET)
+_12039_/D (sky130_fd_sc_hd__dfxtp_1)   27.721409   16.404186   11.317222 (MET)
+_12040_/D (sky130_fd_sc_hd__dfxtp_1)   27.721409   16.404186   11.317222 (MET)
+_12041_/D (sky130_fd_sc_hd__dfxtp_1)   27.721409   16.404186   11.317222 (MET)
+_12042_/D (sky130_fd_sc_hd__dfxtp_1)   27.721409   16.404186   11.317222 (MET)
+_12043_/D (sky130_fd_sc_hd__dfxtp_1)   27.721409   16.404186   11.317222 (MET)
+_12044_/D (sky130_fd_sc_hd__dfxtp_1)   27.721409   16.404186   11.317222 (MET)
+_12045_/D (sky130_fd_sc_hd__dfxtp_1)   27.721409   16.404186   11.317222 (MET)
+_12047_/D (sky130_fd_sc_hd__dfxtp_1)   27.721409   16.404186   11.317222 (MET)
+_12048_/D (sky130_fd_sc_hd__dfxtp_1)   27.721409   16.404186   11.317222 (MET)
+_12049_/D (sky130_fd_sc_hd__dfxtp_1)   27.721409   16.404186   11.317222 (MET)
+
+===== tt_100C_1v80 hold =====
+Warning 502: diag_query.tcl line 1, report_checks -endpoint_count is deprecated. Use -endpoint_path_count instead.
+Warning 503: diag_query.tcl line 1, report_checks -group_count is deprecated. Use -group_path_count instead.
+min_delay/hold group clk
+
+                                        Required      Actual
+Endpoint                                   Delay       Delay       Slack
+------------------------------------------------------------------------
+_12058_/D (sky130_fd_sc_hd__dfxtp_1)   -0.046173    0.043657    0.089830 (MET)
+_12058_/D (sky130_fd_sc_hd__dfxtp_1)   -0.042517    0.086198    0.128715 (MET)
+_12058_/D (sky130_fd_sc_hd__dfxtp_1)   -0.042517    0.102130    0.144647 (MET)
+_12058_/D (sky130_fd_sc_hd__dfxtp_1)   -0.046173    0.115240    0.161414 (MET)
+... [已截断：共 351 行，保留开头 100 行和结尾 100 行] ...
+_12039_/D (sky130_fd_sc_hd__dfxtp_1)   27.796181   11.924675   15.871506 (MET)
+_12040_/D (sky130_fd_sc_hd__dfxtp_1)   27.796181   11.924675   15.871506 (MET)
+_12041_/D (sky130_fd_sc_hd__dfxtp_1)   27.796181   11.924675   15.871506 (MET)
+_12042_/D (sky130_fd_sc_hd__dfxtp_1)   27.796181   11.924675   15.871506 (MET)
+_12043_/D (sky130_fd_sc_hd__dfxtp_1)   27.796181   11.924675   15.871506 (MET)
+_12044_/D (sky130_fd_sc_hd__dfxtp_1)   27.796181   11.924675   15.871506 (MET)
+_12045_/D (sky130_fd_sc_hd__dfxtp_1)   27.796181   11.924675   15.871506 (MET)
+_12047_/D (sky130_fd_sc_hd__dfxtp_1)   27.796181   11.924675   15.871506 (MET)
+_12048_/D (sky130_fd_sc_hd__dfxtp_1)   27.796181   11.924675   15.871506 (MET)
+_12049_/D (sky130_fd_sc_hd__dfxtp_1)   27.796181   11.924675   15.871506 (MET)
+
+===== ff_n40C_1v95 hold =====
+Warning 502: diag_query.tcl line 1, report_checks -endpoint_count is deprecated. Use -endpoint_path_count instead.
+Warning 503: diag_query.tcl line 1, report_checks -group_count is deprecated. Use -group_path_count instead.
+min_delay/hold group clk
+
+                                        Required      Actual
+Endpoint                                   Delay       Delay       Slack
+------------------------------------------------------------------------
+_12058_/D (sky130_fd_sc_hd__dfxtp_1)   -0.036882    0.026590    0.063473 (MET)
+_12058_/D (sky130_fd_sc_hd__dfxtp_1)   -0.019113    0.061093    0.080206 (MET)
+_12058_/D (sky130_fd_sc_hd__dfxtp_1)   -0.019113    0.068928    0.088041 (MET)
+_12058_/D (sky130_fd_sc_hd__dfxtp_1)   -0.036882    0.073481    0.110364 (MET)
+out_data[0] (output)                    0.000000    0.173251    0.173251 (MET)
+out_data[10] (output)                   0.000000    0.173251    0.173251 (MET)
+out_data[11] (output)                   0.000000    0.173251    0.173251 (MET)
+out_data[12] (output)                   0.000000    0.173251    0.173251 (MET)
+out_data[13] (output)                   0.000000    0.173251    0.173251 (MET)
+out_data[14] (output)                   0.000000    0.173251    0.173251 (MET)
+out_data[15] (output)                   0.000000    0.173251    0.173251 (MET)
+out_data[16] (output)                   0.000000    0.173251    0.173251 (MET)
+out_data[17] (output)                   0.000000    0.173251    0.173251 (MET)
+out_data[18] (output)                   0.000000    0.173251    0.173251 (MET)
+out_data[19] (output)                   0.000000    0.173251    0.173251 (MET)
+out_data[1] (output)                    0.000000    0.173251    0.173251 (MET)
+out_data[20] (output)                   0.000000    0.173251    0.173251 (MET)
+out_data[21] (output)                   0.000000    0.173251    0.173251 (MET)
+out_data[22] (output)                   0.000000    0.173251    0.173251 (MET)
+out_data[23] (output)                   0.000000    0.173251    0.173251 (MET)
+
+===== ff_100C_1v95 setup =====
+Warning 502: diag_query.tcl line 1, report_checks -endpoint_count is deprecated. Use -endpoint_path_count instead.
+Warning 503: diag_query.tcl line 1, report_checks -group_count is deprecated. Use -group_path_count instead.
+max_delay/setup group clk
+
+                                        Required      Actual
+Endpoint                                   Delay       Delay       Slack
+------------------------------------------------------------------------
+_12026_/D (sky130_fd_sc_hd__dfxtp_1)   27.804602   11.910374   15.894229 (MET)
+_12027_/D (sky130_fd_sc_hd__dfxtp_1)   27.804602   11.910374   15.894229 (MET)
+_12029_/D (sky130_fd_sc_hd__dfxtp_1)   27.804602   11.910374   15.894229 (MET)
+_12032_/D (sky130_fd_sc_hd__dfxtp_1)   27.804602   11.910374   15.894229 (MET)
+_12033_/D (sky130_fd_sc_hd__dfxtp_1)   27.804602   11.910374   15.894229 (MET)
+_12034_/D (sky130_fd_sc_hd__dfxtp_1)   27.804602   11.910374   15.894229 (MET)
+_12035_/D (sky130_fd_sc_hd__dfxtp_1)   27.804602   11.910374   15.894229 (MET)
+_12036_/D (sky130_fd_sc_hd__dfxtp_1)   27.804602   11.910374   15.894229 (MET)
+_12037_/D (sky130_fd_sc_hd__dfxtp_1)   27.804602   11.910374   15.894229 (MET)
+_12038_/D (sky130_fd_sc_hd__dfxtp_1)   27.804602   11.910374   15.894229 (MET)
+_12039_/D (sky130_fd_sc_hd__dfxtp_1)   27.804602   11.910374   15.894229 (MET)
+_12040_/D (sky130_fd_sc_hd__dfxtp_1)   27.804602   11.910374   15.894229 (MET)
+_12041_/D (sky130_fd_sc_hd__dfxtp_1)   27.804602   11.910374   15.894229 (MET)
+_12042_/D (sky130_fd_sc_hd__dfxtp_1)   27.804602   11.910374   15.894229 (MET)
+_12043_/D (sky130_fd_sc_hd__dfxtp_1)   27.804602   11.910374   15.894229 (MET)
+_12044_/D (sky130_fd_sc_hd__dfxtp_1)   27.804602   11.910374   15.894229 (MET)
+_12045_/D (sky130_fd_sc_hd__dfxtp_1)   27.804602   11.910374   15.894229 (MET)
+_12047_/D (sky130_fd_sc_hd__dfxtp_1)   27.804602   11.910374   15.894229 (MET)
+_12048_/D (sky130_fd_sc_hd__dfxtp_1)   27.804602   11.910374   15.894229 (MET)
+_12049_/D (sky130_fd_sc_hd__dfxtp_1)   27.804602   11.910374   15.894229 (MET)
+
+===== ff_100C_1v95 hold =====
+Warning 502: diag_query.tcl line 1, report_checks -endpoint_count is deprecated. Use -endpoint_path_count instead.
+Warning 503: diag_query.tcl line 1, report_checks -group_count is deprecated. Use -group_path_count instead.
+min_delay/hold group clk
+
+                                        Required      Actual
+Endpoint                                   Delay       Delay       Slack
+------------------------------------------------------------------------
+_12058_/D (sky130_fd_sc_hd__dfxtp_1)   -0.028147    0.030966    0.059113 (MET)
+_12058_/D (sky130_fd_sc_hd__dfxtp_1)   -0.020691    0.057390    0.078081 (MET)
+_12058_/D (sky130_fd_sc_hd__dfxtp_1)   -0.020691    0.069862    0.090553 (MET)
+_12058_/D (sky130_fd_sc_hd__dfxtp_1)   -0.028147    0.074504    0.102651 (MET)
+out_data[0] (output)                    0.000000    0.179844    0.179844 (MET)
+out_data[10] (output)                   0.000000    0.179844    0.179844 (MET)
+out_data[11] (output)                   0.000000    0.179844    0.179844 (MET)
+out_data[12] (output)                   0.000000    0.179844    0.179844 (MET)
+out_data[13] (output)                   0.000000    0.179844    0.179844 (MET)
+out_data[14] (output)                   0.000000    0.179844    0.179844 (MET)
+out_data[15] (output)                   0.000000    0.179844    0.179844 (MET)
+out_data[16] (output)                   0.000000    0.179844    0.179844 (MET)
+out_data[17] (output)                   0.000000    0.179844    0.179844 (MET)
+out_data[18] (output)                   0.000000    0.179844    0.179844 (MET)
+out_data[19] (output)                   0.000000    0.179844    0.179844 (MET)
+out_data[1] (output)                    0.000000    0.179844    0.179844 (MET)
+out_data[20] (output)                   0.000000    0.179844    0.179844 (MET)
+out_data[21] (output)                   0.000000    0.179844    0.179844 (MET)
+out_data[22] (output)                   0.000000    0.179844    0.179844 (MET)
+out_data[23] (output)                   0.000000    0.179844    0.179844 (MET)
+
+CASE01-CMD: report_design_area
+CASE01-ERROR: invalid command name "report_design_area"

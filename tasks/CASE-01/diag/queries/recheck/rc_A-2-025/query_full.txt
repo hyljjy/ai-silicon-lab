@@ -1,0 +1,139 @@
+CASE01-CMD: set names {}
+CASE01-CMD: foreach c [all_registers -cells] { lappend names [get_full_name $c] }
+CASE01-CMD: puts "registers: [llength $names]"
+registers: 33
+CASE01-CMD: foreach n [lsort -dictionary $names] {
+reg _12026_ sky130_fd_sc_hd__dfxtp_1 Q=out_data[0] D=_00030_ Q_endpoints={out_data[0]}
+reg _12027_ sky130_fd_sc_hd__dfxtp_1 Q=out_data[1] D=_00029_ Q_endpoints={out_data[1]}
+reg _12028_ sky130_fd_sc_hd__dfxtp_1 Q=out_data[2] D=_00028_ Q_endpoints={out_data[2]}
+reg _12029_ sky130_fd_sc_hd__dfxtp_1 Q=out_data[3] D=_00027_ Q_endpoints={out_data[3]}
+reg _12030_ sky130_fd_sc_hd__dfxtp_1 Q=out_data[4] D=_00026_ Q_endpoints={out_data[4]}
+reg _12031_ sky130_fd_sc_hd__dfxtp_1 Q=out_data[5] D=_00025_ Q_endpoints={out_data[5]}
+reg _12032_ sky130_fd_sc_hd__dfxtp_1 Q=out_data[6] D=_00024_ Q_endpoints={out_data[6]}
+reg _12033_ sky130_fd_sc_hd__dfxtp_1 Q=out_data[7] D=_00023_ Q_endpoints={out_data[7]}
+reg _12034_ sky130_fd_sc_hd__dfxtp_1 Q=out_data[8] D=_00022_ Q_endpoints={out_data[8]}
+reg _12035_ sky130_fd_sc_hd__dfxtp_1 Q=out_data[9] D=_00021_ Q_endpoints={out_data[9]}
+reg _12036_ sky130_fd_sc_hd__dfxtp_1 Q=out_data[10] D=_00020_ Q_endpoints={out_data[10]}
+reg _12037_ sky130_fd_sc_hd__dfxtp_1 Q=out_data[11] D=_00019_ Q_endpoints={out_data[11]}
+reg _12038_ sky130_fd_sc_hd__dfxtp_1 Q=out_data[12] D=_00018_ Q_endpoints={out_data[12]}
+reg _12039_ sky130_fd_sc_hd__dfxtp_1 Q=out_data[13] D=_00017_ Q_endpoints={out_data[13]}
+reg _12040_ sky130_fd_sc_hd__dfxtp_1 Q=out_data[14] D=_00016_ Q_endpoints={out_data[14]}
+reg _12041_ sky130_fd_sc_hd__dfxtp_1 Q=out_data[15] D=_00015_ Q_endpoints={out_data[15]}
+reg _12042_ sky130_fd_sc_hd__dfxtp_1 Q=out_data[16] D=_00014_ Q_endpoints={out_data[16]}
+reg _12043_ sky130_fd_sc_hd__dfxtp_1 Q=out_data[17] D=_00013_ Q_endpoints={out_data[17]}
+reg _12044_ sky130_fd_sc_hd__dfxtp_1 Q=out_data[18] D=_00012_ Q_endpoints={out_data[18]}
+reg _12045_ sky130_fd_sc_hd__dfxtp_1 Q=out_data[19] D=_00011_ Q_endpoints={out_data[19]}
+reg _12046_ sky130_fd_sc_hd__dfxtp_1 Q=out_data[20] D=_00010_ Q_endpoints={out_data[20]}
+reg _12047_ sky130_fd_sc_hd__dfxtp_1 Q=out_data[21] D=_00009_ Q_endpoints={out_data[21]}
+reg _12048_ sky130_fd_sc_hd__dfxtp_1 Q=out_data[22] D=_00008_ Q_endpoints={out_data[22]}
+reg _12049_ sky130_fd_sc_hd__dfxtp_1 Q=out_data[23] D=_00007_ Q_endpoints={out_data[23]}
+reg _12050_ sky130_fd_sc_hd__dfxtp_1 Q=out_data[24] D=_00006_ Q_endpoints={out_data[24]}
+reg _12051_ sky130_fd_sc_hd__dfxtp_1 Q=out_data[25] D=_00005_ Q_endpoints={out_data[25]}
+reg _12052_ sky130_fd_sc_hd__dfxtp_1 Q=out_data[26] D=_00004_ Q_endpoints={out_data[26]}
+reg _12053_ sky130_fd_sc_hd__dfxtp_1 Q=out_data[27] D=_00003_ Q_endpoints={out_data[27]}
+reg _12054_ sky130_fd_sc_hd__dfxtp_1 Q=out_data[28] D=_00002_ Q_endpoints={out_data[28]}
+reg _12055_ sky130_fd_sc_hd__dfxtp_1 Q=out_data[29] D=_00001_ Q_endpoints={out_data[29]}
+reg _12056_ sky130_fd_sc_hd__dfxtp_1 Q=out_data[30] D=_00000_ Q_endpoints={out_data[30]}
+reg _12057_ sky130_fd_sc_hd__dfxtp_1 Q=out_data[31] D=_00032_ Q_endpoints={out_data[31]}
+reg _12058_ sky130_fd_sc_hd__dfxtp_1 Q=out_valid D=_00031_ Q_endpoints=out_valid
+CASE01-CMD: report_checks -to [get_pins _12057_/D] -path_delay max -scenes ss_n40C_1v60 -fields {slew cap input_pins fanout} -digits 6
+Startpoint: in_b[2] (input port clocked by clk)
+Endpoint: _12057_ (rising edge-triggered flip-flop clocked by clk)
+Path Group: clk
+Path Type: max
+Corner: ss_n40C_1v60
+
+Fanout         Cap        Slew       Delay        Time   Description
+---------------------------------------------------------------------------------------------
+                      0.000000    0.000000    0.000000   clock clk (rise edge)
+                                  0.000000    0.000000   clock network delay (ideal)
+                                  5.582000    5.582000 ^ input external delay
+    19    0.041549    0.433822    0.309138    5.891138 ^ in_b[2] (in)
+                      0.433822    0.000000    5.891138 ^ _10621_/B (sky130_fd_sc_hd__nand2_1)
+     2    0.004565    0.112277    0.245337    6.136474 v _10621_/Y (sky130_fd_sc_hd__nand2_1)
+                      0.112277    0.000000    6.136474 v _10905_/A (sky130_fd_sc_hd__xnor3_1)
+     2    0.005407    0.119873    0.980353    7.116827 v _10905_/X (sky130_fd_sc_hd__xnor3_1)
+                      0.119873    0.000000    7.116827 v _10907_/B (sky130_fd_sc_hd__xnor2_1)
+     3    0.011016    0.649157    0.626728    7.743556 ^ _10907_/Y (sky130_fd_sc_hd__xnor2_1)
+                      0.649157    0.000000    7.743556 ^ _11029_/B (sky130_fd_sc_hd__xnor3_1)
+     2    0.006284    0.126758    1.037887    8.781443 v _11029_/X (sky130_fd_sc_hd__xnor3_1)
+                      0.126758    0.000000    8.781443 v _11087_/B (sky130_fd_sc_hd__xnor2_1)
+     2    0.006045    0.100235    0.272734    9.054176 v _11087_/Y (sky130_fd_sc_hd__xnor2_1)
+                      0.100235    0.000000    9.054176 v _11113_/A (sky130_fd_sc_hd__xnor2_1)
+     3    0.011275    0.661806    0.660067    9.714243 ^ _11113_/Y (sky130_fd_sc_hd__xnor2_1)
+                      0.661806    0.000000    9.714243 ^ _11186_/B (sky130_fd_sc_hd__xor3_1)
+     2    0.009024    0.153577    1.091680   10.805923 v _11186_/X (sky130_fd_sc_hd__xor3_1)
+                      0.153577    0.000000   10.805923 v _11255_/B (sky130_fd_sc_hd__xnor3_1)
+     2    0.006108    0.125377    0.926465   11.732388 v _11255_/X (sky130_fd_sc_hd__xnor3_1)
+                      0.125377    0.000000   11.732388 v _11257_/B (sky130_fd_sc_hd__xor2_1)
+     2    0.006343    0.375235    0.399697   12.132085 ^ _11257_/X (sky130_fd_sc_hd__xor2_1)
+                      0.375235    0.000000   12.132085 ^ _11302_/C (sky130_fd_sc_hd__xor3_1)
+     2    0.007281    0.140117    0.729960   12.862045 v _11302_/X (sky130_fd_sc_hd__xor3_1)
+                      0.140117    0.000000   12.862045 v _11306_/B (sky130_fd_sc_hd__maj3_1)
+     2    0.007280    0.159901    0.943285   13.805329 v _11306_/X (sky130_fd_sc_hd__maj3_1)
+                      0.159901    0.000000   13.805329 v _11338_/B (sky130_fd_sc_hd__xor3_1)
+     2    0.006070    0.130703    0.979920   14.785250 v _11338_/X (sky130_fd_sc_hd__xor3_1)
+                      0.130703    0.000000   14.785250 v _11340_/B (sky130_fd_sc_hd__xor2_1)
+     2    0.006511    0.382010    0.407728   15.192978 ^ _11340_/X (sky130_fd_sc_hd__xor2_1)
+                      0.382010    0.000000   15.192978 ^ _11416_/A1 (sky130_fd_sc_hd__a21oi_1)
+     2    0.006709    0.129881    0.260792   15.453771 v _11416_/Y (sky130_fd_sc_hd__a21oi_1)
+                      0.129881    0.000000   15.453771 v _11418_/C (sky130_fd_sc_hd__maj3_1)
+     2    0.005496    0.144435    0.928543   16.382313 v _11418_/X (sky130_fd_sc_hd__maj3_1)
+                      0.144435    0.000000   16.382313 v _11420_/A1 (sky130_fd_sc_hd__o21ai_0)
+     2    0.006342    0.498432    0.544908   16.927221 ^ _11420_/Y (sky130_fd_sc_hd__o21ai_0)
+                      0.498432    0.000000   16.927221 ^ _11421_/C (sky130_fd_sc_hd__maj3_1)
+     2    0.006522    0.175003    0.534897   17.462118 ^ _11421_/X (sky130_fd_sc_hd__maj3_1)
+                      0.175003    0.000000   17.462118 ^ _11422_/A2 (sky130_fd_sc_hd__a21oi_1)
+     2    0.006741    0.138148    0.179872   17.641989 v _11422_/Y (sky130_fd_sc_hd__a21oi_1)
+                      0.138148    0.000000   17.641989 v _11423_/C (sky130_fd_sc_hd__maj3_1)
+     2    0.006741    0.155187    0.945276   18.587265 v _11423_/X (sky130_fd_sc_hd__maj3_1)
+                      0.155187    0.000000   18.587265 v _11424_/C (sky130_fd_sc_hd__maj3_1)
+     2    0.005628    0.145575    0.940551   19.527817 v _11424_/X (sky130_fd_sc_hd__maj3_1)
+                      0.145575    0.000000   19.527817 v _11426_/A2 (sky130_fd_sc_hd__o21ai_0)
+     2    0.006522    0.509767    0.528894   20.056711 ^ _11426_/Y (sky130_fd_sc_hd__o21ai_0)
+                      0.509767    0.000000   20.056711 ^ _11427_/A2 (sky130_fd_sc_hd__a21oi_1)
+     2    0.006886    0.133126    0.319673   20.376385 v _11427_/Y (sky130_fd_sc_hd__a21oi_1)
+                      0.133126    0.000000   20.376385 v _11428_/C (sky130_fd_sc_hd__maj3_1)
+     2    0.006886    0.156438    0.944727   21.321112 v _11428_/X (sky130_fd_sc_hd__maj3_1)
+                      0.156438    0.000000   21.321112 v _11429_/C (sky130_fd_sc_hd__maj3_1)
+     2    0.006056    0.149355    0.945626   22.266737 v _11429_/X (sky130_fd_sc_hd__maj3_1)
+                      0.149355    0.000000   22.266737 v _11430_/A2 (sky130_fd_sc_hd__o21bai_1)
+     2    0.006522    0.391758    0.439121   22.705858 ^ _11430_/Y (sky130_fd_sc_hd__o21bai_1)
+                      0.391758    0.000000   22.705858 ^ _11431_/A2 (sky130_fd_sc_hd__a21oi_1)
+     3    0.004972    0.113725    0.251708   22.957565 v _11431_/Y (sky130_fd_sc_hd__a21oi_1)
+                      0.113725    0.000000   22.957565 v _11433_/A2 (sky130_fd_sc_hd__o21ai_0)
+     2    0.006522    0.509928    0.511925   23.469490 ^ _11433_/Y (sky130_fd_sc_hd__o21ai_0)
+                      0.509928    0.000000   23.469490 ^ _11434_/A2 (sky130_fd_sc_hd__a21oi_1)
+     3    0.008409    0.147898    0.335671   23.805161 v _11434_/Y (sky130_fd_sc_hd__a21oi_1)
+                      0.147898    0.000000   23.805161 v _11438_/A3 (sky130_fd_sc_hd__o31ai_1)
+     3    0.008847    0.852745    0.846221   24.651382 ^ _11438_/Y (sky130_fd_sc_hd__o31ai_1)
+                      0.852745    0.000000   24.651382 ^ _11440_/B2 (sky130_fd_sc_hd__a221oi_1)
+     3    0.005759    0.180622    0.432591   25.083973 v _11440_/Y (sky130_fd_sc_hd__a221oi_1)
+                      0.180622    0.000000   25.083973 v _11443_/A3 (sky130_fd_sc_hd__o311ai_0)
+     3    0.006751    1.022981    1.024139   26.108112 ^ _11443_/Y (sky130_fd_sc_hd__o311ai_0)
+                      1.022981    0.000000   26.108112 ^ _11446_/A3 (sky130_fd_sc_hd__a311oi_1)
+     3    0.004176    0.176139    0.491900   26.600012 v _11446_/Y (sky130_fd_sc_hd__a311oi_1)
+                      0.176139    0.000000   26.600012 v _11451_/A3 (sky130_fd_sc_hd__o311ai_0)
+     2    0.004508    0.791238    0.837579   27.437592 ^ _11451_/Y (sky130_fd_sc_hd__o311ai_0)
+                      0.791238    0.000000   27.437592 ^ _11454_/A3 (sky130_fd_sc_hd__a31oi_1)
+     1    0.003958    0.140976    0.401347   27.838938 v _11454_/Y (sky130_fd_sc_hd__a31oi_1)
+                      0.140976    0.000000   27.838938 v _11504_/A (sky130_fd_sc_hd__xnor2_1)
+     3    0.006027    0.411916    0.490065   28.329002 ^ _11504_/Y (sky130_fd_sc_hd__xnor2_1)
+                      0.411916    0.000000   28.329002 ^ _11505_/A (sky130_fd_sc_hd__inv_1)
+     1    0.001466    0.067926    0.166297   28.495300 v _11505_/Y (sky130_fd_sc_hd__inv_1)
+                      0.067926    0.000000   28.495300 v _12057_/D (sky130_fd_sc_hd__dfxtp_1)
+                                             28.495300   data arrival time
+
+                      0.000000   27.910000   27.910000   clock clk (rise edge)
+                                  0.000000   27.910000   clock network delay (ideal)
+                                  0.000000   27.910000   clock reconvergence pessimism
+                                             27.910000 ^ _12057_/CLK (sky130_fd_sc_hd__dfxtp_1)
+                                 -0.382307   27.527693   library setup time
+                                             27.527693   data required time
+---------------------------------------------------------------------------------------------
+                                             27.527693   data required time
+                                            -28.495300   data arrival time
+---------------------------------------------------------------------------------------------
+                                             -0.967606   slack (VIOLATED)
+
+

@@ -1,0 +1,13 @@
+report_checks \
+  -from [all_inputs -no_clocks] \
+  -to [all_registers -data_pins] \
+  -path_delay max \
+  -scene ss_n40C_1v60 \
+  -slack_max 0.0 \
+  -sort_by_slack \
+  -group_count 50 \
+  -endpoint_count 50 \
+  -unique_paths_to_endpoint \
+  -format full_clock_expanded \
+  -fields {slew cap input_pins fanout} \
+  -digits 4

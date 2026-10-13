@@ -1,0 +1,4 @@
+CASE01-CMD: report_cell_usage -verbose
+CASE01-ERROR: invalid command name "report_cell_usage"
+CASE01-CMD: report_design_area
+CASE01-ERROR: invalid command name "report_design_area"

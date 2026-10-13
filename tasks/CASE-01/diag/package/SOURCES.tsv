@@ -1,0 +1,9 @@
+# package file	source	source sha256
+context.md	spec.md (section 1)	7ab53c49982cc7a76017060931f8b3a6a5a3b760a767b024fbccabe696b414a1
+context.md	diag/package_src/context_extra.md	d0e696a0c044b7248adba95724b48b244d1b5efcd75bb80dc2547dcdd6cae582
+path_report.rpt	evidence/F1/f1_run_cat_ss_n40C_1v60_in2reg_max.rpt	043e50bf6638284a043aec4cdf9a23ea999878a369ac58cfef7b613420f38d88
+case01_sdc.tcl	sdc/case01_sdc.tcl	b8d1aab60d137dc39dc7cb55b2ec314b952538dfee8f5be627a140dcca09300c
+values.txt	config/f1.cfg (T_ns, C_load_pF)	652c1f1f25be0e0996b841ba371fef5bb667d1609eb92c8e4691c9df4a63bf89
+slack_summary.tsv	evidence/F1/sta_results.tsv (WS/CAT/TOPO rows; = F1 run sta/sta_results.tsv)	14f4def3616882bd2149d38e3b7e1ebac2145438fffbe08b578f1b857aabd7ca
+slack_summary.tsv	diag/package_src/slack_notes.txt	21eb1d88a48d30624fb0acdc2cedad08b1777bab084462fd3eb18242792d510c
+dot4sat.v	rtl/dot4sat.v	422ba000b48903558d797510cd4d0189b3fac9f83ba4ce4a1b22eb497194c802

@@ -1,0 +1,17 @@
+CASE01-CMD: report_instance _12026_
+Instance _12026_
+ Cell: sky130_fd_sc_hd__dfxtp_1
+ Library: sky130_fd_sc_hd__tt_025C_1v80
+ Path cells: sky130_fd_sc_hd__dfxtp_1
+ Input pins:
+  CLK input clk
+  D input _00030_
+ Output pins:
+  Q output out_data[0]
+ Other pins:
+  VGND ground (unconnected)
+  VPWR power (unconnected)
+  IQ internal (unconnected)
+  IQ_N internal (unconnected)
+CASE01-CMD: foreach p [get_fanout -from [get_pins _12026_/Q] -endpoints_only -flat] { puts "Q fanout endpoint: [get_full_name $p]" }
+Q fanout endpoint: out_data[0]

@@ -1,0 +1,2 @@
+report_cell_usage -verbose
+report_design_area

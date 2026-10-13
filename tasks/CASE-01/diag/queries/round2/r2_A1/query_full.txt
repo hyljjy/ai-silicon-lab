@@ -1,0 +1,19 @@
+CASE01-CMD: report_instance _12026_
+Instance _12026_
+ Cell: sky130_fd_sc_hd__dfxtp_1
+ Library: sky130_fd_sc_hd__tt_025C_1v80
+ Path cells: sky130_fd_sc_hd__dfxtp_1
+ Input pins:
+  CLK input clk
+  D input _00030_
+ Output pins:
+  Q output out_data[0]
+ Other pins:
+  VGND ground (unconnected)
+  VPWR power (unconnected)
+  IQ internal (unconnected)
+  IQ_N internal (unconnected)
+CASE01-CMD: report_net -digits 4 [get_nets -of_objects [get_pins _12026_/Q]]
+CASE01-ERROR: Error 232: diag_query.tcl line 1, net _90a868d621610000_p_Net not found.
+CASE01-CMD: report_net -digits 4 [get_nets -of_objects [get_pins _12026_/D]]
+CASE01-ERROR: Error 232: diag_query.tcl line 1, net _f0fbbad621610000_p_Net not found.

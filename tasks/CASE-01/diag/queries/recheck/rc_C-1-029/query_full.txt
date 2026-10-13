@@ -1,0 +1,8 @@
+CASE01-CMD: report_checks -from [get_ports {rst in_valid}] -to [all_registers -data_pins] -path_delay max -scenes ss_n40C_1v60 -format end -digits 6
+max_delay/setup group clk
+
+                                        Required      Actual
+Endpoint                                   Delay       Delay       Slack
+------------------------------------------------------------------------
+_12058_/D (sky130_fd_sc_hd__dfxtp_1)   27.539835    5.835729   21.704105 (MET)
+

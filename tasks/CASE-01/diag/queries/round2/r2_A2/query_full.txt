@@ -1,0 +1,83 @@
+CASE01-CMD: report_checks -from [all_inputs -no_clocks] -to [all_registers -data_pins] -path_delay max \
+max_delay/setup group clk
+
+                                      Required    Actual
+Endpoint                                 Delay     Delay     Slack
+------------------------------------------------------------------
+_12026_/D (sky130_fd_sc_hd__dfxtp_1)   27.3541   31.5439   -4.1897 (VIOLATED)
+_12027_/D (sky130_fd_sc_hd__dfxtp_1)   27.3541   31.5439   -4.1897 (VIOLATED)
+_12029_/D (sky130_fd_sc_hd__dfxtp_1)   27.3541   31.5439   -4.1897 (VIOLATED)
+_12032_/D (sky130_fd_sc_hd__dfxtp_1)   27.3541   31.5439   -4.1897 (VIOLATED)
+_12033_/D (sky130_fd_sc_hd__dfxtp_1)   27.3541   31.5439   -4.1897 (VIOLATED)
+_12034_/D (sky130_fd_sc_hd__dfxtp_1)   27.3541   31.5439   -4.1897 (VIOLATED)
+_12035_/D (sky130_fd_sc_hd__dfxtp_1)   27.3541   31.5439   -4.1897 (VIOLATED)
+_12036_/D (sky130_fd_sc_hd__dfxtp_1)   27.3541   31.5439   -4.1897 (VIOLATED)
+_12037_/D (sky130_fd_sc_hd__dfxtp_1)   27.3541   31.5439   -4.1897 (VIOLATED)
+_12038_/D (sky130_fd_sc_hd__dfxtp_1)   27.3541   31.5439   -4.1897 (VIOLATED)
+_12039_/D (sky130_fd_sc_hd__dfxtp_1)   27.3541   31.5439   -4.1897 (VIOLATED)
+_12040_/D (sky130_fd_sc_hd__dfxtp_1)   27.3541   31.5439   -4.1897 (VIOLATED)
+_12041_/D (sky130_fd_sc_hd__dfxtp_1)   27.3541   31.5439   -4.1897 (VIOLATED)
+_12042_/D (sky130_fd_sc_hd__dfxtp_1)   27.3541   31.5439   -4.1897 (VIOLATED)
+_12043_/D (sky130_fd_sc_hd__dfxtp_1)   27.3541   31.5439   -4.1897 (VIOLATED)
+_12044_/D (sky130_fd_sc_hd__dfxtp_1)   27.3541   31.5439   -4.1897 (VIOLATED)
+_12045_/D (sky130_fd_sc_hd__dfxtp_1)   27.3541   31.5439   -4.1897 (VIOLATED)
+_12047_/D (sky130_fd_sc_hd__dfxtp_1)   27.3541   31.5439   -4.1897 (VIOLATED)
+_12048_/D (sky130_fd_sc_hd__dfxtp_1)   27.3541   31.5439   -4.1897 (VIOLATED)
+_12049_/D (sky130_fd_sc_hd__dfxtp_1)   27.3541   31.5439   -4.1897 (VIOLATED)
+_12050_/D (sky130_fd_sc_hd__dfxtp_1)   27.3541   31.5439   -4.1897 (VIOLATED)
+_12051_/D (sky130_fd_sc_hd__dfxtp_1)   27.3541   31.5439   -4.1897 (VIOLATED)
+_12052_/D (sky130_fd_sc_hd__dfxtp_1)   27.3541   31.5439   -4.1897 (VIOLATED)
+_12053_/D (sky130_fd_sc_hd__dfxtp_1)   27.3541   31.5439   -4.1897 (VIOLATED)
+_12054_/D (sky130_fd_sc_hd__dfxtp_1)   27.3541   31.5439   -4.1897 (VIOLATED)
+_12055_/D (sky130_fd_sc_hd__dfxtp_1)   27.3541   31.5439   -4.1897 (VIOLATED)
+_12056_/D (sky130_fd_sc_hd__dfxtp_1)   27.3541   31.5439   -4.1897 (VIOLATED)
+_12028_/D (sky130_fd_sc_hd__dfxtp_1)   27.3794   31.4791   -4.0997 (VIOLATED)
+_12030_/D (sky130_fd_sc_hd__dfxtp_1)   27.3794   31.4791   -4.0997 (VIOLATED)
+_12031_/D (sky130_fd_sc_hd__dfxtp_1)   27.3794   31.4791   -4.0997 (VIOLATED)
+_12046_/D (sky130_fd_sc_hd__dfxtp_1)   27.3794   31.4791   -4.0997 (VIOLATED)
+_12057_/D (sky130_fd_sc_hd__dfxtp_1)   27.5277   28.4953   -0.9676 (VIOLATED)
+
+CASE01-CMD: report_checks -from [all_inputs -no_clocks] -to [all_registers -data_pins] -path_delay max \
+max_delay/setup group clk
+
+                                      Required    Actual
+Endpoint                                 Delay     Delay     Slack
+------------------------------------------------------------------
+_12026_/D (sky130_fd_sc_hd__dfxtp_1)   27.4741   28.1613   -0.6873 (VIOLATED)
+_12027_/D (sky130_fd_sc_hd__dfxtp_1)   27.4741   28.1613   -0.6873 (VIOLATED)
+_12029_/D (sky130_fd_sc_hd__dfxtp_1)   27.4741   28.1613   -0.6873 (VIOLATED)
+_12032_/D (sky130_fd_sc_hd__dfxtp_1)   27.4741   28.1613   -0.6873 (VIOLATED)
+_12033_/D (sky130_fd_sc_hd__dfxtp_1)   27.4741   28.1613   -0.6873 (VIOLATED)
+_12034_/D (sky130_fd_sc_hd__dfxtp_1)   27.4741   28.1613   -0.6873 (VIOLATED)
+_12035_/D (sky130_fd_sc_hd__dfxtp_1)   27.4741   28.1613   -0.6873 (VIOLATED)
+_12036_/D (sky130_fd_sc_hd__dfxtp_1)   27.4741   28.1613   -0.6873 (VIOLATED)
+_12037_/D (sky130_fd_sc_hd__dfxtp_1)   27.4741   28.1613   -0.6873 (VIOLATED)
+_12038_/D (sky130_fd_sc_hd__dfxtp_1)   27.4741   28.1613   -0.6873 (VIOLATED)
+_12039_/D (sky130_fd_sc_hd__dfxtp_1)   27.4741   28.1613   -0.6873 (VIOLATED)
+_12040_/D (sky130_fd_sc_hd__dfxtp_1)   27.4741   28.1613   -0.6873 (VIOLATED)
+_12041_/D (sky130_fd_sc_hd__dfxtp_1)   27.4741   28.1613   -0.6873 (VIOLATED)
+_12042_/D (sky130_fd_sc_hd__dfxtp_1)   27.4741   28.1613   -0.6873 (VIOLATED)
+_12043_/D (sky130_fd_sc_hd__dfxtp_1)   27.4741   28.1613   -0.6873 (VIOLATED)
+_12044_/D (sky130_fd_sc_hd__dfxtp_1)   27.4741   28.1613   -0.6873 (VIOLATED)
+_12045_/D (sky130_fd_sc_hd__dfxtp_1)   27.4741   28.1613   -0.6873 (VIOLATED)
+_12047_/D (sky130_fd_sc_hd__dfxtp_1)   27.4741   28.1613   -0.6873 (VIOLATED)
+_12048_/D (sky130_fd_sc_hd__dfxtp_1)   27.4741   28.1613   -0.6873 (VIOLATED)
+_12049_/D (sky130_fd_sc_hd__dfxtp_1)   27.4741   28.1613   -0.6873 (VIOLATED)
+_12050_/D (sky130_fd_sc_hd__dfxtp_1)   27.4741   28.1613   -0.6873 (VIOLATED)
+_12051_/D (sky130_fd_sc_hd__dfxtp_1)   27.4741   28.1613   -0.6873 (VIOLATED)
+_12052_/D (sky130_fd_sc_hd__dfxtp_1)   27.4741   28.1613   -0.6873 (VIOLATED)
+_12053_/D (sky130_fd_sc_hd__dfxtp_1)   27.4741   28.1613   -0.6873 (VIOLATED)
+_12054_/D (sky130_fd_sc_hd__dfxtp_1)   27.4741   28.1613   -0.6873 (VIOLATED)
+_12055_/D (sky130_fd_sc_hd__dfxtp_1)   27.4741   28.1613   -0.6873 (VIOLATED)
+_12056_/D (sky130_fd_sc_hd__dfxtp_1)   27.4741   28.1613   -0.6873 (VIOLATED)
+_12028_/D (sky130_fd_sc_hd__dfxtp_1)   27.4858   28.1545   -0.6687 (VIOLATED)
+_12030_/D (sky130_fd_sc_hd__dfxtp_1)   27.4858   28.1545   -0.6687 (VIOLATED)
+_12031_/D (sky130_fd_sc_hd__dfxtp_1)   27.4858   28.1545   -0.6687 (VIOLATED)
+_12046_/D (sky130_fd_sc_hd__dfxtp_1)   27.4858   28.1545   -0.6687 (VIOLATED)
+
+CASE01-CMD: set ps [find_timing_paths -scenes ss_n40C_1v60 -path_delay max -group_path_count 1000 -endpoint_path_count 1 -slack_max 0]
+_d0683eda33610000_p_PathEnd _0063bbd833610000_p_PathEnd _c06241da33610000_p_PathEnd _f097eed833610000_p_PathEnd _00ec35da33610000_p_PathEnd _906041da33610000_p_PathEnd _605d41da33610000_p_PathEnd _d0f68bd233610000_p_PathEnd _c0d7a7d933610000_p_PathEnd _803deed833610000_p_PathEnd _907ae5d833610000_p_PathEnd _7013f4d933610000_p_PathEnd _b01b95d933610000_p_PathEnd _60ae19d933610000_p_PathEnd _e06613d933610000_p_PathEnd _704d09da33610000_p_PathEnd _a0ee1ad933610000_p_PathEnd _f08d02d933610000_p_PathEnd _10cc2bd933610000_p_PathEnd _50b1e0d933610000_p_PathEnd _504f1ad933610000_p_PathEnd _90392cd933610000_p_PathEnd _c05207da33610000_p_PathEnd _d09705da33610000_p_PathEnd _e0d410da33610000_p_PathEnd _d01701da33610000_p_PathEnd _a0ff0bda33610000_p_PathEnd _a06141da33610000_p_PathEnd _206341da33610000_p_PathEnd _d0809ed733610000_p_PathEnd _901a00d933610000_p_PathEnd _30daafd933610000_p_PathEnd
+CASE01-CMD: puts [llength $ps]
+32
+CASE01-CMD: report_tns -digits 4   ;# 无场景选项，结果对应全部场景（不确定是取最差还是汇总）
+tns max -130.4888
