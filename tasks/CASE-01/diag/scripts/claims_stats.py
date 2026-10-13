@@ -47,11 +47,13 @@ LABELS = {
 ACTIONS = {"保持", "修改", "撤回", "新增"}
 CODE_WHATIF = "改变冻结模型的查询（已在单独运行中执行）"
 MATERIAL = re.compile(r"package/([\w.-]+):(\d+)(?:-(\d+))?")
+RETURNED = re.compile(r"round2/([ABC])_results\.md:(\d+)(?:-(\d+))?")
 
 
 def load(path):
     with open(path, encoding="utf-8", newline="") as f:
-        rows = list(csv.DictReader((l for l in f if not l.startswith("#")), delimiter="\t"))
+        # QUOTE_NONE: fields are plain text; a note that starts with a quote mark must not be parsed as a quoted field
+        rows = list(csv.DictReader((l for l in f if not l.startswith("#")), delimiter="\t", quoting=csv.QUOTE_NONE))
     if rows and list(rows[0].keys()) != COLUMNS:
         raise SystemExit(f"CLAIMS FAIL: columns must be {COLUMNS}")
     return rows
@@ -61,9 +63,9 @@ def final(r):
     return r["author_label"].strip() or r["label"].strip()
 
 
-def material_ok(diag, name, first, last):
+def material_ok(diag, name, first, last, folder="package"):
     """package/<name>:<first>-<last> names lines that exist in a materials-package file."""
-    path = os.path.join(diag, "package", name)
+    path = os.path.join(diag, folder, name)
     if not os.path.isfile(path) or not 1 <= first <= last:
         return False
     with open(path, encoding="utf-8") as f:
@@ -112,7 +114,14 @@ def problems(rows, diag=DIAG):
             if not material_ok(diag, name, int(first), int(last or first)):
                 out.append(f"{rid}: evidence package/{name}:{first}{'-' + last if last else ''} is not a line range "
                            "of a package file")
-        if lab in ("证实", "推翻") and r["type"] == "事实" and not qids and not cites:
+        returned = RETURNED.findall(r["evidence"])
+        for code, first, last in returned:
+            if r["round"] != "2" or code != r["code"]:
+                out.append(f"{rid}: evidence round2/{code}_results.md is not its own returned results (rule G12)")
+            elif not material_ok(diag, f"{code}_results.md", int(first), int(last or first), "round2"):
+                out.append(f"{rid}: evidence round2/{code}_results.md:{first}{'-' + last if last else ''} is not a "
+                           "line range of the returned results")
+        if lab in ("证实", "推翻") and r["type"] == "事实" and not qids and not cites and not returned:
             out.append(f"{rid}: {lab} needs query_ids or a package/<file>:<line> citation in evidence")
         if lab == "支持" and not qids:
             out.append(f"{rid}: 支持 without query_ids")

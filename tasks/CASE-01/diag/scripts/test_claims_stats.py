@@ -113,8 +113,40 @@ class TestClaims(Base):
         rows[3]["r2_action"] = "新增"
         self.assertIn("a 证据引用 row carries no r2_action or r1_ref", self.problems(rows))
 
+    def test_round2_fact_judged_on_its_own_returned_results(self):
+        # rule G12: a round-2 fact about what a returned query printed is judged on that code's returned results
+        os.makedirs(os.path.join(self.diag, "round2"))
+        for code in "AB":
+            with open(os.path.join(self.diag, "round2", f"{code}_results.md"), "w", encoding="utf-8") as f:
+                f.write("".join(f"line {i}\n" for i in range(1, 6)))
+        ok = [row(id="A-2-001", round="2", r2_action="新增", query_ids="-", evidence="round2/A_results.md:2-3"),
+              cite("A-2-001", "A-2-002")]
+        ok[1]["round"] = "2"
+        self.assertEqual(cs.problems(ok, self.diag), [])
+        other = [dict(ok[0], evidence="round2/B_results.md:2"), ok[1]]
+        self.assertIn("not its own returned results", self.problems(other))
+        r1 = [row(query_ids="-", evidence="round2/A_results.md:2"), cite("A-1-001", "A-1-002")]
+        self.assertIn("not its own returned results", self.problems(r1))
+        beyond = [dict(ok[0], evidence="round2/A_results.md:4-9"), ok[1]]
+        self.assertIn("is not a line range", self.problems(beyond))
+
     def test_mapping_names(self):
         self.assertIn("| kimi | 1 | 事实 |", cs.stats([row()], {"A": "kimi"}))
+
+    def test_load_keeps_leading_quote_marks(self):
+        # some notes start with a quote mark; csv's default quoting would strip it or swallow the following lines
+        p = os.path.join(self.tmp.name, "q.tsv")
+        r1 = row(note='"引脚电容"指 Cap 列')
+        r2 = row(id="A-1-002", note='"未闭合')
+        r3 = row(id="A-1-003")
+        with open(p, "w", encoding="utf-8") as f:
+            f.write("# c\n" + "\t".join(cs.COLUMNS) + "\n")
+            for r in (r1, r2, r3):
+                f.write("\t".join(r[c] for c in cs.COLUMNS) + "\n")
+        got = cs.load(p)
+        self.assertEqual([r["id"] for r in got], ["A-1-001", "A-1-002", "A-1-003"])
+        self.assertEqual(got[0]["note"], '"引脚电容"指 Cap 列')
+        self.assertEqual(got[1]["note"], '"未闭合')
 
     def test_load_checks_columns(self):
         p = os.path.join(self.tmp.name, "c.tsv")
