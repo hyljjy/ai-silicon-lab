@@ -1,0 +1,5 @@
+CASE01-CMD: report_checks -from [get_ports {in_b[2]}] -to [get_pins _12026_/D] -path_delay max -scenes ss_n40C_1v60 -format summary -digits 4
+Startpoint                           Endpoint                                 Slack
+----------------------------------------------------------------------------------
+in_b[2] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -4.1897
+

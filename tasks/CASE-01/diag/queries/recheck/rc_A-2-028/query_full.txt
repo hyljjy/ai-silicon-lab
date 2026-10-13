@@ -1,0 +1,69 @@
+CASE01-CMD: foreach drv {_11509_/Y _11510_/Y _11302_/X} {
+fanout endpoints of _11509_/Y: 31: _12026_/D _12027_/D _12028_/D _12029_/D _12030_/D _12031_/D _12032_/D _12033_/D _12034_/D _12035_/D _12036_/D _12037_/D _12038_/D _12039_/D _12040_/D _12041_/D _12042_/D _12043_/D _12044_/D _12045_/D _12046_/D _12047_/D _12048_/D _12049_/D _12050_/D _12051_/D _12052_/D _12053_/D _12054_/D _12055_/D _12056_/D
+fanout endpoints of _11510_/Y: 31: _12026_/D _12027_/D _12028_/D _12029_/D _12030_/D _12031_/D _12032_/D _12033_/D _12034_/D _12035_/D _12036_/D _12037_/D _12038_/D _12039_/D _12040_/D _12041_/D _12042_/D _12043_/D _12044_/D _12045_/D _12046_/D _12047_/D _12048_/D _12049_/D _12050_/D _12051_/D _12052_/D _12053_/D _12054_/D _12055_/D _12056_/D
+fanout endpoints of _11302_/X: 32: _12026_/D _12027_/D _12028_/D _12029_/D _12030_/D _12031_/D _12032_/D _12033_/D _12034_/D _12035_/D _12036_/D _12037_/D _12038_/D _12039_/D _12040_/D _12041_/D _12042_/D _12043_/D _12044_/D _12045_/D _12046_/D _12047_/D _12048_/D _12049_/D _12050_/D _12051_/D _12052_/D _12053_/D _12054_/D _12055_/D _12056_/D _12057_/D
+CASE01-CMD: report_instance _11510_
+Instance _11510_
+ Cell: sky130_fd_sc_hd__a21oi_1
+ Library: sky130_fd_sc_hd__tt_025C_1v80
+ Path cells: sky130_fd_sc_hd__a21oi_1
+ Input pins:
+  A1 input _05585_
+  A2 input _05586_
+  B1 input _05584_
+ Output pins:
+  Y output _05589_
+ Other pins:
+  VGND ground (unconnected)
+  VPWR power (unconnected)
+CASE01-CMD: foreach pin {_11510_/Y} {
+Net _05589_
+ Pin capacitance: 0.0581-0.0629
+ Wire capacitance: 0.0000
+ Total capacitance: 0.0581-0.0629
+ Number of drivers: 1
+ Number of loads: 31
+ Number of pins: 32
+
+Driver pins
+ _11510_/Y output (sky130_fd_sc_hd__a21oi_1)
+
+Load pins
+ _11512_/A1 input (sky130_fd_sc_hd__o21ai_0) 0.0018-0.0019
+ _11515_/A1 input (sky130_fd_sc_hd__o21ai_0) 0.0018-0.0019
+ _11517_/A2 input (sky130_fd_sc_hd__o31ai_1) 0.0025-0.0028
+ _11519_/A1 input (sky130_fd_sc_hd__o21ai_0) 0.0018-0.0019
+ _11521_/A2 input (sky130_fd_sc_hd__o31ai_1) 0.0025-0.0028
+ _11523_/A2 input (sky130_fd_sc_hd__o31ai_1) 0.0025-0.0028
+ _11526_/A1 input (sky130_fd_sc_hd__o21ai_0) 0.0018-0.0019
+ _11528_/A1 input (sky130_fd_sc_hd__o21ai_0) 0.0018-0.0019
+ _11530_/A1 input (sky130_fd_sc_hd__o21ai_0) 0.0018-0.0019
+ _11532_/A1 input (sky130_fd_sc_hd__o21ai_0) 0.0018-0.0019
+ _11534_/A1 input (sky130_fd_sc_hd__o21ai_0) 0.0018-0.0019
+ _11537_/A1 input (sky130_fd_sc_hd__o21ai_0) 0.0018-0.0019
+ _11539_/A1 input (sky130_fd_sc_hd__o21ai_0) 0.0018-0.0019
+ _11541_/A1 input (sky130_fd_sc_hd__o21ai_0) 0.0018-0.0019
+ _11543_/A1 input (sky130_fd_sc_hd__o21ai_0) 0.0018-0.0019
+ _11545_/A1 input (sky130_fd_sc_hd__o21ai_0) 0.0018-0.0019
+ _11548_/A1 input (sky130_fd_sc_hd__o21ai_0) 0.0018-0.0019
+ _11550_/A1 input (sky130_fd_sc_hd__o21ai_0) 0.0018-0.0019
+ _11552_/A1 input (sky130_fd_sc_hd__o21ai_0) 0.0018-0.0019
+ _11554_/A1 input (sky130_fd_sc_hd__o21ai_0) 0.0018-0.0019
+ _11556_/A2 input (sky130_fd_sc_hd__o31ai_1) 0.0025-0.0028
+ _11559_/A1 input (sky130_fd_sc_hd__o21ai_0) 0.0018-0.0019
+ _11561_/A1 input (sky130_fd_sc_hd__o21ai_0) 0.0018-0.0019
+ _11564_/A1 input (sky130_fd_sc_hd__o21ai_0) 0.0018-0.0019
+ _11566_/A1 input (sky130_fd_sc_hd__o21ai_0) 0.0018-0.0019
+ _11572_/A1 input (sky130_fd_sc_hd__o21ai_0) 0.0018-0.0019
+ _11574_/A1 input (sky130_fd_sc_hd__o21ai_0) 0.0018-0.0019
+ _11577_/A1 input (sky130_fd_sc_hd__o21ai_0) 0.0018-0.0019
+ _11579_/A1 input (sky130_fd_sc_hd__o21ai_0) 0.0018-0.0019
+ _11581_/A1 input (sky130_fd_sc_hd__o21ai_0) 0.0018-0.0019
+ _11585_/A1 input (sky130_fd_sc_hd__o21ai_0) 0.0018-0.0019
+
+load pins of _11510_/Y (net _05589_): 31: _11512_/A1 _11515_/A1 _11517_/A2 _11519_/A1 _11521_/A2 _11523_/A2 _11526_/A1 _11528_/A1 _11530_/A1 _11532_/A1 _11534_/A1 _11537_/A1 _11539_/A1 _11541_/A1 _11543_/A1 _11545_/A1 _11548_/A1 _11550_/A1 _11552_/A1 _11554_/A1 _11556_/A2 _11559_/A1 _11561_/A1 _11564_/A1 _11566_/A1 _11572_/A1 _11574_/A1 _11577_/A1 _11579_/A1 _11581_/A1 _11585_/A1
+CASE01-CMD: set viol {}
+CASE01-CMD: foreach pe [find_timing_paths -from [all_inputs -no_clocks] -to [all_registers -data_pins] -path_delay max \
+CASE01-CMD: foreach drv {_11509_/Y _11302_/X} {
+ss_n40C violating endpoints: 32; worst path through _11509_/Y: 31; not through: _12057_/D
+ss_n40C violating endpoints: 32; worst path through _11302_/X: 32; not through: 
