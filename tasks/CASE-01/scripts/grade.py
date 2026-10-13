@@ -234,6 +234,24 @@ def check_impl(args, lmax, phase):
     return impl, impl_rel
 
 
+def kill_tree(proc):
+    """Kill proc and every process it started, on Windows as well as POSIX (PRJ-004: os.killpg does not exist on
+    Windows; the AttributeError skipped the kill and an orphaned test child filled the system disk)."""
+    try:
+        if os.name == "nt":
+            subprocess.run(["taskkill", "/F", "/T", "/PID", str(proc.pid)], stdin=subprocess.DEVNULL,
+                           stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=30)
+        else:
+            os.killpg(proc.pid, signal.SIGKILL)      # start_new_session=True: the group id is the child's pid
+    except (OSError, subprocess.SubprocessError):
+        pass
+    if proc.poll() is None:
+        try:
+            proc.kill()
+        except OSError:
+            pass
+
+
 class Run:
     def __init__(self, root, rules):
         self.root = root
@@ -243,8 +261,8 @@ class Run:
 
     def cmd(self, name, argv, log, env=None, extra_logs=()):
         """Run argv in the run dir, stdout+stderr to <root>/<log>, then check this step's logs immediately.
-        A step that outlives STEP_TIMEOUT_S[name] is killed together with its whole process group and fails. If this
-        process is interrupted (Ctrl-C, SIGTERM) the step's process group is killed too, the step is recorded as
+        A step that outlives STEP_TIMEOUT_S[name] is killed together with its whole process tree and fails. If this
+        process is interrupted (Ctrl-C, SIGTERM) the step's process tree is killed too, the step is recorded as
         interrupted and the interrupt propagates (same pattern as calibrate.run_limited; final review M2).
         Every step records its wall-clock duration in seconds (final review M5)."""
         path = os.path.join(self.root, log)
@@ -258,11 +276,11 @@ class Run:
             try:
                 rc = proc.wait(timeout=limit)
             except BaseException as e:
+                kill_tree(proc)
                 try:
-                    os.killpg(proc.pid, signal.SIGKILL)
-                except ProcessLookupError:
-                    pass
-                rc = proc.wait()
+                    rc = proc.wait(timeout=60)
+                except subprocess.TimeoutExpired:
+                    raise RuntimeError(f"pid {proc.pid} survived the kill; stop it by hand") from e
                 if not isinstance(e, subprocess.TimeoutExpired):
                     self.steps.append({"step": name, "argv": argv, "returncode": rc, "timed_out": False,
                                        "timeout_s": limit, "seconds": round(time.monotonic() - t0, 3),

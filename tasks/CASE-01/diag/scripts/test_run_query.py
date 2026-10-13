@@ -1,6 +1,7 @@
 """Unit tests of run_query.py's pure functions (no OpenSTA needed). Run: python3 -B -m unittest test_run_query"""
 import os
 import subprocess
+import sys
 import tempfile
 import time
 import unittest
@@ -9,6 +10,57 @@ import run_query as rq
 
 N = "0123456789abcdef"                  # a nonce
 TAG = f"CASE01-{N}-"
+
+# Child programs for the limit tests. Each one stops by itself (at most about 10 MB of output, at most 20 s), so even
+# a broken kill cannot run away. Incident 2026-10-12: on Windows os.killpg does not exist, the kill was skipped and an
+# orphaned `yes` wrote 250 GB into %TEMP% until the system disk was full.
+BOUNDED_WRITER = """import os, sys, time
+open(sys.argv[1], "w").write(str(os.getpid()))
+for _ in range(200):
+    sys.stdout.write("y" * 50000 + "\\n")
+    sys.stdout.flush()
+    time.sleep(0.05)
+"""
+SLEEPER = """import os, sys, time
+open(sys.argv[1], "w").write(str(os.getpid()))
+time.sleep(20)
+"""
+TREE = """import subprocess, sys, time
+subprocess.Popen([sys.executable, sys.argv[2], sys.argv[1]])
+time.sleep(20)
+"""
+
+
+def alive(pid):
+    if os.name == "nt":
+        out = subprocess.run(["tasklist", "/FI", f"PID eq {pid}", "/NH"], capture_output=True, text=True).stdout
+        return str(pid) in out.split()
+    try:
+        with open(f"/proc/{pid}/stat") as f:
+            return f.read().rsplit(")", 1)[1].split()[0] != "Z"
+    except FileNotFoundError:
+        return False
+
+
+def gone(pid, wait=5):
+    deadline = time.monotonic() + wait
+    while alive(pid) and time.monotonic() < deadline:
+        time.sleep(0.1)
+    return not alive(pid)
+
+
+def read_pid(path, wait=5):
+    deadline = time.monotonic() + wait
+    while time.monotonic() < deadline:
+        try:
+            with open(path) as f:
+                text = f.read().strip()
+            if text:
+                return int(text)
+        except FileNotFoundError:
+            pass
+        time.sleep(0.05)
+    raise AssertionError(f"the child never wrote {path}")
 
 
 def write(path, text):
@@ -184,21 +236,39 @@ class TestExecutorAndLimits(unittest.TestCase):
         self.assertFalse(rq.manifest_committed(self.manifest, repo))                # changed since the tag
         self.assertEqual(len(rq.git_head(repo)), 40)
 
+    def script(self, name, text):
+        path = os.path.join(self.tmp.name, name)
+        write(path, text)
+        return path
+
     def test_wall_clock_limit_kills(self):
+        pidfile = os.path.join(self.tmp.name, "s.pid")
         t0 = time.monotonic()
-        rc, stop = rq.run_limited(["sleep", "20"], os.path.join(self.tmp.name, "l.log"), os.environ,
-                                  self.tmp.name, timeout=1)
+        rc, stop = rq.run_limited([sys.executable, self.script("sleeper.py", SLEEPER), pidfile],
+                                  os.path.join(self.tmp.name, "l.log"), os.environ, self.tmp.name, timeout=2)
         self.assertEqual((rc, stop), (None, "timed_out"))
         self.assertLess(time.monotonic() - t0, 10)
+        self.assertTrue(gone(read_pid(pidfile)))
 
     def test_log_size_limit_kills(self):
-        rc, stop = rq.run_limited(["yes"], os.path.join(self.tmp.name, "y.log"), os.environ, self.tmp.name,
-                                  timeout=30, max_bytes=1000)
+        pidfile, log = os.path.join(self.tmp.name, "w.pid"), os.path.join(self.tmp.name, "y.log")
+        rc, stop = rq.run_limited([sys.executable, self.script("writer.py", BOUNDED_WRITER), pidfile], log,
+                                  os.environ, self.tmp.name, timeout=30, max_bytes=1000)
         self.assertEqual((rc, stop), (None, "output_limit"))
+        self.assertTrue(gone(read_pid(pidfile)))
+        self.assertLess(os.path.getsize(log), 3_000_000)     # stopped within about one poll, not left writing
+
+    def test_whole_process_tree_is_killed(self):
+        pidfile = os.path.join(self.tmp.name, "g.pid")
+        rc, stop = rq.run_limited([sys.executable, self.script("tree.py", TREE), pidfile,
+                                   self.script("sleeper.py", SLEEPER)],
+                                  os.path.join(self.tmp.name, "t.log"), os.environ, self.tmp.name, timeout=4)
+        self.assertEqual((rc, stop), (None, "timed_out"))
+        self.assertTrue(gone(read_pid(pidfile)))              # the grandchild, not only the direct child
 
     def test_normal_exit(self):
-        self.assertEqual(rq.run_limited(["true"], os.path.join(self.tmp.name, "t.log"), os.environ,
-                                        self.tmp.name), (0, None))
+        self.assertEqual(rq.run_limited([sys.executable, "-c", "pass"], os.path.join(self.tmp.name, "t.log"),
+                                        os.environ, self.tmp.name), (0, None))
 
 
 if __name__ == "__main__":

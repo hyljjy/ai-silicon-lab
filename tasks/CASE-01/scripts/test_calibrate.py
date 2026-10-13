@@ -5,6 +5,8 @@ import hashlib
 import io
 import json
 import os
+import subprocess
+import sys
 import tempfile
 import time
 import unittest
@@ -53,6 +55,14 @@ def alive(pid):
             return f.read().rsplit(")", 1)[1].split()[0] != "Z"
     except FileNotFoundError:
         return False
+
+
+def alive_here(pid):
+    """alive() that also works on Windows, for pids reported by the process itself."""
+    if os.name == "nt":
+        out = subprocess.run(["tasklist", "/FI", f"PID eq {pid}", "/NH"], capture_output=True, text=True).stdout
+        return str(pid) in out.split()
+    return alive(pid)
 
 
 def make_run(test, T0, S0, category, impl=None):
@@ -180,6 +190,26 @@ class TestRunLimited(unittest.TestCase):
         while alive(pid) and time.monotonic() < deadline:
             time.sleep(0.1)
         self.assertFalse(alive(pid))
+
+    def test_hung_tree_is_killed_on_this_platform(self):
+        # Portable twin of the test above (bash's $! is not a Windows pid). The children stop by themselves after
+        # 20 s, so a broken kill cannot run away (incident 2026-10-12, an unkillable `yes` on Windows).
+        d = tmpdir(self)
+        pidfile, sleeper, tree = (os.path.join(d, n) for n in ("g.pid", "sleeper.py", "tree.py"))
+        with open(sleeper, "w") as f:
+            f.write("import os, sys, time\nopen(sys.argv[1], 'w').write(str(os.getpid()))\ntime.sleep(20)\n")
+        with open(tree, "w") as f:
+            f.write("import subprocess, sys, time\nsubprocess.Popen([sys.executable, sys.argv[2], sys.argv[1]])\n"
+                    "time.sleep(20)\n")
+        calibrate.TIMEOUT_S = dict(calibrate.TIMEOUT_S, sta=4)
+        with self.assertRaises(calibrate.CalibError):
+            calibrate.run_limited("sta", [sys.executable, tree, pidfile, sleeper], os.path.join(d, "sta.log"))
+        with open(pidfile) as f:
+            pid = int(f.read())
+        deadline = time.monotonic() + 5
+        while alive_here(pid) and time.monotonic() < deadline:
+            time.sleep(0.1)
+        self.assertFalse(alive_here(pid))
 
     def test_normal_step_returns_its_exit_code(self):
         d = tmpdir(self)

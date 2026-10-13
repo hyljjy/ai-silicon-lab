@@ -100,6 +100,15 @@ def alive(pid):
         return False
 
 
+def alive_here(pid):
+    """alive() that also works on Windows, for pids reported by the process itself."""
+    if os.name == "nt":
+        import subprocess
+        out = subprocess.run(["tasklist", "/FI", f"PID eq {pid}", "/NH"], capture_output=True, text=True).stdout
+        return str(pid) in out.split()
+    return alive(pid)
+
+
 class TestStepTimeout(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory(prefix="grade_timeout_")
@@ -120,6 +129,26 @@ class TestStepTimeout(unittest.TestCase):
         self.assertIn("timed out", str(cm.exception))
         self.assertEqual(run.steps[-1]["step"], "rtl_sim")
         self.assertTrue(run.steps[-1]["timed_out"])
+
+    def test_hung_tree_is_killed_on_this_platform(self):
+        # Portable twin of the next test (bash's $! is not a Windows pid). The children stop by themselves after
+        # 20 s, so a broken kill cannot run away (PRJ-004, an unkillable `yes` on Windows).
+        pidfile, sleeper, tree = (os.path.join(self.root, n) for n in ("g.pid", "sleeper.py", "tree.py"))
+        with open(sleeper, "w") as f:
+            f.write("import os, sys, time\nopen(sys.argv[1], 'w').write(str(os.getpid()))\ntime.sleep(20)\n")
+        with open(tree, "w") as f:
+            f.write("import subprocess, sys, time\nsubprocess.Popen([sys.executable, sys.argv[2], sys.argv[1]])\n"
+                    "time.sleep(20)\n")
+        grade.STEP_TIMEOUT_S = dict(grade.STEP_TIMEOUT_S, rtl_sim=4)
+        run = grade.Run(self.root, [])
+        with self.assertRaises(grade.GradeError):
+            run.cmd("rtl_sim", [sys.executable, tree, pidfile, sleeper], "rtl_sim/sim.log")
+        with open(pidfile) as f:
+            pid = int(f.read())
+        deadline = time.monotonic() + 5
+        while alive_here(pid) and time.monotonic() < deadline:
+            time.sleep(0.1)
+        self.assertFalse(alive_here(pid))
 
     def test_child_processes_are_killed_too(self):
         pidfile = os.path.join(self.root, "child.pid")

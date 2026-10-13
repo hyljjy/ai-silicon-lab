@@ -6,7 +6,7 @@ from unittest import mock
 
 import build_package as bp
 import build_prompt as bpr
-from diagpaths import CASE, read_bytes
+from diagpaths import CASE, read_bytes, sha256_bytes
 
 
 class TestPackage(unittest.TestCase):
@@ -25,6 +25,10 @@ class TestPackage(unittest.TestCase):
         self.assertEqual(self.files["path_report.rpt"], read_bytes(os.path.join(CASE, bp.REPORT)))
         self.assertEqual(self.files["case01_sdc.tcl"], read_bytes(os.path.join(CASE, bp.SDC)))
         self.assertEqual(self.files["dot4sat.v"], read_bytes(os.path.join(CASE, bp.RTL)))
+
+    def test_spec_is_the_pinned_version_even_after_later_revisions(self):
+        # PRJ-004: contract v1.3 changed spec.md after the package was built; the build reads the pinned version
+        self.assertEqual(sha256_bytes(bp.spec_bytes()), bp.PINNED[bp.SPEC])
 
     def test_context_is_spec_section_1_plus_conditions(self):
         ctx = self.files["context.md"].decode("utf-8")

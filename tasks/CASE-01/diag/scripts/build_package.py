@@ -9,6 +9,7 @@ An existing package must be byte-identical (it is never rewritten); --check only
 difference.
 """
 import os
+import subprocess
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -29,10 +30,22 @@ PINNED = {                                   # every source is checked before an
     SPEC: "7ab53c49982cc7a76017060931f8b3a6a5a3b760a767b024fbccabe696b414a1",
 }
 ORDER = ("context.md", "path_report.rpt", "case01_sdc.tcl", "values.txt", "slack_summary.tsv", "dot4sat.v")
+SPEC_COMMIT = "43047299ca0900cb69e1611ce30908a100dc16da"   # the commit whose spec.md has the PINNED hash (v1.2)
 
 
 def text(rel):
     return read_bytes(os.path.join(CASE, rel)).decode("utf-8")
+
+
+def spec_bytes():
+    """spec.md as pinned. The contract keeps its revision record in spec.md itself, so a later revision (v1.3,
+    PRJ-004: only the status line and the version record) changes the live file; the package is still built from
+    the pinned version, read from git, and its hash is checked like every other source."""
+    live = read_bytes(os.path.join(CASE, SPEC))
+    if sha256_bytes(live) == PINNED[SPEC]:
+        return live
+    return subprocess.run(["git", "-C", CASE, "show", f"{SPEC_COMMIT}:./{SPEC}"], capture_output=True,
+                          check=True).stdout
 
 
 def spec_section_1(spec):
@@ -61,8 +74,10 @@ def slack_summary(results, notes):
 def build():
     """Return ({package file: bytes}, [(package file, source description, source sha256)])."""
     for rel, want in PINNED.items():
-        if sha256_bytes(read_bytes(os.path.join(CASE, rel))) != want:
+        data = spec_bytes() if rel == SPEC else read_bytes(os.path.join(CASE, rel))
+        if sha256_bytes(data) != want:
             raise SystemExit(f"DIAG FAIL: {rel} is not the frozen source ({want[:16]}…)")
+    spec = spec_bytes()
     frozen = dict(reversed(l.split()) for l in text("config/f1.sha256").splitlines() if l.strip())
     if frozen.get(SDC) != PINNED[SDC]:
         raise SystemExit(f"DIAG FAIL: {SDC} hash differs from config/f1.sha256")
@@ -70,14 +85,14 @@ def build():
     extra = read_bytes(os.path.join(PACKAGE_SRC, "context_extra.md")).decode("utf-8")
     notes = read_bytes(os.path.join(PACKAGE_SRC, "slack_notes.txt")).decode("utf-8")
     files = {
-        "context.md": (spec_section_1(text(SPEC)) + extra).encode("utf-8"),
+        "context.md": (spec_section_1(spec.decode("utf-8")) + extra).encode("utf-8"),
         "path_report.rpt": report,
         "case01_sdc.tcl": read_bytes(os.path.join(CASE, SDC)),
         "values.txt": values(text(F1_CFG)).encode("utf-8"),
         "slack_summary.tsv": slack_summary(text(RESULTS), notes).encode("utf-8"),
         "dot4sat.v": rtl,
     }
-    sources = [("context.md", SPEC + " (section 1)", sha256_bytes(read_bytes(os.path.join(CASE, SPEC)))),
+    sources = [("context.md", SPEC + " (section 1)", sha256_bytes(spec)),
                ("context.md", "diag/package_src/context_extra.md", sha256_bytes(extra.encode("utf-8"))),
                ("path_report.rpt", REPORT, sha256_bytes(report)),
                ("case01_sdc.tcl", SDC, sha256_bytes(files["case01_sdc.tcl"])),
