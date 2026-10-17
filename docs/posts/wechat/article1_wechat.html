@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>公众号排版 · 文章 1</title></head>
+<body style="margin:0;background:#eceef1;font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif;">
+<div style="max-width:720px;margin:0 auto;padding:16px;box-sizing:border-box;overflow-wrap:anywhere;">
+<div style="background:#fffbe6;border:1px solid #f0d58a;border-radius:8px;padding:14px 18px;margin-bottom:16px;font-size:14px;line-height:1.7;color:#5c4a00;">
+<p style="margin:0 0 6px 0;"><strong>用法</strong>（这一块不会被复制）</p>
+<ol style="margin:0;padding-left:20px;">
+<li>标题填到公众号编辑器的标题栏：<strong>大模型看时序报告靠谱吗？我用 OpenSTA 核对了 Claude Opus 5.5、Kimi K3、DeepSeek V4 Pro 的诊断</strong></li>
+<li>点下面的"复制正文"，到编辑器正文区粘贴。</li>
+<li>正文里有 7 个橙色虚线框，逐个点中，替换成对应的图片（PNG，2 倍分辨率）：<ul style="margin:4px 0;padding-left:18px;"><li>图 1：<code style='overflow-wrap:anywhere;word-break:break-all;'>docs/posts/figs/article1/fig1_series.png</code>（这个系列怎么做）</li><li>图 2：<code style='overflow-wrap:anywhere;word-break:break-all;'>docs/posts/figs/article1/fig2_circuit.png</code>（被测电路）</li><li>图 3：<code style='overflow-wrap:anywhere;word-break:break-all;'>docs/posts/figs/article1/fig3_budget.png</code>（最差路径的时间账）</li><li>图 4：<code style='overflow-wrap:anywhere;word-break:break-all;'>docs/posts/figs/article1/fig4_corners.png</code>（6 个角的最差 setup slack）</li><li>图 5：<code style='overflow-wrap:anywhere;word-break:break-all;'>docs/posts/figs/article1/fig5_cuts.png</code>（三家提出的流水切点）</li><li>图 6：<code style='overflow-wrap:anywhere;word-break:break-all;'>docs/posts/figs/article1/fig6_local_global.png</code>（把驱动 X 的单元换强以后）</li><li>图 7：<code style='overflow-wrap:anywhere;word-break:break-all;'>docs/posts/figs/article1/fig7_controls.png</code>（同一条路径，几组对照的 setup slack）</li></ul></li>
+<li>文末的仓库链接在公众号里不能点，保留为文字；仓库公开后读者可以复制访问。</li>
+<li>发布前用编辑器的"预览"在手机上看一遍。</li>
+</ol>
+<button id="copy" style="margin-top:10px;padding:8px 18px;font-size:15px;border:0;border-radius:6px;background:#2a78d6;color:#fff;cursor:pointer;">复制正文</button>
+<span id="msg" style="margin-left:10px;"></span>
+</div>
+<div id="article" style="background:#ffffff;padding:24px 18px;border-radius:8px;">
+<section style="font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif;">
+<section style="margin:0 0 20px 0;padding:12px 16px;background:#f5f6f8;border-left:3px solid #c9c8c3;font-size:14px;line-height:1.75;color:#555555;">AI 提出的时序建议，用工程实验验证 · CASE-01 阶段 A<br>公众号版。文中的数字都来自 GitHub 完整版，那里每个数字都标了出处。</section>
+<h2 style="margin:36px 0 16px 0;padding:2px 0 2px 12px;border-left:4px solid #2a78d6;font-size:19px;font-weight:bold;line-height:1.5;color:#222222;">1. 同一道题，三份答复</h2>
+<p style="margin:0 0 18px 0;font-size:16px;line-height:1.8;letter-spacing:0.5px;color:#222222;text-align:justify;">我把同一份时序报告交给三个大模型：Claude Opus 5.5、Kimi K3、DeepSeek V4 Pro，请它们说说一条路径为什么违例、该怎么改。</p>
+<p style="margin:0 0 18px 0;font-size:16px;line-height:1.8;letter-spacing:0.5px;color:#222222;text-align:justify;">我没有凭感觉判断它们说得好不好，而是把答复整理成一条条可以检查的判断。说的是报告里的数字和对象，就对照报告原文；说的是"这样改会怎样"，能在本次固定的分析条件下检验的，就做查询或对照；证据不足或检验条件不成立的，记为"未判定"；必须改 RTL 才能判断的建议，留到下一阶段。</p>
+<p style="margin:0 0 18px 0;font-size:16px;line-height:1.8;letter-spacing:0.5px;color:#222222;text-align:justify;">做完以后，有三件事最值得说：</p>
+<ul style="margin:0 0 18px 0;padding-left:22px;"><li style="margin:0 0 8px 0;font-size:16px;line-height:1.8;letter-spacing:0.5px;color:#222222;">修好一个局部瓶颈，不等于整个设计的问题解决了；</li><li style="margin:0 0 8px 0;font-size:16px;line-height:1.8;letter-spacing:0.5px;color:#222222;">slack 转正，可能只是改了时序预算，电路并没有变快；</li><li style="margin:0 0 8px 0;font-size:16px;line-height:1.8;letter-spacing:0.5px;color:#222222;">第二轮的事实判断全部通过，不等于第一轮的错误都被纠正了。</li></ul>
+<h2 style="margin:36px 0 16px 0;padding:2px 0 2px 12px;border-left:4px solid #2a78d6;font-size:19px;font-weight:bold;line-height:1.5;color:#222222;">2. 为什么做这件事</h2>
+<p style="margin:0 0 18px 0;font-size:16px;line-height:1.8;letter-spacing:0.5px;color:#222222;text-align:justify;">我想把大模型用进自己的芯片设计工作，先从读时序报告、提修改建议开始。大模型说的话往往很像样：哪条路径最慢，为什么慢，怎么改。但像样不等于对。我想知道，它说的话里有多少经得起工具核对；它给的修改，改完以后电路到底有没有变好。</p>
+<p style="margin:0 0 18px 0;font-size:16px;line-height:1.8;letter-spacing:0.5px;color:#222222;text-align:justify;">时序适合做这种实验。很多具体说法能对照报告，或者在固定的分析模型里做对照。当然，约束是否合理、修改有没有破坏功能，还要另外检查。</p>
+<p style="margin:0 0 18px 0;font-size:16px;line-height:1.8;letter-spacing:0.5px;color:#222222;text-align:justify;">这个系列叫"<strong style="color:#222222;">AI 提出的时序建议，用工程实验验证</strong>"。做法分四步，见下图。</p>
+<section style="margin:8px 0 22px 0;padding:22px 12px;border:2px dashed #eb6834;border-radius:6px;background:#fff7f3;text-align:center;font-size:15px;line-height:1.7;color:#b4441c;"><strong>【图 1】在此插入图片</strong><br>fig1_series.png<br><span style="color:#888;font-size:13px;">这个系列怎么做</span></section>
+<p style="margin:0 0 18px 0;font-size:16px;line-height:1.8;letter-spacing:0.5px;color:#222222;text-align:justify;">第一步要多说一句：为了检验某个说法，可以另开对照改一项设置，但对照的结果单独标记，不能算成优化收益。本文写完时，RTL 修改还没有开始。</p>
+<p style="margin:0 0 18px 0;font-size:16px;line-height:1.8;letter-spacing:0.5px;color:#222222;text-align:justify;">第二个案例 CASE-02 还只是计划：在同一个设计上故意漏掉一项输入延迟约束，看 AI 能不能分清"真的变快"和"约束漏了"。缺了约束，相关路径可能变成没有约束的路径，报告看起来更好，像是"变快了"，但这不说明电路变快。</p>
+<p style="margin:0 0 18px 0;font-size:16px;line-height:1.8;letter-spacing:0.5px;color:#222222;text-align:justify;">整个计划先做这两个案例。布线后的对照、换更多模型复跑，以后有条件再做，本期不承诺。</p>
+<h2 style="margin:36px 0 16px 0;padding:2px 0 2px 12px;border-left:4px solid #2a78d6;font-size:19px;font-weight:bold;line-height:1.5;color:#222222;">3. 这道题卡在哪里</h2>
+<p style="margin:0 0 18px 0;font-size:16px;line-height:1.8;letter-spacing:0.5px;color:#222222;text-align:justify;">被测电路很小：四对 16 位有符号数相乘，四个乘积加起来，再饱和到 32 位输出。饱和的意思是，结果超出 32 位有符号数的范围时，取最大值或最小值，而不是截断回绕。现在的实现只在输出端有一级寄存器，全部组合运算都挤在同一拍里。</p>
+<section style="margin:8px 0 22px 0;padding:22px 12px;border:2px dashed #eb6834;border-radius:6px;background:#fff7f3;text-align:center;font-size:15px;line-height:1.7;color:#b4441c;"><strong>【图 2】在此插入图片</strong><br>fig2_circuit.png<br><span style="color:#888;font-size:13px;">被测电路</span></section>
+<p style="margin:0 0 18px 0;font-size:16px;line-height:1.8;letter-spacing:0.5px;color:#222222;text-align:justify;">时钟周期按事先定好的校准规则设为 27.91 ns，让最差的 setup slack 大约是周期的 −15%。也就是说，这是一个明确违例的起点，留给模型去诊断。</p>
+<p style="margin:0 0 18px 0;font-size:16px;line-height:1.8;letter-spacing:0.5px;color:#222222;text-align:justify;">这里先看 setup，也就是检查数据能不能及时到达。setup slack 是要求的最晚到达时刻减去实际到达时刻，负数就是没赶上。本次检查了 6 组工艺、电压、温度的组合，下面简称"角"。最差的角是慢工艺、1.60 V、零下 40 度：</p>
+<section style="margin:8px 0 22px 0;padding:22px 12px;border:2px dashed #eb6834;border-radius:6px;background:#fff7f3;text-align:center;font-size:15px;line-height:1.7;color:#b4441c;"><strong>【图 3】在此插入图片</strong><br>fig3_budget.png<br><span style="color:#888;font-size:13px;">最差路径的时间账</span></section>
+<p style="margin:0 0 18px 0;font-size:16px;line-height:1.8;letter-spacing:0.5px;color:#222222;text-align:justify;">图里灰色的 5.58 ns 是约束规定的输入外部延迟，也就是外部电路把数据送到输入端之前已经用掉的时间。从输入到寄存器，还要算上约 0.31 ns 的端口驱动和 37 个组合单元的延迟，最终比要求的时刻晚了 4.19 ns。图中"最晚应到"的 27.35 ns，是周期 27.91 ns 减去寄存器的 setup 要求 0.56 ns。</p>
+<section style="margin:8px 0 22px 0;padding:22px 12px;border:2px dashed #eb6834;border-radius:6px;background:#fff7f3;text-align:center;font-size:15px;line-height:1.7;color:#b4441c;"><strong>【图 4】在此插入图片</strong><br>fig4_corners.png<br><span style="color:#888;font-size:13px;">6 个角的最差 setup slack</span></section>
+<p style="margin:0 0 18px 0;font-size:16px;line-height:1.8;letter-spacing:0.5px;color:#222222;text-align:justify;">6 个角里只有两个慢工艺角违例，其余 4 个都有富余。这是改动之前的基线结果。</p>
+<p style="margin:0 0 18px 0;font-size:16px;line-height:1.8;letter-spacing:0.5px;color:#222222;text-align:justify;">分析条件是综合之后、布局之前：时钟按理想情况处理，不算布线的电阻和电容，但算上了单元引脚和输出负载对延迟的影响。输入端驱动单元的输入 transition 设为 0 ns，这是简化，不代表真实接口。</p>
+<p style="margin:0 0 18px 0;font-size:16px;line-height:1.8;letter-spacing:0.5px;color:#222222;text-align:justify;">综合用的是这个案例专用的配方，没有设时钟和输入输出的时序目标，也没有做物理修复，结果不一定能推广到默认流程。这些简化意味着，本文的结论只在这个固定模型、这 6 个角之内成立，不代表流片后的芯片。</p>
+<h2 style="margin:36px 0 16px 0;padding:2px 0 2px 12px;border-left:4px solid #2a78d6;font-size:19px;font-weight:bold;line-height:1.5;color:#222222;">4. 怎么把一句话变成可检查的判断</h2>
+<p style="margin:0 0 18px 0;font-size:16px;line-height:1.8;letter-spacing:0.5px;color:#222222;text-align:justify;">第一轮尽量统一条件：三个模型拿到同一份设计材料，包括路径报告、约束、各角的汇总表、RTL 和一页背景说明；都通过同一版命令行外壳调用，并关掉它们自己跑工具的权限，只能读材料、写答复。服务端和兼容接口仍有差异。</p>
+<p style="margin:0 0 18px 0;font-size:16px;line-height:1.8;letter-spacing:0.5px;color:#222222;text-align:justify;">一共考两轮。第一轮读材料写诊断。第二轮把每个模型自己提的查询拿到工具里跑，各自只拿回自己的结果，再修正判断。</p>
+<p style="margin:0 0 18px 0;font-size:16px;line-height:1.8;letter-spacing:0.5px;color:#222222;text-align:justify;">模型版本按调用参数和响应里记录的模型名标注。Kimi 和 DeepSeek 经过各自的兼容接口调用，背后具体是什么模型，我们无法独立核实。</p>
+<p style="margin:0 0 18px 0;font-size:16px;line-height:1.8;letter-spacing:0.5px;color:#222222;text-align:justify;">三份答复先随机编成 A、B、C，初次判读用代号。这是部分盲评，答复的文风仍可能暴露身份。</p>
+<p style="margin:0 0 18px 0;font-size:16px;line-height:1.8;letter-spacing:0.5px;color:#222222;text-align:justify;">还有一点要说明：拆分答复、写判定条件、打标签的操作者也是 Claude，和被测的 Claude 是同一个模型，有偏向自己的风险。判定条件先写后查，就是为了压住这一点。</p>
+<p style="margin:0 0 18px 0;font-size:16px;line-height:1.8;letter-spacing:0.5px;color:#222222;text-align:justify;">判的时候，按性质分两类：</p>
+<ul style="margin:0 0 18px 0;padding-left:22px;"><li style="margin:0 0 8px 0;font-size:16px;line-height:1.8;letter-spacing:0.5px;color:#222222;"><strong style="color:#222222;">事实</strong>，比如"这条路径有 37 个单元"。对照报告，分"证实""推翻""无法核对"。</li><li style="margin:0 0 8px 0;font-size:16px;line-height:1.8;letter-spacing:0.5px;color:#222222;"><strong style="color:#222222;">假设</strong>，比如"某个高扇出信号是主要原因"。事先写下：出现什么结果算支持，什么结果会让它站不住，然后去试。结果分"支持""反对""未判定"。必须改 RTL 才能判断的，单独留给阶段 B。</li></ul>
+<p style="margin:0 0 18px 0;font-size:16px;line-height:1.8;letter-spacing:0.5px;color:#222222;text-align:justify;">"支持"只针对这次实际检验的那一部分，不等于整段解释都对了。"未判定"也不等于模型说错了：可能是证据不足、对照没生效、判定条件有歧义，或者结果不足以满足判定条件。</p>
+<p style="margin:0 0 18px 0;font-size:16px;line-height:1.8;letter-spacing:0.5px;color:#222222;text-align:justify;">做验证的人可以这样理解：先说清楚检查什么、怎样算过，再看结果。但自然语言的答复没有一个包办一切的 checker，查不清的要允许留空。</p>
+<h2 style="margin:36px 0 16px 0;padding:2px 0 2px 12px;border-left:4px solid #2a78d6;font-size:19px;font-weight:bold;line-height:1.5;color:#222222;">5. 三份答复说了什么</h2>
+<p style="margin:0 0 18px 0;font-size:16px;line-height:1.8;letter-spacing:0.5px;color:#222222;text-align:justify;">三家对主要原因的看法相近：一个周期里塞了整条乘加和饱和逻辑，组合逻辑太长。三家也都注意到，末端有一个高扇出的公共控制信号，也就是同一个信号要驱动很多接收端，是局部热点。Kimi 和 DeepSeek 还把输入外部延迟当作重要因素；Claude 把它只当背景，因为约束不能改。</p>
+<p style="margin:0 0 18px 0;font-size:16px;line-height:1.8;letter-spacing:0.5px;color:#222222;text-align:justify;">修改建议的共同方向是增加流水级，但切在哪里并不一样：</p>
+<section style="margin:8px 0 22px 0;padding:22px 12px;border:2px dashed #eb6834;border-radius:6px;background:#fff7f3;text-align:center;font-size:15px;line-height:1.7;color:#b4441c;"><strong>【图 5】在此插入图片</strong><br>fig5_cuts.png<br><span style="color:#888;font-size:13px;">三家提出的流水切点</span></section>
+<p style="margin:0 0 18px 0;font-size:16px;line-height:1.8;letter-spacing:0.5px;color:#222222;text-align:justify;">图里只画了主要的几种。Claude 第一轮还提过在压缩树输出处切，Kimi 还把不加流水级的算术优化排在前面。这些建议都只是候选，有没有效，要到阶段 B 改了 RTL，做功能仿真、重新综合和 6 个角的时序检查才知道。</p>
+<h2 style="margin:36px 0 16px 0;padding:2px 0 2px 12px;border-left:4px solid #2a78d6;font-size:19px;font-weight:bold;line-height:1.5;color:#222222;">6. 工具核对出的两件事</h2>
+<p style="margin:0 0 18px 0;font-size:16px;line-height:1.8;letter-spacing:0.5px;color:#222222;text-align:justify;"><strong style="color:#222222;">第一件：修好一个局部瓶颈，不等于整体解决。</strong></p>
+<p style="margin:0 0 18px 0;font-size:16px;line-height:1.8;letter-spacing:0.5px;color:#222222;text-align:justify;">三家都提到末端那个高扇出信号，下面叫它 X，它驱动通向 31 个输出位的逻辑。Claude 的说法最具体：驱动 X 的单元太弱，额外带来了约 2.5 到 3 ns 的延迟。它还写了怎么推翻自己：把这个单元换成驱动更强的版本后，如果全设计的最差 slack 改善不到 1 ns，这条假设就站不住。</p>
+<p style="margin:0 0 18px 0;font-size:16px;line-height:1.8;letter-spacing:0.5px;color:#222222;text-align:justify;">我们照做了，结果如下：</p>
+<section style="margin:8px 0 22px 0;padding:22px 12px;border:2px dashed #eb6834;border-radius:6px;background:#fff7f3;text-align:center;font-size:15px;line-height:1.7;color:#b4441c;"><strong>【图 6】在此插入图片</strong><br>fig6_local_global.png<br><span style="color:#888;font-size:13px;">把驱动 X 的单元换强以后</span></section>
+<p style="margin:0 0 18px 0;font-size:16px;line-height:1.8;letter-spacing:0.5px;color:#222222;text-align:justify;">原来那条路径改善了 2.30 ns，但全设计的最差 slack 只改善了 0.67 ns。对照报告显示，最差路径改走了旁边另一个信号 Y 那一支。原设计还有 27 个终点并列最差，所以只看原来那条路径，会高估这次调整的整体效果。按 Claude 自己写的条件，这条假设被推翻。</p>
+<p style="margin:0 0 18px 0;font-size:16px;line-height:1.8;letter-spacing:0.5px;color:#222222;text-align:justify;">有意思的是第二轮。Claude 拿到这个结果以后，自己把 X 从"多花 2.5 到 3 ns"改成了"次要因素"。</p>
+<p style="margin:0 0 18px 0;font-size:16px;line-height:1.8;letter-spacing:0.5px;color:#222222;text-align:justify;">做时序优化时这是个很实用的提醒：盯着一条路径看它变好了没有，是不够的，要看全设计的最差值有没有动。</p>
+<p style="margin:0 0 18px 0;font-size:16px;line-height:1.8;letter-spacing:0.5px;color:#222222;text-align:justify;">我们又扩大了这组对照：把原路径上的 37 个组合单元都换成驱动更强的版本，这条路径仍差约 2.12 ns。这次调整没有消除违例，流水方案的效果还要另外验证。</p>
+<p style="margin:0 0 18px 0;font-size:16px;line-height:1.8;letter-spacing:0.5px;color:#222222;text-align:justify;"><strong style="color:#222222;">第二件：slack 转正，可能只是改了预算。</strong></p>
+<p style="margin:0 0 18px 0;font-size:16px;line-height:1.8;letter-spacing:0.5px;color:#222222;text-align:justify;">三家都预测过：如果没有那 5.58 ns 的输入外部延迟，这条路径会怎样，有的给了近似数值，有的只说会转正。我们在工具里做了对照，把输入延迟设为 0，slack 变成 +1.39 ns，三家的这条预测都得到支持。</p>
+<p style="margin:0 0 18px 0;font-size:16px;line-height:1.8;letter-spacing:0.5px;color:#222222;text-align:justify;">但这个对照什么也没改进。RTL 没变，电路没变，只是把约束里外部电路占用的时间拿掉了。它能帮我们核对模型的诊断，但不能算成优化成绩。另一组对照把周期改为 33.15 ns，同时把输入、输出的外部延迟按 0.2T 改为 6.63 ns，这条路径的 slack 约为 +0.002 ns，刚好不违例。这也只是改了检查条件，电路没有变快。</p>
+<section style="margin:8px 0 22px 0;padding:22px 12px;border:2px dashed #eb6834;border-radius:6px;background:#fff7f3;text-align:center;font-size:15px;line-height:1.7;color:#b4441c;"><strong>【图 7】在此插入图片</strong><br>fig7_controls.png<br><span style="color:#888;font-size:13px;">同一条路径，几组对照的 setup slack</span></section>
+<p style="margin:0 0 18px 0;font-size:16px;line-height:1.8;letter-spacing:0.5px;color:#222222;text-align:justify;">把几组对照放在一起看：两组改约束的结果都转正了，电路却没变；换强驱动这组确实改善了 slack，只是仍未消除违例。正负号不能代替对电路改动的判断。这几组各自从基线出发，条件不同，只用来说明现象，不是方案比较；起点和终点相同，但不保证每组经过的单元完全一样。</p>
+<p style="margin:0 0 18px 0;font-size:16px;line-height:1.8;letter-spacing:0.5px;color:#222222;text-align:justify;">这件事和下一篇直接相关。"先把输入寄存一拍"的方案，是让长组合逻辑放到两级寄存器之间，不再扣同一笔输入的外部延迟；实际可用的时间仍要扣掉寄存器自身的开销。它即使让时序收敛，也要说清楚收益从哪来，代价是多一拍延迟和更多寄存器。</p>
+<h2 style="margin:36px 0 16px 0;padding:2px 0 2px 12px;border-left:4px solid #2a78d6;font-size:19px;font-weight:bold;line-height:1.5;color:#222222;">7. 模型错在哪，拿到反馈后又怎样</h2>
+<p style="margin:0 0 18px 0;font-size:16px;line-height:1.8;letter-spacing:0.5px;color:#222222;text-align:justify;">按本次的判定规则，第一轮有 5 条事实被推翻：Claude 43 条里 3 条，DeepSeek 13 条里 2 条，Kimi 的 35 条都获证实。Claude 另有 1 条无法核对。这些条数只描述这三份答复，不能拿来比哪家强：答复长短不同，拆出来的条数不同，每家也只完成了一次两轮流程。</p>
+<p style="margin:0 0 18px 0;font-size:16px;line-height:1.8;letter-spacing:0.5px;color:#222222;text-align:justify;">错法各不相同：</p>
+<ul style="margin:0 0 18px 0;padding-left:22px;"><li style="margin:0 0 8px 0;font-size:16px;line-height:1.8;letter-spacing:0.5px;color:#222222;"><strong style="color:#222222;">读错了表的意思。</strong> DeepSeek 说"存在 130 条输入到寄存器的路径"。表里那一栏写明是"能到达这类终点的起点个数"，130 统计的是起点，同一个起点可能通向多条路径，不能当成路径总数。</li><li style="margin:0 0 8px 0;font-size:16px;line-height:1.8;letter-spacing:0.5px;color:#222222;"><strong style="color:#222222;">近似值跨过了舍入边界。</strong> Claude 有两条，一位小数本应写 25.7 和 12.9，却写成了 25.6 和 12.8。这是按事先定好的严格容差判的，差得很少，但规则对所有人一样。</li><li style="margin:0 0 8px 0;font-size:16px;line-height:1.8;letter-spacing:0.5px;color:#222222;">还有一条是 Claude 对一类门的延迟范围说窄了，判定的范围仍有争议；一条是 DeepSeek 的减法算错了。细节在完整版。</li></ul>
+<p style="margin:0 0 18px 0;font-size:16px;line-height:1.8;letter-spacing:0.5px;color:#222222;text-align:justify;"><strong style="color:#222222;">第二轮的查询命令也出了不少问题。</strong> 第二轮要跑模型自己写的查询。三份答复里的查询都遇到了命令或参数错误：用了这个工具版本里不存在的命令，选项写错，或者把对象传给了只接受名字的命令。有的代码块仍返回了部分结果。</p>
+<p style="margin:0 0 18px 0;font-size:16px;line-height:1.8;letter-spacing:0.5px;color:#222222;text-align:justify;">DeepSeek 把 7 个子查询写在一个代码块里，输出又被截断，它第二轮基本看不到自己的报错。</p>
+<p style="margin:0 0 18px 0;font-size:16px;line-height:1.8;letter-spacing:0.5px;color:#222222;text-align:justify;">提出一个查询思路，和写出能在当前工具版本里跑起来的命令，是两件事。这个差距直接影响模型第二轮能拿到多少证据。</p>
+<p style="margin:0 0 18px 0;font-size:16px;line-height:1.8;letter-spacing:0.5px;color:#222222;text-align:justify;"><strong style="color:#222222;">最值得注意的是第二轮的覆盖。</strong> 按本次的拆分和判定规则，第二轮列为事实的判断全部获证实。</p>
+<p style="margin:0 0 18px 0;font-size:16px;line-height:1.8;letter-spacing:0.5px;color:#222222;text-align:justify;">但按判断编号的关联记录，第一轮被推翻的 5 条事实，第二轮都没有对应的复核条目。这不等于错误已经消失：DeepSeek 在第二轮的"缺失证据"里仍写了"130 条路径"，因为归在另一类，没有计入第二轮的事实标签。第二轮的模型没有收到我们的判定结果，也就没有得到针对这些错误的逐条纠错提示。</p>
+<p style="margin:0 0 18px 0;font-size:16px;line-height:1.8;letter-spacing:0.5px;color:#222222;text-align:justify;">所以，"第二轮列为事实的判断全部获证实"，不等于"上一轮的错误都已纠正"。要衡量纠错，就得事先决定要不要把被质疑的条目告诉模型，并要求它逐条回应。这是下一次设计实验时要解决的问题。</p>
+<h2 style="margin:36px 0 16px 0;padding:2px 0 2px 12px;border-left:4px solid #2a78d6;font-size:19px;font-weight:bold;line-height:1.5;color:#222222;">8. 检查的人也会错，这套检查花了什么</h2>
+<p style="margin:0 0 18px 0;font-size:16px;line-height:1.8;letter-spacing:0.5px;color:#222222;text-align:justify;">检查的一方同样出了错，照实写出来：</p>
+<ul style="margin:0 0 18px 0;padding-left:22px;"><li style="margin:0 0 8px 0;font-size:16px;line-height:1.8;letter-spacing:0.5px;color:#222222;"><strong style="color:#222222;">我自己的参考答案。</strong> 模型运行之前，我先手算了一遍这条路径。减法 27.3541 − 31.5439 应得 −4.1898，我却直接抄了报告的 −4.1897，还写了"没有末位差"。工具用的是没有舍入的数，两个各自舍入过的数再相减，最后一位就差了 1，也就是 0.0001 ns。</li><li style="margin:0 0 8px 0;font-size:16px;line-height:1.8;letter-spacing:0.5px;color:#222222;"><strong style="color:#222222;">对照命令没生效。</strong> 为了检验"输入端口驱动不是主因"，我们用了一条把输入驱动设为理想的命令。这里改的是端口驱动模型，和前面把外部延迟清零是两件事。这条命令被约束里的另一条设置覆盖，没起作用。第二轮换了办法，把输入驱动换成库里驱动能力很强的缓冲器，看到了改善；但它仍不是理想驱动，这次对照还是判不了。</li><li style="margin:0 0 8px 0;font-size:16px;line-height:1.8;letter-spacing:0.5px;color:#222222;"><strong style="color:#222222;">事后更正。</strong> 有 16 条判定是揭盲后更正过的，原因包括判定条件没照模型的原话写、数值窗口宽严不一、引用只覆盖了一部分等。原始标签和最终统计都在仓库里，逐条的更正记录没有公开。</li></ul>
+<p style="margin:0 0 18px 0;font-size:16px;line-height:1.8;letter-spacing:0.5px;color:#222222;text-align:justify;">代价方面：正式运行两轮各 3 次，全部一次通过，没有作废或补跑。评估花了多少工时，没有逐项记录；按提交时间算，第一轮从拿到答复到判完约一个半小时，第二轮约六小时，但这是包括等待在内的时间跨度，不是工时。token 用量和费用也没有统计。</p>
+<h2 style="margin:36px 0 16px 0;padding:2px 0 2px 12px;border-left:4px solid #2a78d6;font-size:19px;font-weight:bold;line-height:1.5;color:#222222;">9. 下一篇要验证什么</h2>
+<p style="margin:0 0 18px 0;font-size:16px;line-height:1.8;letter-spacing:0.5px;color:#222222;text-align:justify;">阶段 B 会让 AI 提出 RTL 修改，候选主要是两类：乘积之后加寄存器，或者先把输入寄存一拍；三拍是备选。每轮修改之前先写下预期，再跑：</p>
+<ul style="margin:0 0 18px 0;padding-left:22px;"><li style="margin:0 0 8px 0;font-size:16px;line-height:1.8;letter-spacing:0.5px;color:#222222;">功能：用同一套测试检查每笔交易的结果、有效信号和复位，并做门级仿真；</li><li style="margin:0 0 8px 0;font-size:16px;line-height:1.8;letter-spacing:0.5px;color:#222222;">合同：延迟最多 3 拍，每拍仍要接收一笔输入，接口和输入输出约束不变，面积不超过原来的 1.25 倍；</li><li style="margin:0 0 8px 0;font-size:16px;line-height:1.8;letter-spacing:0.5px;color:#222222;">时序：6 个角的 setup 和 hold 都看。hold 检查的是数据会不会变得太早。本模型下，原设计最小的 hold 裕量约 0.06 ns；加了寄存器以后会出现寄存器到寄存器的新路径，要重新检查。</li></ul>
+<p style="margin:0 0 18px 0;font-size:16px;line-height:1.8;letter-spacing:0.5px;color:#222222;text-align:justify;">最多两轮。两轮都没有收益，就发表失败的分析。</p>
+<p style="margin:0 0 18px 0;font-size:16px;line-height:1.8;letter-spacing:0.5px;color:#222222;text-align:justify;">回到标题的问题。在这次案例里，我会把大模型的诊断当作待验证的起点；涉及数字、原因和修改收益的判断，仍要逐项检查。</p>
+<p style="margin:0 0 18px 0;font-size:16px;line-height:1.8;letter-spacing:0.5px;color:#222222;text-align:justify;">三份答复都提出了值得继续检验的方向，但读对数字、提出假设、写出能跑的查询、真正改好 RTL，是四件不同的事。这次只核对了前面几步；修改有没有收益、代价能不能接受，下一篇按同样的规则验证。</p>
+<section style="margin:0 0 20px 0;padding:12px 16px;background:#f5f6f8;border-left:3px solid #c9c8c3;font-size:14px;line-height:1.75;color:#555555;">项目仓库：<span style="color:#2a78d6;word-break:break-all;">https://github.com/hyljjy/ai-silicon-lab</span><br>• 完整版（每个数字都标了出处）：<span style="color:#2a78d6;word-break:break-all;">https://github.com/hyljjy/ai-silicon-lab/blob/main/docs/posts/article1_draft.md</span><br>• 全部判定记录、查询原始输出和复现脚本：<span style="color:#2a78d6;word-break:break-all;">https://github.com/hyljjy/ai-silicon-lab/tree/main/tasks/CASE-01/diag</span><br>• 最终统计：<span style="color:#2a78d6;word-break:break-all;">https://github.com/hyljjy/ai-silicon-lab/blob/main/tasks/CASE-01/diag/stats_revised.md</span></section>
+</section>
+</div>
+</div>
+<script>
+document.getElementById('copy').onclick = function () {
+  var el = document.getElementById('article'), r = document.createRange(), s = window.getSelection();
+  s.removeAllRanges(); r.selectNodeContents(el); s.addRange(r);
+  var ok = false; try { ok = document.execCommand('copy'); } catch (e) {}
+  s.removeAllRanges();
+  document.getElementById('msg').textContent = ok ? '已复制，去编辑器粘贴' : '复制失败，请手动全选正文复制';
+};
+</script>
+</body></html>
