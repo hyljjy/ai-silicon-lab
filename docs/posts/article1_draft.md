@@ -4,7 +4,7 @@
 
 > 草稿。起草者是本项目的操作者 Claude（`claude-opus-5-5`），**与被测的 Claude 是同一个模型**。作者修改定稿；是否发表、何时发表，由作者决定。
 >
-> 项目仓库：https://github.com/hyljjy/ai-silicon-lab。公众号版：`docs/posts/article1_public.md`。
+> 项目仓库：https://github.com/hyljjy/ai-silicon-lab。公众号版：`docs/posts/article1_public.md`；英文摘要：`docs/posts/article1_summary_en.md`。
 >
 > 文中来源路径都相对于仓库的 `tasks/CASE-01/`，例如 `diag/stats.md`；`B02` 指基础核对 `diag/queries/base/base_B02_worst_path_d6/query_full.txt`（最差路径的 6 位小数报告）。
 >
