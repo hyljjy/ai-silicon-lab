@@ -13,3 +13,12 @@ __pycache__/
 # private working notes and commercial-tool scripts: kept locally, never published (2026-10-17)
 docs/sessions/
 scripts/
+
+# reviews, plans, prototypes and the post-unblinding review records: kept locally, not published (2026-10-17)
+docs/review/
+docs/PLAN_*.md
+tasks/CASE-01/impl_plan.md
+tasks/CASE-01/diag/impl_plan.md
+tasks/CASE-01/plan/
+tasks/CASE-01/diag/plan/
+tasks/CASE-01/diag/review/

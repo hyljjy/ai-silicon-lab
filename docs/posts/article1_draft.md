@@ -54,7 +54,7 @@
   - 改约束、改单元的查询转入单独的对照运行；
   - 结果原样交还，不替模型改写命令（`diag/protocol.md` §8，`diag/rules/rewrite_table.md`）。
 
-**部分盲评。** 运行脚本把三份答复随机编成 A、B、C。代号与模型的对应表加了 256 位随机盐，存在仓库外的封存目录；只有它的 sha256 在第 1 轮之前提交（提交 `7a2a7f4`，09:11，见 `git log`；第 1 轮 09:13:43 开始，见 `diag/outputs/sealed_export/heads.log:3`）。初次的拆分、写判定条件、复验和打标签，都在揭盲之前完成。揭盲时核对封存对应表的 sha256 与承诺一致（`a6e7aae0…`，`diag/outputs/mapping.sha256`）。结果是 **A = Claude，B = Kimi，C = DeepSeek**（`diag/outputs/mapping.json`）。
+**部分盲评。** 运行脚本把三份答复随机编成 A、B、C。代号与模型的对应表加了 256 位随机盐，存在仓库外的封存目录；只有它的 sha256 在第 1 轮之前提交（提交 `1fb2d5e`，09:11，见 `git log`；第 1 轮 09:13:43 开始，见 `diag/outputs/sealed_export/heads.log:3`）。初次的拆分、写判定条件、复验和打标签，都在揭盲之前完成。揭盲时核对封存对应表的 sha256 与承诺一致（`a6e7aae0…`，`diag/outputs/mapping.sha256`）。结果是 **A = Claude，B = Kimi，C = DeepSeek**（`diag/outputs/mapping.json`）。
 
 这里的提交顺序来自本地 git，只是"作者自己作证"的记录，不构成第三方意义上的证明（`diag/protocol.md` §3）。
 
@@ -72,7 +72,7 @@
 
 ## 3. 证据和假设：作者的参考答案
 
-模型运行之前，作者先独立填了一份参考答案，08:50 提交（提交 `20fabe5`，见 `git log`；`diag/reference/answer.md`）。按规程，参考答案提交后不改，错误照样写出来。操作者用基础核对比对的结果（`diag/reference/check.md`）：
+模型运行之前，作者先独立填了一份参考答案，08:50 提交（提交 `92dcd8d`，见 `git log`；`diag/reference/answer.md`）。按规程，参考答案提交后不改，错误照样写出来。操作者用基础核对比对的结果（`diag/reference/check.md`）：
 
 - **表格 9 项全对**：起点、终点、时钟沿、单位、arrival 31.5439、required 27.3541、slack −4.1897 ns（理想时钟、综合后、只计引脚电容，ss_n40C_1v60）、setup 要求 0.5559 等，数值和对象都对。其中"单位的依据"一部分引了 Liberty 文件，超出了参考答案允许参看的三份材料。
 - **arrival 的手算对**：输入外部延迟、输入端口和 37 个单元，共 39 项延迟逐项相加，等于 31.5439，没有漏项或抄错。required 的算式少写了一个运算符（应为 27.9100 + 0.0000 − 0.5559），结果 27.3541 对。
@@ -237,7 +237,7 @@
 - **操作者的对照命令无效。** Claude H6"输入端口驱动不是主因"的第 1 轮对照用了 `set_drive 0`，被 SDC 中的 `set_driving_cell` 覆盖，没有生效，所以判为未判定（A-1-099；`diag/queries/recheck/rc_A-1-099/query_full.txt`）。第 2 轮改用 `set_driving_cell` 换成 `buf_16` 重做，观察到改善；但 buf_16 不是理想驱动，这次对照给不出所需的改善上限，同一假设（动作为"保持"）仍为未判定（A-2-068）。
 - **操作者的重查写错。** 第 1 轮有两个重查查询的 Tcl 写法不对，其中一个触发了 OpenSTA 段错误。只改写法、判定条件不变，重跑后使用，原运行保留（`diag/interventions.md`，`diag/recheck/q/A-1-093.tcl`、`A-1-097.tcl`）。
 - **判据前后不一致**，见第 6.1 节 A-2-067。
-- **预登记之后的改动。** 统计脚本 `scripts/claims_stats.py` 和它的测试 `scripts/test_claims_stats.py` 列在预登记清单里（`diag/rules/preregistered.txt`），本应在预登记之后不再修改，但在第 2 轮答复之后改了三处（提交 `710c241`、`0f011e3`）：
+- **预登记之后的改动。** 统计脚本 `scripts/claims_stats.py` 和它的测试 `scripts/test_claims_stats.py` 列在预登记清单里（`diag/rules/preregistered.txt`），本应在预登记之后不再修改，但在第 2 轮答复之后改了三处（提交 `a32bef9`、`13e79a5`）：
   1. 证据引用行不再计入转移表。原来每条事实会算两次。
   2. 读表时不再把开头的引号当作带引号的字段。原来会丢掉引号，引号不成对时还会吞掉后面的行。
   3. **新增规则 G12**：第 2 轮里关于"查询本身报了什么错、输出是否被截断"的事实，可以引用该代号交还结果的原文作为证据（`diag/claims.tsv` 开头的注释）。这条规则是在看到第 2 轮答复之后、打标签之前加的。依据它判为证实的事实有 5 条：A-2-003、B-2-054、C-2-001、C-2-012、C-2-014。没有 G12，这 5 条只能标"无法核对"。
@@ -300,8 +300,8 @@
 
 ## 8. 已知偏差和残留差异
 
-- **同一个模型的风险。** 起草者、操作者、规程审查者和被测的 Claude 是同一个模型（`claude-opus-5-5`），有自我偏好的风险。缓解措施是判据先写后查和部分盲评。本文另由一个新开的 Claude 审查子代理审查，它也是同一个模型（`docs/review/CASE01_A1_reviewer.md`）。Kimi 和 DeepSeek 是被测对象，不承担本流程（阶段 A 诊断）的任何审查；此前 Kimi 曾审过 CASE-01 F0→F1 的实现计划（`docs/review/CASE01_P2_kimi.md`）。
-- **有 16 条标签是揭盲后更正过的。** 原因是判据没照模型原话、数值窗口宽严不一、引用只覆盖了一部分等，改动方向多数对 Claude 不利。原始标签和更正记录都在仓库里（`diag/stats.md`、`diag/review/postblind/`）。
+- **同一个模型的风险。** 起草者、操作者、规程审查者和被测的 Claude 是同一个模型（`claude-opus-5-5`），有自我偏好的风险。缓解措施是判据先写后查和部分盲评。本文另由一个新开的 Claude 审查子代理审查，它也是同一个模型；评审记录未公开。Kimi 和 DeepSeek 是被测对象，不承担本流程（阶段 A 诊断）的任何审查；此前 Kimi 曾审过 CASE-01 F0→F1 的实现计划。
+- **有 16 条标签是揭盲后更正过的。** 原因是判据没照模型原话、数值窗口宽严不一、引用只覆盖了一部分等，改动方向多数对 Claude 不利。原始标签在 `diag/claims.tsv` 和 `diag/stats.md`，最终标签的统计在 `diag/stats_revised.md`；逐条的更正记录未公开。
 - **部分盲评。** 运行由操作者编排，盲评成立与否，取决于操作者遵守"揭盲前不打开封存目录"的约定；答复的文风也可能暴露身份。只有 Claude 那一次，因为订阅登录收到过账号邮箱；仓库里的答复把邮箱和本机路径替换成 `<已隐去>`，这个标记本身就可能暗示身份。实际检查，六份答复里都没有出现 `<已隐去>`（`diag/outputs/sealed_export/round*/*.meta.json` 的 `hidden_in_answer: 0`），也没有自报模型名。
 - **预登记之前看过基础核对。** 操作者在实现计划的预验证阶段，即预登记之前，执行并看过基础核对的输出。时间是 2026-10-10 至 10-12（`diag/interventions.md` 第一行；规程 §7.2 只写了 10-10、10-11）。看到的内容包括"最差 slack 有 27 个终点并列""同一终点有 7 条不同路径"。
 - **措辞修改的时机。** 按审查意见 D5，材料包背景说明改了三处措辞：延迟 L 的定义、`-scenes` 的说法、"按默认设置只报告一条路径"。其中第三处是在看过基础核对之后提出的（`diag/interventions.md`）。
@@ -348,7 +348,7 @@
 
 | 内容 | 位置 |
 |---|---|
-| 规程、实现计划 | `diag/protocol.md`、`diag/impl_plan.md` |
+| 规程 | `diag/protocol.md`（实现计划未公开） |
 | 材料包 | `diag/package/` |
 | 题目（两轮、按代号） | `diag/prompts/` |
 | 答复（按代号） | `diag/outputs/round1/`、`diag/outputs/round2/` |
@@ -358,5 +358,4 @@
 | 第 2 轮抽取、翻译表、交还的结果 | `diag/round2/` |
 | 介入日志 | `diag/interventions.md` |
 | 揭盲：对应表、运行元数据 | `diag/outputs/mapping.json`、`diag/outputs/sealed_export/` |
-| 本文的审查记录 | `docs/review/CASE01_A1_reviewer.md` |
 | 最终标签统计 | `diag/stats_revised.md`（脚本 `diag/scripts/claims_stats_revised.py`） |
