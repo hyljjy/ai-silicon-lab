@@ -22,3 +22,6 @@ tasks/CASE-01/diag/impl_plan.md
 tasks/CASE-01/plan/
 tasks/CASE-01/diag/plan/
 tasks/CASE-01/diag/review/
+
+# environment debugging logs: kept locally, not published (2026-10-17)
+docs/env/
