@@ -1,14 +1,15 @@
 # 2026-10-17 历史改写：新旧提交号对照
 
-2026-10-17 公开仓库之前，改写过三次全部历史：
+2026-10-17 公开仓库之前，改写过四次全部历史：
 
 1. 提交者邮箱换成公开邮箱；本地工作记录 `docs/sessions/` 和商业 EDA 工具的调用脚本 `scripts/` 从所有提交中移除。
 2. 执行计划 `docs/PLAN_*.md`、评审记录 `docs/review/`、实现计划和原型代码（`tasks/CASE-01/impl_plan.md`、`tasks/CASE-01/plan/`、`tasks/CASE-01/diag/impl_plan.md`、`tasks/CASE-01/diag/plan/`）、揭盲后复核记录 `tasks/CASE-01/diag/review/` 从所有提交中移除。
 3. 环境调试记录 `docs/env/` 从所有提交中移除。
+4. 介入日志 `tasks/CASE-01/diag/interventions.md` 和事故说明 `tasks/CASE-01/diag/INCIDENT-2026-10-12-run-limited-windows.md` 从所有提交中移除。
 
 提交内容的其他部分、提交时间和提交说明都没有变；只改动了被移除文件的提交保留为空提交。
 
-仓库里改写之前写成的记录（介入日志、查询结果 `result.json` 中的 `repo_commit`、封存导出的 `heads.log`、冒烟总结、F1 说明等）引用的是**原始**提交号。这些记录被哈希清单锁定或属于当时的原始记录，没有改。按下表把原始编号换成新编号即可找到对应提交。文章完整版和 `build_package.py` 已改用新编号。预登记清单中的 `diag/impl_plan.md` 已不在公开仓库里。
+仓库里改写之前写成的记录（查询结果 `result.json` 中的 `repo_commit`、封存导出的 `heads.log`、冒烟总结、F1 说明等）引用的是**原始**提交号。这些记录被哈希清单锁定或属于当时的原始记录，没有改。按下表把原始编号换成新编号即可找到对应提交。文章完整版和 `build_package.py` 已改用新编号。预登记清单中的 `diag/impl_plan.md` 已不在公开仓库里。
 
 | 原始提交 | 新提交 | 说明 |
 |---|---|---|
@@ -44,48 +45,49 @@
 | `21fa7d7` | `d6eb94f` | CASE-01 diag: query sandbox with byte-exact F1 environment check; 17/17 self-test |
 | `cda1ac8` | `cb03b75` | CASE-01 diag: collect query runs; assemble round-2 results |
 | `acb08b1` | `8c0d33d` | CASE-01 diag: claims table checker, counts and round-2 transitions |
-| `13fff28` | `f967948` | CASE-01 diag: materials package and prompts (wording confirmed by the author) |
-| `f7d7df6` | `0d0d511` | CASE-01 diag: run shell with preflight, sealed blinding, void check, rerun and resume |
-| `d819016` | `0406ff7` | CASE-01 diag: round-2 extraction and rewrite rules, base checks and the pre-registration list |
-| `8b812db` | `ead8f83` | CASE-01 diag: author's reference answer (before any model run) |
-| `33cddd3` | `e1d39b9` | CASE-01 diag: key-free copies of the model settings (made by the author) |
-| `a610a4e` | `592c1b3` | CASE-01 diag: protocol v0.6 and plan v1.3 after the failed smoke retest (output-cap field is not the effective cap; smoke gains a cap probe) |
-| `26ed7e8` | `79fe256` | CASE-01 diag: smoke retest passed (protocol step 4) |
-| `4ffd9c2` | `08d30f2` | CASE-01 diag: base checks and the code-mapping commitment (before any model run) |
-| `774494c` | `1bfc968` | CASE-01 diag: reference answer checked against the base checks (answer unchanged) |
-| `d4f673a` | `05207bd` | CASE-01 diag: round 1 answers by code |
-| `501cae4` | `4d23404` | CASE-01 diag: round-1 claims split (reviewed by the author, before any recheck) |
-| `c8327e6` | `4091689` | CASE-01 diag: decision rules for hypotheses (before running them) |
-| `0cde6e8` | `ed85df6` | CASE-01 diag: round-1 rechecks and labels (blind-reviewed by the author) |
-| `f69f9c8` | `6b0a12b` | CASE-01 diag: round-2 query results (reviewed by the author; B1/B5 extraction errors dropped) |
-| `4b38cf7` | `d7910fc` | CASE-01 diag: round 2 answers by code |
-| `998966e` | `13802b9` | CASE-01 diag: round-2 claims split with round-1 refs and actions (reviewed by the author); citation rows are not transitions |
-| `604a16e` | `2cc9441` | CASE-01 diag: round-2 decision rules (before running them; reviewed by the author); claims checker accepts own returned results and keeps leading quotes |
-| `ad39ccc` | `99e5c0a` | CASE-01 diag: round-2 rechecks and labels (blind-reviewed by the author) |
-| `25dd61c` | `31ef97b` | CASE-01 diag: unblinding (commitment verified), publishable sealed records, per-model stats |
-| `ae4a4a6` | `8573401` | CASE-01: article 1 draft (reviewed by a Claude subagent, confirmed by the author) |
-| `5131ea4` | `4b29a5c` | CASE-01 diag: after the final review: disclose post-prereg changes (G12), round-2 coverage of round-1 judgments |
-| `264048e` | `223f426` | CASE-01: article 1 final touches after the final review; session record 2026-10-12 |
-| `10b81b5` | `0ddf384` | Merge diag-stageA: CASE-01 stage A steps 2-5 |
-| `3339d65` | `7a9e351` | PRJ-004: kill the whole process tree on Windows too in run_limited (run_query, calibrate); self-bounded test children |
-| `3c8a2a6` | `16e2baa` | PRJ-004: grade.py kills the process tree on Windows too (F1 freeze revision, contract v1.3, config/f1.sha256); build_package reads the pinned spec.md; incident note |
-| `a0806cf` | `ccc2859` | Merge fix-run-limited-windows: PRJ-004 (kill process trees on Windows too; contract v1.3) |
-| `31c83a2` | `5aa7e61` | Merge session-record-prj004: session record with PRJ-004 |
-| `8fbd12b` | `9a6f70e` | Session record 2026-10-12: add the PRJ-004 incident and the updated next steps |
-| `696bd8f` | `84ebf8f` | CASE-01 stage A: post-unblinding review (Codex-assisted, two rounds); author decisions overlay, revised stats; A2 review records |
-| `9c3c352` | `6e4f223` | Article 1: revise for the post-unblinding review (author review gap, revised labels and transitions); dated corrections in the intervention log and session record |
-| `3970c2c` | `8b93857` | Article 1: drop the author-review and post-unblinding review sections from the article body (kept as one pointer in §8); final labels unchanged |
-| `53a2b8e` | `8c55100` | Article 1: plain-language sample (opening five sections, incl. why this plan and its framework); A3 review request to Codex |
-| `a56cbcb` | `dfdd0be` | Article 1 plain sample: drop the author-background sentence |
-| `f64d7c9` | `6714682` | Article 1 full version: fix stale A-2-068 label and qualify the pre-unblinding timeline (Codex A3 F3, F4); archive the A3 review |
-| `c10fdcf` | `340e82e` | Article 1: plain-language public version (~5400 chars) following the Codex A3 outline and fixes |
-| `ffdabc9` | `a3ebaf8` | Article 1: new title naming Claude Opus 5.5, Kimi K3, DeepSeek V4 Pro; note how model versions are identified |
-| `f3e0f56` | `7095955` | A4 review request to Codex: the plain-language public version of article 1 |
-| `ed5865f` | `e244425` | Article 1: apply Codex A4 (round-2 coverage wording, 33.15 ns control incl. IO delay, setup slack, 未判定 meaning, analysis simplifications; readability edits); sync full version; archive A4 review |
-| `c8fecf6` | `72a027d` | Article 1 public version: 7 figures (series, circuit, timing budget, corners, pipeline cuts, local vs global, constraint vs circuit controls) with generator script; trim text the figures replace |
-| `5e3c1f0` | `0c77821` | A5 review request to Codex: figures and post-A4 edits of the public version |
-| `f5199c4` | `af652bb` | Merge postblind-review: post-unblinding review, revised stats, article 1 full and public versions with figures, A2-A5 review records |
-| `69e9575` | `5cf9900` | Article 1 public version: apply Codex A5 (L=3 candidate redrawn as product+sum registers; circuit figure marked as RTL functional sketch, X/Y removed; all figures re-laid out for phone width 720/1440 px; near-zero value as marker; text carries details moved out of figures); archive A5 review |
-| `—` | `135e508` | Prepare for publication: Apache-2.0 LICENSE, CC BY 4.0 for articles and docs, root README, commit-id map for the 2026-10-17 history rewrite; build_package pins the rewritten spec commit; article uses new commit ids; private notes and commercial-tool scripts ignored |
-| `—` | `db30e06` | Article 1: link to the GitHub repository (hyljjy/ai-silicon-lab) |
-| `—` | `569e3f8` | Second history rewrite before publication: plans, reviews, prototypes and post-unblinding review records kept local; update build_package spec pin, article commit ids and references, README, commit-id map |
+| `13fff28` | `cf9531c` | CASE-01 diag: materials package and prompts (wording confirmed by the author) |
+| `f7d7df6` | `57676af` | CASE-01 diag: run shell with preflight, sealed blinding, void check, rerun and resume |
+| `d819016` | `909576c` | CASE-01 diag: round-2 extraction and rewrite rules, base checks and the pre-registration list |
+| `8b812db` | `7af3260` | CASE-01 diag: author's reference answer (before any model run) |
+| `33cddd3` | `83430fa` | CASE-01 diag: key-free copies of the model settings (made by the author) |
+| `a610a4e` | `310f632` | CASE-01 diag: protocol v0.6 and plan v1.3 after the failed smoke retest (output-cap field is not the effective cap; smoke gains a cap probe) |
+| `26ed7e8` | `854593d` | CASE-01 diag: smoke retest passed (protocol step 4) |
+| `4ffd9c2` | `e264279` | CASE-01 diag: base checks and the code-mapping commitment (before any model run) |
+| `774494c` | `5544d91` | CASE-01 diag: reference answer checked against the base checks (answer unchanged) |
+| `d4f673a` | `6edd052` | CASE-01 diag: round 1 answers by code |
+| `501cae4` | `3878f01` | CASE-01 diag: round-1 claims split (reviewed by the author, before any recheck) |
+| `c8327e6` | `2158752` | CASE-01 diag: decision rules for hypotheses (before running them) |
+| `0cde6e8` | `e6e3c96` | CASE-01 diag: round-1 rechecks and labels (blind-reviewed by the author) |
+| `f69f9c8` | `5296793` | CASE-01 diag: round-2 query results (reviewed by the author; B1/B5 extraction errors dropped) |
+| `4b38cf7` | `be043e6` | CASE-01 diag: round 2 answers by code |
+| `998966e` | `93ac9e4` | CASE-01 diag: round-2 claims split with round-1 refs and actions (reviewed by the author); citation rows are not transitions |
+| `604a16e` | `0d824ad` | CASE-01 diag: round-2 decision rules (before running them; reviewed by the author); claims checker accepts own returned results and keeps leading quotes |
+| `ad39ccc` | `be63c05` | CASE-01 diag: round-2 rechecks and labels (blind-reviewed by the author) |
+| `25dd61c` | `74179fc` | CASE-01 diag: unblinding (commitment verified), publishable sealed records, per-model stats |
+| `ae4a4a6` | `3a342fe` | CASE-01: article 1 draft (reviewed by a Claude subagent, confirmed by the author) |
+| `5131ea4` | `ef6d061` | CASE-01 diag: after the final review: disclose post-prereg changes (G12), round-2 coverage of round-1 judgments |
+| `264048e` | `332dec8` | CASE-01: article 1 final touches after the final review; session record 2026-10-12 |
+| `10b81b5` | `4d9b24c` | Merge diag-stageA: CASE-01 stage A steps 2-5 |
+| `3339d65` | `73288fa` | PRJ-004: kill the whole process tree on Windows too in run_limited (run_query, calibrate); self-bounded test children |
+| `3c8a2a6` | `9fb9b12` | PRJ-004: grade.py kills the process tree on Windows too (F1 freeze revision, contract v1.3, config/f1.sha256); build_package reads the pinned spec.md; incident note |
+| `a0806cf` | `c5343cf` | Merge fix-run-limited-windows: PRJ-004 (kill process trees on Windows too; contract v1.3) |
+| `31c83a2` | `f05dbcf` | Merge session-record-prj004: session record with PRJ-004 |
+| `8fbd12b` | `26930cc` | Session record 2026-10-12: add the PRJ-004 incident and the updated next steps |
+| `696bd8f` | `ac2180b` | CASE-01 stage A: post-unblinding review (Codex-assisted, two rounds); author decisions overlay, revised stats; A2 review records |
+| `9c3c352` | `0204f81` | Article 1: revise for the post-unblinding review (author review gap, revised labels and transitions); dated corrections in the intervention log and session record |
+| `3970c2c` | `0f73fb8` | Article 1: drop the author-review and post-unblinding review sections from the article body (kept as one pointer in §8); final labels unchanged |
+| `53a2b8e` | `af977ad` | Article 1: plain-language sample (opening five sections, incl. why this plan and its framework); A3 review request to Codex |
+| `a56cbcb` | `6e13ac9` | Article 1 plain sample: drop the author-background sentence |
+| `f64d7c9` | `c0187ed` | Article 1 full version: fix stale A-2-068 label and qualify the pre-unblinding timeline (Codex A3 F3, F4); archive the A3 review |
+| `c10fdcf` | `933f06f` | Article 1: plain-language public version (~5400 chars) following the Codex A3 outline and fixes |
+| `ffdabc9` | `5097828` | Article 1: new title naming Claude Opus 5.5, Kimi K3, DeepSeek V4 Pro; note how model versions are identified |
+| `f3e0f56` | `df828b2` | A4 review request to Codex: the plain-language public version of article 1 |
+| `ed5865f` | `4aadfd5` | Article 1: apply Codex A4 (round-2 coverage wording, 33.15 ns control incl. IO delay, setup slack, 未判定 meaning, analysis simplifications; readability edits); sync full version; archive A4 review |
+| `c8fecf6` | `bdee400` | Article 1 public version: 7 figures (series, circuit, timing budget, corners, pipeline cuts, local vs global, constraint vs circuit controls) with generator script; trim text the figures replace |
+| `5e3c1f0` | `020c941` | A5 review request to Codex: figures and post-A4 edits of the public version |
+| `f5199c4` | `14ff549` | Merge postblind-review: post-unblinding review, revised stats, article 1 full and public versions with figures, A2-A5 review records |
+| `69e9575` | `10bd668` | Article 1 public version: apply Codex A5 (L=3 candidate redrawn as product+sum registers; circuit figure marked as RTL functional sketch, X/Y removed; all figures re-laid out for phone width 720/1440 px; near-zero value as marker; text carries details moved out of figures); archive A5 review |
+| `—` | `27864b0` | Prepare for publication: Apache-2.0 LICENSE, CC BY 4.0 for articles and docs, root README, commit-id map for the 2026-10-17 history rewrite; build_package pins the rewritten spec commit; article uses new commit ids; private notes and commercial-tool scripts ignored |
+| `—` | `7d00108` | Article 1: link to the GitHub repository (hyljjy/ai-silicon-lab) |
+| `—` | `3fb7ca7` | Second history rewrite before publication: plans, reviews, prototypes and post-unblinding review records kept local; update build_package spec pin, article commit ids and references, README, commit-id map |
+| `—` | `91a885d` | Third history rewrite before publication: environment debugging logs (docs/env) kept local; update spec pin, article commit ids, README, commit-id map |

@@ -25,3 +25,7 @@ tasks/CASE-01/diag/review/
 
 # environment debugging logs: kept locally, not published (2026-10-17)
 docs/env/
+
+# intervention log and incident note: kept locally, not published (2026-10-17)
+tasks/CASE-01/diag/interventions.md
+tasks/CASE-01/diag/INCIDENT-2026-10-12-run-limited-windows.md
