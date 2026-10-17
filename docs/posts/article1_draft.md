@@ -4,6 +4,8 @@
 
 > 草稿。起草者是本项目的操作者 Claude（`claude-opus-5-5`），**与被测的 Claude 是同一个模型**。作者修改定稿；是否发表、何时发表，由作者决定。
 >
+> 项目仓库：https://github.com/hyljjy/ai-silicon-lab。公众号版：`docs/posts/article1_public.md`。
+>
 > 文中来源路径都相对于仓库的 `tasks/CASE-01/`，例如 `diag/stats.md`；`B02` 指基础核对 `diag/queries/base/base_B02_worst_path_d6/query_full.txt`（最差路径的 6 位小数报告）。
 >
 > 本文所有 slack 都来自同一个分析模型：**理想时钟、综合后网表、互连只计引脚电容**。每个 slack 数字旁边都注明这几项和 corner；同一段里多次出现时，第一次写全，后面写"同上"。hold 数字都是"理想时钟、综合后模型下的最小 hold slack"。

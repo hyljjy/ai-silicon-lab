@@ -161,4 +161,8 @@ DeepSeek 把 7 个子查询写在一个代码块里，输出又被截断，它�
 
 三份答复都提出了值得继续检验的方向，但读对数字、提出假设、写出能跑的查询、真正改好 RTL，是四件不同的事。这次只核对了前面几步；修改有没有收益、代价能不能接受，下一篇按同样的规则验证。
 
-> 完整版、全部判定记录、查询原始输出和复现脚本：见 GitHub 仓库 `docs/posts/article1_draft.md` 和 `tasks/CASE-01/diag/`。
+> 项目仓库：https://github.com/hyljjy/ai-silicon-lab
+>
+> - 完整版（每个数字都标了出处）：https://github.com/hyljjy/ai-silicon-lab/blob/main/docs/posts/article1_draft.md
+> - 全部判定记录、查询原始输出和复现脚本：https://github.com/hyljjy/ai-silicon-lab/tree/main/tasks/CASE-01/diag
+> - 最终统计：https://github.com/hyljjy/ai-silicon-lab/blob/main/tasks/CASE-01/diag/stats_revised.md
