@@ -50,7 +50,7 @@
   - 改约束、改单元的查询转入单独的对照运行；
   - 结果原样交还，不替模型改写命令（`diag/protocol.md` §8，`diag/rules/rewrite_table.md`）。
 
-**部分盲评。** 运行脚本把三份答复随机编成 A、B、C。代号与模型的对应表加了 256 位随机盐，存在仓库外的封存目录；只有它的 sha256 在第 1 轮之前提交（提交 `4ffd9c2`，09:11，见 `git log`；第 1 轮 09:13:43 开始，见 `diag/outputs/sealed_export/heads.log:3`）。拆分、写判定条件、复验和打标签，都在揭盲之前完成。揭盲时核对封存对应表的 sha256 与承诺一致（`a6e7aae0…`，`diag/outputs/mapping.sha256`）。结果是 **A = Claude，B = Kimi，C = DeepSeek**（`diag/outputs/mapping.json`）。
+**部分盲评。** 运行脚本把三份答复随机编成 A、B、C。代号与模型的对应表加了 256 位随机盐，存在仓库外的封存目录；只有它的 sha256 在第 1 轮之前提交（提交 `4ffd9c2`，09:11，见 `git log`；第 1 轮 09:13:43 开始，见 `diag/outputs/sealed_export/heads.log:3`）。初次的拆分、写判定条件、复验和打标签，都在揭盲之前完成。揭盲时核对封存对应表的 sha256 与承诺一致（`a6e7aae0…`，`diag/outputs/mapping.sha256`）。结果是 **A = Claude，B = Kimi，C = DeepSeek**（`diag/outputs/mapping.json`）。
 
 这里的提交顺序来自本地 git，只是"作者自己作证"的记录，不构成第三方意义上的证明（`diag/protocol.md` §3）。
 
@@ -230,7 +230,7 @@
 
 - **作者参考答案的错误**，见第 3 节。
 - **查询抽取的误抽。** 规则只看"以命令名开头的行内代码"，从 Kimi 的正文里抽出了两条它并没有要求执行的命令：一条是前提句里的 `link_design`，一条是"不用 `report_worst_slack`"里的 `report_worst_slack`。作者在检查点 7 决定剔除，记为一次输入介入（`diag/interventions.md`）。
-- **操作者的对照命令无效。** Claude H6"输入端口驱动不是主因"的第 1 轮对照用了 `set_drive 0`，被 SDC 中的 `set_driving_cell` 覆盖，没有生效，所以判为未判定（A-1-099；`diag/queries/recheck/rc_A-1-099/query_full.txt`）。第 2 轮改用 `set_driving_cell` 换成 `buf_16` 重做，同一假设（动作为"保持"）判为支持（A-2-068）。
+- **操作者的对照命令无效。** Claude H6"输入端口驱动不是主因"的第 1 轮对照用了 `set_drive 0`，被 SDC 中的 `set_driving_cell` 覆盖，没有生效，所以判为未判定（A-1-099；`diag/queries/recheck/rc_A-1-099/query_full.txt`）。第 2 轮改用 `set_driving_cell` 换成 `buf_16` 重做，观察到改善；但 buf_16 不是理想驱动，这次对照给不出所需的改善上限，同一假设（动作为"保持"）仍为未判定（A-2-068）。
 - **操作者的重查写错。** 第 1 轮有两个重查查询的 Tcl 写法不对，其中一个触发了 OpenSTA 段错误。只改写法、判定条件不变，重跑后使用，原运行保留（`diag/interventions.md`，`diag/recheck/q/A-1-093.tcl`、`A-1-097.tcl`）。
 - **判据前后不一致**，见第 6.1 节 A-2-067。
 - **预登记之后的改动。** 统计脚本 `scripts/claims_stats.py` 和它的测试 `scripts/test_claims_stats.py` 列在预登记清单里（`diag/rules/preregistered.txt`），本应在预登记之后不再修改，但在第 2 轮答复之后改了三处（提交 `998966e`、`604a16e`）：
