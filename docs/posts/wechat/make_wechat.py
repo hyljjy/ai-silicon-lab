@@ -3,7 +3,7 @@
   python -I docs/posts/wechat/make_wechat.py            (from the repository root)
 
 The WeChat editor keeps inline styles and drops style sheets, so every element carries its own style. It does not
-upload local images, so each image becomes a placeholder box naming the PNG to insert by hand. The page has a
+upload local images, so each image becomes a plain orange marker line naming the PNG; put the cursor there, insert the image, delete the line. The page has a
 "copy" button that copies only the article body; the title, the summary and the instructions stay outside it.
 Only the Markdown used in the article is supported: one H1, H2, paragraphs, "- " lists, "> " quotes, images, **bold**,
 `code` and bare URLs.
@@ -27,8 +27,7 @@ S_LI = f"margin:0 0 8px 0;font-size:16px;line-height:1.8;letter-spacing:0.5px;co
 S_QUOTE = (f"margin:0 0 20px 0;padding:12px 16px;background:{SOFT};border-left:3px solid #c9c8c3;"
            f"font-size:14px;line-height:1.75;color:{INK2};")
 S_CODE = "font-family:Menlo,Consolas,monospace;font-size:14px;background:#eef0f3;padding:1px 4px;border-radius:3px;"
-S_FIG = ("margin:8px 0 22px 0;padding:22px 12px;border:2px dashed #eb6834;border-radius:6px;background:#fff7f3;"
-         "text-align:center;font-size:15px;line-height:1.7;color:#b4441c;")
+S_FIG = "margin:0 0 18px 0;font-size:15px;line-height:1.8;color:#d4541f;font-weight:bold;"
 
 
 def inline(text):
@@ -61,9 +60,7 @@ def convert(md):
             n = len(figs) + 1
             name = os.path.basename(m.group(2))
             figs.append((n, m.group(1), name))
-            body.append(f'<section style="{S_FIG}"><strong>【图 {n}】在此插入图片</strong><br>'
-                        f'{html.escape(name)}<br><span style="color:#888;font-size:13px;">{html.escape(m.group(1))}</span>'
-                        f'</section>')
+            body.append(f'<p style="{S_FIG}">【插入图 {n}：{html.escape(name)}（{html.escape(m.group(1))}），插好后删掉这行】</p>')
         elif line.startswith("- "):
             flush(); items = []
             while i < len(lines) and lines[i].startswith("- "):
@@ -108,7 +105,7 @@ def page(title, body, figs):
 <ol style="margin:0;padding-left:20px;">
 <li>标题填到公众号编辑器的标题栏：<strong>{html.escape(title or "")}</strong></li>
 <li>点下面的"复制正文"，到编辑器正文区粘贴。</li>
-<li>正文里有 {len(figs)} 个橙色虚线框，逐个点中，替换成对应的图片（PNG，2 倍分辨率）：<ul style="margin:4px 0;padding-left:18px;">{fig_rows}</ul></li>
+<li>正文里有 {len(figs)} 行橙色的【插入图 N】标记。把光标放到这一行，用编辑器插入对应的图片（PNG，2 倍分辨率），再删掉这行文字：<ul style="margin:4px 0;padding-left:18px;">{fig_rows}</ul></li>
 <li>文末的仓库链接在公众号里不能点，保留为文字；仓库公开后读者可以复制访问。</li>
 <li>发布前用编辑器的"预览"在手机上看一遍。</li>
 </ol>
