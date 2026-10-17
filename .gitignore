@@ -12,7 +12,7 @@ __pycache__/
 
 # private working notes and commercial-tool scripts: kept locally, never published (2026-10-17)
 docs/sessions/
-scripts/
+/scripts/
 
 # reviews, plans, prototypes and the post-unblinding review records: kept locally, not published (2026-10-17)
 docs/review/
