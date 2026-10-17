@@ -26,6 +26,8 @@ Follow [env/SETUP.md](env/SETUP.md) to install OSS CAD Suite, OpenSTA and the Sk
 
 The versions must match: a different Yosys/ABC or OpenSTA can give a different netlist and different timing numbers.
 
+**Install and run as user `eda` with HOME `/home/eda`.** The F1 evidence `evidence/F1/sta_results.tsv` records the absolute liberty paths `/home/eda/pdk/...`, and the replication compares it byte for byte; under another user that check necessarily fails.
+
 Run every command below in a login shell, from `tasks/CASE-01/`.
 
 ## 2. Tool layer
@@ -59,7 +61,7 @@ When everything holds it prints `REPLICATION OK` and writes a report to `runs/<t
 Both scripts take this flag, but they relax the check to different degrees:
 
 - `grade.py` accepts only a different `opensta/bin/sta` fingerprint and nothing else in the snapshot log. The OSS CAD Suite tools from the release tarball, the kit scripts, the liberty files and the snapshot files must all still match. The drifted binary and its sha256 are recorded under `env_snapshot` in `verdict.json`. This is the frozen revision v1.4 of the contract (version record in `tasks/CASE-01/spec.md`).
-- `replicate.py` accepts a query whose only environment problem is the "tool binaries differ" line, and reports it as "tool drift".
+- `replicate.py` applies the same rule to each query and reports an accepted one as "tool drift".
 
 Whether the tools are really equivalent is decided by the netlist hash and the query outputs.
 

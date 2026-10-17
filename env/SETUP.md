@@ -6,7 +6,7 @@
 
 ## 1. 目录约定
 
-所有路径都相对于运行用户的 `$HOME`。项目脚本通过 [open_eda_env.sh](open_eda_env.sh) 里的变量找到工具和单元库，所以请按下面的布局安装：
+所有路径都相对于运行用户的 `$HOME`。**要复现 CASE-01，运行用户必须是 `eda`，HOME 必须是 `/home/eda`**：F1 的证据里记着 liberty 文件的绝对路径 `/home/eda/pdk/...`，复现时要逐字节比对，见 [REPRODUCE.md](../REPRODUCE.md) 第 1 节。项目脚本通过 [open_eda_env.sh](open_eda_env.sh) 里的变量找到工具和单元库，所以请按下面的布局安装：
 
 ```
 ~/src/            源码（OpenSTA、CUDD）

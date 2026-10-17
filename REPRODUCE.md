@@ -16,6 +16,8 @@
 
 按 [env/SETUP.md](env/SETUP.md) 在 Ubuntu 24.04（或 WSL2 里的 Ubuntu 24.04）装好 OSS CAD Suite、OpenSTA、Sky130 PDK，跑通冒烟测试。版本必须和 [env/INSTALL_RECORD.md](env/INSTALL_RECORD.md) 一致。
 
+**用户必须是 `eda`，HOME 必须是 `/home/eda`。** F1 的证据 `evidence/F1/sta_results.tsv` 里记着 liberty 文件的绝对路径 `/home/eda/pdk/...`，复现时要求逐字节相同。用别的用户运行，这一项必然不同。
+
 以下命令都在 login shell 里、从 `tasks/CASE-01/` 目录执行。
 
 ## 2. 工具层
@@ -49,7 +51,7 @@ python3 -B diag/scripts/replicate.py --f1-run runs/<id>
 两个脚本都有这个开关，但放宽的程度不同：
 
 - `grade.py` 只放过 `opensta/bin/sta` 的指纹不同，快照日志的其他任何一行都不放过，包括 OSS CAD Suite 预编译包里的工具不一致、kit 脚本不一致、liberty 文件不一致和快照文件本身不一致。漂移的二进制及其 sha256 记在 `verdict.json` 的 `env_snapshot` 字段里。这是合同的 v1.4 冻结修订（`tasks/CASE-01/spec.md` 版本记录）。
-- `replicate.py` 接受快照日志里唯一的问题只是"工具二进制不同"这一行，并在报告里注明"tool drift"。
+- `replicate.py` 对每个查询用同一条规则，放过时在报告里注明"tool drift"。
 
 工具是否真的等价，最终看网表哈希和查询输出。
 

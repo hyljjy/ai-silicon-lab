@@ -20,10 +20,11 @@ hash, the frozen inputs, the STA records byte for byte against the F1 run, the l
 result.json gets "replication": {...}. Nothing under diag/queries/ is written.
 Exit 0 only if step 1 holds and every query is env_ok, completed and identical or identical-masked.
 
---allow-tool-drift: OpenSTA and CUDD are built from source, so on another machine their binaries differ from
+--allow-tool-drift: OpenSTA and CUDD are built from source, so on another machine the OpenSTA binary differs from
 env/tools.sha256 even at the same commit, and env/snapshot.sh check reports "DRIFT: tool binaries differ". With this
-flag a query whose only environment problem is that one drift line is accepted and reported as "tool drift"; every
-other drift (kit scripts, liberty files, snapshot files) still fails. The netlist hash and the query outputs remain
+flag a query whose only environment problem is that drift is accepted and reported as "tool drift", under the same
+line-by-line rule as grade.py --allow-tool-drift (spec v1.4): only opensta/bin/sta may differ; any other binary
+(the OSS CAD Suite tools), kit script, liberty file or snapshot file still fails. The netlist hash and the query outputs remain
 the test of whether the replication holds.
 """
 import argparse
@@ -43,13 +44,12 @@ F1_EVIDENCE = (("sta/sta_results.tsv", "evidence/F1/sta_results.tsv"),
                ("sta/cat_ss_n40C_1v60_in2reg_max.rpt", "evidence/F1/f1_run_cat_ss_n40C_1v60_in2reg_max.rpt"))
 
 
-TOOL_DRIFT = "DRIFT: tool binaries differ from tools.sha256"
-
-
 def only_tool_drift(snapshot_log):
-    """True when env/snapshot.sh check failed only because the tool binaries differ from tools.sha256."""
-    drift = [l.strip() for l in snapshot_log.splitlines() if l.startswith(("DRIFT:", "FAIL: snapshot files"))]
-    return drift == [TOOL_DRIFT]
+    """True when env/snapshot.sh check failed only because opensta/bin/sta differs from tools.sha256: the same rule
+    as grade.py --allow-tool-drift (spec v1.4), which reads the log line by line (CLOUD_R2 review)."""
+    sys.path.insert(0, os.path.join(CASE, "scripts"))
+    import grade
+    return grade.tool_drift_only(snapshot_log) is not None
 
 
 def mask(text):

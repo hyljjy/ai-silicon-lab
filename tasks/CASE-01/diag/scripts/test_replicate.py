@@ -53,15 +53,28 @@ class TestCommittedQueries(unittest.TestCase):
         self.assertTrue(all(os.path.isfile(q) for _, _, q, _ in got))
 
 
+STA_DRIFT = ("opensta/bin/sta: FAILED\nsha256sum: WARNING: 1 computed checksum did NOT match\n"
+             "DRIFT: tool binaries differ from tools.sha256\nFAIL: live environment differs from the snapshot\n")
+
+
 class TestToolDrift(unittest.TestCase):
+    """Same rule as grade.py --allow-tool-drift (spec v1.4): only opensta/bin/sta may differ (CLOUD_R2 review)."""
+
     def test_only_tool_drift(self):
-        log = "DRIFT: tool binaries differ from tools.sha256\nFAIL: live environment differs from the snapshot\n"
-        self.assertTrue(replicate.only_tool_drift(log))
+        self.assertTrue(replicate.only_tool_drift(STA_DRIFT))
 
     def test_other_drift_not_accepted(self):
-        log = ("DRIFT: liberty files differ from sky130hd_kit/MANIFEST.txt\n"
-               "DRIFT: tool binaries differ from tools.sha256\nFAIL: live environment differs from the snapshot\n")
+        log = "DRIFT: liberty files differ from sky130hd_kit/MANIFEST.txt\n" + STA_DRIFT
         self.assertFalse(replicate.only_tool_drift(log))
+
+    def test_release_tool_drift_not_accepted(self):
+        self.assertFalse(replicate.only_tool_drift(STA_DRIFT.replace("opensta/bin/sta", "oss-cad-suite/libexec/yosys")))
+
+    def test_unknown_or_missing_lines_not_accepted(self):
+        self.assertFalse(replicate.only_tool_drift("something else\n" + STA_DRIFT))
+        self.assertFalse(replicate.only_tool_drift(STA_DRIFT.replace("FAIL: live environment differs from the snapshot\n", "")))
+        self.assertFalse(replicate.only_tool_drift(
+            "DRIFT: tool binaries differ from tools.sha256\nFAIL: live environment differs from the snapshot\n"))
 
     def test_broken_snapshot_not_accepted(self):
         self.assertFalse(replicate.only_tool_drift("FAIL: snapshot files do not match SHA256SUMS\n"))
