@@ -17,7 +17,7 @@
 | `sky130hd_kit/MANIFEST.txt` | `~/pdk/sky130hd_kit/MANIFEST.txt` | PDK 来源，18 个 `.lib` 及 `synth_excluded.cells` 的 sha256 |
 | `sky130hd_kit/synth.tcl` | `~/pdk/sky130hd_kit/synth.tcl` | Yosys 综合脚本 |
 | `sky130hd_kit/corners.tcl` | `~/pdk/sky130hd_kit/corners.tcl` | OpenSTA 多 corner 设置（`std` / `sweep` 分组） |
-| `smoke/sky130/{run.sh,sta.tcl,mac.v,tb.v}` | `~/smoke/sky130/` | 冒烟测试。期望输出见 [OPEN_EDA_UBUNTU2404.md 第 5.1 节](../docs/env/OPEN_EDA_UBUNTU2404.md) |
+| `smoke/sky130/{run.sh,sta.tcl,mac.v,tb.v}` | `~/smoke/sky130/` | 冒烟测试。期望输出见 [SETUP.md 第 4 节](SETUP.md) |
 | `tools.sha256` | 由脚本生成 | 6 个工具二进制的 sha256，路径相对于 `~/tools` |
 | `SHA256SUMS` | 由脚本生成 | 上面这些文件，加上 `licenses/` 下两份许可原文的 sha256 |
 | [INSTALL_RECORD.md](INSTALL_RECORD.md) | — | 安装记录：发行包及校验值、源码 commit、构建步骤、依赖（R1 第 5 条第 1 项） |
@@ -40,14 +40,14 @@ wsl -d Ubuntu-24.04 --exec bash -l /mnt/d/study/ai_native_design/env/snapshot.sh
 
 `update` 把 WSL 中的来源文件复制过来，并重写 `tools.sha256` 和 `SHA256SUMS`。规则：
 
-- 改动环境（升级工具、修改 kit 脚本、更换 PDK）之前，要先征得作者同意（见 OPEN_EDA 文档第 7 节）。改完之后依次：重跑冒烟测试 → `update` → `check`，再同步更新 `INSTALL_RECORD.md` 和 OPEN_EDA 文档里的版本信息。
+- 改动环境（升级工具、修改 kit 脚本、更换 PDK）之前，要先征得作者同意。改完之后依次：重跑冒烟测试 → `update` → `check`，再同步更新 `INSTALL_RECORD.md` 和 `SETUP.md` 里的版本信息。
 - 不要为了让 `check` 通过就去跑 `update`。`check` 报 DRIFT，说明环境变了，要先查清楚是谁、为什么改的。
 - 建议：CASE-01 的 grader 在每次运行前先跑 `check`，不通过就停下，不产出结果。
 
 ## 已验证（2026-10-04）
 
 - 在当前环境下，`check` 输出 `SNAPSHOT OK`。
-- 冒烟测试 `run.sh` 输出 `SMOKE OK`，16 个 corner 的 setup / hold 数值与 OPEN_EDA 文档第 5.1 节逐项一致。
+- 冒烟测试 `run.sh` 输出 `SMOKE OK`，16 个 corner 的 setup / hold 数值与 [SETUP.md](SETUP.md) 第 4 节逐项一致。
 - `snapshot.sh` 做了故障注入测试，11 个场景全部符合预期：基线通过；快照文件被改；来源文件被改；来源文件缺失；某个 `.lib` 被改；`.lib` 目录为空；`synth_excluded.cells` 被改；工具二进制被改；没有 login 环境（变量未设置）；参数错误（退出码 2）；`update` 之后再 `check` 通过。测试在 `/tmp` 下的副本上进行，没有动 `$HOME` 和项目文件。
 - `run.sh` 的 sha256 是 `717d7d5f…`，与 2026-10-03 会话记录的值一致。
 
@@ -55,7 +55,7 @@ wsl -d Ubuntu-24.04 --exec bash -l /mnt/d/study/ai_native_design/env/snapshot.sh
 
 - **PDK 文件本身**（`.lib`、Verilog 模型等）：项目里只记录哈希。PDK 发布包被下架时的备用路径（R1 第 5 条第 3 项）已经落实：ciel 的两个发行包、校验值和离线恢复脚本备份在项目外的 `D:\study\eda_archive\pdk\sky130-1689ac3f…\`，2026-10-04 做过端到端验证，结果是恢复出的目录与现有安装逐文件相同，用本目录的脚本跑冒烟得到 `SMOKE OK`。详见那里的 README。这份备份是作者本机的私有备份，不随项目分发。
 - **工具的二进制和安装包**：只记录来源、校验值和指纹，见 INSTALL_RECORD。
-- **冒烟测试的运行产物**（网表、日志）：期望输出见 OPEN_EDA 文档第 5.1 节。
+- **冒烟测试的运行产物**（网表、日志）：期望输出见 [SETUP.md](SETUP.md) 第 4 节。
 - **本目录脚本的许可**：还没有决定，见 [licenses/SOURCES.md](licenses/SOURCES.md) 第 3 节。
 
 ## 换行符

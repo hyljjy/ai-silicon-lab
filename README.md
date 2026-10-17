@@ -12,6 +12,10 @@
 |---|---|---|
 | 1. 大模型看时序报告靠谱吗？我用 OpenSTA 核对了 Claude Opus 5.5、Kimi K3、DeepSeek V4 Pro 的诊断 | [`docs/posts/article1_public.md`](docs/posts/article1_public.md) | [`docs/posts/article1_draft.md`](docs/posts/article1_draft.md) |
 
+## 复现
+
+想自己验证结论，不用作者跑出的结果：先按 [`env/SETUP.md`](env/SETUP.md) 搭好环境，再按 [`REPRODUCE.md`](REPRODUCE.md) 从 RTL 重新生成基线、重跑全部基础核对和重查，并与仓库里的输出逐份比对；判断和标签也可以按规程独立重做。
+
 ## 目录
 
 | 位置 | 内容 |
