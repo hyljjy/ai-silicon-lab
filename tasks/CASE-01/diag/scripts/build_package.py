@@ -30,7 +30,7 @@ PINNED = {                                   # every source is checked before an
     SPEC: "7ab53c49982cc7a76017060931f8b3a6a5a3b760a767b024fbccabe696b414a1",
 }
 ORDER = ("context.md", "path_report.rpt", "case01_sdc.tcl", "values.txt", "slack_summary.tsv", "dot4sat.v")
-SPEC_COMMIT = "43047299ca0900cb69e1611ce30908a100dc16da"   # the commit whose spec.md has the PINNED hash (v1.2)
+SPEC_COMMIT = "16206c104ac602b8b1f4487fd33fcc396c5b038e"   # the commit whose spec.md has the PINNED hash (v1.2)
 
 
 def text(rel):

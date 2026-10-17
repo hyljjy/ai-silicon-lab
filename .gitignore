@@ -9,3 +9,7 @@ tasks/*/evidence/*/archive/*
 !tasks/*/evidence/*/archive/SHA256SUMS
 __pycache__/
 *.vvp
+
+# private working notes and commercial-tool scripts: kept locally, never published (2026-10-17)
+docs/sessions/
+scripts/
