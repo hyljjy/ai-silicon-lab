@@ -19,6 +19,12 @@ pre-registered study. Every other environment check of run_query.py still runs (
 hash, the frozen inputs, the STA records byte for byte against the F1 run, the log check). Each replicated
 result.json gets "replication": {...}. Nothing under diag/queries/ is written.
 Exit 0 only if step 1 holds and every query is env_ok, completed and identical or identical-masked.
+
+--allow-tool-drift: OpenSTA and CUDD are built from source, so on another machine their binaries differ from
+env/tools.sha256 even at the same commit, and env/snapshot.sh check reports "DRIFT: tool binaries differ". With this
+flag a query whose only environment problem is that one drift line is accepted and reported as "tool drift"; every
+other drift (kit scripts, liberty files, snapshot files) still fails. The netlist hash and the query outputs remain
+the test of whether the replication holds.
 """
 import argparse
 import datetime
@@ -35,6 +41,15 @@ ADDRESS = re.compile(r"_[0-9a-f]{8,}_p_[A-Za-z_]+")
 GROUPS = {"base": "queries/base", "recheck": "queries/recheck"}
 F1_EVIDENCE = (("sta/sta_results.tsv", "evidence/F1/sta_results.tsv"),
                ("sta/cat_ss_n40C_1v60_in2reg_max.rpt", "evidence/F1/f1_run_cat_ss_n40C_1v60_in2reg_max.rpt"))
+
+
+TOOL_DRIFT = "DRIFT: tool binaries differ from tools.sha256"
+
+
+def only_tool_drift(snapshot_log):
+    """True when env/snapshot.sh check failed only because the tool binaries differ from tools.sha256."""
+    drift = [l.strip() for l in snapshot_log.splitlines() if l.startswith(("DRIFT:", "FAIL: snapshot files"))]
+    return drift == [TOOL_DRIFT]
 
 
 def mask(text):
@@ -120,6 +135,8 @@ def main(argv=None):
     ap.add_argument("--f1-run", required=True, help="the regenerated F1 run directory, e.g. runs/<RUN_ID>")
     ap.add_argument("--groups", default="base,recheck")
     ap.add_argument("--out", help="summary file (default runs/<ts>-replicate.md)")
+    ap.add_argument("--allow-tool-drift", action="store_true",
+                    help="accept env/snapshot.sh failing only on the tool binary fingerprints (built from source)")
     args = ap.parse_args(argv)
     f1_run = os.path.abspath(args.f1_run if os.path.isabs(args.f1_run) else os.path.join(CASE, args.f1_run))
     groups = [g for g in args.groups.split(",") if g]
@@ -137,13 +154,19 @@ def main(argv=None):
         else:
             with open(os.path.join(run_dir, "result.json"), encoding="utf-8") as f:
                 res = json.load(f)
-            status = f"env_ok={res['env_ok']} {res['query_status']}"
+            env_ok = res["env_ok"]
+            if not env_ok and args.allow_tool_drift and res["env_problems"] == ["env/snapshot.sh check failed"]:
+                with open(os.path.join(run_dir, "snapshot.log"), encoding="utf-8", errors="replace") as f:
+                    env_ok = only_tool_drift(f.read())
+            drift_note = " (tool drift accepted)" if env_ok and not res["env_ok"] else ""
+            status = f"env_ok={res['env_ok']}{drift_note} {res['query_status']}"
             with open(os.path.join(run_dir, "query_full.txt"), encoding="utf-8", errors="replace") as f:
                 new = f.read()
             with open(os.path.join(DIAG, GROUPS[group], name, "query_full.txt"), encoding="utf-8", errors="replace") as f:
                 old = f.read()
             verdict, where = compare_text(new, old)
-            if not res["env_ok"] or res["query_status"] != "completed" or rc != 0:
+            log_ok = res["query_log_ok"]
+            if not env_ok or not log_ok or res["query_status"] != "completed":
                 verdict = "env/log problem: " + verdict
         if verdict not in ("identical", "identical-masked"):
             bad += 1

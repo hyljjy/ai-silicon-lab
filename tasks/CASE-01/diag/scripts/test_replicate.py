@@ -53,5 +53,19 @@ class TestCommittedQueries(unittest.TestCase):
         self.assertTrue(all(os.path.isfile(q) for _, _, q, _ in got))
 
 
+class TestToolDrift(unittest.TestCase):
+    def test_only_tool_drift(self):
+        log = "DRIFT: tool binaries differ from tools.sha256\nFAIL: live environment differs from the snapshot\n"
+        self.assertTrue(replicate.only_tool_drift(log))
+
+    def test_other_drift_not_accepted(self):
+        log = ("DRIFT: liberty files differ from sky130hd_kit/MANIFEST.txt\n"
+               "DRIFT: tool binaries differ from tools.sha256\nFAIL: live environment differs from the snapshot\n")
+        self.assertFalse(replicate.only_tool_drift(log))
+
+    def test_broken_snapshot_not_accepted(self):
+        self.assertFalse(replicate.only_tool_drift("FAIL: snapshot files do not match SHA256SUMS\n"))
+
+
 if __name__ == "__main__":
     unittest.main()
