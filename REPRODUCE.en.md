@@ -34,6 +34,7 @@ Run every command below in a login shell, from `tasks/CASE-01/`.
 
 ```bash
 python3 scripts/grade.py --impl config/impl.base.cfg
+# on another machine, where you built OpenSTA yourself, add: --allow-tool-drift
 ```
 
 The first line is `RUN_ID=<id>`; the last line should be `GRADE OK`, with `worst_setup` slack `-4.189726…` (ss_n40C_1v60), `worst_hold` `0.059112…` (ff_100C_1v95) and area `45383.5264`. The results go to `runs/<id>/`, which is not tracked by git.
@@ -53,7 +54,14 @@ python3 -B diag/scripts/replicate.py --f1-run runs/<id>
 
 When everything holds it prints `REPLICATION OK` and writes a report to `runs/<time>-replicate.md`.
 
-**About `--allow-tool-drift`.** `env/snapshot.sh check` compares the tool binaries with `env/tools.sha256`. OpenSTA and CUDD are built from source, so on another machine their binaries will differ even at the same commit. With this flag, a query whose only environment problem is that one drift line is accepted and reported as "tool drift"; any other drift (kit scripts, liberty files, the snapshot files) still fails. Whether the tools are really equivalent is decided by the netlist hash and the query outputs.
+**About `--allow-tool-drift`.** Both the grader and the query executor run `env/snapshot.sh check`, which compares the tool binaries with `env/tools.sha256`. OpenSTA and CUDD are built from source, so on another machine their binaries will differ even at the same commit.
+
+Both scripts take this flag, but they relax the check to different degrees:
+
+- `grade.py` accepts only a different `opensta/bin/sta` fingerprint and nothing else in the snapshot log. The OSS CAD Suite tools from the release tarball, the kit scripts, the liberty files and the snapshot files must all still match. The drifted binary and its sha256 are recorded under `env_snapshot` in `verdict.json`. This is the frozen revision v1.4 of the contract (version record in `tasks/CASE-01/spec.md`).
+- `replicate.py` accepts a query whose only environment problem is the "tool binaries differ" line, and reports it as "tool drift".
+
+Whether the tools are really equivalent is decided by the netlist hash and the query outputs.
 
 **About the pre-registration.** The query executor `run_query.py` was changed after the study (to kill child process trees on Windows; behaviour on Linux is unchanged), so it no longer matches the pre-registered executor manifest, and run directly it refuses to run. `replicate.py` skips only that self-check; every other environment check still runs: environment snapshot, netlist hash, frozen inputs, STA records byte for byte against the baseline, log check. Every replicated `result.json` carries a `"replication"` field.
 

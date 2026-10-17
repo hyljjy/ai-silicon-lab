@@ -767,5 +767,72 @@ class TestFrozenInputsInARun(unittest.TestCase):
         self.assertNotIn("synth", steps)
 
 
+STA_DRIFT_LOG = ("opensta/bin/sta: FAILED\nsha256sum: WARNING: 1 computed checksum did NOT match\n"
+                 "DRIFT: tool binaries differ from tools.sha256\nFAIL: live environment differs from the snapshot\n")
+
+
+class TestToolDrift(unittest.TestCase):
+    """spec v1.4: --allow-tool-drift accepts env/snapshot.sh check failing only on the OpenSTA fingerprint; every
+    other drift still fails, and without the flag nothing changes."""
+
+    def test_only_the_opensta_fingerprint_is_accepted(self):
+        self.assertEqual(grade.tool_drift_only(STA_DRIFT_LOG), ["opensta/bin/sta"])
+        rejected = {
+            "release tool": STA_DRIFT_LOG.replace("opensta/bin/sta", "oss-cad-suite/libexec/yosys"),
+            "extra binary": "oss-cad-suite/libexec/vvp: FAILED\n" + STA_DRIFT_LOG,
+            "unreadable": STA_DRIFT_LOG.replace("FAILED\n", "FAILED open or read\n", 1),
+            "kit script": "DRIFT: sky130hd_kit/synth.tcl differs from ~/pdk/sky130hd_kit/synth.tcl\n" + STA_DRIFT_LOG,
+            "liberty": STA_DRIFT_LOG.replace("FAIL:", "DRIFT: liberty files differ from sky130hd_kit/MANIFEST.txt\nFAIL:"),
+            "snapshot files": "FAIL: snapshot files do not match SHA256SUMS\n",
+            "no drift line": "opensta/bin/sta: FAILED\nFAIL: live environment differs from the snapshot\n",
+            "empty": "",
+        }
+        for name, log in rejected.items():
+            with self.subTest(name=name):
+                self.assertIsNone(grade.tool_drift_only(log))
+
+    def drift_case(self, log):
+        tc = TempCase(self)
+        write(os.path.join(tc.repo, "env", "snapshot.sh"), f"printf '%s' '{log}'\nexit 1\n")
+        home = os.path.join(tc.repo, "home")
+        write(os.path.join(home, "tools", "opensta", "bin", "sta"), "another build\n")
+        p = mock.patch.dict(os.environ, {"HOME": home, "USERPROFILE": home})
+        p.start()
+        self.addCleanup(p.stop)
+        write(tc.path("ref/gen_vectors.py"), "import sys\nsys.exit(3)\n")      # stop right after versions
+        return tc, home
+
+    def test_flag_accepts_and_records_the_drift(self):
+        tc, home = self.drift_case(STA_DRIFT_LOG)
+        rc, _ = run_main(PRE_F1 + ["--allow-tool-drift"])
+        self.assertEqual(rc, 1)
+        v = load(os.path.join(tc.run_root(), "verdict.json"))
+        self.assertIn("gen_vectors failed", v["error"])                    # got past env_snapshot and versions
+        self.assertEqual(v["env_snapshot"], {"allow_tool_drift": True, "tool_drift": {
+            "opensta/bin/sta": grade.sha256(os.path.join(home, "tools", "opensta", "bin", "sta"))}})
+
+    def test_without_the_flag_the_drift_fails(self):
+        tc, _ = self.drift_case(STA_DRIFT_LOG)
+        rc, lines = run_main(PRE_F1)
+        self.assertEqual(rc, 1)
+        self.assertTrue(lines[-1].startswith("GRADE FAIL: GradeError: env_snapshot failed (exit 1"), lines)
+        self.assertNotIn("env_snapshot", load(os.path.join(tc.run_root(), "verdict.json")))
+
+    def test_flag_still_fails_on_other_drift(self):
+        tc, _ = self.drift_case(STA_DRIFT_LOG.replace("opensta/bin/sta", "oss-cad-suite/libexec/yosys"))
+        rc, lines = run_main(PRE_F1 + ["--allow-tool-drift"])
+        self.assertEqual(rc, 1)
+        self.assertIn("not only an allowed tool drift", lines[-1])
+
+    def test_flag_with_a_clean_snapshot_records_no_drift(self):
+        tc = TempCase(self, snapshot_ok=True)
+        write(tc.path("ref/gen_vectors.py"), "import sys\nsys.exit(3)\n")
+        rc, _ = run_main(PRE_F1 + ["--allow-tool-drift"])
+        self.assertEqual(rc, 1)
+        v = load(os.path.join(tc.run_root(), "verdict.json"))
+        self.assertIn("gen_vectors failed", v["error"])
+        self.assertEqual(v["env_snapshot"], {"allow_tool_drift": True, "tool_drift": {}})
+
+
 if __name__ == "__main__":
     unittest.main()

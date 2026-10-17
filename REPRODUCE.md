@@ -24,6 +24,7 @@
 
 ```bash
 python3 scripts/grade.py --impl config/impl.base.cfg
+# 另一台机器上，OpenSTA 是自己编译的，加：--allow-tool-drift
 ```
 
 第一行打印 `RUN_ID=<id>`，最后一行应为 `GRADE OK`，其中 `worst_setup` 的 slack 是 `-4.189726…`（ss_n40C_1v60），`worst_hold` 是 `0.059112…`（ff_100C_1v95），面积 `45383.5264`。结果写在 `runs/<id>/`，这个目录不进 git。
@@ -42,6 +43,15 @@ python3 -B diag/scripts/replicate.py --f1-run runs/<id>
 3. 把每个新的 `query_full.txt` 与仓库里的比对，结果为三种之一：`identical`（逐字节相同）、`identical-masked`（OpenSTA 打印的对象内存地址每次运行都不同，屏蔽这些地址后相同）、`different`。
 
 全部通过时打印 `REPLICATION OK`，报告写在 `runs/<时间>-replicate.md`。
+
+**关于 `--allow-tool-drift`。** 评估脚本和查询执行器开始运行前，都会执行 `env/snapshot.sh check`，它会把工具二进制与 `env/tools.sha256` 比对。OpenSTA 和 CUDD 是从源码编译的，换一台机器后，即使 commit 相同，二进制也会不同。
+
+两个脚本都有这个开关，但放宽的程度不同：
+
+- `grade.py` 只放过 `opensta/bin/sta` 的指纹不同，快照日志的其他任何一行都不放过，包括 OSS CAD Suite 预编译包里的工具不一致、kit 脚本不一致、liberty 文件不一致和快照文件本身不一致。漂移的二进制及其 sha256 记在 `verdict.json` 的 `env_snapshot` 字段里。这是合同的 v1.4 冻结修订（`tasks/CASE-01/spec.md` 版本记录）。
+- `replicate.py` 接受快照日志里唯一的问题只是"工具二进制不同"这一行，并在报告里注明"tool drift"。
+
+工具是否真的等价，最终看网表哈希和查询输出。
 
 **与预登记的关系。** 查询执行器 `run_query.py` 在实验结束后改过一次（修复在 Windows 上杀不掉子进程的问题，不影响 Linux 上的行为），已经和预登记时的执行器清单不一致，直接运行会被它的自检拦下。`replicate.py` 只跳过这一项自检，其余环境检查全部照常：环境快照、网表哈希、冻结输入、STA 记录与基线逐字节比对、日志检查。复现运行的每个 `result.json` 都标有 `"replication"` 字段。
 

@@ -3,7 +3,9 @@
 Run inside WSL (login shell) from tasks/CASE-01:
   before F1: python3 scripts/grade.py --impl config/impl.base.cfg --T 20 --cload 0.0024 [--lmax 3] [--seed 1]
              [--sceneset std]
-  after F1:  python3 scripts/grade.py --impl config/impl.<name>.cfg [--sceneset std|all]
+  after F1:  python3 scripts/grade.py --impl config/impl.<name>.cfg [--sceneset std|all] [--allow-tool-drift]
+--allow-tool-drift (spec v1.4, for another machine): env/snapshot.sh check may fail only because the OpenSTA
+binary, built from source, differs from env/tools.sha256; verdict.json records it under env_snapshot.
 After F1, config/f1.cfg is the only source of T, C_load, L_max and the seed (passing --T/--cload/--lmax/--seed is
 then an error), and config/f1.sha256 must match the live evaluation files (a changed one is an evaluation revision).
 The first output line is RUN_ID=<id>; the last line is always one 'GRADE OK: ...' or 'GRADE FAIL: ...' line.
@@ -50,6 +52,13 @@ RECIPE_SHA = "b517940e44b8d0a87a7b649f7f3355fa8960759ba436a8acf5684bf9bc674049" 
 STD = ["tt_025C_1v80", "tt_100C_1v80", "ss_100C_1v60", "ss_n40C_1v60", "ff_n40C_1v95", "ff_100C_1v95"]
 # Frozen timing-target rules (spec 6: third verdict state). Decided by the author at checkpoint C (2026-10-09).
 TIMING_RULES = {"setup_ge_0_std": "worst setup slack over the six std corners >= 0 at the frozen T; hold observed only"}
+# --allow-tool-drift (spec v1.4): OpenSTA (with CUDD) is built from source, so on another machine its binary differs
+# from env/tools.sha256 even at the same commit. Only these binaries may differ; the release-tarball tools may not.
+ALLOWED_TOOL_DRIFT = ("opensta/bin/sta",)
+TOOL_DRIFT_LINE = "DRIFT: tool binaries differ from tools.sha256"
+SNAPSHOT_FAIL_LINE = "FAIL: live environment differs from the snapshot"
+TOOL_DRIFT_LOG = re.compile(r"(?P<bin>\S+): FAILED|sha256sum: WARNING: \d+ computed checksums? did NOT match|"
+                            + re.escape(TOOL_DRIFT_LINE) + "|" + re.escape(SNAPSHOT_FAIL_LINE))
 F1_KEYS = ("T_ns", "C_load_pF", "L_max", "area_cap", "timing_target", "seed", "calib_session")
 F1_FILES = ["config/f1.cfg", "config/f1.sha256"]             # frozen into every post-F1 run as well
 # RTL lint (final review I1; spec 1 and frozen-input integrity): candidate code runs inside the run dir during
@@ -315,6 +324,42 @@ class Run:
         return text
 
 
+def tool_drift_only(text):
+    """spec v1.4 (--allow-tool-drift): the drifted binaries when the env/snapshot.sh check log shows that only tool
+    fingerprints in ALLOWED_TOOL_DRIFT differ from env/tools.sha256, else None. Every non-empty log line must be one
+    the check prints for exactly that case; any other line (kit scripts, liberty files, snapshot files, a missing or
+    unreadable binary) gives None."""
+    lines = [l.strip() for l in text.splitlines() if l.strip()]
+    failed = []
+    for line in lines:
+        m = TOOL_DRIFT_LOG.fullmatch(line)
+        if m is None:
+            return None
+        if m.group("bin"):
+            failed.append(m.group("bin"))
+    if not {TOOL_DRIFT_LINE, SNAPSHOT_FAIL_LINE} <= set(lines) or not failed or not set(failed) <= set(ALLOWED_TOOL_DRIFT):
+        return None
+    return failed
+
+
+def snapshot_allowing_tool_drift(run, argv):
+    """The env_snapshot step under --allow-tool-drift: {binary: live sha256} of the accepted drift ({} if none).
+    Any other failure is a GradeError as with Run.require. The one unreviewed log line of an accepted drift (the
+    sha256sum WARNING) stays recorded in steps.json; the whole log has been checked line by line instead."""
+    log = "env_snapshot.log"
+    rc, text, problems = run.cmd("env_snapshot", argv, log)
+    if rc == 0:
+        if problems:
+            raise GradeError("env_snapshot: log check failed:\n" + "\n".join(problems[:10]))
+        return {}
+    drifted = tool_drift_only(text)
+    if drifted is None:
+        tail = "\n".join(text.splitlines()[-5:])
+        raise GradeError(f"env_snapshot failed (exit {rc}, see {log}; not only an allowed tool drift, "
+                         f"{', '.join(ALLOWED_TOOL_DRIFT)}):\n{tail}")
+    return {b: sha256(os.path.join(os.path.expanduser("~"), "tools", b)) for b in drifted}
+
+
 def parse_f1(path):
     """Validate config/f1.cfg (final review I2): every key present, no unknown key, every value well formed."""
     kv = read_kv(path)
@@ -512,7 +557,11 @@ def grade(args, verdict):
             raise GradeError(f"RTL lint: {impl['rtl']} uses constructs a candidate must not use (file access, "
                              f"plusargs, shell, waveform dumps, `include, macro token pasting; spec 1): "
                              + "; ".join(verdict["rtl_lint"][:10]))
-        run.require("env_snapshot", ["bash", os.path.join(REPO, "env", "snapshot.sh"), "check"], "env_snapshot.log")
+        snapshot = ["bash", os.path.join(REPO, "env", "snapshot.sh"), "check"]
+        if getattr(args, "allow_tool_drift", False):
+            verdict["env_snapshot"] = {"allow_tool_drift": True, "tool_drift": snapshot_allowing_tool_drift(run, snapshot)}
+        else:
+            run.require("env_snapshot", snapshot, "env_snapshot.log")
         verdict["env_ids"] = env_ids()
         text = run.require("versions", versions_argv(), "versions.log")
         verdict["tool_versions"] = text.strip().splitlines()           # spec 3.5, 4.1
@@ -625,6 +674,9 @@ def main(argv=None):
     ap.add_argument("--lmax", type=int)
     ap.add_argument("--seed", type=int, help="pre-F1 only (default 1); after F1 the seed comes from config/f1.cfg")
     ap.add_argument("--sceneset", choices=("std", "all"), default="std")
+    ap.add_argument("--allow-tool-drift", action="store_true",
+                    help="spec v1.4: accept env/snapshot.sh check failing only on the fingerprints of "
+                         + ", ".join(ALLOWED_TOOL_DRIFT) + " (another machine); recorded in verdict.json")
     try:
         args = ap.parse_args(argv)
     except SystemExit as e:
