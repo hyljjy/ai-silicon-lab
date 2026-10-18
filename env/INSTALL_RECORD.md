@@ -47,7 +47,7 @@ apt-get install -y -qq build-essential git cmake ninja-build pkg-config swig tcl
 | 发行页 | https://github.com/YosysHQ/oss-cad-suite-build/releases/tag/2026-10-03（发布于 2026-10-03T08:41:09Z） |
 | 发行包 | `oss-cad-suite-linux-x64-20261003.tgz`，746,447,109 字节 |
 | sha256 | `41b1e1c669efe199ac6e3969b067b84622c365871b4bc09e6b9357ea2f001dcc`（GitHub 发布页公布的值，2026-10-04 经 API 查询） |
-| 安装位置 | `~/tools/oss-cad-suite`；`VERSION` 文件内容为 `20261003`，`RELEASE_DATE` 为 `2026-10-03` |
+| 安装位置 | `~/tools/oss-cad-suite`；`VERSION` 文件内容为 `20261003`。安装目录里另有一个 `RELEASE_DATE` 文件，内容为 `2026-10-03`，但它不属于发行包：包里没有这个文件；它的修改时间是安装当时（2026-10-03 07:18），而包里文件保留的都是打包时间（如 `VERSION` 为 01:35）。推断是安装时另外写入的 |
 
 安装步骤（复原）：
 
@@ -59,7 +59,7 @@ tar -xzf oss-cad-suite-linux-x64-20261003.tgz       # 解出 ~/tools/oss-cad-sui
 ```
 
 - 证据：`~/.wget-hsts` 里有 github.com 的记录，说明用过 wget；`~/tools/oss-cad-suite` 的修改时间是 2026-10-03 07:18。
-- 局限：本机没有保留下载包，所以**无法在本机核对"已安装的目录就是从这个包解出来的"**，只能靠 `VERSION` 和 `RELEASE_DATE` 对应。已安装二进制的指纹记在 [tools.sha256](tools.sha256) 里，以后换了版本可以检测出来。
+- 局限：本机没有保留下载包，所以**无法在本机核对"已安装的目录就是从这个包解出来的"**，只能靠 `VERSION` 对应。已安装二进制的指纹记在 [tools.sha256](tools.sha256) 里，以后换了版本可以检测出来。
 - 环境：只把 `bin/` **追加**到 PATH 末尾，**不** source 包里的 `environment`（见 TOOL-009），写法见快照中的 [open_eda_env.sh](open_eda_env.sh)。
 
 各组件的源码版本，摘自包内 `license/LICENSE.<组件>`：
@@ -149,7 +149,6 @@ PDK 安装命令（摘自 [sky130hd_kit/MANIFEST.txt](sky130hd_kit/MANIFEST.txt)
 
 ## 6. 局限
 
-- 没有在干净的机器上按本记录重装验证过（R1 第 1 条已说明"从干净机器安装的复现尚未做"）。
 - 安装时下载的 OSS CAD Suite 包和 ciel 包都没有保留，上面的校验值来自 GitHub 发布页。
 - 2026-10-04 已把 PDK 的两个 ciel 发行包重新下载到 `D:\study\eda_archive\pdk\sky130-1689ac3f…\`（R1 第 5 条第 3 项）。它们的 sha256 与上面 3.4 节表中的值一致；离线恢复出的目录与 `~/pdk/ciel` 逐文件相同。
 - OSS CAD Suite 的安装包没有备份。

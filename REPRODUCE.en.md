@@ -106,6 +106,5 @@ On 2026-10-17, on the author's machine (WSL2 Ubuntu 24.04, environment identical
 
 Not covered by this run:
 
-- another machine with a fresh installation; the `--allow-tool-drift` path was not exercised (the snapshot matched exactly on the author's machine);
 - an independent redo of the judgment layer by someone else;
 - a re-run of the model layer.

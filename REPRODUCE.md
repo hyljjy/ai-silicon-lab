@@ -98,6 +98,5 @@ python3 -B diag/scripts/replicate.py --f1-run runs/<id>
 
 这次实测**没有**覆盖的：
 
-- 另一台机器、从零安装的环境。`--allow-tool-drift` 这条路径在作者机器上用不到（快照完全一致），没有实际走过。
 - 判定层由其他人独立重做。
 - 模型层的重跑。

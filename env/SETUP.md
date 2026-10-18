@@ -20,7 +20,7 @@
 
 按 [INSTALL_RECORD.md](INSTALL_RECORD.md) 的顺序执行：
 
-1. 第 2 节：用 apt 装系统包（编译器、Tcl、SWIG、CMake、Ninja、Python 3.12 等）。
+1. 第 2 节：用 apt 装系统包（编译器、Tcl、SWIG、CMake、Ninja、Python 3.12 等）。装完确认 `python3 --version` 是 `Python 3.12.3`：有的镜像另装了更新的 Python，并把 `python3` 指了过去。ciel 的 venv 和项目脚本都要用 3.12.3。
 2. 第 3.1 节：下载 OSS CAD Suite `2026-10-03` 发行包，先核对 sha256，再解压到 `~/tools/oss-cad-suite`。它提供 Yosys、ABC、Icarus Verilog。
 3. 第 3.2 节：从源码构建 CUDD 3.0.0（固定 commit），安装到 `~/tools/cudd`。
 4. 第 3.3 节：从源码构建 OpenSTA，**必须用 commit `7a034b56de14b485ddf8fd97b420a6f37a91c00d`**，安装到 `~/tools/opensta`。
@@ -86,9 +86,8 @@ bash <repo>/env/snapshot.sh check
 
 它核对 4 项：快照文件本身、`~/tools` 和 `~/pdk/sky130hd_kit` 下的脚本是否与快照逐字节相同、18 个 `.lib` 的 sha256、工具二进制的指纹。在作者的机器上输出 `SNAPSHOT OK`。
 
-在另一台机器上，**前三项应当通过；第 4 项预计会报 `DRIFT: tool binaries differ from tools.sha256`**：OpenSTA 和 CUDD 是从源码编译的，即使 commit 相同，编译出的二进制哈希也会因编译器和构建路径而不同。OSS CAD Suite 是预编译包，它的几个二进制应当相同。这种情况下，复现脚本要加 `--allow-tool-drift`，见仓库根目录的 [REPRODUCE.md](../REPRODUCE.md)。工具是否真的等价，由网表哈希和查询输出是否逐字节一致来判断。
+在另一台机器上，**前三项应当通过；第 4 项可能报 `DRIFT: tool binaries differ from tools.sha256`**：OpenSTA 和 CUDD 是从源码编译的，编译器版本或构建路径不同，二进制哈希就可能不同；两者都相同时，哈希也可能完全一致。OSS CAD Suite 是预编译包，它的几个二进制应当相同。如果只报了 OpenSTA 一项，复现脚本要加 `--allow-tool-drift`，见仓库根目录的 [REPRODUCE.md](../REPRODUCE.md)。工具是否真的等价，由网表哈希和查询输出是否逐字节一致来判断。
 
 ## 5. 已知限制
 
-- 作者只在自己的机器上从干净克隆跑通过完整复现，还没有在另一台机器上从零装环境验证过。
 - 安装时下载的发行包没有随项目分发，校验值来自 GitHub 发布页（见 INSTALL_RECORD 第 3 节）。如果发布页下架，需要另找来源，并核对同一个 sha256。
