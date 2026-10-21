@@ -38,17 +38,20 @@ Ownership (primary):
     zombie, a task inside do_exit, an execve that released the old address space), or, after ANY environment read
     (token or not, also a failed one), it no longer runs with its listed start time or is now a zombie. The
     environment is read with ONE read(2) of ENVIRON_MAX bytes: the kernel holds the address space for the whole call,
-    so the result is complete or empty, never a prefix (exactly ENVIRON_MAX bytes -> unconfirmed). A process forked
+    so the result is complete or empty, never a prefix (exactly ENVIRON_MAX bytes -> unconfirmed). Kernel assumption:
+    /proc/<pid>/environ is served by environ_read, which takes the mm reference (mmget_not_zero) once and keeps it
+    across its whole copy loop up to env_end; true of modern kernels, including the WSL2 5.15 / 6.x kernels (this
+    machine: 6.18). Very old kernels truncated environ at one page; there the claim does not hold. A process forked
     by a vanished one before it exited is listed by the next pass. Zombies: /proc lists only thread-group leaders,
     and a leader that called pthread_exit shows Z while other threads keep running and can fork; so a zombie leader
     is looked up in /proc/<pid>/task/. A live other thread -> the process counts as running (its environment is read
     through that thread; also _start_time and the registry checks treat it as running); a listed thread that is gone
-    when its stat is read -> the group changed (a worker may have handed over to a new thread; the task/ readdir
-    stops early when the thread under its cursor dies) -> rescan, and running for the liveness checks; every other
-    task Z/X or none -> finished, accepted only when the previous pass also found it finished (its pre-exit children
-    are listed by then); task/ unreadable -> unconfirmed at once. When SCAN_PASSES passes in a row see a change (also
-    a steady thread handoff), the result is unconfirmed (still_alive, cleanup, verify). Kernel threads (PF_KTHREAD)
-    are left out of the listing.
+    when its stat is read, or that is Z/X (EXIT_DEAD until release_task) -> the group changed (a worker may have
+    handed over to a new thread; the task/ readdir stops early when the thread under its cursor dies) -> rescan, and
+    running for the liveness checks; task/ listing the leader alone -> finished, accepted only when the previous pass
+    also found it finished (its pre-exit children are listed by then); task/ unreadable -> unconfirmed at once. When
+    SCAN_PASSES passes in a row see a change (also a steady thread handoff), the result is unconfirmed (still_alive,
+    cleanup, verify). Kernel threads (PF_KTHREAD) are left out of the listing.
     Known residual limits: (1) conservative, not unsafe: on a busy system unrelated processes started since the
     launch that exit during every pass, or a user process whose environment is really empty, make the result
     unconfirmed (a stop the author clears), never a false confirmation. (2) A /proc readdir is not an atomic
@@ -62,7 +65,10 @@ Ownership (primary):
     migration mediated by PID 1 or by root (e.g. "systemd-run --user --scope", which asks the user manager to move
     the process into user@<uid>.service) can carry a descendant out of the launch cgroup; if it is then also unreadable
     it is not counted. (5) Next to the set-uid case above: a member that execs with a scrubbed environment (e.g.
-    "env -i") produces token-less descendants. The graded flow (grade.py and its tools) does none of (4) and (5).
+    "env -i") produces token-less descendants. (6) /proc/<pid>/environ shows the current environment memory of the
+    process, not a copy made at exec: a member that overwrites that memory (setproctitle-style) or moves it with
+    prctl(PR_SET_MM_ENV_START / PR_SET_MM_ENV_END) loses the token without any exec, and so do its later children.
+    The graded flow (grade.py and its tools) does none of (4) to (6).
   - Windows across lifetimes: the job is unnamed and its only handle belongs to the wrapper; when the wrapper process
     exits, the handle is closed and KILL_ON_JOB_CLOSE ends every member, registered or not. A fresh process cannot open
     the job, so it checks the root and the registry by pid AND start time and relies on that guarantee (recovery runs
@@ -430,13 +436,14 @@ else:
 
     def _group_state(pid, listdir=None, task_state=None):
         """State of the thread group of pid whose leader is a zombie (Codex BC4-01: a leader that called
-        pthread_exit shows Z while its other threads keep running and can fork): ("finished", None) when task/ holds
-        no task other than the leader or every other listed task is Z/X; ("live", tid) for a running other task;
-        ("changed", None) when a listed task no longer exists when its stat is read (BC4 round 2: that proves only
-        that one thread exited; a worker may have handed over to a new thread, and the task/ readdir stops early when
-        the thread under its cursor dies, so later threads may be missing: the caller rescans or, for a liveness
-        check, counts the process as running); ("gone", None) when the process no longer exists; ("unknown", None)
-        when task/ or a task's stat cannot be read. listdir / task_state(pid, tid): injectable readers (tests)."""
+        pthread_exit shows Z while its other threads keep running and can fork): ("finished", None) only when task/
+        lists the leader alone; ("live", tid) for a running other task; ("changed", None) when a listed other task no
+        longer exists when its stat is read, or is Z/X (BC4 rounds 2 and 3: that proves only that one thread exited
+        or is exiting; a worker may have handed over to a new thread created after the readdir cursor passed, and the
+        task/ readdir stops early when the thread under its cursor dies, so later threads may be missing: the caller
+        rescans or, for a liveness check, counts the process as running); ("gone", None) when the process no longer
+        exists; ("unknown", None) when task/ or a task's stat cannot be read. listdir / task_state(pid, tid):
+        injectable readers (tests)."""
         listdir = listdir or os.listdir
         task_state = task_state or _task_stat_state
         try:
@@ -454,8 +461,9 @@ else:
                 return "changed", None                 # never "that thread has exited, carry on"
             except (OSError, ValueError, IndexError):
                 return "unknown", None
-            if state not in ("Z", "X", "x"):
-                return "live", tid
+            if state in ("Z", "X", "x"):
+                return "changed", None                 # exiting (EXIT_DEAD until release_task), not proof of the group
+            return "live", tid
         return "finished", None
 
     def _running_start(pid):

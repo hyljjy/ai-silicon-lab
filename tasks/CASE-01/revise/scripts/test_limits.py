@@ -968,6 +968,24 @@ class TestRecordChecks(unittest.TestCase):
                                                         read_environ=lambda pid, tid=None: env_tok,
                                                         start_time=lambda pid: None, group_state=group_b)
         self.assertEqual((found, stable, len(n)), ({P: "505"}, True, 2))
+        # BC4 round 3: a listed other task in X (EXIT_DEAD until release_task) or Z is exiting, not proof that the
+        # group is finished (a handoff worker may have created a new thread after the cursor passed): changed.
+        # finished only when task/ lists the leader alone
+        for st in ("X", "x", "Z"):
+            self.assertEqual(limits._group_state(P, listdir=lambda path: [str(P), str(P + 3)],
+                                                 task_state=lambda pid, tid: st), ("changed", None), st)
+        self.assertEqual(limits._group_state(P, listdir=lambda path: [str(P)], task_state=gone_stat),
+                         ("finished", None))
+        self.assertEqual(limits._group_state(P, listdir=lambda path: [str(P), str(P + 3)],
+                                             task_state=lambda pid, tid: "S"), ("live", P + 3))
+        # the handoff worker sitting in X in every pass: never accepted -> unconfirmed after SCAN_PASSES
+        n.clear()
+        found, _, _, stable = limits._stable_token_scan(
+            token, "400", None, listing=listing, read_environ=lambda pid, tid=None: env_tok,
+            start_time=lambda pid: None,
+            group_state=lambda pid: limits._group_state(pid, listdir=handoff_listdir,
+                                                        task_state=lambda p, t: "X"))
+        self.assertEqual((found, stable, len(n)), ({}, False, limits.SCAN_PASSES))
         # liveness checks: a changed group counts as running (never as exited)
         with mock.patch.object(limits, "_stat", lambda pid, flags=False: ("Z", 1, "505")), \
                 mock.patch.object(limits, "_group_state", lambda pid: ("changed", None)):
