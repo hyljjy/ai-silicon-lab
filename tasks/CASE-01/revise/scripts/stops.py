@@ -13,8 +13,16 @@ contract; protocol v0.4 section 16).
   and WSL (/mnt/d), where pids and start times mean different things: a lock written on another platform
   (sys.platform differs or is missing) -> LockError "LOCKED ... held from another OS", never taken over. Same
   platform: a holder that still runs (same pid AND start time, limits.still_alive) or cannot be verified -> LOCKED;
-  a holder that has exited -> the lock is moved aside (os.replace to a unique name, content re-checked), one line is
-  appended to revise/stops/r<rnd>/lock_history.txt (time, old holder, new holder), and the lock is created anew.
+  a holder that has exited -> takeover, mutually exclusive among all takers (Codex BC1-04): the takeover guard
+  <lock>.takeover is created with O_CREAT | O_EXCL (content {pid, start, platform, acquired_at, guards, nonce});
+  only while it is held the lock is re-read, must be byte-identical to the stale content judged and its holder must
+  still have exited; then os.replace(<unique temporary file>, lock) puts our content in place, so the lock is never
+  absent and never moved aside; one line is appended to revise/stops/r<rnd>/lock_history.txt (time, old holder, new
+  holder) and the guard is removed. An existing guard: held from another OS, by a running or unverifiable creator,
+  or unreadable -> LOCKED; its creator provably exited on this platform -> the guard is broken by the same protocol
+  under <lock>.takeover.takeover (a history line "takeover guard broken"); an existing <lock>.takeover.takeover is
+  never broken (LOCKED, check by hand). No OS byte-range locks: they do not work between Windows and WSL on /mnt/d.
+  Release removes the lock (and a guard) only while it still holds our own content.
 Every function takes revise= (the revise directory) so tests can work in a temporary repository.
 Python standard library only; Windows and WSL."""
 import contextlib
@@ -165,6 +173,114 @@ def _holder_text(rec):
     return f"pid={rec.get('pid')} start={rec.get('start')} acquired_at={rec.get('acquired_at')}"
 
 
+def _hook(point, path):
+    """Test seam, does nothing: called with "judged" when the holder of path (the lock or its takeover guard) has
+    just been judged to have exited, before the takeover guard is taken, and with "guarded" when the takeover guard
+    of path is held, before path is re-read."""
+
+
+def _create_excl(path, data):
+    fd = os.open(path, os.O_CREAT | os.O_EXCL | os.O_WRONLY | getattr(os, "O_BINARY", 0), 0o644)
+    try:
+        os.write(fd, data)
+    finally:
+        os.close(fd)
+
+
+def _remove_if_mine(path, data):
+    """Remove path only when it still holds exactly data (our own lock or guard)."""
+    try:
+        if rp.read_bytes(path) == data:
+            os.remove(path)
+    except OSError:
+        pass
+
+
+def _history(rnd, revise, text):
+    hist_dir = stops_dir(rnd, revise)
+    os.makedirs(hist_dir, exist_ok=True)
+    with open(os.path.join(hist_dir, "lock_history.txt"), "ab") as f:
+        f.write(f"{_now()}\t{text}\n".encode("utf-8"))
+
+
+def _judge_exited(path, raw, what, rnd, side):
+    """The holder record raw of path (the lock, or a takeover guard); returned only when its holder provably has
+    exited on this platform, otherwise LockError."""
+    where = f"round {rnd} side {side}"
+    try:
+        rec = json.loads(raw.decode("utf-8"))
+        pid, start = int(rec["pid"]), rec["start"]
+        if not isinstance(start, str) or not start:
+            raise ValueError("no start time")
+    except (ValueError, KeyError, TypeError) as e:
+        raise LockError(f"LOCKED: {path} exists and cannot be read ({e}); remove it only after checking "
+                        f"by hand that no run of {where} is active") from None
+    if rec.get("platform") != sys.platform:
+        raise LockError(f"LOCKED: {where}: the {what} is held from another OS (platform {rec.get('platform')!r}, "
+                        f"here {sys.platform!r}; {_holder_text(rec)}); cannot verify the holder from here, the "
+                        f"{what} is not taken over")
+    alive, unconfirmed = limits.still_alive({"root_pid": pid, "root_start": start, "registry": []})
+    if alive:
+        raise LockError(f"LOCKED: {where}: the {what} is held by a running process ({_holder_text(rec)})")
+    if unconfirmed:
+        raise LockError(f"LOCKED: {where}: cannot confirm that the holder of the {what} ({_holder_text(rec)}) "
+                        f"has exited")
+    return rec
+
+
+def _take_over(path, old_raw, new_data, ident, depth, rnd, side, revise):
+    """Replace path, whose content old_raw was judged to belong to an exited holder, by new_data, mutually exclusive
+    with every other taker. The takeover guard path + ".takeover" is created with O_CREAT | O_EXCL; only while it
+    is held, path is re-read, must still be exactly old_raw and its holder must still have exited; then
+    os.replace(<unique temporary file>, path), so path is never absent and never moved aside. The guard is removed
+    afterwards (only if it still holds our content). depth 0: path is the lock; depth 1: path is the lock's takeover
+    guard. An existing guard at depth 0 whose creator provably exited on this platform is broken the same way (under
+    its own guard); an existing guard at depth 1 is never broken (LOCKED, to be checked by hand)."""
+    where = f"round {rnd} side {side}"
+    what = "lock" if depth == 0 else "takeover guard"
+    guard = path + ".takeover"
+    gdata = (json.dumps(dict(ident, acquired_at=_now(), guards=os.path.basename(path),
+                             nonce=secrets.token_hex(6))) + "\n").encode("utf-8")
+    try:
+        _create_excl(guard, gdata)
+    except FileExistsError:
+        if depth >= 1:
+            raise LockError(f"LOCKED: {where}: {guard} exists (a takeover of the takeover guard is running or was "
+                            f"interrupted); remove it only after checking by hand that no run of {where} is "
+                            f"active") from None
+        try:
+            graw = rp.read_bytes(guard)
+        except FileNotFoundError:
+            raise LockError(f"LOCKED: {where}: the takeover guard changed while it was checked") from None
+        g = _judge_exited(guard, graw, "takeover guard", rnd, side)
+        _hook("judged", guard)
+        _take_over(guard, graw, gdata, ident, depth + 1, rnd, side, revise)   # we now hold the guard
+        _history(rnd, revise, f"side={side}\ttakeover guard broken\told: {_holder_text(g)} (exited)\t"
+                              f"new: {_holder_text(ident)}")
+    try:
+        _hook("guarded", path)
+        try:
+            cur = rp.read_bytes(path)
+        except FileNotFoundError:
+            cur = None
+        if cur != old_raw:
+            raise LockError(f"LOCKED: {where}: another process took the {what} over first (or it changed while it "
+                            f"was checked); it is left as it is")
+        _judge_exited(path, cur, what, rnd, side)
+        tmp = f"{path}.new-{secrets.token_hex(6)}"
+        _create_excl(tmp, new_data)
+        try:
+            os.replace(tmp, path)
+        except OSError as e:
+            try:
+                os.remove(tmp)
+            except OSError:
+                pass
+            raise LockError(f"LOCKED: {where}: the stale {what} could not be replaced ({e})") from None
+    finally:
+        _remove_if_mine(guard, gdata)
+
+
 @contextlib.contextmanager
 def round_lock(rnd, side, revise=None):
     """Exclusive ownership of round rnd on one side for the duration of the with-block (see module doc)."""
@@ -173,67 +289,26 @@ def round_lock(rnd, side, revise=None):
     start = limits._start_time(os.getpid())
     if start is None:
         raise LockError("LOCKED: the start time of this process cannot be read; lock not taken")
+    ident = {"pid": os.getpid(), "start": start, "platform": sys.platform}
     mine = {"pid": os.getpid(), "start": start, "side": side, "acquired_at": _now(), "platform": sys.platform}
     data = (json.dumps(mine) + "\n").encode("utf-8")
-
-    def create():
-        fd = os.open(path, os.O_CREAT | os.O_EXCL | os.O_WRONLY | getattr(os, "O_BINARY", 0), 0o644)
-        try:
-            os.write(fd, data)
-        finally:
-            os.close(fd)
-
     try:
-        create()
+        _create_excl(path, data)
     except FileExistsError:
-        old_raw = rp.read_bytes(path)
         try:
-            old = json.loads(old_raw.decode("utf-8"))
-            old_pid, old_start = int(old["pid"]), old["start"]
-            if not isinstance(old_start, str) or not old_start:
-                raise ValueError("no start time")
-        except (ValueError, KeyError, TypeError) as e:
-            raise LockError(f"LOCKED: {path} exists and cannot be read ({e}); remove it only after checking "
-                            f"by hand that no run of round {rnd} side {side} is active") from None
-        if old.get("platform") != sys.platform:
-            raise LockError(f"LOCKED: round {rnd} side {side} is held from another OS (platform "
-                            f"{old.get('platform')!r}, here {sys.platform!r}; {_holder_text(old)}); cannot verify "
-                            f"the holder from here, the lock is not taken over")
-        alive, unconfirmed = limits.still_alive({"root_pid": old_pid, "root_start": old_start, "registry": []})
-        if alive:
-            raise LockError(f"LOCKED: round {rnd} side {side} is held by a running process ({_holder_text(old)})")
-        if unconfirmed:
-            raise LockError(f"LOCKED: round {rnd} side {side}: cannot confirm that the holder "
-                            f"({_holder_text(old)}) has exited")
-        # move the stale lock aside under a unique name, then check that what was moved is the lock just verified
-        aside = f"{path}.stale-{secrets.token_hex(6)}"
-        try:
-            os.replace(path, aside)
+            old_raw = rp.read_bytes(path)
         except FileNotFoundError:
             raise LockError(f"LOCKED: round {rnd} side {side}: the lock changed while it was checked") from None
-        if rp.read_bytes(aside) != old_raw:         # another process took it over meanwhile: put its lock back
-            try:
-                os.link(aside, path)                # fails when a lock exists again; never overwrites one
-                os.remove(aside)
-                note = "its lock was put back"
-            except OSError as e:
-                note = f"its lock could not be put back ({e}); it is kept at {aside}"
-            raise LockError(f"LOCKED: round {rnd} side {side}: another process took the lock over first; {note}")
-        os.remove(aside)
-        hist_dir = stops_dir(rnd, revise)
-        os.makedirs(hist_dir, exist_ok=True)
-        with open(os.path.join(hist_dir, "lock_history.txt"), "ab") as f:
-            f.write(f"{_now()}\tside={side}\ttaken over\told: {_holder_text(old)} (exited)\t"
-                    f"new: {_holder_text(mine)}\n".encode("utf-8"))
+        old = _judge_exited(path, old_raw, "lock", rnd, side)
+        _hook("judged", path)
         try:
-            create()
-        except FileExistsError:
-            raise LockError(f"LOCKED: round {rnd} side {side}: another process took the lock over first") from None
+            _take_over(path, old_raw, data, ident, 0, rnd, side, revise)
+            _history(rnd, revise, f"side={side}\ttaken over\told: {_holder_text(old)} (exited)\t"
+                                  f"new: {_holder_text(mine)}")
+        except BaseException:
+            _remove_if_mine(path, data)
+            raise
     try:
         yield mine
     finally:
-        try:
-            if rp.read_bytes(path) == data:
-                os.remove(path)
-        except OSError:
-            pass
+        _remove_if_mine(path, data)

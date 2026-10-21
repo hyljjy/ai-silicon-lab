@@ -1,5 +1,6 @@
 """Tests for stops (stop records, clearances, round locks; CASE-01 stage B, Task 1, protocol section 16).
 Run per module, never with discover. Every test works in a temporary git repository under tasks/CASE-01/runs/."""
+import contextlib
 import json
 import os
 import subprocess
@@ -206,29 +207,246 @@ class TestLocks(Base):
             with open(self.lock_path(1, "call"), encoding="utf-8") as f:
                 self.assertEqual(json.load(f)["platform"], sys.platform)
 
-    def test_takeover_race_puts_other_lock_back(self):
-        path = self.lock_path(1, "eval")
-        os.makedirs(os.path.dirname(path))
-        with open(path, "w", encoding="utf-8", newline="\n") as f:      # stale: same pid, other start time
-            json.dump({"pid": os.getpid(), "start": "1", "side": "eval", "acquired_at": "t0",
-                       "platform": sys.platform}, f)
-        fresh = b'{"pid": 1, "start": "2", "side": "eval", "acquired_at": "t1", "platform": "x"}\n'
-        real_replace = os.replace
+    def write_json(self, path, rec):
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        raw = (json.dumps(rec) + "\n").encode("utf-8")
+        with open(path, "wb") as f:
+            f.write(raw)
+        return raw
 
-        def racing_replace(src, dst):
-            # another process took the stale lock over between our check and our move
-            with open(src, "wb") as f:
+    def stale(self, **kw):
+        # same pid as this process, other start time: provably not this holder, same platform
+        return dict({"pid": os.getpid(), "start": "1", "side": "eval", "acquired_at": "t0",
+                     "platform": sys.platform}, **kw)
+
+    def hook_once(self, point, action, where=None):
+        """Patch stops._hook so that action() runs once, the first time the given point is reached for the lock
+        path; returns a list that records whether it fired."""
+        fired = []
+        where = where or self.lock_path(1, "eval")
+
+        def hook(name, path):
+            if name == point and path == where and not fired:
+                fired.append(True)
+                action()
+        p = mock.patch.object(stops, "_hook", hook)
+        p.start()
+        self.addCleanup(p.stop)
+        return fired
+
+    def others(self, path):
+        return sorted(n for n in os.listdir(os.path.dirname(path)) if n != ".lock")
+
+    def test_takeover_race_lock_changed_before_guard(self):
+        path = self.lock_path(1, "eval")
+        self.write_json(path, self.stale())
+        fresh = b'{"pid": 1, "start": "2", "side": "eval", "acquired_at": "t1", "platform": "x"}\n'
+
+        def other_takes_over():          # another process took the stale lock over between our check and our guard
+            with open(path, "wb") as f:
                 f.write(fresh)
-            real_replace(src, dst)
-        with mock.patch.object(stops.os, "replace", racing_replace):
-            with self.assertRaises(stops.LockError) as cm:
-                with stops.round_lock(1, "eval", revise=self.revise):
-                    pass
+        fired = self.hook_once("judged", other_takes_over)
+        with self.assertRaises(stops.LockError) as cm:
+            with stops.round_lock(1, "eval", revise=self.revise):
+                pass
+        self.assertTrue(fired)
         self.assertIn("another process took the lock over first", str(cm.exception))
         with open(path, "rb") as f:
             self.assertEqual(f.read(), fresh)
-        self.assertEqual([n for n in os.listdir(os.path.dirname(path)) if n != ".lock"], [])
+        self.assertEqual(self.others(path), [])
         self.assertFalse(os.path.exists(os.path.join(self.rdir(1), "lock_history.txt")))
+
+    def test_takeover_three_way_interleaving(self):
+        # A and B both judge the same stale lock; A takes over and works; B's delayed attempt must not displace A
+        # (never moves, removes or replaces .lock), and C must not get in while A works.
+        path = self.lock_path(1, "eval")
+        self.write_json(path, self.stale())
+        stack = contextlib.ExitStack()
+        self.addCleanup(stack.close)
+        held = {}
+        touched = []
+
+        def a_takes_over():              # B has judged the lock stale; A now takes it over completely
+            held["a"] = stack.enter_context(stops.round_lock(1, "eval", revise=self.revise))
+            with open(path, "rb") as f:
+                held["raw"] = f.read()
+        fired = self.hook_once("judged", a_takes_over)
+        real = {n: getattr(stops.os, n) for n in ("replace", "rename", "remove", "unlink")}
+
+        def spy(name):
+            def f(*args, **kw):
+                if "raw" in held and os.path.abspath(args[0]) == os.path.abspath(path):
+                    touched.append((name, args))
+                return real[name](*args, **kw)
+            return f
+        with mock.patch.multiple(stops.os, **{n: spy(n) for n in real}):
+            with self.assertRaises(stops.LockError) as cm:      # B
+                with stops.round_lock(1, "eval", revise=self.revise):
+                    self.fail("B entered while A holds the lock")
+        self.assertTrue(fired)
+        self.assertIn("LOCKED", str(cm.exception))
+        self.assertEqual(touched, [])                           # B never moved or removed A's lock
+        with open(path, "rb") as f:
+            self.assertEqual(f.read(), held["raw"])
+        self.assertEqual(json.loads(held["raw"])["acquired_at"], held["a"]["acquired_at"])
+        with self.assertRaises(stops.LockError) as cm:          # C, while A works
+            with stops.round_lock(1, "eval", revise=self.revise):
+                self.fail("C entered while A holds the lock")
+        self.assertIn("held by a running process", str(cm.exception))
+        with open(path, "rb") as f:
+            self.assertEqual(f.read(), held["raw"])
+        self.assertEqual(self.others(path), [])
+        stack.close()                                           # A finishes
+        self.assertFalse(os.path.exists(path))
+        with open(os.path.join(self.rdir(1), "lock_history.txt"), encoding="utf-8") as f:
+            self.assertEqual(len(f.read().splitlines()), 1)     # only A took over
+
+    def test_takeover_guard_held_by_live_taker_refused(self):
+        # B holds the takeover guard and is about to replace the stale lock: A and C are refused, the stale lock
+        # stays in place until B replaces it, and B then completes the takeover.
+        path = self.lock_path(1, "eval")
+        stale_raw = self.write_json(path, self.stale())
+        errors = []
+
+        def others_try():
+            errors.append(os.path.exists(path + ".takeover"))
+            for _ in ("A", "C"):
+                try:
+                    with stops.round_lock(1, "eval", revise=self.revise):
+                        errors.append("entered")
+                except stops.LockError as e:
+                    errors.append(str(e))
+            with open(path, "rb") as f:
+                errors.append(f.read() == stale_raw)
+        fired = self.hook_once("guarded", others_try)
+        with stops.round_lock(1, "eval", revise=self.revise) as mine:    # B
+            with open(path, encoding="utf-8") as f:
+                self.assertEqual(json.load(f)["acquired_at"], mine["acquired_at"])
+            self.assertEqual(self.others(path), [])
+        self.assertTrue(fired)
+        self.assertEqual(len(errors), 4)
+        self.assertIs(errors[0], True)
+        for e in errors[1:3]:
+            self.assertIn("LOCKED", e)
+            self.assertIn("takeover", e)
+        self.assertIs(errors[3], True)
+        with open(os.path.join(self.rdir(1), "lock_history.txt"), encoding="utf-8") as f:
+            self.assertEqual(len(f.read().splitlines()), 1)
+
+    def test_stale_takeover_guard_broken(self):
+        path = self.lock_path(1, "eval")
+        self.write_json(path, self.stale())
+        self.write_json(path + ".takeover", self.stale(acquired_at="t5"))
+        with stops.round_lock(1, "eval", revise=self.revise) as mine:
+            with open(path, encoding="utf-8") as f:
+                self.assertEqual(json.load(f)["acquired_at"], mine["acquired_at"])
+            self.assertEqual(self.others(path), [])
+        self.assertFalse(os.path.exists(path))
+        with open(os.path.join(self.rdir(1), "lock_history.txt"), encoding="utf-8") as f:
+            lines = f.read().splitlines()
+        self.assertEqual(len(lines), 2)
+        self.assertIn("takeover guard", lines[0])
+        self.assertIn("t5", lines[0])
+        self.assertIn("taken over", lines[1])
+
+    def test_takeover_guard_not_broken_unless_provably_stale(self):
+        path = self.lock_path(1, "eval")
+        guard = path + ".takeover"
+        other = "linux" if sys.platform == "win32" else "win32"
+        p = subprocess.Popen(HOLDER, stdin=subprocess.PIPE, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        try:
+            live_start = limits._start_time(p.pid)
+            self.assertIsNotNone(live_start)
+            cases = {
+                "other OS": (json.dumps(self.stale(platform=other, pid=999999)) + "\n").encode(),
+                "running": (json.dumps(self.stale(pid=p.pid, start=live_start)) + "\n").encode(),
+                "unreadable": b"",
+                "no platform": (json.dumps({"pid": os.getpid(), "start": "1"}) + "\n").encode(),
+            }
+            for name, graw in cases.items():
+                with self.subTest(name):
+                    lraw = self.write_json(path, self.stale())
+                    with open(guard, "wb") as f:
+                        f.write(graw)
+                    with self.assertRaises(stops.LockError) as cm:
+                        with stops.round_lock(1, "eval", revise=self.revise):
+                            pass
+                    self.assertIn("LOCKED", str(cm.exception))
+                    with open(path, "rb") as f:
+                        self.assertEqual(f.read(), lraw)
+                    with open(guard, "rb") as f:
+                        self.assertEqual(f.read(), graw)
+                    self.assertEqual(self.others(path), [".lock.takeover"])
+        finally:
+            p.stdin.close()
+            p.wait(timeout=20)
+        self.assertFalse(os.path.exists(os.path.join(self.rdir(1), "lock_history.txt")))
+
+    def test_stale_guard_of_guard_refused(self):
+        path = self.lock_path(1, "eval")
+        lraw = self.write_json(path, self.stale())
+        g1 = self.write_json(path + ".takeover", self.stale(acquired_at="t5"))
+        g2 = self.write_json(path + ".takeover.takeover", self.stale(acquired_at="t6"))
+        with self.assertRaises(stops.LockError) as cm:
+            with stops.round_lock(1, "eval", revise=self.revise):
+                pass
+        self.assertIn("LOCKED", str(cm.exception))
+        self.assertIn("by hand", str(cm.exception))
+        for f_, raw in ((path, lraw), (path + ".takeover", g1), (path + ".takeover.takeover", g2)):
+            with open(f_, "rb") as f:
+                self.assertEqual(f.read(), raw)
+        self.assertEqual(self.others(path), [".lock.takeover", ".lock.takeover.takeover"])
+        self.assertFalse(os.path.exists(os.path.join(self.rdir(1), "lock_history.txt")))
+
+    def test_two_breakers_of_stale_guard_exclusive(self):
+        # X and Y both judge the same stale takeover guard; X breaks it and is about to replace the lock; Y's
+        # delayed attempt must not displace X's guard nor enter.
+        path = self.lock_path(1, "eval")
+        guard = path + ".takeover"
+        self.write_json(path, self.stale())
+        self.write_json(guard, self.stale(acquired_at="t5"))
+        state = {}
+
+        def y_tries():                   # X now holds the broken guard; Y runs a whole attempt
+            with open(guard, "rb") as f:
+                state["x_guard"] = f.read()
+            try:
+                with stops.round_lock(1, "eval", revise=self.revise):
+                    state["y"] = "entered"
+            except stops.LockError as e:
+                state["y"] = str(e)
+            with open(guard, "rb") as f:
+                state["after"] = f.read()
+        fired = self.hook_once("guarded", y_tries)
+        with stops.round_lock(1, "eval", revise=self.revise):
+            pass
+        self.assertTrue(fired)
+        self.assertIn("LOCKED", state["y"])
+        self.assertEqual(state["after"], state["x_guard"])
+        self.assertNotIn(b"t5", state["x_guard"])
+        self.assertEqual(self.others(path), [])
+
+    def test_guard_judged_then_replaced_before_break(self):
+        # Y judges a stale guard; before Y breaks it, X breaks it and holds it: Y must not displace X's guard.
+        path = self.lock_path(1, "eval")
+        guard = path + ".takeover"
+        self.write_json(path, self.stale())
+        self.write_json(guard, self.stale(acquired_at="t5"))
+        x_guard = (json.dumps({"pid": os.getpid(), "start": limits._start_time(os.getpid()), "acquired_at": "tx",
+                               "platform": sys.platform}) + "\n").encode()
+
+        def x_breaks():
+            with open(guard, "wb") as f:
+                f.write(x_guard)
+        fired = self.hook_once("judged", x_breaks, where=guard)
+        with self.assertRaises(stops.LockError) as cm:
+            with stops.round_lock(1, "eval", revise=self.revise):
+                pass
+        self.assertTrue(fired)
+        self.assertIn("LOCKED", str(cm.exception))
+        with open(guard, "rb") as f:
+            self.assertEqual(f.read(), x_guard)
+        self.assertEqual(self.others(path), [".lock.takeover"])
 
     def test_unreadable_lock_refused(self):
         path = self.lock_path(1, "eval")
