@@ -1,0 +1,1 @@
+{"slack": {"better": "increase", "epsilon": "0.000001"}, "area": {"better": "decrease", "epsilon": "0.0001"}, "L": {"compare": "equal"}, "function": {"compare": "equal"}}

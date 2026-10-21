@@ -119,6 +119,22 @@ class TestRevpaths(unittest.TestCase):
                 rp.directions(p)
         self.assertEqual(rp.METRIC_DIRECTIONS, os.path.join(rp.RULES, "metric_directions.json"))
 
+    def test_real_rules_files(self):
+        # the committed rules files: reused.sha256 lists the six reused stage-A files and all match;
+        # metric_directions.json holds the values of the implementation plan
+        self.assertEqual(rp.reused_problems(), [])
+        with open(rp.REUSED_SHA256, "rb") as f:
+            raw = f.read()
+        self.assertNotIn(b"\r", raw)
+        rels = sorted(ln.split(None, 1)[1] for ln in raw.decode("utf-8").splitlines())
+        want = sorted([f"tasks/CASE-01/diag/scripts/{n}" for n in
+                       ("wsl.sh", "privacy_check.py", "diag_commit.sh", "void_check.py", "redact_settings.py")]
+                      + ["tasks/CASE-01/diag/models/originals.sha256"])
+        self.assertEqual(rels, want)
+        self.assertEqual(rp.directions(), {"slack": {"better": "increase", "epsilon": Decimal("0.000001")},
+                                           "area": {"better": "decrease", "epsilon": Decimal("0.0001")},
+                                           "L": {"compare": "equal"}, "function": {"compare": "equal"}})
+
 
 if __name__ == "__main__":
     unittest.main()
