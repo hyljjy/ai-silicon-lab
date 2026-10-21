@@ -1,4 +1,4 @@
-GRADE FAIL
+{grade_fail_heading}
 
 grade_status：{grade_status}
 

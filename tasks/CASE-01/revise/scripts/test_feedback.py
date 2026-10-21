@@ -297,11 +297,12 @@ class TestRender(Base):
                         mock.patch.object(feedback, "_r2_code", return_value="cand_r2zz"):
                     text = self.render(code)
                 self.assertTrue(text.startswith(re.split(r"\{", first)[0]))
-                body = text.split(e["r1_prompt_header"])[0]
-                self.assertTrue(body.rstrip("\n").endswith(e[ending]), (state, body[-200:]))
-                for other in set(e) - {ending, "r1_prompt_header"}:
+                # every state, unavailable included: the feedback ends with its ending; the round-1 prompt is
+                # never appended (build_prompt places it first in every round-2 prompt)
+                self.assertTrue(text.endswith(e[ending] + "\n"), (state, text[-200:]))
+                for other in set(e) - {ending}:
                     self.assertNotIn(e[other], text)
-                self.assertEqual(e["r1_prompt_header"] in text, state == "unavailable")
+                self.assertNotIn(f"# 第 1 轮题目 {code}", text)
         # grade_fail with a valid analysis gets the "valid analysis" ending
         code = "cand_gfok"
         self.attempt(code, location="outside_steps", files={"stdout.txt": "GRADE FAIL: area\n", "stderr.txt": ""})
@@ -318,11 +319,13 @@ class TestRender(Base):
 
     def test_fields_per_state(self):
         c0, c1, c2 = self.c1
-        # unavailable: categories of every call, then the full round-1 prompt
+        # unavailable: categories of every call, then the ending; the round-1 prompt is not appended
         self.write_state(c0, "unavailable")
         t = self.render(c0)
-        self.assertIn("第 1 次调用：模型不符；第 2 次调用：记录不完整、退出码非 0", t)
-        self.assertTrue(t.endswith(f"# 第 1 轮题目 {c0}\n\n题目正文。\n"))
+        self.assertEqual(t, "第 1 轮没有收到你的有效答复（原因类别：第 1 次调用：模型不符；第 2 次调用：记录不完整、退出码非 0）。"
+                            "\n\n" + self.endings()["not_evaluated"] + "\n")
+        self.assertNotIn("第 1 轮题目", t)
+        self.assertEqual(set(feedback.ENDING_KEYS), {"evaluated_valid", "evaluated_no_analysis", "not_evaluated"})
         for word in ("rtl_sim", "GRADE", "失败位置"):
             self.assertNotIn(word, t)
         written = os.path.join(self.revise, "prompts", "r2", f"{c0}_feedback.md")
@@ -353,8 +356,10 @@ class TestRender(Base):
             self.assertNotIn(word, t)
         self.write_state(c1, "grade_fail")
         t = self.render(c1)
-        self.assertTrue(t.startswith("GRADE FAIL\n"))
+        self.assertTrue(t.startswith("GRADE FAIL\n\ngrade_status：GRADE FAIL\n"))
+        self.assertNotIn("未取得最终判定行", t)
         self.assertIn("失败位置：步骤 gl_compile", t)
+        self.assertIn("```text\n日志末尾摘要（最多 40 个物理行）：\nerror x\n```", t)
         self.assertIn("error x", t)
         self.assertIn("rtl_sim：pass（checked=2856）", t)
         self.assertIn("gl_sim：fail", t)
@@ -375,6 +380,33 @@ class TestRender(Base):
         self.assertNotIn("失败位置", t)
         for banned in ("signoff", "签核", "author_veto", "eligible", "improvement", "合格"):
             self.assertNotIn(banned, t)
+
+    def test_grade_fail_heading_without_final_line(self):
+        # RV-03: no final verdict line -> heading '未取得最终判定行' and grade_status indeterminate, same template.
+        code = self.c
+        self.attempt(code, location="no_final_line", exit_code=137, timed_out=True,
+                     files={"stdout.txt": "RUN_ID=x\nstep gl_sim\n", "stderr.txt": "killed\n"})
+        self.status(code, "grade_fail", selected_attempt=1, grade_status="indeterminate", final_line_missing=True,
+                    rtl_sim="pass", gl_sim="indeterminate", checked_rtl="checked=2856",
+                    failure_location="no_final_line")
+        t = self.render(code)
+        self.assertTrue(t.startswith("未取得最终判定行\n\ngrade_status：indeterminate\n"), t[:80])
+        self.assertNotIn("GRADE FAIL", t)
+        self.assertIn("失败位置：步骤之外（没有最终判定行；退出码 137，超时 true）", t)
+        self.assertIn("日志末尾摘要（最多 40 个物理行）：\nRUN_ID=x\nstep gl_sim\nkilled\n", t)
+        self.assertIn("rtl_sim：pass（checked=2856）", t)
+        self.assertTrue(t.endswith(self.endings()["evaluated_no_analysis"] + "\n"))
+        # the heading follows final_line_missing; a status whose grade_status contradicts it is refused
+        for code2, fields in ((self.c1[1], dict(grade_status="GRADE FAIL", final_line_missing=True)),
+                              (self.c1[2], dict(grade_status="indeterminate", final_line_missing=False))):
+            self.attempt(code2, location="no_final_line", files={"stdout.txt": "x\n", "stderr.txt": ""})
+            self.status(code2, "grade_fail", selected_attempt=1, failure_location="no_final_line", **fields)
+            with self.assertRaisesRegex(feedback.FeedbackError, "grade_status"):
+                self.render(code2)
+
+    def test_log_heading_text(self):
+        self.assertEqual(feedback.TAIL_HEADER, "日志末尾摘要（最多 40 个物理行）：")
+        self.assertEqual(feedback.TAIL_LINES, 40)
 
     def test_templates_use_only_known_placeholders(self):
         self.write_state(self.c, "eligible_gain")

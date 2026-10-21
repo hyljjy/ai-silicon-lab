@@ -1,11 +1,12 @@
-"""Round-2 feedback of CASE-01 stage B (implementation plan Task 8; protocol v0.4 section 11).
+"""Round-2 feedback of CASE-01 stage B (implementation plan Task 8; protocol v0.5 section 11; revisions RV-03).
 
 The feedback carries only mechanical evaluation results. mechanical_view(code, rnd) reads exactly the field-source
 table of the plan (paths relative to tasks/CASE-01; a missing value is "not_available", a step that did not run
 "not_run"):
-  revise/results/r<rnd>/<code>/status.json        grade_status rtl_sim gl_sim sta_analysis checked_rtl checked_gl
-                                                   cfg_L area_um2 within_cap numeric_target_met; selected_attempt
-                                                   (which attempt directory to read)
+  revise/results/r<rnd>/<code>/status.json        grade_status final_line_missing rtl_sim gl_sim sta_analysis
+                                                   checked_rtl checked_gl cfg_L area_um2 within_cap
+                                                   numeric_target_met; selected_attempt (which attempt directory
+                                                   to read)
   revise/compare/r<rnd>_<code>.json               "cells" (6 global setup/hold values; the three categories with
                                                    start and end) and candidate "summary" (worst setup / hold and
                                                    corner); read only when sta_analysis is "pass" (and required then)
@@ -40,7 +41,12 @@ Other lines are ignored; an id must not appear in two rows; "\\|" inside a cell 
 
 render(r1_code): mapping.load(1) and mapping.load(2) first (MappingError when either is not committed); the code
 must be in the round-1 mapping and be the prev_code of exactly one round-2 code. The round-1 state selects the
-template (TEMPLATE_OF) and the ending (endings.md); unavailable also gets the full committed round-1 prompt.
+template (TEMPLATE_OF) and the ending (endings.md); the feedback is the filled template followed by the ending and
+nothing else, for every state. The round-1 prompt is never appended here: build_prompt.py puts it first in every
+round-2 prompt, unavailable included, so it appears exactly once (protocol 11; author checkpoint 1).
+grade_fail (RV-03): the first line of grade_fail.md is {grade_fail_heading}: "GRADE FAIL" when status.json
+final_line_missing is false (a final GRADE FAIL: line exists; grade_status must then be "GRADE FAIL"), "未取得最终判定行"
+when it is true (grade_status must then be "indeterminate"); any other combination is refused.
 A state whose evidence is missing (delivery_fail without a parsed.json delivery_fail or a call.json truncation;
 gate_reject without a gate.json with passed false) is refused. Writes revise/prompts/r2/<r1_code>_feedback.md and,
 when the feedback contains a log summary, <r1_code>_log_summary.txt (the summary) and <r1_code>_log_summary.sha256
@@ -53,7 +59,6 @@ from decimal import Decimal, InvalidOperation
 
 import baseline
 import mapping
-import prereg
 import revpaths as rp
 
 TEMPLATES = os.path.join(rp.PROMPTS, "feedback")
@@ -66,12 +71,14 @@ CATEGORIES = ("in2reg", "reg2reg", "reg2out")
 TEMPLATE_OF = {"unavailable": "unavailable", "delivery_fail": "delivery_fail", "gate_reject": "gate_reject",
                "infra_fail": "infra_fail", "grade_fail": "grade_fail", "ineligible": "grade_ok",
                "eligible_no_gain": "grade_ok", "eligible_gain": "grade_ok"}
-ENDING_KEYS = ("evaluated_valid", "evaluated_no_analysis", "not_evaluated", "r1_prompt_header")
-STATUS_KEYS = ("grade_status rtl_sim gl_sim sta_analysis checked_rtl checked_gl cfg_L area_um2 within_cap "
-               "numeric_target_met").split()
+ENDING_KEYS = ("evaluated_valid", "evaluated_no_analysis", "not_evaluated")
+STATUS_KEYS = ("grade_status final_line_missing rtl_sim gl_sim sta_analysis checked_rtl checked_gl cfg_L area_um2 "
+               "within_cap numeric_target_met").split()
 TAIL_LINES = 40
 PROBLEMS_HEADER = "日志检查发现的问题："
-TAIL_HEADER = f"日志最后 {TAIL_LINES} 行："
+TAIL_HEADER = f"日志末尾摘要（最多 {TAIL_LINES} 个物理行）："
+GRADE_FAIL_HEADING = {False: "GRADE FAIL", True: "未取得最终判定行"}    # by status.json final_line_missing (RV-03)
+GRADE_STATUS_OF = {False: "GRADE FAIL", True: "indeterminate"}
 CAP_CATEGORY = "输出上限"                          # classify.F_LIMIT
 NO_LINE = "无可定位的原文行"
 NO_RTL_LINE = "无可定位的 RTL 行"
@@ -439,6 +446,8 @@ def _values(v):
     cats = v["unavailable_categories"]
     gl = v["gate_lines"]
     return {
+        "grade_fail_heading": (GRADE_FAIL_HEADING[v["final_line_missing"]]
+                               if isinstance(v["final_line_missing"], bool) else NA),
         "grade_status": _s(v["grade_status"]),
         "rtl_sim": _stage(v["rtl_sim"], v["checked_rtl"]),
         "gl_sim": _stage(v["gl_sim"], v["checked_gl"]),
@@ -502,6 +511,12 @@ def render(r1_code, case=None, sealed=None, templates=None, repo=None):
     if state == "gate_reject" and v["gate_rules"] == NA:
         raise FeedbackError(f"FEEDBACK FAIL: {r1_code}: state gate_reject, but there is no gate.json with passed "
                             f"false")
+    if state == "grade_fail":
+        missing = v["final_line_missing"]
+        if not isinstance(missing, bool) or v["grade_status"] != GRADE_STATUS_OF[missing]:
+            raise FeedbackError(f"FEEDBACK FAIL: {r1_code}: state grade_fail with final_line_missing {missing!r} "
+                                f"and grade_status {v['grade_status']!r} (expected final_line_missing false with "
+                                f"GRADE FAIL, or true with indeterminate)")
     name = TEMPLATE_OF[state]
     template = _text(os.path.join(templates, f"{name}.md"))
     body = _fill(template, _values(v), f"{name}.md")
@@ -515,12 +530,7 @@ def render(r1_code, case=None, sealed=None, templates=None, repo=None):
     else:
         key = "evaluated_valid"
     data = (body.rstrip("\n") + "\n\n" + endings[key] + "\n").encode("utf-8")
-    if state == "unavailable":
-        p = os.path.join(revise, "prompts", "r1", f"{r1_code}_prompt.md")
-        if not prereg.committed_unchanged(p):
-            raise FeedbackError(f"FEEDBACK FAIL: the round-1 prompt {p} is missing, untracked or differs from HEAD")
-        data += ("\n" + endings["r1_prompt_header"] + "\n\n").encode("utf-8") + rp.read_bytes(p)
-    if b"\r" in data:                                 # logs are normalized; templates and prompts are LF files
+    if b"\r" in data:                                 # logs are normalized; templates are LF files
         raise FeedbackError(f"FEEDBACK FAIL: {r1_code}: the feedback would not be LF-only text")
     out = os.path.join(revise, "prompts", "r2")
     if "{log_summary}" in template and v["log_summary"] != NA:
