@@ -105,8 +105,11 @@ class Base(unittest.TestCase):
         touch(os.path.join(self.repo, "env", "tools.sha256"))
         self.env = {"PATH": self.bin, "SKY130_KIT": self.kit, "SKY130_HD": self.hd, "LANG": "C.UTF-8"}
         self.preflights = []
+        self.eligibility_calls = []
+        # the shared target-eligibility check (round.target_problems) needs a whole round; test_round covers it
         self.kw = dict(case=self.case, repo=self.repo, env=self.env, free_bytes=lambda vol: 100 * GB,
-                       preflight=lambda rnd, step: self.preflights.append((rnd, step)))
+                       preflight=lambda rnd, step: self.preflights.append((rnd, step)),
+                       eligibility=lambda rnd, code: self.eligibility_calls.append((rnd, code)))
         p = mock.patch.dict(limits.LIMITS, {"grade": TEST_LIMIT})
         p.start()
         self.addCleanup(p.stop)
@@ -457,6 +460,85 @@ class TestAttempts(Base):
         self.assertFalse(os.path.exists(self.adir(1)))
         self.assertEqual(self.run_attempt("success", preflight=lambda rnd, step: [])["k"], 1)
 
+    def test_ineligible_target_refused_before_anything_is_created(self):
+        with self.assertRaises(run_grade.RunGradeError) as cm:
+            self.run_attempt("success", eligibility=lambda rnd, code: [f"NOT ELIGIBLE {code}: gate rejected"])
+        self.assertIn("NOT ELIGIBLE cand_ab12: gate rejected", str(cm.exception))
+        self.assertFalse(os.path.exists(self.cdir()))
+        self.run_attempt("success")
+        self.assertEqual(self.eligibility_calls, [(1, CODE)])
+
+    def test_default_eligibility_is_round_target_problems(self):
+        seen = []
+        fake = mock.MagicMock()
+        fake.Ctx = lambda case: ("ctx", case)
+        fake.target_problems = lambda rnd, code, ctx: seen.append((rnd, code, ctx)) or ["NOT ELIGIBLE x"]
+        kw = dict(self.kw)
+        del kw["eligibility"]
+        with mock.patch.dict(sys.modules, {"round": fake}), contextlib.redirect_stdout(self.out):
+            with self.assertRaises(run_grade.RunGradeError):
+                run_grade.attempt(CODE, 1, grade_cmd=self.cmd("success"), **kw)
+        self.assertEqual(seen, [(1, CODE, ("ctx", self.case))])
+        self.assertFalse(os.path.exists(self.cdir()))
+
+    def test_retry_refused_when_recovery_raises_stop(self):
+        # Codex BC1-07: disk fine at entry, the recovery of attempt 1 finds low disk (a stop); --retry must not go on
+        self.craft_crash("", proc_fields={"root_pid": None, "root_start": None, "registry": None,
+                                          "phase": "launching"})
+        calls = []
+
+        def free(vol):
+            calls.append(vol)
+            return 100 * GB if len(calls) <= 2 else 5 * GB
+        with self.assertRaises(run_grade.RunGradeError) as cm:
+            self.run_attempt("success", retry=True, free_bytes=free)
+        self.assertIn("REFUSED", str(cm.exception))
+        rec1 = load(os.path.join(self.adir(1), "attempt.json"))
+        self.assertEqual(rec1["attribution"], "external")
+        self.assertIn("运行后磁盘不足", [s["reason"] for s in self.stop_records()])
+        self.assertFalse(os.path.exists(os.path.join(self.adir(2), "started.json")))
+        self.assertFalse(os.path.exists(self.adir(2)))
+
+    def test_retry_refused_when_disk_low_after_recovery(self):
+        # the recovery itself raised no stop, but the disk is low before the next started.json
+        self.craft_crash("", proc_fields={"root_pid": None, "root_start": None, "registry": None,
+                                          "phase": "launching"})
+        calls = []
+
+        def free(vol):
+            calls.append(vol)
+            return 5 * GB if len(calls) > 4 else 100 * GB
+        with self.assertRaises(run_grade.RunGradeError) as cm:
+            self.run_attempt("success", retry=True, free_bytes=free)
+        self.assertIn("DISK FAIL", str(cm.exception))
+        self.assertEqual(self.stop_records(), [])
+        self.assertFalse(os.path.exists(self.adir(2)))
+
+    def test_disk_measurement_kill_fail_before_attempt_stops(self):
+        def free(vol):
+            raise rp.MeasureKillFail("df left processes", [4242], False)
+        with self.assertRaises(run_grade.RunGradeError) as cm:
+            self.run_attempt("success", free_bytes=free)
+        self.assertIn("KILL FAIL", str(cm.exception))
+        (rec,) = self.stop_records()
+        self.assertEqual((rec["reason"], rec["side"], rec["code"]), ("KILL FAIL", "eval", CODE))
+        self.assertIn(f"commit revise/stops/r1/{rec['stop_id']}.json now", self.out.getvalue())
+        self.assertFalse(os.path.exists(self.cdir()))
+
+    def test_disk_measurement_kill_fail_after_run_stops(self):
+        calls = []
+
+        def free(vol):
+            calls.append(vol)
+            if len(calls) > 2:
+                raise rp.MeasureKillFail("df left processes", [], True)
+            return 100 * GB
+        rec = self.run_attempt("check_sta_fail", free_bytes=free)
+        reasons = [s["reason"] for s in self.stop_records()]
+        self.assertEqual(reasons, ["KILL FAIL"])
+        self.assertEqual(rec["stops"], [s["stop_id"] for s in self.stop_records()])
+        self.assertIn("commit revise/stops/r1/", self.out.getvalue())
+
     def test_stdout_streamed_and_run_id_recorded_early(self):
         th, box = self.threaded("hang")
         stdout = os.path.join(self.adir(1), "stdout.txt")
@@ -516,7 +598,7 @@ class TestRecovery(Base):
                   "import run_grade\n"
                   "kw = json.loads(sys.argv[1])\n"
                   "run_grade.attempt(kw.pop('code'), 1, grade_cmd=kw.pop('cmd'), preflight=lambda r, s: None,\n"
-                  "                  free_bytes=lambda v: 100 * 2 ** 30, **kw)\n")
+                  "                  eligibility=lambda r, c: None, free_bytes=lambda v: 100 * 2 ** 30, **kw)\n")
         kw = {"code": CODE, "cmd": self.cmd("hang"), "case": self.case, "repo": self.repo, "env": self.env}
         wrapper = subprocess.Popen([sys.executable, "-B", "-c", driver, json.dumps(kw)], stdin=subprocess.DEVNULL,
                                    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)

@@ -37,6 +37,19 @@ class RevpathsError(Exception):
     pass
 
 
+class MeasureKillFail(OSError):
+    """A disk measurement whose process cleanup failed (killed_pids_alive non-empty or cleanup_unconfirmed, also
+    after a SupervisionError): disk_problems reports it as a KILL_FAIL problem, and the caller writes a stop."""
+
+    def __init__(self, message, alive=(), unconfirmed=False):
+        super().__init__(message)
+        self.alive = list(alive)
+        self.unconfirmed = bool(unconfirmed)
+
+
+KILL_FAIL = "KILL FAIL"                               # prefix of a disk_problems entry whose measurement left processes
+
+
 def sha256_bytes(data):
     return hashlib.sha256(data).hexdigest()
 
@@ -118,9 +131,15 @@ def _measure_free(volume):
             res = limits.run_limited(["wsl.exe", "-d", WSL_DISTRO, "--exec", "df", "-B1", "--output=avail", "/"],
                                      "preflight")
         except limits.SupervisionError as e:          # started, then supervision failed: no measurement
-            raise OSError(f"df in WSL failed after it had started ({e.cause_type}; alive after cleanup: "
-                          f"{e.killed_pids_alive}, unconfirmed: {e.cleanup_unconfirmed})") from None
-        if res.rc != 0 or res.timed_out or res.killed_pids_alive or res.cleanup_unconfirmed:
+            msg = (f"df in WSL failed after it had started ({e.cause_type}; alive after cleanup: "
+                   f"{e.killed_pids_alive}, unconfirmed: {e.cleanup_unconfirmed})")
+            if e.killed_pids_alive or e.cleanup_unconfirmed:
+                raise MeasureKillFail(msg, e.killed_pids_alive, e.cleanup_unconfirmed) from None
+            raise OSError(msg) from None
+        if res.killed_pids_alive or res.cleanup_unconfirmed:
+            raise MeasureKillFail(f"df in WSL: processes alive after cleanup: {res.killed_pids_alive}, unconfirmed: "
+                                  f"{res.cleanup_unconfirmed}", res.killed_pids_alive, res.cleanup_unconfirmed)
+        if res.rc != 0 or res.timed_out:
             raise OSError(f"df in WSL failed: rc={res.rc} timed_out={res.timed_out}")
         return int(res.stdout.decode("ascii", "replace").split()[-1])
     return shutil.disk_usage(volume).free
@@ -128,7 +147,9 @@ def _measure_free(volume):
 
 def disk_problems(min_gb=20, free_bytes=None):
     """Both volumes need at least min_gb GiB free. free_bytes (tests): dict volume -> bytes or callable(volume).
-    Every problem names the volume, the measured bytes and the measurement time."""
+    Every problem names the volume, the measured bytes and the measurement time. A measurement whose process cleanup
+    failed (MeasureKillFail) gives a problem starting with KILL_FAIL (kill_fail_problems): the caller writes a stop
+    record (its own side) and prints the instruction to commit it now (ruling R12)."""
     problems = []
     for vol in DISK_VOLUMES:
         when = datetime.datetime.now().astimezone().isoformat(timespec="seconds")
@@ -139,6 +160,10 @@ def disk_problems(min_gb=20, free_bytes=None):
                 free = free_bytes(vol)
             else:
                 free = free_bytes[vol]
+        except MeasureKillFail as e:
+            problems.append(f"{KILL_FAIL}: {vol}: disk measurement at {when} left processes behind or their exit "
+                            f"cannot be confirmed (alive: {e.alive}, unconfirmed: {e.unconfirmed}): {e}")
+            continue
         except (OSError, KeyError, ValueError, IndexError) as e:
             problems.append(f"DISK FAIL: {vol}: free space could not be measured at {when}: {e}")
             continue
@@ -146,6 +171,11 @@ def disk_problems(min_gb=20, free_bytes=None):
             problems.append(f"DISK FAIL: {vol}: {free} bytes free ({free / GB:.2f} GiB) < {min_gb} GiB, "
                             f"measured at {when}")
     return problems
+
+
+def kill_fail_problems(problems):
+    """The disk_problems entries of measurements whose process cleanup failed (they call for a stop record)."""
+    return [p for p in problems if p.startswith(KILL_FAIL + ":")]
 
 
 def directions(path=None):

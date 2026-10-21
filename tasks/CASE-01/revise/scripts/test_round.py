@@ -114,6 +114,7 @@ class Base(unittest.TestCase):
         touch(os.path.join(repo, "env", "tools.sha256"))
         env = {"PATH": self.bin, "SKY130_KIT": kit, "SKY130_HD": hd, "LANG": "C.UTF-8"}
         self.gate_calls = []
+        self.gate_reject = set()                        # codes the stub gate rejects
         self.modes = {}
         self.kw = dict(case=self.case, sealed=self.sealed, repo=repo, env=env, free_bytes=lambda vol: 100 * GB,
                        gate=self.fake_gate, grade_cmd=self.cmd, prereg_problems=lambda: [],
@@ -127,6 +128,9 @@ class Base(unittest.TestCase):
     # ---------------------------------------------------------------- stubs
     def fake_gate(self, rtl_path, declared_L):
         self.gate_calls.append((os.path.basename(rtl_path), declared_L))
+        if any(f"dot4sat_{c}.v" == os.path.basename(rtl_path) for c in self.gate_reject):
+            return {"passed": False, "hits": [{"rule": "G1", "line": 1, "kind": "latch", "text": "x"}],
+                    "yosys_problem": None}
         return {"passed": True, "hits": [], "yosys_problem": None}
 
     def cmd(self, code):
@@ -458,6 +462,113 @@ class Evaluate(Base):
         self.assertEqual(rc, 1, out)
         self.assertIn("STOPPED", out)
         self.assertEqual(self.attempts_of(1), [])
+
+
+class TargetEligibility(Base):
+    """Codex BC1-06: the direct run_grade entry and round.py evaluate share round.target_problems, run before any
+    attempt directory exists."""
+
+    def direct(self, code, real_preflight=True):
+        import run_grade
+        pf = (lambda r, s: rnd_mod.preflight(r, s, self.ctx())) if real_preflight else rnd_mod._noop_preflight
+        buf = io.StringIO()
+        with contextlib.redirect_stdout(buf):
+            with self.assertRaises(run_grade.RunGradeError) as cm:
+                run_grade.attempt(code, 1, grade_cmd=self.cmd(code), case=self.case, repo=self.kw["repo"],
+                                  env=self.kw["env"], free_bytes=self.kw["free_bytes"], preflight=pf)
+        self.output.append(buf.getvalue())
+        self.assertFalse(os.path.exists(self.cdir(1, code)) and
+                         any(n.startswith("attempt") for n in os.listdir(self.cdir(1, code))))
+        return str(cm.exception)
+
+    def test_direct_run_grade_refuses_gate_rejected_code(self):
+        self.setup_round(1)
+        a, b = sorted(self.codes[1])
+        self.gate_reject = {a}
+        self.phase_c(1)
+        self.assertEqual(load(os.path.join(self.cdir(1, a), "gate.json"))["passed"], False)
+        self.assertEqual(rnd_mod.preflight(1, "evaluate", self.ctx()), [])   # a correct rejection: round is fine
+        for real in (True, False):
+            msg = self.direct(a, real_preflight=real)
+            self.assertIn(f"NOT ELIGIBLE {a}", msg)
+            self.assertIn("gate", msg)
+        self.assertEqual(self.attempts_of(1), [])
+        self.assertEqual(rnd_mod.target_problems(1, b, self.ctx()), [])
+
+    def test_direct_run_grade_refuses_code_not_in_round(self):
+        self.setup_round(1)
+        self.phase_c(1)
+        for real in (True, False):
+            msg = self.direct("cand_zzzz", real_preflight=real)
+            self.assertIn("NOT ELIGIBLE cand_zzzz", msg)
+            self.assertIn("codes.txt", msg)
+        self.assertFalse(os.path.exists(self.cdir(1, "cand_zzzz")))
+
+    def test_direct_run_grade_refuses_code_without_review_row(self):
+        self.setup_round(1)
+        a, b = sorted(self.codes[1])
+        self.phase_c(1, review_rows=[f"{a}\t是\t看了\t\t\t\t5"])
+        self.assertIn("has no review row", self.direct(b, real_preflight=True))
+        msg = self.direct(b, real_preflight=False)                    # as evaluate calls it (no-op preflight)
+        self.assertIn(f"NOT ELIGIBLE {b}", msg)
+        self.assertIn("review row", msg)
+        self.assertEqual(self.attempts_of(1), [])
+
+    def test_target_problems_call_parse_and_criteria(self):
+        self.setup_round(1)
+        a, b = sorted(self.codes[1])
+        self.phase_c(1)
+        crit = [row for row in judge.read_jsonl(self.pred("r1_criteria.jsonl")) if row["candidate"] != a]
+        touch(self.pred("r1_criteria.jsonl"), jsonl(crit))
+        touch(self.out(1, f"{b}.call.json"), dump({"code": b, "rnd": 1, "final": "unavailable", "calls": []}))
+        self.commit("drop criteria of a, b unavailable")
+        pa = rnd_mod.target_problems(1, a, self.ctx())
+        self.assertTrue(any("criteria" in p for p in pa), pa)
+        pb = rnd_mod.target_problems(1, b, self.ctx())
+        self.assertTrue(any(f"NOT ELIGIBLE {b}" in p and "parse" in p for p in pb), pb)
+
+
+class StatusAndDiskKill(Base):
+    def test_status_line_counts_only_started_attempts(self):
+        # Codex BC1-S2: an empty attempt1/ is not an attempt (run_grade.attempt_dirs: started.json)
+        self.setup_round(1)
+        self.phase_c(1)
+        a = sorted(self.codes[1])[0]
+        os.makedirs(os.path.join(self.cdir(1, a), "attempt1"))
+        line = [ln for ln in rnd_mod.status_lines(self.ctx(), 1) if ln.startswith(f"CODE {a}:")][0]
+        self.assertIn("attempts=0 last=-", line)
+
+    def test_preflight_disk_kill_fail_raises_eval_stop(self):
+        self.setup_round(1)
+        self.phase_c(1)
+
+        def free(vol):
+            raise rp.MeasureKillFail("df left processes", [4242], False)
+        self.kw["free_bytes"] = free
+        rc, out = self.run_sub("evaluate", 1)
+        self.assertEqual(rc, 1, out)
+        recs = stops.open_stops(1, revise=self.revise)
+        self.assertEqual([(s["reason"], s["side"]) for s in recs], [("KILL FAIL", "eval")])
+        self.assertIn(f"commit revise/stops/r1/{recs[0]['stop_id']}.json now", out)
+        self.assertEqual(self.attempts_of(1), [])
+
+    def test_evaluate_disk_kill_fail_before_next_attempt_raises_eval_stop(self):
+        self.setup_round(1)
+        self.phase_c(1)
+        a, b = sorted(self.codes[1])
+        done_a = os.path.join(self.cdir(1, a), "attempt1", "attempt.json")
+
+        def free(vol):                                # fails only once attempt 1 of a is written
+            if os.path.exists(done_a):
+                raise rp.MeasureKillFail("df left processes", [], True)
+            return 100 * GB
+        self.kw["free_bytes"] = free
+        rc, out = self.run_sub("evaluate", 1)
+        self.assertEqual(rc, 1, out)
+        recs = stops.open_stops(1, revise=self.revise)
+        self.assertEqual([(s["reason"], s["side"], s["code"]) for s in recs], [("KILL FAIL", "eval", b)])
+        self.assertIn(f"commit revise/stops/r1/{recs[0]['stop_id']}.json now", out)
+        self.assertFalse(os.path.exists(os.path.join(self.cdir(1, b), "attempt1")))
 
 
 class FinalizeClose(Base):

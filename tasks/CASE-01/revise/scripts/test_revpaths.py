@@ -4,7 +4,9 @@ import os
 import tempfile
 import unittest
 from decimal import Decimal
+from unittest import mock
 
+import limits
 import revpaths as rp
 
 RUNS = os.path.join(rp.CASE, "runs")
@@ -106,6 +108,43 @@ class TestRevpaths(unittest.TestCase):
             raise OSError("cannot measure")
         probs = rp.disk_problems(free_bytes=broken)
         self.assertEqual(len(probs), 2)
+
+    def test_disk_measurement_kill_fail_is_distinguishable(self):
+        def killfail(v):
+            raise rp.MeasureKillFail("df left processes", [4242], False)
+        probs = rp.disk_problems(free_bytes=killfail)
+        self.assertEqual(len(probs), 2)
+        self.assertTrue(all(p.startswith(rp.KILL_FAIL + ": ") for p in probs), probs)
+        self.assertEqual(rp.kill_fail_problems(probs), probs)
+        self.assertIn("4242", probs[0])
+
+        def broken(v):
+            raise OSError("cannot measure")
+        self.assertEqual(rp.kill_fail_problems(rp.disk_problems(free_bytes=broken)), [])
+        self.assertTrue(issubclass(rp.MeasureKillFail, OSError))   # callers catching OSError still see a failure
+
+    def test_measure_free_wsl_cleanup_failure_raises_kill_fail(self):
+        def res(**kw):
+            base = dict(rc=0, timed_out=False, stdout_over=False, stderr_over=False, stdout=b"Avail\n99\n",
+                        stderr=b"", stdout_bytes=9, stderr_bytes=0)
+            base.update(kw)
+            return limits.Limited(**base)
+        with mock.patch.object(limits, "run_limited", return_value=res()):
+            self.assertEqual(rp._measure_free("WSL /"), 99)
+        for kw in ({"killed_pids_alive": [77]}, {"cleanup_unconfirmed": True}):
+            with mock.patch.object(limits, "run_limited", return_value=res(**kw)):
+                with self.assertRaises(rp.MeasureKillFail):
+                    rp._measure_free("WSL /")
+        for fields, kill in (({"killed_pids_alive": [5]}, True), ({"cleanup_unconfirmed": True}, True), ({}, False)):
+            err = limits.SupervisionError("supervision failed", cause_type="OSError", **fields)
+            with mock.patch.object(limits, "run_limited", side_effect=err):
+                with self.assertRaises(OSError) as cm:
+                    rp._measure_free("WSL /")
+            self.assertEqual(isinstance(cm.exception, rp.MeasureKillFail), kill, fields)
+        with mock.patch.object(limits, "run_limited", return_value=res(rc=1)):
+            with self.assertRaises(OSError) as cm:
+                rp._measure_free("WSL /")
+        self.assertNotIsInstance(cm.exception, rp.MeasureKillFail)
 
     def test_directions(self):
         with tmpdir() as d:

@@ -13,7 +13,8 @@ first and prints one status line per code at the end (codes only, never a model 
 
 preflight(r, stage) -> list of problems (empty: go). Stages are cumulative: ingest < evaluate < finalize < close.
   all     the eval lock (taken for the checks, or already held by this process); no open stop on either side
-          (stops.open_stops); prereg.problems("formal"); revpaths.reused_problems(); revpaths.disk_problems();
+          (stops.open_stops); prereg.problems("formal"); revpaths.reused_problems(); revpaths.disk_problems() (a
+          measurement whose process cleanup failed, revpaths.kill_fail_problems, also raises an eval KILL FAIL stop);
           mapping.load(r); outputs/r<r>/codes.txt committed.
   ingest  stage-B products committed (data contract B): attempts.json, status.md, every code's call.json (final one
           of parse / delivery_fail / unavailable), the public answer <code>.md (final parse or delivery_fail),
@@ -65,6 +66,14 @@ Subcommands
             {text, recorded_at}}.
 After writing, the operator commits (diag_commit.sh); every stop raised prints the instruction to commit its record
 now (ruling R12).
+
+target_problems(r, code) -> list of problems (empty: the code may be evaluated). The target-eligibility check shared by
+round.py evaluate and the direct run_grade.py entry (Codex BC1-06; run_grade.attempt runs it before recovery and
+before any attempt directory exists): codes.txt committed and the code in it; the stage-B checks of that code (call.json
+final "parse", parsed.json status "ok", committed candidate equal to the recorded hashes, extracted rows); gate.json
+committed with passed true; review/r<r>.tsv committed, valid, with the code's row; r<r>_criteria.jsonl committed and
+holding criteria rows when the code has extracted prediction or failure-condition rows. The gate is not re-run here
+(the evaluate preflight does that once for the whole round).
 
 Roots are injectable for tests (Ctx): case (tasks/CASE-01), sealed (mapping), repo (run_grade env files), env,
 free_bytes, base_root (baseline), gate, grade_cmd (code -> command list), prereg_problems, reused_problems.
@@ -361,16 +370,56 @@ def _phase_c(ctx, r, codes, info, probs):
         if rc:
             probs += [f"VIEWS FAIL: {ln}" for ln in lines] or ["VIEWS FAIL: judge views check failed"]
         else:
-            crit = judge.read_jsonl(p_crit)
-            have = {row.get("candidate") for row in crit}
-            ext = ctx.pred(f"r{r}_extracted.jsonl")
-            rows = judge.read_jsonl(ext) if os.path.isfile(ext) else []
-            need = sorted({e.get("code") for e in rows if e.get("row_type") in ("prediction", "failure_condition")})
-            for code in need:
-                if code not in have:
-                    probs.append(f"CRITERIA FAIL {code}: it has predictions or failure conditions but no criteria row")
+            probs += _missing_criteria(ctx, r, None)
     probs += baseline.verify(ctx.base_root)
     return passed
+
+
+def _missing_criteria(ctx, r, codes):
+    """CRITERIA FAIL problems: codes (None: every code) with extracted prediction or failure-condition rows but no row
+    in r<r>_criteria.jsonl (the caller has checked that the file is committed). Shared with target_problems."""
+    have = {row.get("candidate") for row in judge.read_jsonl(ctx.pred(f"r{r}_criteria.jsonl"))}
+    ext = ctx.pred(f"r{r}_extracted.jsonl")
+    rows = judge.read_jsonl(ext) if os.path.isfile(ext) else []
+    need = sorted({e.get("code") for e in rows if e.get("row_type") in ("prediction", "failure_condition")
+                   and (codes is None or e.get("code") in codes)})
+    return [f"CRITERIA FAIL {code}: it has predictions or failure conditions but no criteria row"
+            for code in need if code not in have]
+
+
+def target_problems(r, code, ctx=None):
+    """Target eligibility of `code` in round r (see the module doc); every problem starts with NOT ELIGIBLE <code>."""
+    ctx = ctx or Ctx()
+    w = f"NOT ELIGIBLE {code}"
+    try:
+        probs = []
+        if not _committed(ctx, os.path.join(ctx.out_dir(r), "codes.txt"), probs):
+            return [f"{w}: {p}" for p in probs]
+        codes = _codes(ctx, r)
+        if code not in codes:
+            return [f"{w}: not a code of round {r} (revise/outputs/r{r}/codes.txt)"]
+        e = _phase_b(ctx, r, [code], probs)[code]
+        if probs:
+            return [f"{w}: {p}" for p in probs]
+        if e["final"] != "parse" or e["parsed"] != "ok":
+            return [f"{w}: call.json final is {e['final']!r} and parsed.json status {e['parsed']!r}; only a call "
+                    f"ending in parse with parsed status ok has a candidate to evaluate"]
+        p_gate = os.path.join(ctx.cand_dir(r, code), "gate.json")
+        if not _committed(ctx, p_gate, probs):
+            return [f"{w}: {p}" for p in probs]
+        g = _load(p_gate)
+        if not isinstance(g, dict) or g.get("passed") is not True:
+            return [f"{w}: {ctx.rel(p_gate)} does not record passed true (rejected by the gate: no grader run, "
+                    f"protocol 7.2)"]
+        p_rev = os.path.join(ctx.revise, "review", f"r{r}.tsv")
+        if _committed(ctx, p_rev, probs):
+            probs += review_problems(rp.read_bytes(p_rev).decode("utf-8"), codes, [code])
+        if _committed(ctx, ctx.pred(f"r{r}_criteria.jsonl"), probs):
+            probs += _missing_criteria(ctx, r, [code])
+        return [f"{w}: {p}" for p in probs]
+    except (OSError, UnicodeDecodeError, judge.JudgeError, prereg.PreregError, rp.RevpathsError,
+            stops.StopsError) as err:
+        return [f"{w}: {err.__class__.__name__}: {err}"]
 
 
 # ------------------------------------------------------------------------------------------------ stage D/E
@@ -516,7 +565,11 @@ def _checks(ctx, r, stage):
                      f"{s.get('why_open')}")
     probs += ctx.prereg_problems()
     probs += ctx.reused_problems()
-    probs += rp.disk_problems(free_bytes=ctx.free_bytes)
+    disk = rp.disk_problems(free_bytes=ctx.free_bytes)
+    kill = rp.kill_fail_problems(disk)
+    if kill:                                          # the measurement's own processes: a stop, not just a refusal
+        _stop(ctx, r, "KILL FAIL", None, {"source": "disk measurement in the preflight", "problems": kill})
+    probs += disk
     try:
         mapping.load(r, revise=ctx.revise, sealed=ctx.sealed)
     except mapping.MappingError as e:
@@ -557,6 +610,7 @@ def status_lines(ctx, r):
                 review[cells[0].strip()] = cells[3].strip() or "no_veto"
     except (OSError, UnicodeDecodeError):
         pass
+    import run_grade
     out = []
     for code in codes:
         call = _load(os.path.join(ctx.out_dir(r), f"{code}.call.json"))
@@ -564,18 +618,16 @@ def status_lines(ctx, r):
         gate = _load(os.path.join(ctx.cand_dir(r, code), "gate.json"))
         st = _load(os.path.join(ctx.cand_dir(r, code), "status.json"))
         attempts, last = 0, "-"
-        cdir = ctx.cand_dir(r, code)
-        if os.path.isdir(cdir):
-            ks = sorted(int(n[7:]) for n in os.listdir(cdir) if re.fullmatch(r"attempt[1-9][0-9]*", n))
-            attempts = len(ks)
-            if ks:
-                a = _load(os.path.join(cdir, f"attempt{ks[-1]}", "attempt.json"))
-                if not isinstance(a, dict):
-                    last = "unfinished"
-                else:
-                    fl = a.get("final_line") or ""
-                    last = ("GRADE OK" if fl.startswith("GRADE OK:") else "GRADE FAIL" if fl.startswith("GRADE FAIL:")
-                            else "no_final_line") + f"/{a.get('attribution')}"
+        dirs = run_grade.attempt_dirs(ctx.cand_dir(r, code))       # started.json only (Codex BC1-S2)
+        attempts = len(dirs)
+        if dirs:
+            a = _load(os.path.join(dirs[-1][1], "attempt.json"))
+            if not isinstance(a, dict):
+                last = "unfinished"
+            else:
+                fl = a.get("final_line") or ""
+                last = ("GRADE OK" if fl.startswith("GRADE OK:") else "GRADE FAIL" if fl.startswith("GRADE FAIL:")
+                        else "no_final_line") + f"/{a.get('attribution')}"
         g = "-" if not isinstance(gate, dict) else ("passed" if gate.get("passed") is True else "rejected")
         out.append(f"CODE {code}: call={call.get('final') if isinstance(call, dict) else '-'} "
                    f"parsed={parsed.get('status') if isinstance(parsed, dict) else '-'} gate={g} "
@@ -687,6 +739,10 @@ def cmd_evaluate(ctx, r):
             if lines:
                 return _refuse(lines)
             disk = rp.disk_problems(free_bytes=ctx.free_bytes)
+            kill = rp.kill_fail_problems(disk)
+            if kill:
+                _stop(ctx, r, "KILL FAIL", code, {"source": "disk measurement before an attempt", "problems": kill})
+                return 1
             if disk:
                 _stop(ctx, r, "DISK: 可用空间不足，不开始新的正式运行", code, {"problems": disk})
                 return 1
@@ -697,7 +753,8 @@ def cmd_evaluate(ctx, r):
             cmd = ctx.grade_cmd(code) if ctx.grade_cmd else None
             try:
                 rec = run_grade.attempt(code, r, retry=False, grade_cmd=cmd, locked=True,
-                                        preflight=_noop_preflight, **roots)
+                                        preflight=_noop_preflight,
+                                        eligibility=lambda rr, c: target_problems(rr, c, ctx), **roots)
             except run_grade.RunGradeError as e:
                 print(str(e), flush=True)
                 return 1

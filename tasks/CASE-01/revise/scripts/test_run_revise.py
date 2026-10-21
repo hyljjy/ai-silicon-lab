@@ -1031,6 +1031,43 @@ class TestBatchD(Base):
         self.assertIn("DISK FAIL", self.out)
         self.assertEqual(self.stop_records(), [])
 
+    # ---- batch C: a disk measurement whose process cleanup failed is a KILL FAIL stop, not just DISK FAIL
+    @staticmethod
+    def kill_fail(v):
+        raise rp.MeasureKillFail("df left processes", [4242], False)
+
+    def test_disk_measurement_kill_fail_at_setup_stops(self):
+        self.setup_round()
+        self.free = self.kill_fail
+        self.assertEqual(self.run_main("--round", "1"), 3, self.out)
+        self.assertEqual(self.calls(), [])
+        (rec,) = self.stop_records()
+        self.assertEqual((rec["reason"], rec["side"]), (run_revise.REASON_KILL, "call"))
+        self.assertTrue(all(p.startswith(rp.KILL_FAIL) for p in rec["details"]["disk_measurement"]))
+        self.assertIn(f"commit revise/stops/r1/{rec['stop_id']}.json now", self.out)
+        self.assertFalse(os.path.exists(os.path.join(self.revise, "outputs", "r1", "attempts.json")))
+
+    def test_disk_measurement_kill_fail_before_call_stops(self):
+        self.setup_round()
+        self.free = lambda v: 100 * GB if len(self.calls()) < 1 else self.kill_fail(v)
+        self.assertEqual(self.run_main("--round", "1"), 3, self.out)
+        self.assertEqual(len(self.calls()), 1)
+        (rec,) = self.stop_records()
+        self.assertEqual((rec["reason"], rec["side"]), (run_revise.REASON_KILL, "call"))
+        self.assertEqual(rec["details"]["before_call"], 1)
+        self.assertIn(f"commit revise/stops/r1/{rec['stop_id']}.json now", self.out)
+
+    def test_smoke_disk_measurement_kill_fail_stops(self):
+        self.canary_file()
+        self.set_plan({n: ["prompt_echo"] for n, _ in MODELS})
+        self.free = lambda v: 100 * GB if len(self.calls()) < 1 else self.kill_fail(v)
+        self.assertEqual(self.run_main("--smoke", "canary"), 3, self.out)
+        self.assertEqual(len(self.calls()), 1)
+        (rec,) = self.stop_records()
+        self.assertEqual((rec["reason"], rec["side"], rec["details"]["smoke"]),
+                         (run_revise.REASON_KILL, "call", "canary"))
+        self.assertIn(f"commit revise/stops/r1/{rec['stop_id']}.json now", self.out)
+
     # ---- BC1-10: strict preflight
     def test_preflight_nonzero_exit_fails(self):
         self.setup_round()

@@ -45,7 +45,11 @@ disk volumes are checked before every model call (formal, retry, smoke) and befo
 formal round raises REASON_DISK with the measured values and no other code is called. Preflight commands must exit 0;
 revise/models/originals.sha256 is parsed strictly and every model's settings hash is verified. Smoke prompt bytes
 (system prompt and stdin) are rebuilt from the frozen sources with build_prompt.py and must match before any launch;
-the canary words come from smoke_system.md / smoke_user.md."""
+the canary words come from smoke_system.md / smoke_user.md.
+
+Batch C: a disk measurement whose process cleanup failed (revpaths.kill_fail_problems: the WSL df left processes or
+their exit cannot be confirmed) writes a REASON_KILL stop (round setup, before a formal call, smoke) instead of a
+plain DISK FAIL, prints the instruction to commit it now (ruling R12) and exits 3."""
 import argparse
 import dataclasses
 import datetime
@@ -189,8 +193,13 @@ def check_reused():
         raise Refused([f"PREREG {p}" for p in probs])
 
 
-def check_disk(ctx):
+def check_disk(ctx, rnd, stop_details=None):
+    """Both volumes (protocol 16). A measurement whose process cleanup failed (revpaths.kill_fail_problems) writes a
+    REASON_KILL call-side stop of round rnd at once (exit 3), like any other cleanup failure."""
     probs = rp.disk_problems(free_bytes=ctx.free_bytes)
+    kill = rp.kill_fail_problems(probs)
+    if kill:
+        _stop_now(ctx, rnd, REASON_KILL, dict(stop_details or {}, disk_measurement=kill))
     if probs:
         raise Refused(probs + ["DISK FAIL: not started (protocol 16)"])
 
@@ -644,6 +653,9 @@ def call_code(ctx, rnd, code, e, entry, expect, att):
     if disk:
         for p in disk:
             print(p, flush=True)
+        kill = rp.kill_fail_problems(disk)
+        if kill:
+            return [(REASON_KILL, {"before_call": n, "disk_measurement": kill})]
         return [(REASON_DISK, {"before_call": n, "problems": disk})]
     e["consumed"], e["state"] = n, f"running{n}"
     save_attempts(ctx, rnd, att)                                      # before the call; never decreased
@@ -716,7 +728,7 @@ def _round_setup(ctx, rnd):
     check_stops(ctx, rnd)
     check_tags(ctx, "formal")
     check_reused()
-    check_disk(ctx)
+    check_disk(ctx, rnd)
     try:
         m = mapping.load(rnd, revise=ctx.revise, sealed=ctx.sealed)
     except mapping.MappingError as err:
@@ -874,7 +886,7 @@ def run_smoke(ctx, kind):
     check_stops(ctx, SMOKE_STOP_ROUND)
     check_tags(ctx, "smoke")
     check_reused()
-    check_disk(ctx)
+    check_disk(ctx, SMOKE_STOP_ROUND, {"smoke": kind})
     models = run_order(ctx)
     expect = load_expect(ctx, "smoke", models)
     prompts = os.path.join(ctx.case, "runs", "revise-smoke", "prompts")
@@ -923,6 +935,13 @@ def run_smoke(ctx, kind):
             for p in disk:
                 print(p, flush=True)
             summary.append(dict(chk, ok=False, disk=disk))
+            kill = rp.kill_fail_problems(disk)
+            if kill:                                                  # the measurement's own cleanup failed
+                all_ok = False
+                exit_code = _raise(ctx, SMOKE_STOP_ROUND, None, [(REASON_KILL, {
+                    "smoke": kind, "stamp": stamp, "run_order_index": i, "disk_measurement": kill})])
+                print("STOPPED: nothing else is launched; clear the stop before any further run", flush=True)
+                break
             print(f"DISK FAIL: smoke stopped before {m['name']}; no further call", flush=True)
             all_ok, exit_code = False, EXIT_REFUSED
             break

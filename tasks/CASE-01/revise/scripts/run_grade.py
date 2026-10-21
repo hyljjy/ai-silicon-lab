@@ -22,8 +22,19 @@ external fault (infra_fail) or still without a final line; KILL FAIL; cleanup_un
 failure's emergency cleanup failed, and on recovery when proc.json itself records alive_after / cleanup_unconfirmed);
 recovery cannot confirm that the old processes exited (no usable proc.json included); low disk after the run.
 
+Target eligibility (Codex BC1-06): before anything of an attempt is created (and before recovery), the shared check
+round.target_problems(rnd, code) must pass: the code is in this round's codes.txt, its call ended in "parse" with
+parsed status "ok" and an unchanged committed candidate, gate.json is committed with passed true, the review row and
+(where predictions / failure conditions exist) criteria rows exist. round.py evaluate runs the same check (it passes
+it explicitly); otherwise the default builds round.Ctx(case=<case>).
+
+Stops after recovery (Codex BC1-07): every stop raised while recovering an earlier attempt refuses the run; open stops
+and both disks are then checked again before the next started.json. A disk measurement whose process cleanup failed
+(revpaths.kill_fail_problems) raises a KILL FAIL stop, before the attempt (no attempt directory) or after the run.
+
 Roots are injectable for tests: case (tasks/CASE-01; revise = case/revise), repo (env/ hash files), env (environment of
-the dependency check and of grade.py), free_bytes (revpaths.disk_problems), preflight (round.preflight, Task 11).
+the dependency check and of grade.py), free_bytes (revpaths.disk_problems), preflight (round.preflight, Task 11),
+eligibility (callable(rnd, code) -> problems; default round.target_problems).
 The proc.json run_id goes through limits.run_limited(proc_extra=...); proc.json also records the wrapper's own
 signals_sent and timed_out (limits), which recovery uses: an interrupt is external evidence only when the record
 shows that the wrapper sent no signal; a record without that information (older format) gives no such evidence.
@@ -68,18 +79,24 @@ def _now():
 
 
 class _Ctx:
-    def __init__(self, case=None, repo=None, env=None, free_bytes=None, preflight=None):
+    def __init__(self, case=None, repo=None, env=None, free_bytes=None, preflight=None, eligibility=None):
         self.case = case or rp.CASE
         self.revise = os.path.join(self.case, "revise")
         self.repo = repo or rp.REPO
         self.env = dict(os.environ) if env is None else env
         self.free_bytes = free_bytes
         self.preflight = preflight or _default_preflight
+        self.eligibility = eligibility or (lambda rnd, code: _default_eligibility(self.case, rnd, code))
 
 
 def _default_preflight(rnd, step):
     import round as round_py                          # Task 11 writes revise/scripts/round.py
     return round_py.preflight(rnd, step)
+
+
+def _default_eligibility(case, rnd, code):
+    import round as round_py                          # the check shared with round.py evaluate (Codex BC1-06)
+    return round_py.target_problems(rnd, code, round_py.Ctx(case=case))
 
 
 def cand_dir(ctx, rnd, code):
@@ -163,6 +180,20 @@ def _disk(ctx):
     problems = rp.disk_problems(free_bytes=measure)
     return {"time": when, "min_gib": 20, "free_bytes": {v: seen.get(v) for v in rp.DISK_VOLUMES},
             "problems": problems}
+
+
+def _disk_or_refuse(ctx, rnd, code):
+    """A disk measurement before an attempt: KILL FAIL (the measurement's cleanup failed) raises a stop and refuses;
+    any other problem refuses. Returns the measurement."""
+    disk = _disk(ctx)
+    kill = rp.kill_fail_problems(disk["problems"])
+    if kill:
+        sid = _stop(ctx, rnd, "KILL FAIL", code, {"source": "disk measurement before an attempt", "problems": kill})
+        raise RunGradeError(f"STOP {sid}: KILL FAIL in the disk measurement before an attempt of {code}: "
+                            + "; ".join(kill))
+    if disk["problems"]:
+        raise RunGradeError("REFUSED: " + "; ".join(disk["problems"]))
+    return disk
 
 
 # ------------------------------------------------------------------------------------- location and attribution
@@ -370,10 +401,15 @@ def _finish(ctx, code, rnd, k, adir, started, info, recovered=False, wrapper_int
         raised.append(_stop(ctx, rnd, "KILL FAIL", code, {"attempt": k, "alive": kill["alive"]}))
     if kill.get("unconfirmed"):
         raised.append(_stop(ctx, rnd, "cleanup_unconfirmed", code, {"attempt": k}))
-    if disk_after["problems"]:
+    disk_kill = rp.kill_fail_problems(disk_after["problems"])
+    if disk_kill:
+        raised.append(_stop(ctx, rnd, "KILL FAIL", code, {"attempt": k, "source": "disk measurement after the run",
+                                                          "problems": disk_kill}))
+    disk_rest = [p for p in disk_after["problems"] if p not in disk_kill]
+    if disk_rest:
         raised.append(_stop(ctx, rnd, "运行后磁盘不足", code,
                             {"attempt": k, "time": disk_after["time"], "free_bytes": disk_after["free_bytes"],
-                             "problems": disk_after["problems"]}))
+                             "problems": disk_rest}))
     ok = bool(final_line and final_line.startswith("GRADE OK:"))
     if k >= 2 and not ok and (attr == "external" or final_line is None):
         raised.append(_stop(ctx, rnd, "infra_fail: the second attempt is still an external fault or still has no "
@@ -431,20 +467,31 @@ def attempt(code, rnd, retry=False, grade_cmd=None, locked=False, **roots):
         return _attempt(ctx, code, rnd, retry, grade_cmd)
 
 
-def _attempt(ctx, code, rnd, retry, grade_cmd):
+def _refuse_open_stops(ctx, rnd):
     open_ = stops.open_stops(rnd, revise=ctx.revise)
     if open_:
         raise RunGradeError("REFUSED: open stop records in round %d: %s" % (
             rnd, ", ".join(f"{s['stop_id']} ({s.get('reason')})" for s in open_)))
+
+
+def _attempt(ctx, code, rnd, retry, grade_cmd):
+    _refuse_open_stops(ctx, rnd)
     probs = ctx.preflight(rnd, "evaluate")
     if probs:
         raise RunGradeError("REFUSED: " + "; ".join(probs))
-    disk = _disk(ctx)
-    if disk["problems"]:
-        raise RunGradeError("REFUSED: " + "; ".join(disk["problems"]))
+    probs = ctx.eligibility(rnd, code)               # shared target check (Codex BC1-06), before anything is created
+    if probs:
+        raise RunGradeError("REFUSED: " + "; ".join(probs))
+    disk = _disk_or_refuse(ctx, rnd, code)
     cdir = cand_dir(ctx, rnd, code)
     if any(not os.path.isfile(os.path.join(a, "attempt.json")) for _, a in attempt_dirs(cdir)):
-        _recover(ctx, code, rnd)
+        # Codex BC1-07: a stop raised while recovering refuses the run; stops and disks are checked again
+        raised = [sid for rec in _recover(ctx, code, rnd) for sid in rec.get("stops") or []]
+        if raised:
+            raise RunGradeError(f"REFUSED: recovering {code} raised stop(s) {', '.join(raised)}; no further attempt "
+                                f"is started")
+        _refuse_open_stops(ctx, rnd)
+        disk = _disk_or_refuse(ctx, rnd, code)
     done = attempt_dirs(cdir)
     if len(done) >= 2:
         raise RunGradeError(f"REFUSED: {code} already has two attempts (protocol 8: at most two)")
