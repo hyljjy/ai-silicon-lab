@@ -414,6 +414,14 @@ class TestAttempts(Base):
             self.run_attempt("success")
         self.assertFalse(os.path.exists(self.adir(1)))
 
+    def test_preflight_problems_refuse_attempt(self):
+        with self.assertRaises(run_grade.RunGradeError) as cm:
+            self.run_attempt("success", preflight=lambda rnd, step: ["NOT COMMITTED: review/r1.tsv is missing"])
+        self.assertTrue(str(cm.exception).startswith("REFUSED: NOT COMMITTED: review/r1.tsv"))
+        self.assertFalse(os.path.exists(os.path.join(self.adir(1), "started.json")))
+        self.assertFalse(os.path.exists(self.adir(1)))
+        self.assertEqual(self.run_attempt("success", preflight=lambda rnd, step: [])["k"], 1)
+
     def test_stdout_streamed_and_run_id_recorded_early(self):
         th, box = self.threaded("hang")
         stdout = os.path.join(self.adir(1), "stdout.txt")

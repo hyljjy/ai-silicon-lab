@@ -360,13 +360,42 @@ class Evaluate(Base):
         touch(os.path.join(adir, "started.json"),
               dump({"code": a, "rnd": 1, "k": 1, "cmd": self.cmd(a), "start": "2026-11-01T12:00:00+08:00",
                     "disk_before": {"free_bytes": {}}, "dependency_check": dep}))
+        a_b = sorted(self.codes[1])
         rc, out = self.run_sub("evaluate", 1)
-        self.assertEqual(rc, 0, out)
+        self.assertEqual(rc, 1, out)                  # attempt 1 recovered as external: it awaits its retry
         rec1 = load(os.path.join(adir, "attempt.json"))
         self.assertIn("由包装器恢复", rec1["attribution_evidence"])
         self.assertEqual(rec1["attribution"], "external")
-        self.assertTrue(os.path.isfile(os.path.join(self.cdir(1, a), "attempt2", "attempt.json")))
+        self.assertFalse(os.path.exists(os.path.join(self.cdir(1, a), "attempt2")))
+        self.assertIn(f"AWAIT RETRY {a}: author consent required, then run_grade.py {a} 1 --retry", out)
+        self.assertTrue(os.path.isfile(os.path.join(self.cdir(1, a_b[1]), "attempt1", "attempt.json")))
         self.assertLess(out.index(f"RECOVERED {a} attempt1"), out.index("ATTEMPT "))
+
+    def author_retry(self, code):
+        """The retry the author consented to: run_grade directly, with the real round.preflight."""
+        import run_grade
+        buf = io.StringIO()
+        with contextlib.redirect_stdout(buf):
+            rec = run_grade.attempt(code, 1, retry=True, grade_cmd=self.cmd(code), case=self.case,
+                                    repo=self.kw["repo"], env=self.kw["env"], free_bytes=self.kw["free_bytes"],
+                                    preflight=lambda r, s: rnd_mod.preflight(r, s, self.ctx()))
+        self.output.append(buf.getvalue())
+        return rec, buf.getvalue()
+
+    def test_evaluate_never_starts_a_retry(self):
+        self.setup_round(1)
+        self.phase_c(1)
+        a, b = sorted(self.codes[1])
+        self.modes[a] = "env_snapshot_fail"
+        rc, out = self.run_sub("evaluate", 1)
+        self.assertEqual(rc, 1, out)
+        self.assertIn(f"AWAIT RETRY {a}: author consent required, then run_grade.py {a} 1 --retry", out)
+        self.assertFalse(os.path.exists(os.path.join(self.cdir(1, a), "attempt2")))
+        self.assertTrue(os.path.isfile(os.path.join(self.cdir(1, b), "attempt1", "attempt.json")))
+        rc, out = self.run_sub("evaluate", 1)         # a second evaluate still does not retry
+        self.assertEqual(rc, 1, out)
+        self.assertFalse(os.path.exists(os.path.join(self.cdir(1, a), "attempt2")))
+        self.assertEqual(stops.open_stops(1, revise=self.revise), [])
 
     def test_evaluate_stops_on_infra_fail(self):
         self.setup_round(1)
@@ -375,13 +404,51 @@ class Evaluate(Base):
         self.modes[a] = "env_snapshot_fail"
         rc, out = self.run_sub("evaluate", 1)
         self.assertEqual(rc, 1, out)
-        self.assertTrue(os.path.isfile(os.path.join(self.cdir(1, a), "attempt2", "attempt.json")))
-        self.assertFalse(os.path.exists(self.cdir(1, b)) and os.listdir(self.cdir(1, b)) != ["gate.json"])
-        recs = [s for s in stops.open_stops(1, revise=self.revise)]
+        rec, out = self.author_retry(a)               # the retry is still an external fault: infra_fail stop
+        self.assertEqual(rec["k"], 2)
+        recs = stops.open_stops(1, revise=self.revise)
         self.assertEqual(len(recs), 1)
         self.assertEqual(recs[0]["side"], "eval")
         self.assertTrue(recs[0]["reason"].startswith("infra_fail"))
         self.assertIn(f"commit revise/stops/r1/{recs[0]['stop_id']}.json now", out)
+        before = sorted(self.attempts_of(1))
+        for sub in ("evaluate", "finalize"):
+            rc, out = self.run_sub(sub, 1)
+            self.assertEqual(rc, 1, out)
+            self.assertIn("STOPPED", out)
+        self.assertEqual(sorted(self.attempts_of(1)), before)
+
+    def test_evaluate_stops_at_once_on_a_stop_raised_by_an_attempt(self):
+        self.setup_round(1)
+        self.phase_c(1)
+        a, b = sorted(self.codes[1])
+        a1 = os.path.join(self.cdir(1, a), "attempt1")
+
+        def free(vol):                                # low only after attempt 1 of a ran (the disk-after check)
+            ran = os.path.exists(os.path.join(a1, "stdout.txt")) and not os.path.exists(os.path.join(a1, "attempt.json"))
+            return 5 * GB if ran else 100 * GB
+        self.kw["free_bytes"] = free
+        rc, out = self.run_sub("evaluate", 1)
+        self.assertEqual(rc, 1, out)
+        self.assertTrue(os.path.isfile(os.path.join(a1, "attempt.json")))
+        self.assertFalse(os.path.exists(os.path.join(self.cdir(1, b), "attempt1")))
+        recs = stops.open_stops(1, revise=self.revise)
+        self.assertEqual(len(recs), 1)
+        self.assertIn(f"commit revise/stops/r1/{recs[0]['stop_id']}.json now", out)
+
+    def test_evaluate_refuses_malformed_jsonl(self):
+        self.setup_round(1)
+        self.phase_c(1)
+        p = self.pred("r1_criteria.jsonl")
+        touch(p, rp.read_bytes(p)[:-1])           # last line without LF: judge.read_jsonl raises JudgeError
+        self.commit("malformed criteria")
+        rc, out = self.run_sub("evaluate", 1)
+        self.assertEqual(rc, 1, out)
+        self.assertNotIn("Traceback", out)
+        with mock.patch.object(judge, "views", return_value=0):     # past the views check: preflight reads it
+            probs = rnd_mod.preflight(1, "evaluate", self.ctx())
+        self.assertTrue(any("PREFLIGHT FAIL: JudgeError" in x for x in probs), probs)
+        self.assertEqual(self.attempts_of(1), [])
 
     def test_call_side_stop_blocks_evaluate(self):
         self.setup_round(1)
@@ -406,6 +473,37 @@ class FinalizeClose(Base):
         self.assertIn("ARCHIVE FAIL", out)
         self.assertIn("FINALIZE FAIL: status", out)
         self.assertFalse(os.path.exists(self.pred("r1_judgments.jsonl")))
+
+    def test_finalize_refuses_await_retry(self):
+        self.setup_round(1)
+        self.phase_c(1)
+        a, b = sorted(self.codes[1])
+        self.modes[a] = "env_snapshot_fail"
+        rc, out = self.run_sub("evaluate", 1)
+        self.assertEqual(rc, 1, out)
+        rc, out = self.run_sub("finalize", 1)
+        self.assertEqual(rc, 1, out)
+        self.assertIn(f"AWAIT RETRY {a}", out)
+        self.assertIn("REFUSED", out)
+        for c in (a, b):
+            self.assertFalse(os.path.exists(os.path.join(self.cdir(1, c), "status.json")))
+        self.assertFalse(os.path.exists(self.pred("r1_judgments.jsonl")))
+
+    def test_closed_round_refuses_every_subcommand(self):
+        self.full_round(1)
+        rc, out = self.run_sub("close", 1, review="看了判定表")
+        self.assertEqual(rc, 0, out)
+        self.commit("close")
+        watched = [self.pred("r1_judgments.jsonl"), self.pred("r1_judgments.md")]
+        watched += [os.path.join(self.cdir(1, c), "status.json") for c in self.codes[1]]
+        before = {p: (rp.read_bytes(p), os.stat(p).st_mtime_ns) for p in watched}
+        attempts = sorted(self.attempts_of(1))
+        for sub in ("ingest", "evaluate", "finalize", "close"):
+            rc, out = self.run_sub(sub, 1, review="again" if sub == "close" else None)
+            self.assertEqual(rc, 1, (sub, out))
+            self.assertIn("CLOSED", out)
+        self.assertEqual({p: (rp.read_bytes(p), os.stat(p).st_mtime_ns) for p in watched}, before)
+        self.assertEqual(sorted(self.attempts_of(1)), attempts)
 
     def test_close_rejects_uncommitted_or_recomputed_difference(self):
         self.full_round(1)
@@ -454,7 +552,7 @@ class FinalizeClose(Base):
     def test_output_has_no_model_names(self):
         self.full_round(1)
         self.run_sub("close", 1, review="看了")
-        self.run_sub("evaluate", 1)                   # a refusal (round already closed is not checked there)
+        self.run_sub("evaluate", 1)                   # a refusal: the round is closed (CLOSED line)
         text = "".join(self.output)
         self.assertIn("CODE ", text)
         sealed = load(os.path.join(self.sealed, "mapping_r1.json"))

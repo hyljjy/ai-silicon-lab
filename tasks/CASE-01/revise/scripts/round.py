@@ -6,7 +6,8 @@ Command line (WSL, from tasks/CASE-01):
   python3 -B revise/scripts/round.py evaluate <r>
   python3 -B revise/scripts/round.py finalize <r>
   python3 -B revise/scripts/round.py close <r> --author-review "<what the author actually looked at>"
-<r> is 1 or 2. Exit codes: 0 done; 1 refused or stopped (nothing done after a failed preflight); 2 usage.
+<r> is 1 or 2. Exit codes: 0 done; 1 refused, stopped or (evaluate) a code awaits its retry (nothing done after a
+failed preflight); 2 usage. Once revise/outputs/r<r>/round_complete.json exists every subcommand refuses (CLOSED).
 Every subcommand holds the eval lock (stops.round_lock(r, "eval")) for its whole run, runs preflight(r, <stage>)
 first and prints one status line per code at the end (codes only, never a model name).
 
@@ -47,9 +48,11 @@ Subcommands
             file must hold the same bytes). The gate is injectable (Ctx(gate=...)); default: gate.gate(rtl_path,
             declared_L) -> GateResult(passed, hits, yosys_problem), hits with rule, line, kind, text (Task 4).
   evaluate  first recovers attempts that have started.json only (run_grade.recover), then, code by code (sorted),
-            runs run_grade.attempt for every gate-passed code (vetoed ones included) until the code is terminal:
-            attempt 1 when there is none, the one retry when attempt 1 is attributed "external" and did not end with
-            GRADE OK (protocol 8). Before each attempt: open stops, disk and baseline are re-checked (a disk or
+            runs attempt 1 (run_grade.attempt) of every gate-passed code (vetoed ones included) that has none. It
+            never starts attempt 2 (controller ruling R22; plan Task 15 step 7): a code whose attempt 1 is attributed
+            "external" without GRADE OK gets the line "AWAIT RETRY <code>: author consent required, then
+            run_grade.py <code> <r> --retry", evaluate continues with the other codes and exits 1 at the end;
+            finalize refuses while a code awaits its retry. Before each attempt: open stops, disk and baseline are re-checked (a disk or
             baseline failure raises an eval stop). Stops at once, exit 1, on a refusal of run_grade, a stop raised by
             run_grade (KILL FAIL, cleanup, low disk after the run, infra_fail), DISK, BASELINE FAIL, or open_stops(r)
             becoming non-empty. Attempts run one after another in this process (limits.run_limited: one at a time).
@@ -75,6 +78,7 @@ import re
 import sys
 
 import baseline
+import judge
 import limits
 import mapping
 import prereg
@@ -496,13 +500,17 @@ def preflight(r, stage, ctx=None):
             return _checks(ctx, r, stage)
     except stops.LockError as e:
         return [str(e)]
-    except (stops.StopsError, prereg.PreregError, rp.RevpathsError, OSError, UnicodeDecodeError) as e:
+    except (stops.StopsError, prereg.PreregError, rp.RevpathsError, judge.JudgeError, OSError,
+            UnicodeDecodeError) as e:
         return [f"PREFLIGHT FAIL: {e.__class__.__name__}: {e}"]
 
 
 def _checks(ctx, r, stage):
     level = STAGES.index(stage)
     probs = []
+    if os.path.exists(os.path.join(ctx.out_dir(r), "round_complete.json")):
+        return [f"CLOSED: revise/outputs/r{r}/round_complete.json exists; round {r} is closed and its products are "
+                f"not regenerated or rerun"]
     for s in stops.open_stops(r, revise=ctx.revise):
         probs.append(f"STOPPED: open stop {s.get('stop_id')} (side {s.get('side')}, {s.get('reason')}): "
                      f"{s.get('why_open')}")
@@ -618,17 +626,18 @@ def _noop_preflight(rnd, stage):
 
 
 def _next_attempt(ctx, r, code):
-    """None (terminal), False (attempt 1) or True (the retry) for a gate-passed code."""
+    """None (terminal), "first" (attempt 1 to run) or "await_retry" (attempt 1 external, not GRADE OK: the retry
+    needs the author's consent and is run with run_grade.py --retry, never by evaluate)."""
     import run_grade
     dirs = run_grade.attempt_dirs(ctx.cand_dir(r, code))
     if not dirs:
-        return False
+        return "first"
     att = _load(os.path.join(dirs[-1][1], "attempt.json"))
     if not isinstance(att, dict):
         raise RoundError(f"{code}: attempt{dirs[-1][0]} has no attempt.json after recovery")
     if len(dirs) == 1 and att.get("attribution") == "external" and \
             not str(att.get("final_line") or "").startswith("GRADE OK:"):
-        return True
+        return "await_retry"
     return None
 
 
@@ -658,15 +667,21 @@ def cmd_evaluate(ctx, r):
             lines = _open_stop_lines(ctx, r)
             if lines:
                 return _refuse(lines)
-    # 2. attempts, one after another
+    # 2. attempt 1 of every code without one, one after another; never a retry (author consent, run_grade --retry)
+    awaiting = []
     for code in passed:
         while True:
             try:
-                retry = _next_attempt(ctx, r, code)
+                nxt = _next_attempt(ctx, r, code)
             except RoundError as e:
                 print(f"EVALUATE FAIL: {e}", flush=True)
                 return 1
-            if retry is None:
+            if nxt == "await_retry":
+                awaiting.append(code)
+                print(f"AWAIT RETRY {code}: author consent required, then run_grade.py {code} {r} --retry",
+                      flush=True)
+                break
+            if nxt is None:
                 break
             lines = _open_stop_lines(ctx, r)
             if lines:
@@ -681,7 +696,7 @@ def cmd_evaluate(ctx, r):
                 return 1
             cmd = ctx.grade_cmd(code) if ctx.grade_cmd else None
             try:
-                rec = run_grade.attempt(code, r, retry=retry, grade_cmd=cmd, locked=True,
+                rec = run_grade.attempt(code, r, retry=False, grade_cmd=cmd, locked=True,
                                         preflight=_noop_preflight, **roots)
             except run_grade.RunGradeError as e:
                 print(str(e), flush=True)
@@ -693,6 +708,10 @@ def cmd_evaluate(ctx, r):
             lines = _open_stop_lines(ctx, r)
             if lines:
                 return _refuse(lines)
+    if awaiting:
+        print(f"evaluate incomplete: {len(awaiting)} code(s) await a retry ({' '.join(awaiting)}); finalize refuses "
+              f"until the retries are done", flush=True)
+        return 1
     print("evaluate done; next: round.py finalize, then commit the stage-D products", flush=True)
     return 0
 
@@ -766,7 +785,8 @@ def run(sub, r, ctx, author_review=None):
     except stops.LockError as e:
         print(str(e), flush=True)
         return 1
-    except (stops.StopsError, prereg.PreregError, mapping.MappingError, rp.RevpathsError, RoundError, OSError) as e:
+    except (stops.StopsError, prereg.PreregError, mapping.MappingError, rp.RevpathsError, judge.JudgeError,
+            RoundError, OSError) as e:
         print(f"{sub.upper()} FAIL: {e.__class__.__name__}: {e}", flush=True)
         return 1
 

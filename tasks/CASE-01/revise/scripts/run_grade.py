@@ -421,7 +421,9 @@ def _attempt(ctx, code, rnd, retry, grade_cmd):
     if open_:
         raise RunGradeError("REFUSED: open stop records in round %d: %s" % (
             rnd, ", ".join(f"{s['stop_id']} ({s.get('reason')})" for s in open_)))
-    ctx.preflight(rnd, "evaluate")
+    probs = ctx.preflight(rnd, "evaluate")
+    if probs:
+        raise RunGradeError("REFUSED: " + "; ".join(probs))
     disk = _disk(ctx)
     if disk["problems"]:
         raise RunGradeError("REFUSED: " + "; ".join(disk["problems"]))
