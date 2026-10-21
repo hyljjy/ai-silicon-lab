@@ -114,8 +114,12 @@ def _measure_free(volume):
     """Free bytes of one of DISK_VOLUMES. On Windows the WSL root file system is measured inside WSL."""
     if volume == "WSL /":
         import limits                                 # local import: limits does not depend on revpaths
-        res = limits.run_limited(["wsl.exe", "-d", WSL_DISTRO, "--exec", "df", "-B1", "--output=avail", "/"],
-                                 "preflight")
+        try:
+            res = limits.run_limited(["wsl.exe", "-d", WSL_DISTRO, "--exec", "df", "-B1", "--output=avail", "/"],
+                                     "preflight")
+        except limits.SupervisionError as e:          # started, then supervision failed: no measurement
+            raise OSError(f"df in WSL failed after it had started ({e.cause_type}; alive after cleanup: "
+                          f"{e.killed_pids_alive}, unconfirmed: {e.cleanup_unconfirmed})") from None
         if res.rc != 0 or res.timed_out or res.killed_pids_alive or res.cleanup_unconfirmed:
             raise OSError(f"df in WSL failed: rc={res.rc} timed_out={res.timed_out}")
         return int(res.stdout.decode("ascii", "replace").split()[-1])

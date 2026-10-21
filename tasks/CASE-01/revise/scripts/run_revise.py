@@ -25,7 +25,15 @@ call, never decreased, never above 2), "final" (null | "parse" | "delivery_fail"
 .err, the lifecycle record to call<n>.proc.json, details to call<n>.meta.json. The repository gets only <code>.call.json
 (categories and decisions), <code>.md (redacted public answer, for final parse or delivery_fail), <code>.parsed.json,
 the candidate (extract.write_candidate from the RAW answer), r<r>_extracted.jsonl rows and status.md.
-Text and hashes follow the plan ("文本和哈希" 1-5). Python standard library only."""
+Text and hashes follow the plan ("文本和哈希" 1-5). Python standard library only.
+
+Call failures (Codex BC1-03): OSError / limits.IsolationFail from run_limited = the CLI never ran (launch problem,
+REASON_ISOLATION stop); limits.SupervisionError = the CLI had started and supervising it failed: the call counts as an
+interrupted call (classified from the output captured so far), and a failed or unconfirmed emergency cleanup raises
+REASON_KILL. Recovery (--resume, Codex BC1-01): without a usable lifecycle record (call<n>.proc.json) the old call
+cannot be confirmed gone -> REASON_RESUME stop (there is no "never started" inference); a record that itself says the
+cleanup failed (alive_after / cleanup_unconfirmed) -> REASON_KILL; a "not_started" record -> REASON_ISOLATION (as when
+the launch failure is seen live)."""
 import argparse
 import dataclasses
 import datetime
@@ -215,6 +223,10 @@ def preflight(ctx, models):
     def run(args):
         try:
             res = limits.run_limited(ctx.claude_cmd + args, "preflight", cwd=cwd, env=clean_env(ctx.base_env))
+        except limits.SupervisionError as e:
+            kill = " and was not cleaned up" if e.killed_pids_alive or e.cleanup_unconfirmed else ""
+            probs.append(f"PREFLIGHT FAIL: {' '.join(args)} failed after it had started ({e.cause_type}){kill}")
+            return None
         except (OSError, limits.IsolationFail) as e:
             probs.append(f"PREFLIGHT FAIL: {' '.join(args)} could not run ({e.__class__.__name__})")
             return None
@@ -325,7 +337,8 @@ def read_call_inputs(ctx, rnd, code):
 
 
 def one_call(ctx, entry, system, stdin, prompt_ok, raw_dir, n, expect, tokens, work_sub):
-    """Run one model call; returns (verdict, meta, stdout bytes, launch problem or None, kill problem bool)."""
+    """Run one model call; returns (verdict, meta, stdout bytes, launch problem or None, kill problem bool).
+    meta["interrupted"] is True when supervision failed after the CLI had started (limits.SupervisionError)."""
     os.makedirs(raw_dir, exist_ok=True)
     workdir = _fresh_workdir(ctx, work_sub)
     settings = os.path.expandvars(entry["settings"])
@@ -340,7 +353,7 @@ def one_call(ctx, entry, system, stdin, prompt_ok, raw_dir, n, expect, tokens, w
             "system_sha": rp.sha256_bytes(system), "stdin_sha": rp.sha256_bytes(stdin), "prompt_ok": prompt_ok,
             "start": _now(), "completed": False}
     _write(meta_path, _dump(meta))
-    launch, kill = None, False
+    launch, kill, interrupted = None, False, False
     try:
         res = limits.run_limited(argv, "model", cwd=workdir, env=clean_env(ctx.base_env, tokens), stdin_bytes=stdin,
                                  stdout_path=base + ".jsonl", stderr_path=base + ".err",
@@ -351,6 +364,13 @@ def one_call(ctx, entry, system, stdin, prompt_ok, raw_dir, n, expect, tokens, w
         meta.update(kill={"alive": res.killed_pids_alive, "unconfirmed": res.cleanup_unconfirmed},
                     captured={"stdout": res.stdout_bytes, "stderr": res.stderr_bytes},
                     incomplete="超限，输出不完整" if res.incomplete else None)
+    except limits.SupervisionError as e:
+        # the CLI had started: not a launch problem; the call counts as interrupted, the cleanup result decides KILL
+        rc, timed_out, over, interrupted = None, e.timed_out, bool(e.stdout_over or e.stderr_over), True
+        kill = bool(e.killed_pids_alive or e.cleanup_unconfirmed)
+        meta.update(supervision_error=f"{e.cause_type}: {e.__cause__}", interrupted=True,
+                    kill={"alive": e.killed_pids_alive, "unconfirmed": e.cleanup_unconfirmed},
+                    captured={"stdout": e.stdout_bytes, "stderr": e.stderr_bytes}, incomplete="超限，输出不完整")
     except (OSError, limits.IsolationFail) as e:
         rc, timed_out, over = None, False, False
         launch = f"{e.__class__.__name__}: {e}"
@@ -358,7 +378,7 @@ def one_call(ctx, entry, system, stdin, prompt_ok, raw_dir, n, expect, tokens, w
     stdout = rp.read_bytes(base + ".jsonl") if os.path.isfile(base + ".jsonl") else b""
     stderr = rp.read_bytes(base + ".err") if os.path.isfile(base + ".err") else b""
     mem = memory_clean(stdout)
-    verdict = classify.classify(stdout, expect, rc, timed_out, over, False, prompt_ok, mem)
+    verdict = classify.classify(stdout, expect, rc, timed_out, over, interrupted, prompt_ok, mem)
     meta.update(end=_now(), exit=rc, timed_out=timed_out, over_limit=over, memory_dir_clean=mem, completed=True,
                 stdout_sha=rp.sha256_bytes(stdout), stderr_sha=rp.sha256_bytes(stderr),
                 flags=verdict.flags, delivery=verdict.delivery, retry_allowed=verdict.retry_allowed,
@@ -518,7 +538,8 @@ def call_code(ctx, rnd, code, e, entry, expect, att):
     verdict, meta, stdout, launch, kill = one_call(ctx, entry, system, stdin, ok, raw_dir, n, expect,
                                                    MAX_OUTPUT_TOKENS, f"r{rnd}")
     extra = REASON_ISOLATION if launch else REASON_KILL if kill else None
-    return apply_verdict(ctx, rnd, code, e, n, verdict, stdout, raw_dir, meta, extra_stop=extra)
+    return apply_verdict(ctx, rnd, code, e, n, verdict, stdout, raw_dir, meta,
+                         interrupted=bool(meta.get("interrupted")), extra_stop=extra)
 
 
 def recover(ctx, rnd, code, e, expect, att):
@@ -527,19 +548,15 @@ def recover(ctx, rnd, code, e, expect, att):
     raw_dir = os.path.join(ctx.raw, f"r{rnd}", code)
     base = os.path.join(raw_dir, f"call{n}")
     proc = _load_json(base + ".proc.json")
-    has_output = os.path.isfile(base + ".jsonl") and os.path.getsize(base + ".jsonl") > 0
-    if not os.path.exists(base + ".proc.json") and not has_output:
-        # the shell stopped after saving running<n> but before run_limited wrote the lifecycle record: no CLI
-        # process ever existed; the call counts as interrupted (it was started: consumed is not decreased)
-        proc, alive, unconfirmed = {}, [], False
-        print(f"RESUME: call {n} of a code never started a CLI process (no lifecycle record, no output)", flush=True)
-    elif not isinstance(proc, dict) or "root_pid" not in proc:
+    if not isinstance(proc, dict) or ("root_pid" not in proc and proc.get("phase") not in
+                                      ("launching", "not_started")):
+        # no record (the shell may have stopped before run_limited wrote it, or between Popen and the record): an
+        # old CLI process cannot be ruled out
         return [(REASON_RESUME, {"call": n, "why": "no usable lifecycle record"})], False
-    else:
-        try:
-            alive, unconfirmed = limits.still_alive(proc)
-        except Exception:                                             # noqa: BLE001 - any failure = unconfirmed
-            alive, unconfirmed = [], True
+    try:
+        alive, unconfirmed = limits.still_alive(proc)
+    except Exception:                                                 # noqa: BLE001 - any failure = unconfirmed
+        alive, unconfirmed = [], True
     if unconfirmed:
         return [(REASON_RESUME, {"call": n, "why": "process state cannot be confirmed"})], False
     if alive:
@@ -548,13 +565,25 @@ def recover(ctx, rnd, code, e, expect, att):
             return [(REASON_RESUME, {"call": n, "why": "old processes still alive or unconfirmed after cleanup"})], \
                 False
         print(f"RESUME: old call processes cleaned up ({len(alive)})", flush=True)
+    extra = None
+    if proc.get("phase") == "not_started":
+        extra = REASON_ISOLATION                                      # the launch failed, as if seen live
+    elif limits.record_cleanup_failed(proc):
+        extra = REASON_KILL                                           # the old run's own cleanup failed
     meta = _load_json(base + ".meta.json") or {"n": n, "prompt_ok": True}
     stdout = rp.read_bytes(base + ".jsonl") if os.path.isfile(base + ".jsonl") else b""
     if meta.get("completed"):
+        # the call ended and was classified, the shell stopped before the decision was saved: same decision and
+        # same stops as on the live path
+        interrupted = bool(meta.get("interrupted"))
         verdict = classify.classify(stdout, expect, meta.get("exit"), meta.get("timed_out", False),
-                                    meta.get("over_limit", False), False, meta.get("prompt_ok", True),
+                                    meta.get("over_limit", False), interrupted, meta.get("prompt_ok", True),
                                     meta.get("memory_dir_clean"))
-        interrupted = False
+        kill = meta.get("kill") or {}
+        if meta.get("launch_error"):
+            extra = REASON_ISOLATION
+        elif extra is None and (kill.get("alive") or kill.get("unconfirmed")):
+            extra = REASON_KILL
     else:
         verdict = classify.classify(stdout, expect, None, bool(proc.get("timed_out")), False, True,
                                     meta.get("prompt_ok", True), memory_clean(stdout))
@@ -563,7 +592,8 @@ def recover(ctx, rnd, code, e, expect, att):
                     stdout_sha=rp.sha256_bytes(stdout), flags=verdict.flags, delivery=verdict.delivery)
     if interrupted and verdict.delivery == "parse":                  # cannot happen (interrupted is a flag)
         raise AssertionError("an interrupted call was classified as parse")
-    return apply_verdict(ctx, rnd, code, e, n, verdict, stdout, raw_dir, meta, interrupted=interrupted), True
+    return apply_verdict(ctx, rnd, code, e, n, verdict, stdout, raw_dir, meta, interrupted=interrupted,
+                         extra_stop=extra), True
 
 
 # ------------------------------------------------------------------------------------- modes

@@ -184,7 +184,10 @@ class Base(unittest.TestCase):
         gone.wait()
         proc = {"root_pid": gone.pid, "root_start": "1", "registry": [[gone.pid, "1"]], "isolation": "subreaper",
                 "started_at": "2026-11-01T12:00:00+08:00", "run_id": run_id}
+        proc.update(limits._launch_marks())         # a run token no process carries: nothing of the run is left
         proc.update(proc_fields or {})
+        for key in [k for k, v in proc.items() if v is None]:
+            del proc[key]
         touch(os.path.join(adir, "proc.json"), json.dumps(proc).encode())
         touch(os.path.join(adir, "stdout.txt"), stdout_text.encode())
         touch(os.path.join(adir, "stderr.txt"), b"")
@@ -304,6 +307,38 @@ class TestAttribution(Base):
         self.assertEqual(rec["launch_error"]["errno"], 2)
         self.assertEqual(rec["attribution"], "external")
         self.assertTrue(rec["final_line_missing"])
+
+    def failing_record_write(self):
+        real = limits._write_json
+
+        def failing(p, obj):                       # the first registry update after grade.py's child started
+            if len(obj.get("registry") or []) > 1 and "ended_at" not in obj:
+                raise OSError(28, "No space left on device")
+            real(p, obj)
+        return mock.patch.object(limits, "_write_json", failing)
+
+    def test_supervision_failure_is_not_launch_error(self):
+        with self.failing_record_write():
+            rec = self.run_attempt("hang")
+        self.assertIsNone(rec["launch_error"])
+        self.assertEqual(rec["supervision_error"], {"type": "OSError", "errno": 28})
+        self.assertEqual(self.file_entry(rec, "stdout.txt")["state"], "produced")
+        self.assertTrue(rec["run_id"])
+        self.assertIn("supervision_error: OSError errno=28", rec["attribution_evidence"])
+        self.assertNotIn("wrapper_interrupted", rec["attribution_evidence"])
+        self.assertEqual(self.stop_records(), [])
+        self.assertIs(self.proc_record()["aborted"], True)
+
+    def test_supervision_failure_with_failed_cleanup_stops(self):
+        with self.failing_record_write(), mock.patch.object(limits, "_force_kill", lambda ctx, pids: None):
+            rec = self.run_attempt("hang")
+        proc = self.proc_record()
+        self.addCleanup(lambda: limits.cleanup(proc, "grade"))
+        self.assertIsNone(rec["launch_error"])
+        self.assertIn(proc["root_pid"], proc["alive_after"])
+        self.assertIn("KILL FAIL", [s["reason"] for s in self.stop_records()])
+        res = limits.cleanup(proc, "grade")
+        self.assertEqual(res.killed_pids_alive, [])
 
     def test_missing_dependency_is_external(self):
         os.remove(os.path.join(self.bin, "yosys"))
@@ -555,6 +590,73 @@ class TestRecovery(Base):
         rec = self.crash_after_sigterm({"signals_sent": [], "timed_out": False})
         self.assertEqual(rec["attribution"], "external")
         self.assertIs(rec["timed_out"], False)
+
+    def test_recovery_without_proc_json_stops(self):
+        adir = self.craft_crash("")
+        os.remove(os.path.join(adir, "proc.json"))
+        with self.assertRaises(run_grade.RunGradeError):
+            self.recover()
+        self.assertFalse(os.path.exists(os.path.join(adir, "attempt.json")))
+        self.assertIn("恢复时无法确认旧进程已退出", [s["reason"] for s in self.stop_records()])
+
+    def test_recovery_old_record_without_token_stops(self):
+        # a Linux record without the run token, of a run that did not end normally: unregistered orphans cannot be
+        # ruled out (Codex BC1-02)
+        adir = self.craft_crash("RUN_ID=20261101-120000-cand_ab12-T27.91-1\n", proc_fields={"token": None})
+        with self.assertRaises(run_grade.RunGradeError):
+            self.recover()
+        self.assertFalse(os.path.exists(os.path.join(adir, "attempt.json")))
+
+    def test_recovery_launching_record_is_wrapper_interrupted(self):
+        # the wrapper died after the record written before Popen: the token proves that no process of it is left
+        self.craft_crash("", proc_fields={"root_pid": None, "root_start": None, "registry": None,
+                                          "phase": "launching"})
+        self.recover()
+        rec = load(os.path.join(self.adir(1), "attempt.json"))
+        self.assertIn("wrapper_interrupted", rec["attribution_evidence"])
+        self.assertEqual(rec["attribution"], "external")
+        self.assertEqual(self.stop_records(), [])
+
+    def test_recovery_not_started_record_is_launch_error(self):
+        self.craft_crash("", proc_fields={"root_pid": None, "root_start": None, "registry": None,
+                                          "phase": "not_started",
+                                          "launch_error": {"type": "FileNotFoundError", "errno": 2}})
+        self.recover()
+        rec = load(os.path.join(self.adir(1), "attempt.json"))
+        self.assertEqual(rec["launch_error"], {"type": "FileNotFoundError", "errno": 2})
+        self.assertNotIn("wrapper_interrupted", rec["attribution_evidence"])
+        self.assertEqual(self.file_entry(rec, "stdout.txt")["state"], "not_run")
+
+    def test_recovery_record_says_kill_fail_stops(self):
+        # the old wrapper's cleanup failed and it died before raising the stop: recovery raises it
+        self.craft_crash("RUN_ID=20261101-120000-cand_ab12-T27.91-1\n",
+                         proc_fields={"ended_at": "x", "alive_after": [4242], "cleanup_unconfirmed": False,
+                                      "signals_sent": ["SIGKILL 4242"], "timed_out": True})
+        self.recover()
+        self.assertTrue(os.path.exists(os.path.join(self.adir(1), "attempt.json")))
+        self.assertIn("KILL FAIL", [s["reason"] for s in self.stop_records()])
+
+    def test_recovery_aborted_record_is_supervision_error(self):
+        self.craft_crash("RUN_ID=20261101-120000-cand_ab12-T27.91-1\nrunning rtl_sim\n",
+                         proc_fields={"ended_at": "x", "alive_after": [], "cleanup_unconfirmed": False,
+                                      "aborted": True, "abort_error": "OSError", "signals_sent": ["SIGKILL 4242"],
+                                      "timed_out": False})
+        self.recover()
+        rec = load(os.path.join(self.adir(1), "attempt.json"))
+        self.assertNotIn("wrapper_interrupted", rec["attribution_evidence"])
+        self.assertEqual(rec["supervision_error"]["type"], "OSError")
+        self.assertIsNone(rec["launch_error"])
+        self.assertEqual(self.stop_records(), [])
+
+    def test_recovery_interrupt_abort_is_wrapper_interrupted(self):
+        self.craft_crash("RUN_ID=20261101-120000-cand_ab12-T27.91-1\nrunning rtl_sim\n",
+                         proc_fields={"ended_at": "x", "alive_after": [], "cleanup_unconfirmed": False,
+                                      "aborted": True, "abort_error": "interrupted", "signals_sent": [],
+                                      "timed_out": False})
+        self.recover()
+        rec = load(os.path.join(self.adir(1), "attempt.json"))
+        self.assertIn("wrapper_interrupted", rec["attribution_evidence"])
+        self.assertIsNone(rec["supervision_error"])
 
     def test_recovery_unconfirmed_raises_stop(self):
         self.craft_crash("RUN_ID=20261101-120000-cand_ab12-T27.91-1\n")

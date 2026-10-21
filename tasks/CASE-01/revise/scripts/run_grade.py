@@ -9,14 +9,18 @@ One call of attempt() is one attempt k of one candidate: revise/results/r<rnd>/<
 At most two attempts per candidate; the second only with --retry and only when attempt 1 is attributed "external"
 (protocol 8). Only WSL runs it (the frozen grade.py, no --allow-tool-drift).
 
-Attribution uses structured evidence only (never log text): env_snapshot/versions step failed; launch error; a
-dependency missing before the start or after the run; an interrupt the wrapper did not send (exit 143/130/negative or
-a step's "interrupted" key, with signals_sent empty); the wrapper itself interrupted (recovery). A timeout and the
-wrapper's own SIGTERM are no evidence.
+Attribution uses structured evidence only (never log text): env_snapshot/versions step failed; launch error (grade.py
+never ran: Popen failed / ISOLATION FAIL); a supervision failure after grade.py had started (limits.SupervisionError:
+lifecycle record or output file write failed, ...; recorded as supervision_error, never as launch_error; the files
+already produced are archived); a dependency missing before the start or after the run; an interrupt the wrapper did
+not send (exit 143/130/negative or a step's "interrupted" key, with signals_sent empty); the wrapper itself interrupted
+(recovery: a lifecycle record exists, the wrapper is gone, and the record is neither ended nor aborted; ruling R17
+narrowed by Codex BC1-03). A timeout and the wrapper's own SIGTERM are no evidence.
 
 Stops (stops.raise_stop, side "eval"; the operator commits the record at once, ruling R12): second attempt still an
-external fault (infra_fail) or still without a final line; KILL FAIL; cleanup_unconfirmed; recovery cannot confirm
-that the old processes exited; low disk after the run.
+external fault (infra_fail) or still without a final line; KILL FAIL; cleanup_unconfirmed (also when a supervision
+failure's emergency cleanup failed, and on recovery when proc.json itself records alive_after / cleanup_unconfirmed);
+recovery cannot confirm that the old processes exited (no usable proc.json included); low disk after the run.
 
 Roots are injectable for tests: case (tasks/CASE-01; revise = case/revise), repo (env/ hash files), env (environment of
 the dependency check and of grade.py), free_bytes (revpaths.disk_problems), preflight (round.preflight, Task 11).
@@ -38,9 +42,9 @@ import limits
 import revpaths as rp
 import stops
 
-ATTEMPT_FIELDS = ("code rnd k cmd start end exit_code timed_out over_limit signals_sent launch_error run_id final_line "
-                  "final_line_missing failure_location attribution attribution_evidence disk_before disk_after "
-                  "dependency_after files").split()
+ATTEMPT_FIELDS = ("code rnd k cmd start end exit_code timed_out over_limit signals_sent launch_error supervision_error "
+                  "run_id final_line final_line_missing failure_location attribution attribution_evidence disk_before "
+                  "disk_after dependency_after files").split()
 TOOLS = ("iverilog", "vvp", "yosys", "sta", "python3")
 GL_MODELS = ("primitives.v", "sky130_fd_sc_hd.v")                     # grade.py:38, 624-629
 STD = ("tt_025C_1v80", "tt_100C_1v80", "ss_100C_1v60", "ss_n40C_1v60", "ff_n40C_1v95", "ff_100C_1v95")
@@ -192,6 +196,9 @@ def attribution(attempt, steps):
     le = attempt.get("launch_error")
     if le:
         ev.append(f"launch_error: {le.get('type')} errno={le.get('errno')}")
+    se = attempt.get("supervision_error")
+    if se:
+        ev.append(f"supervision_error: {se.get('type')} errno={se.get('errno')}")
     before = attempt.get("dependency_check")
     after = attempt.get("dependency_after")
     if before is not None and not before.get("ok"):
@@ -337,7 +344,8 @@ def _finish(ctx, code, rnd, k, adir, started, info, recovered=False, wrapper_int
     rec = {"code": code, "rnd": rnd, "k": k, "cmd": started["cmd"], "start": started["start"], "end": _now(),
            "exit_code": info.get("exit_code"), "timed_out": flag(info.get("timed_out")),
            "over_limit": flag(info.get("over_limit")), "signals_sent": list(info.get("signals_sent") or []),
-           "launch_error": info.get("launch_error"), "run_id": run_id, "final_line": final_line,
+           "launch_error": info.get("launch_error"), "supervision_error": info.get("supervision_error"),
+           "run_id": run_id, "final_line": final_line,
            "final_line_missing": final_line is None,
            "failure_location": failure_location(steps, final_line), "attribution": None,
            "attribution_evidence": None, "disk_before": started.get("disk_before"), "disk_after": disk_after,
@@ -394,6 +402,13 @@ def _launch(ctx, cmd, adir):
                                  stdout_path=os.path.join(adir, "stdout.txt"),
                                  stderr_path=os.path.join(adir, "stderr.txt"), proc_path=proc_path, on_line=on_line,
                                  proc_extra=extra)
+    except limits.SupervisionError as e:
+        # grade.py had started: not a launch error; what it produced is archived, the cleanup result decides the stop
+        cause = e.__cause__
+        return {"supervision_error": {"type": e.cause_type, "errno": getattr(cause, "errno", None)},
+                "exit_code": e.rc, "timed_out": e.timed_out, "over_limit": bool(e.stdout_over or e.stderr_over),
+                "signals_sent": list(e.signals_sent),
+                "kill": {"alive": list(e.killed_pids_alive), "unconfirmed": bool(e.cleanup_unconfirmed)}}
     except limits.IsolationFail as e:
         return {"launch_error": {"errno": None, "type": "IsolationFail", "message": str(e)}}
     except OSError as e:
@@ -483,11 +498,15 @@ def _recover(ctx, code, rnd):
             out.append(_finish(ctx, code, rnd, k, adir, started, {"not_started": True}, recovered=True))
             continue
         proc = _load_json(os.path.join(adir, "proc.json"))
-        if not isinstance(proc, dict) or "root_pid" not in proc:
+        if not isinstance(proc, dict) or ("root_pid" not in proc and proc.get("phase") not in
+                                          ("launching", "not_started")):
             sid = _stop(ctx, rnd, "恢复时无法确认旧进程已退出", code,
                         {"attempt": k, "why": "proc.json missing or unreadable"})
             raise RunGradeError(f"STOP {sid}: attempt {k} of {code}: no usable proc.json")
-        alive, unconfirmed = limits.still_alive(proc)
+        try:
+            alive, unconfirmed = limits.still_alive(proc)
+        except Exception:                                             # noqa: BLE001 - any failure = unconfirmed
+            alive, unconfirmed = [], True
         signals = []
         if unconfirmed:
             sid = _stop(ctx, rnd, "恢复时无法确认旧进程已退出", code, {"attempt": k, "alive": alive})
@@ -499,6 +518,13 @@ def _recover(ctx, code, rnd):
                 sid = _stop(ctx, rnd, "恢复时无法确认旧进程已退出", code,
                             {"attempt": k, "alive": res.killed_pids_alive, "unconfirmed": res.cleanup_unconfirmed})
                 raise RunGradeError(f"STOP {sid}: attempt {k} of {code}: old processes still alive or unconfirmed")
+        if proc.get("phase") == "not_started":
+            # Popen failed (or the suspended target was killed before release): grade.py never ran
+            le = proc.get("launch_error") if isinstance(proc.get("launch_error"), dict) else {}
+            out.append(_finish(ctx, code, rnd, k, adir, started,
+                               {"launch_error": {"errno": le.get("errno"), "type": le.get("type") or UNKNOWN}},
+                               recovered=True))
+            continue
         text = _stdout_text(adir)
         run_id = proc.get("run_id") or _first_run_id(text)
         complete = bool(_final_line(text) and run_id and RUN_ID_RE.match(f"RUN_ID={run_id}")
@@ -508,8 +534,17 @@ def _recover(ctx, code, rnd):
                 "timed_out": proc["timed_out"] if known and isinstance(proc.get("timed_out"), bool) else UNKNOWN,
                 "signals_sent": (list(proc["signals_sent"]) if known else []) + signals,
                 "signals_unknown": not known}
+        if limits.record_cleanup_failed(proc):
+            # the old wrapper's own cleanup failed (KILL FAIL) and it died before it could raise the stop
+            info["kill"] = {"alive": list(proc.get("alive_after") or []),
+                            "unconfirmed": proc.get("cleanup_unconfirmed") is True}
+        # a supervision failure (not a wrapper interruption): the wrapper force-stopped grade.py itself; an abort by
+        # KeyboardInterrupt/SystemExit (abort_error "interrupted") is a wrapper interruption
+        aborted = bool(proc.get("aborted")) and proc.get("abort_error") != "interrupted"
+        if aborted:
+            info["supervision_error"] = {"type": proc.get("abort_error") or UNKNOWN, "errno": None}
         out.append(_finish(ctx, code, rnd, k, adir, started, info, recovered=True,
-                           wrapper_interrupted=not complete))
+                           wrapper_interrupted=not complete and not aborted))
     return out
 
 

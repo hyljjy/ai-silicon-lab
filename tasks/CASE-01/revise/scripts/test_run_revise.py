@@ -41,6 +41,7 @@ sys.path.insert(0, {scripts!r})
 import limits, run_revise
 limits.LIMITS["model"] = limits.Limit(30, limits.MB, limits.MB, 5, 5)
 limits.LIMITS["preflight"] = limits.Limit(30, limits.MB, limits.MB, 5, 5)
+{pre}
 sys.exit(run_revise.main(json.loads(sys.argv[1]), free_bytes=lambda v: 100 * 1024 ** 3))
 """
 
@@ -222,8 +223,8 @@ class Base(unittest.TestCase):
             return system, stdin, ok
         return mock.patch.object(run_revise, "read_call_inputs", fake)
 
-    def driver(self, *args):
-        cmd = [sys.executable, "-B", "-c", DRIVER.format(scripts=HERE), json.dumps(list(args) + self.flags())]
+    def driver(self, *args, pre=""):
+        cmd = [sys.executable, "-B", "-c", DRIVER.format(scripts=HERE, pre=pre), json.dumps(list(args) + self.flags())]
         p = subprocess.Popen(cmd, cwd=self.tmp.name, env=self.env, stdout=subprocess.DEVNULL,
                              stderr=subprocess.DEVNULL)
         self.addCleanup(lambda: p.poll() is None and (p.kill(), p.wait()))
@@ -625,18 +626,115 @@ class TestRecovery(Base):
         second = [c for c in self.calls("claude") if c["pid"] != cli.pid][-1]
         self.assertNotEqual(second["pid"], cli.pid)
 
-    def test_resume_without_lifecycle_record_retries(self):
-        # the shell stopped after saving running1 but before the CLI was started: no proc record, no output
+    def test_resume_without_lifecycle_record_stops(self):
+        # running1 saved, no proc record, no output: the shell may have died between Popen and the record, so an old
+        # CLI process cannot be ruled out (Codex BC1-01: no "never started" inference)
         self.setup_round()
         att = run_revise.new_attempts(1, sorted(self.code.values()))
         att["codes"][self.code["claude"]].update(state="running1", consumed=1)
         write(os.path.join(self.revise, "outputs", "r1", "attempts.json"), json.dumps(att))
+        self.assertEqual(self.run_main("--resume", "1"), 3, self.out)
+        (rec,) = self.stop_records()
+        self.assertEqual(rec["reason"], run_revise.REASON_RESUME)
+        self.assertEqual(self.entry("claude")["state"], "running1")
+        self.assertEqual(self.calls(), [])
+
+    # the shell dies inside run_limited at the real launch boundary of the model call (preflight runs normally)
+    CRASH = ("import os, subprocess\n"
+             "_real = limits.run_limited\n"
+             "def _rl(argv, kind, *a, **k):\n"
+             "    if kind == 'model':\n"
+             "        MODE\n"
+             "    return _real(argv, kind, *a, **k)\n"
+             "limits.run_limited = _rl\n")
+
+    def test_shell_killed_before_release_retries(self):
+        # record with the root identity written, target in the job and still suspended, then the shell dies: the job
+        # handle closes, KILL_ON_JOB_CLOSE ends the target; recovery confirms that and grants the retry
+        self.setup_round()
+        p = self.driver("--round", "1", pre=self.CRASH.replace("MODE", "limits._resume_process = lambda pid: os._exit(9)"))
+        p.wait(timeout=30)
+        self.assertEqual(self.entry("claude")["state"], "running1")
+        proc = load(self.raw("claude", "call1.proc.json"))
+        self.assertEqual(proc["phase"], "pending_release")
+        wait_for(lambda: not alive(proc["root_pid"]), 10)
+        self.assertEqual(self.calls(), [])                             # the fake CLI never ran
         self.assertEqual(self.run_main("--resume", "1"), 0, self.out)
         e = self.entry("claude")
         self.assertEqual((e["state"], e["consumed"], e["final"]), ("final", 2, "parse"))
         self.assertTrue(e["calls"][0]["interrupted"])
         self.assertEqual(self.stop_records(), [])
         self.assertEqual(len(self.calls("claude")), 1)
+
+    def test_shell_killed_right_after_popen_stops(self):
+        # Popen returned (suspended process outside any job), then the shell dies: the record has no identity
+        self.setup_round()
+        pidout = os.path.join(self.tmp.name, "pidout.txt")
+        mode = ("class _P(subprocess.Popen):\n"
+                "            def __init__(s, *a, **k):\n"
+                "                super().__init__(*a, **k)\n"
+                f"                open({pidout!r}, 'w').write(str(s.pid))\n"
+                "                os._exit(9)\n"
+                "        limits.subprocess.Popen = _P")
+        p = self.driver("--round", "1", pre=self.CRASH.replace("MODE", mode))
+        p.wait(timeout=30)
+        with open(pidout, encoding="ascii") as f:
+            pid = int(f.read())
+        self.addCleanup(lambda: alive(pid) and limits._kill_pid(pid))
+        self.assertEqual(load(self.raw("claude", "call1.proc.json"))["phase"], "launching")
+        self.assertEqual(self.run_main("--resume", "1"), 3, self.out)
+        (rec,) = self.stop_records()
+        self.assertEqual(rec["reason"], run_revise.REASON_RESUME)
+        self.assertEqual(self.entry("claude")["state"], "running1")
+        self.assertEqual(self.calls(), [])
+        limits._kill_pid(pid)
+        wait_for(lambda: not alive(pid), 10)
+
+    def test_resume_record_says_kill_fail_stops(self):
+        self.setup_round()
+        gone = subprocess.Popen([sys.executable, "-B", "-c", "pass"])
+        gone.wait()
+        self.craft_running("claude", gone.pid, "1")
+        path = self.raw("claude", "call1.proc.json")
+        rec = load(path)
+        rec.update(ended_at="2026-10-20T10:30:00+08:00", alive_after=[gone.pid], cleanup_unconfirmed=False)
+        write(path, json.dumps(rec))
+        self.assertEqual(self.run_main("--resume", "1"), 3, self.out)
+        (stop,) = self.stop_records()
+        self.assertEqual(stop["reason"], run_revise.REASON_KILL)
+        self.assertEqual(self.entry("claude")["state"], "await_retry")
+        self.assertEqual(self.calls(), [])
+
+    def fail_running_save(self):
+        real = limits._write_json
+
+        def failing(p, obj):                       # the first save after the CLI was released fails
+            if obj.get("phase") == "running" and "ended_at" not in obj:
+                raise OSError(28, "No space left on device")
+            real(p, obj)
+        return mock.patch.object(limits, "_write_json", failing)
+
+    def test_supervision_failure_is_interrupted_not_launch(self):
+        self.setup_round()
+        with self.fail_running_save():
+            self.assertEqual(self.run_main("--round", "1"), 0, self.out)
+        e = self.entry("claude")
+        self.assertEqual((e["state"], e["consumed"], e["final"]), ("final", 2, "unavailable"))
+        self.assertTrue(all(c["interrupted"] for c in e["calls"]))
+        self.assertEqual(self.stop_records(), [])
+        meta = load(self.raw("claude", "call1.meta.json"))
+        self.assertNotIn("launch_error", meta)
+        self.assertTrue(meta["supervision_error"].startswith("OSError: "))
+
+    def test_supervision_failure_with_failed_cleanup_stops(self):
+        self.setup_round()
+        self.set_plan({"claude": ["hang"]})
+        with self.fail_running_save(), mock.patch.object(limits, "_force_kill", lambda ctx, pids: None):
+            self.assertEqual(self.run_main("--round", "1"), 3, self.out)
+        (rec,) = self.stop_records()
+        self.assertEqual(rec["reason"], run_revise.REASON_KILL)
+        self.assertEqual(self.entry("claude")["state"], "await_retry")
+        self.assertNotIn("launch_error", load(self.raw("claude", "call1.meta.json")))
 
     def test_resume_output_without_lifecycle_record_stops(self):
         self.setup_round()

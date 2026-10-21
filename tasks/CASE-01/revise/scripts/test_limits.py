@@ -375,26 +375,37 @@ class TestFailurePaths(Base):
             self.assertFalse(alive(pid), f"{role} {pid} still alive")
 
     def test_bad_output_path_cleans_tree(self):
+        # the target was already running when the output file failed: a supervision failure, not a launch failure
         bad = os.path.join(self.d, "no_such_dir", "out.txt")
         t0 = time.monotonic()
-        with self.assertRaises(OSError):
+        with self.assertRaises(limits.SupervisionError) as cm:
             self.tree("--new-session", stdout_path=bad)
         self.assertLess(time.monotonic() - t0, 8)
+        e = cm.exception
+        self.assertNotIsInstance(e, OSError)
+        self.assertIsInstance(e.__cause__, OSError)
+        self.assertIsInstance(e.pid, int)
+        if "root" in self.pids():                   # the root may be stopped before it wrote its pid
+            self.assertEqual(e.pid, self.pids()["root"])
+        self.assertTrue(e.root_start)
+        self.assertEqual(e.isolation, "job" if os.name == "nt" else "subreaper")
+        self.assertEqual(e.killed_pids_alive, [])
+        self.assertFalse(e.cleanup_unconfirmed)
+        self.assertEqual(e.cause_type, "FileNotFoundError")
         self.assert_tree_gone_later()
 
     def test_proc_record_failure_cleans_tree(self):
         path = os.path.join(self.d, "proc.json")
         real = limits._write_json
-        calls = []
 
         def failing(p, obj):
-            calls.append(obj)
-            if len(calls) > 1 and "ended_at" not in obj:  # the first registry update after launch fails
+            # the first registry update after the children were found fails
+            if len(obj.get("registry") or []) > 1 and "ended_at" not in obj:
                 raise OSError(28, "No space left on device")
             real(p, obj)
         t0 = time.monotonic()
         with mock.patch.object(limits, "_write_json", failing):
-            with self.assertRaises(OSError):
+            with self.assertRaises(limits.SupervisionError) as cm:
                 self.tree("--new-session", proc_path=path)
         self.assertLess(time.monotonic() - t0, 8)
         self.assertGreaterEqual(len(self.pids()), 2)
@@ -403,6 +414,43 @@ class TestFailurePaths(Base):
             rec = json.load(f)
         self.assertEqual(rec["alive_after"], [])
         self.assertIn("ended_at", rec)
+        self.assertIs(rec["aborted"], True)
+        self.assertIs(rec["cleanup_unconfirmed"], False)
+        self.assertEqual(rec["abort_error"], "OSError")
+        self.assertEqual(cm.exception.killed_pids_alive, [])
+        self.assertFalse(limits.record_cleanup_failed(rec))
+
+    def test_emergency_cleanup_failure_propagated(self):
+        # the forced stop does nothing: the error raised after the supervision failure must carry the survivors
+        path = os.path.join(self.d, "proc.json")
+        real = limits._write_json
+
+        def failing(p, obj):
+            if len(obj.get("registry") or []) > 1 and "ended_at" not in obj:
+                raise OSError(28, "No space left on device")
+            real(p, obj)
+        with mock.patch.object(limits, "_write_json", failing), \
+                mock.patch.object(limits, "_force_kill", lambda ctx, pids: None):
+            with self.assertRaises(limits.SupervisionError) as cm:
+                self.tree(proc_path=path)
+        root = self.pids()["root"]
+        self.assertIn(root, cm.exception.killed_pids_alive)
+        with open(path, encoding="utf-8") as f:
+            rec = json.load(f)
+        self.assertIs(rec["aborted"], True)
+        self.assertIn(root, rec["alive_after"])
+        self.assertTrue(limits.record_cleanup_failed(rec))
+
+    def test_launch_failure_is_oserror_and_recorded(self):
+        path = os.path.join(self.d, "proc.json")
+        with self.assertRaises(OSError) as cm:
+            limits.run_limited([os.path.join(self.d, "no_such_program")], "fast", cwd=self.d, proc_path=path)
+        self.assertNotIsInstance(cm.exception, limits.SupervisionError)
+        with open(path, encoding="utf-8") as f:
+            rec = json.load(f)
+        self.assertEqual(rec["phase"], "not_started")
+        self.assertEqual(rec["launch_error"]["type"], type(cm.exception).__name__)
+        self.assertEqual(limits.still_alive(rec), ([], False))
 
     def test_output_write_error_reported(self):
         class Full:
@@ -428,6 +476,212 @@ class TestFailurePaths(Base):
         self.assertFalse(res.cleanup_unconfirmed)
         self.assertEqual(res.stdout_bytes, 100)            # still captured in memory
         self.assertEqual(hooked, [])
+
+
+DRIVER = r"""
+import json, os, subprocess, sys, threading
+threading.Timer(25, lambda: os._exit(9)).start()            # self-limit of the driver itself
+sys.path.insert(0, {here!r})
+import limits
+cfg = json.loads(sys.argv[1])
+limits.LIMITS["drv"] = limits.Limit(*cfg["limit"])
+limits.SCAN_INTERVAL = cfg.get("scan", 1.0)
+if cfg.get("crash") == "after_popen":                       # the wrapper dies right after Popen returned
+    real = subprocess.Popen
+    class P(real):
+        def __init__(self, *a, **k):
+            super().__init__(*a, **k)
+            with open(cfg["pidout"], "w") as f:
+                f.write(str(self.pid))
+            os._exit(9)
+    limits.subprocess.Popen = P
+elif cfg.get("crash") == "before_release":                 # Windows: dies after the record, before ResumeThread
+    limits._resume_process = lambda pid: os._exit(9)
+limits.run_limited(cfg["argv"], "drv", cwd=cfg["cwd"], proc_path=cfg["proc"])
+"""
+
+
+class TestLifecycle(Base):
+    """Wrapper death at the real launch boundary and after the last registry scan (Codex BC1-01, BC1-02)."""
+
+    def driver(self, argv, crash=None, scan=1.0, limit=(8, 1024, 1024, 1, 3)):
+        import subprocess
+        self.proc_path = os.path.join(self.d, "proc.json")
+        self.pidout = os.path.join(self.d, "pidout.txt")
+        cfg = {"argv": argv, "cwd": self.d, "proc": self.proc_path, "crash": crash, "scan": scan,
+               "limit": list(limit), "pidout": self.pidout}
+        p = subprocess.Popen([sys.executable, "-B", "-c", DRIVER.format(here=HERE), json.dumps(cfg)],
+                             stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+        def stop():
+            if p.poll() is None:
+                p.kill()
+            p.wait(10)
+        self.addCleanup(stop)
+        return p
+
+    def record(self):
+        with open(self.proc_path, encoding="utf-8") as f:
+            return json.load(f)
+
+    def wait(self, cond, timeout=8.0):
+        deadline = time.monotonic() + timeout
+        while time.monotonic() < deadline:
+            if cond():
+                return True
+            time.sleep(0.05)
+        self.fail("condition not reached in time")
+
+    def kill_later(self, pid):
+        self.addCleanup(lambda: alive(pid) and limits._kill_pid(pid))
+
+    def test_crash_right_after_popen(self):
+        marker = os.path.join(self.d, "marker")
+        p = self.driver(CHATTY + ["--sleep", "--marker", marker], crash="after_popen")
+        p.wait(15)
+        with open(self.pidout, encoding="ascii") as f:
+            pid = int(f.read())
+        self.kill_later(pid)
+        rec = self.record()
+        self.assertEqual(rec["phase"], "launching")
+        self.assertNotIn("root_pid", rec)
+        if POSIX:
+            # the target runs; the record written before Popen holds the run token that every process of the run
+            # carries in its environment: a fresh process finds it although no pid was recorded
+            self.wait(lambda: os.path.exists(marker))
+            self.assertRegex(rec["token"], r"^[0-9a-f]{32}$")
+            self.assertEqual(limits.still_alive(rec), ([pid], False))
+            res = limits.cleanup(rec, "fast")
+            self.assertEqual(res.killed_pids_alive, [])
+            self.assertFalse(res.cleanup_unconfirmed)
+            self.assertFalse(alive(pid))
+            self.assertEqual(limits.still_alive(rec), ([], False))
+        else:
+            # created suspended, outside any job: it never ran, but nothing in the record identifies it
+            time.sleep(0.5)
+            self.assertFalse(os.path.exists(marker))
+            self.assertEqual(limits.still_alive(rec), ([], True))
+            self.assertTrue(limits.cleanup(rec, "fast").cleanup_unconfirmed)
+            self.assertTrue(alive(pid))
+            limits._kill_pid(pid)
+
+    @unittest.skipIf(POSIX, "CREATE_SUSPENDED and the job object exist only on Windows")
+    def test_crash_before_release_is_confirmed(self):
+        marker = os.path.join(self.d, "marker")
+        p = self.driver(CHATTY + ["--sleep", "--marker", marker], crash="before_release")
+        p.wait(15)
+        rec = self.record()
+        self.assertEqual(rec["phase"], "pending_release")
+        self.kill_later(rec["root_pid"])
+        # the wrapper's death closed the only job handle: KILL_ON_JOB_CLOSE ended the still suspended target
+        self.wait(lambda: not alive(rec["root_pid"]))
+        self.assertFalse(os.path.exists(marker))
+        self.assertEqual(limits.still_alive(rec), ([], False))
+
+    def test_orphan_after_last_scan_found_after_wrapper_killed(self):
+        p = self.driver(TREE + ["--pidfile", self.pidfile, "--orphan"], scan=60)
+        self.wait(lambda: "grandchild" in self.pids())
+        self.wait(lambda: os.path.exists(self.proc_path) and "root_pid" in self.record())
+        p.kill()                                   # only the wrapper dies
+        p.wait(10)
+        pids = self.pids()
+        rec = self.record()
+        self.assertNotIn(pids["grandchild"], {pid for pid, _ in rec["registry"]})
+        if POSIX:
+            # the registered root goes too: only the unregistered orphan is left, its subreaper is gone
+            limits._kill_pid(pids["root"])
+            self.wait(lambda: not alive(pids["root"]))
+            self.assertTrue(alive(pids["grandchild"]))
+            got, unconfirmed = limits.still_alive(rec)
+            self.assertFalse(unconfirmed)
+            self.assertIn(pids["grandchild"], got)
+            res = limits.cleanup(rec, "fast")
+            self.assertEqual(res.killed_pids_alive, [])
+            self.assertFalse(res.cleanup_unconfirmed)
+            self.assertFalse(alive(pids["grandchild"]))
+        else:
+            # KILL_ON_JOB_CLOSE: closing the wrapper's job handle ended every member, registered or not
+            self.wait(lambda: not any(alive(x) for x in pids.values()))
+        self.assertEqual(limits.still_alive(rec), ([], False))
+
+
+class TestRecordChecks(unittest.TestCase):
+    def gone(self):
+        import subprocess
+        p = subprocess.Popen([sys.executable, "-B", "-c", "pass"])
+        p.wait()
+        return p.pid
+
+    def test_missing_root_start_is_unconfirmed(self):
+        pid = self.gone()
+        for iso in ("job", "subreaper", None):
+            rec = {"root_pid": pid, "root_start": None, "registry": [[pid, None]], "ended_at": "x",
+                   "alive_after": [], "cleanup_unconfirmed": False}
+            if iso:
+                rec["isolation"] = iso
+            self.assertEqual(limits.still_alive(rec), ([], True), iso)
+
+    def test_launching_record_without_token_unconfirmed(self):
+        self.assertEqual(limits.still_alive({"phase": "launching", "isolation": "job"}), ([], True))
+        self.assertEqual(limits.still_alive({"phase": "not_started", "isolation": "job"}), ([], False))
+
+    def test_subreaper_record_without_token(self):
+        # an older record (no run token) of a run that did not end normally cannot prove that no unregistered
+        # descendant survives; one that ended normally was verified by its own (live) wrapper
+        pid = self.gone()
+        rec = {"root_pid": pid, "root_start": "1", "registry": [[pid, "1"]], "isolation": "subreaper"}
+        self.assertEqual(limits.still_alive(rec), ([], True))
+        ended = dict(rec, ended_at="x", alive_after=[], cleanup_unconfirmed=False)
+        self.assertEqual(limits.still_alive(ended), ([], False))
+        self.assertEqual(limits.still_alive(dict(ended, aborted=True)), ([], True))
+
+    def test_record_cleanup_failed(self):
+        self.assertFalse(limits.record_cleanup_failed({"alive_after": [], "cleanup_unconfirmed": False}))
+        self.assertFalse(limits.record_cleanup_failed({}))
+        self.assertTrue(limits.record_cleanup_failed({"alive_after": [12]}))
+        self.assertTrue(limits.record_cleanup_failed({"alive_after": [], "cleanup_unconfirmed": True}))
+
+    @unittest.skipUnless(POSIX, "the run token is the Linux ownership marker")
+    def test_token_scan(self):
+        import subprocess
+        marks = limits._launch_marks()
+        self.assertNotIn(limits.TOKEN_VAR, os.environ)
+        env = dict(os.environ, **{limits.TOKEN_VAR: marks["token"]})
+        p = subprocess.Popen([sys.executable, "-B", "-c", "import time; time.sleep(8)"], env=env,
+                             stdin=subprocess.DEVNULL)
+        try:
+            deadline = time.monotonic() + 5
+            while limits._start_time(p.pid) is None and time.monotonic() < deadline:
+                time.sleep(0.02)
+            rec = dict(marks, phase="launching", isolation="subreaper")
+            self.assertEqual(limits.still_alive(rec), ([p.pid], False))
+            # another boot: nothing of that run can still exist
+            self.assertEqual(limits.still_alive(dict(rec, boot_id="not-this-boot")), ([], False))
+            # an environment of this user that cannot be read: unconfirmed
+            real = limits._read_environ
+
+            def denied(pid):
+                if pid == p.pid:
+                    raise PermissionError(13, "Permission denied")
+                return real(pid)
+            with mock.patch.object(limits, "_read_environ", denied):
+                self.assertEqual(limits.still_alive(rec), ([], True))
+                # ... unless it lies outside the wrapper's cgroup v2 subtree (e.g. "systemd --user")
+                real_cg = limits._cgroup
+                user_mgr = "/user.slice/user-1000.slice/user@1000.service/init.scope"
+                with mock.patch.object(limits, "_cgroup", lambda pid: user_mgr if pid == p.pid else real_cg(pid)):
+                    want = ([], True) if rec.get("cgroup") in (None, "/") else ([], False)
+                    self.assertEqual(limits.still_alive(rec), want)
+        finally:
+            p.kill()
+            p.wait(10)
+
+    @unittest.skipUnless(POSIX, "prctl is Linux only")
+    def test_prctl_prototype(self):
+        import ctypes
+        fn = limits._prctl()
+        self.assertIs(fn.restype, ctypes.c_int)
+        self.assertEqual(fn.argtypes, [ctypes.c_int] + [ctypes.c_ulong] * 4)
 
 
 if __name__ == "__main__":

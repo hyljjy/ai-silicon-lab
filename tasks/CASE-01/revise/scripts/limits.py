@@ -11,7 +11,36 @@ Ownership (primary):
     (including those in a new session or process group) are re-parented to the caller, so they stay reachable through
     /proc PPid chains: descendants of the root plus processes adopted by the caller that started after the root.
     Limitation: one run_limited at a time per process (concurrent calls could attribute each other's orphans).
+    Run token (cross-lifetime ownership, Codex BC1-02): the subreaper adoption belongs to the wrapper process and is
+    lost when the wrapper dies. Each run therefore draws a random token (secrets.token_hex(16); no model identity, no
+    secret), records it in the lifecycle record BEFORE Popen, and passes TOKEN_VAR=<token> in the target's environment.
+    The environment is inherited by every descendant, also in a new session (grade.py builds its tool environments
+    from os.environ, grade.py:597, 643). Any process, also a fresh one after the wrapper died, finds every process of
+    the run by reading /proc/<pid>/environ of the processes started since the launch (launch_ticks). A process of
+    this user whose environment cannot be read makes the result unconfirmed (other users' processes cannot carry the
+    token unless a set-uid program was run, which the graded flow does not do), except when it lies outside the
+    wrapper's cgroup v2 subtree recorded at launch ("cgroup"): every descendant inherits that cgroup, and cgroup v2
+    lets an unprivileged process migrate only below a common ancestor whose cgroup.procs it may write (here a
+    root-owned one). This exempts e.g. "systemd --user" and "(sd-pam)" (same uid, not dumpable after their credential
+    change, in user@<uid>.service), which a new WSL session starts. Without cgroup v2 information ("0::/" or none)
+    there is no exemption. boot_id: in another boot nothing of the run exists. Residual limit: a child frozen between fork and exec does not carry the token yet; Popen returns
+    only after exec succeeded, and the window only matters if the wrapper dies inside it AND the child stays frozen.
+  - Windows across lifetimes: the job is unnamed and its only handle belongs to the wrapper; when the wrapper process
+    exits, the handle is closed and KILL_ON_JOB_CLOSE ends every member, registered or not. A fresh process cannot open
+    the job, so it checks the root and the registry by pid AND start time and relies on that guarantee (recovery runs
+    under the round lock, which first verifies that the previous holder exited). A record without the root identity
+    (phase "launching": the wrapper died between Popen and AssignProcessToJobObject, leaving a suspended process
+    outside any job) cannot be confirmed.
   - If the mechanism cannot be set up, IsolationFail ("ISOLATION FAIL ...") is raised and the target never runs.
+Lifecycle record phases (proc_path; Codex BC1-01): "launching" (written before Popen: isolation, started_at and, on
+Linux, token/launch_ticks/boot_id; no pid yet) -> Windows only: "pending_release" (root identity, the process is in the
+job and still suspended; written before ResumeThread) -> "running" (written when supervision starts, then on every
+registry change) -> ended_at/alive_after/cleanup_unconfirmed at the end (plus aborted/abort_error after a supervision
+failure). "not_started": Popen failed, or the still suspended target was killed before release.
+Failures: OSError / IsolationFail = the target never ran (Popen failed, or Windows: it was killed while still
+suspended). SupervisionError = the target had started and supervising it failed (record or output file write, ...):
+the tree was force-stopped first, and the error carries the pid identity, the cleanup result and the captured byte
+counts.
 Registry (secondary): root pid and start time at launch, then every 1 s all descendants with start times. A process is
 the same process only when pid AND start time match (pid reuse is not confused with a survivor).
 Cleanup: gentle (POSIX: SIGTERM to the root only; Windows: none) -> wait term_wait -> forced (POSIX: SIGKILL to the
@@ -22,6 +51,7 @@ import collections
 import datetime
 import json
 import os
+import secrets
 import signal
 import subprocess
 import threading
@@ -46,10 +76,35 @@ POLL = 0.05
 READ_CHUNK = 65536
 CLEANUP_SLACK = 10                                    # cleanup total <= term_wait + kill_wait + 10 s
 PIPE_EOF_WAIT = 2.0                                   # after cleanup, both pipes must reach EOF within this time
+TOKEN_VAR = "CASE01_LIMITS_RUN_TOKEN"                 # Linux: environment variable carrying the run token
 
 
 class IsolationFail(RuntimeError):
     pass
+
+
+class SupervisionError(RuntimeError):
+    """The target had started (Linux: exec done; Windows: resumed) and supervising it failed. The whole tree was
+    force-stopped and verified before this was raised. Not an OSError: callers must not take it for a launch failure.
+    Fields: pid, root_start, isolation, rc (None while unknown), timed_out, signals_sent, killed_pids_alive,
+    cleanup_unconfirmed, stdout_bytes, stderr_bytes, stdout_over, stderr_over, cause_type (class name of the
+    original exception, which is also __cause__)."""
+
+    def __init__(self, message, **fields):
+        super().__init__(message)
+        self.pid = fields.get("pid")
+        self.root_start = fields.get("root_start")
+        self.isolation = fields.get("isolation", "")
+        self.rc = fields.get("rc")
+        self.timed_out = bool(fields.get("timed_out"))
+        self.signals_sent = list(fields.get("signals_sent") or [])
+        self.killed_pids_alive = list(fields.get("killed_pids_alive") or [])
+        self.cleanup_unconfirmed = bool(fields.get("cleanup_unconfirmed"))
+        self.stdout_bytes = int(fields.get("stdout_bytes") or 0)
+        self.stderr_bytes = int(fields.get("stderr_bytes") or 0)
+        self.stdout_over = bool(fields.get("stdout_over"))
+        self.stderr_over = bool(fields.get("stderr_over"))
+        self.cause_type = fields.get("cause_type")
 
 
 @dataclass
@@ -283,16 +338,25 @@ else:
     _PR_SET_CHILD_SUBREAPER = 36
     _PR_GET_CHILD_SUBREAPER = 37
 
+    def _prctl():
+        """prctl with an explicit prototype: int prctl(int option, unsigned long arg2, unsigned long arg3,
+        unsigned long arg4, unsigned long arg5) (the kernel ABI: every argument after option is an unsigned long;
+        a pointer argument is passed as its address)."""
+        fn = ctypes.CDLL(None, use_errno=True).prctl
+        fn.restype = ctypes.c_int
+        fn.argtypes = [ctypes.c_int, ctypes.c_ulong, ctypes.c_ulong, ctypes.c_ulong, ctypes.c_ulong]
+        return fn
+
     def _setup_isolation():
         """Make the calling process a child subreaper (raises OSError when that is impossible)."""
         if not os.path.isdir("/proc/self"):
             raise OSError("no /proc: the subreaper mechanism needs Linux")
-        libc = ctypes.CDLL(None, use_errno=True)
-        if libc.prctl(_PR_SET_CHILD_SUBREAPER, 1, 0, 0, 0) != 0:
+        prctl = _prctl()
+        if prctl(_PR_SET_CHILD_SUBREAPER, 1, 0, 0, 0) != 0:
             err = ctypes.get_errno()
             raise OSError(err, f"prctl(PR_SET_CHILD_SUBREAPER) failed: {os.strerror(err)}")
-        flag = ctypes.c_int(0)
-        if libc.prctl(_PR_GET_CHILD_SUBREAPER, ctypes.byref(flag), 0, 0, 0) != 0 or flag.value != 1:
+        flag = ctypes.c_int(0)                         # read back: the kernel writes an int at the address
+        if prctl(_PR_GET_CHILD_SUBREAPER, ctypes.addressof(flag), 0, 0, 0) != 0 or flag.value != 1:
             raise OSError("PR_SET_CHILD_SUBREAPER did not take effect")
         return None
 
@@ -335,6 +399,98 @@ else:
 
     def _resume_process(pid):
         pass
+
+    def _read_environ(pid):
+        with open(f"/proc/{pid}/environ", "rb") as f:
+            return f.read()
+
+    def _same_user(pid, uid):
+        """True when the real or effective uid of pid is uid (also when that cannot be read: conservative)."""
+        try:
+            with open(f"/proc/{pid}/status", "rb") as f:
+                for line in f.read().decode("ascii", "replace").splitlines():
+                    if line.startswith("Uid:"):
+                        return str(uid) in line.split()[1:3]
+        except (FileNotFoundError, ProcessLookupError):
+            return False
+        except OSError:
+            return True
+        return True
+
+    def _cgroup(pid):
+        """cgroup v2 path of pid ("0::<path>" line of /proc/<pid>/cgroup), or None."""
+        try:
+            with open(f"/proc/{pid}/cgroup", "rb") as f:
+                for line in f.read().decode("utf-8", "replace").splitlines():
+                    if line.startswith("0::"):
+                        return line[3:].strip() or None
+        except OSError:
+            return None
+        return None
+
+    def _outside(cg, launch_cg):
+        """True when cgroup cg is known to lie outside the subtree of launch_cg (never when either is unknown or the
+        launch cgroup is the root)."""
+        if not cg or not launch_cg or launch_cg == "/":
+            return False
+        return cg != launch_cg and not cg.startswith(launch_cg.rstrip("/") + "/")
+
+    def _token_scan(token, since, table, launch_cg=None):
+        """({pid: start} of the running processes whose environment holds TOKEN_VAR=token, [pids of this user whose
+        environment could not be read]) among the processes of `table` started at or after `since` clock ticks. An
+        unreadable process outside the launch cgroup subtree (launch_cg) is not counted (module docstring)."""
+        needle = f"{TOKEN_VAR}={token}".encode("ascii")
+        me, uid = os.getpid(), os.getuid()
+        found, unreadable = {}, []
+        for pid, (state, _, start) in table.items():
+            if pid == me or state in ("Z", "X", "x"):
+                continue
+            if since is not None and int(start) < int(since):
+                continue
+            try:
+                data = _read_environ(pid)
+            except (FileNotFoundError, ProcessLookupError):
+                continue
+            except OSError:
+                if _same_user(pid, uid) and not _outside(_cgroup(pid), launch_cg):
+                    unreadable.append(pid)
+                continue
+            if needle in data.split(b"\0") and _start_time(pid) == start:
+                found[pid] = start
+        return found, unreadable
+
+    def _boot_id():
+        try:
+            with open("/proc/sys/kernel/random/boot_id", "rb") as f:
+                return f.read().decode("ascii", "replace").strip() or None
+        except OSError:
+            return None
+
+    def _thread_ticks():
+        """Start time (clock ticks since boot) of a thread created now: the same clock as the start times of the
+        processes created after it."""
+        box = {}
+
+        def probe():
+            try:
+                with open(f"/proc/self/task/{threading.get_native_id()}/stat", "rb") as f:
+                    data = f.read().decode("ascii", "replace")
+                box["t"] = int(data[data.rindex(")") + 2:].split()[19])
+            except (OSError, ValueError, IndexError) as e:
+                box["e"] = e
+        th = threading.Thread(target=probe)
+        th.start()
+        th.join()
+        if "t" not in box:
+            raise OSError(f"cannot read the current clock tick: {box.get('e')}")
+        return box["t"]
+
+    def _launch_marks():
+        """Ownership marks of one run, recorded before Popen: token, launch_ticks (1 s margin before now), boot_id,
+        cgroup (cgroup v2 path of the wrapper, inherited by the target)."""
+        return {"token": secrets.token_hex(16),
+                "launch_ticks": max(0, _thread_ticks() - os.sysconf("SC_CLK_TCK")), "boot_id": _boot_id(),
+                "cgroup": _cgroup("self")}
 
 
 def _is_alive(pid, start):
@@ -389,10 +545,14 @@ def _force_kill(ctx, pids):
 class _Run:
     """State of one supervised process tree: root, registry, ownership context."""
 
-    def __init__(self, root_pid, root_start, ctx, isolation, popen=None, registry=None, prior_children=()):
+    def __init__(self, root_pid, root_start, ctx, isolation, popen=None, registry=None, prior_children=(),
+                 token=None, since=None, cgroup=None):
         self.root_pid, self.root_start, self.ctx, self.isolation, self.popen = root_pid, root_start, ctx, \
             isolation, popen
-        self.registry = collections.OrderedDict(registry or [(root_pid, root_start)])
+        self.token, self.since, self.cgroup = (token, since, cgroup) if os.name != "nt" else (None, None, None)
+        if registry is None:
+            registry = [(root_pid, root_start)] if root_pid is not None else []
+        self.registry = collections.OrderedDict(registry)
         self.prior_children = set(prior_children)
         self.signals = []
         self.unconfirmed = False
@@ -408,6 +568,8 @@ class _Run:
         """Root still running: the Popen object (when we own it) or the process table, pid AND start time."""
         if self.popen is not None and self.popen.poll() is None:
             return True
+        if self.root_pid is None:
+            return False
         try:
             return _is_alive(self.root_pid, self.root_start)
         except OSError:
@@ -424,9 +586,11 @@ class _Run:
             return False
         changed = False
         for pid, start in found.items():
-            if start is not None and pid not in self.registry:
+            if start is not None and self.registry.get(pid) is None:     # new, or an entry without a start time
                 self.registry[pid] = start
                 changed = True
+                if pid == self.root_pid and self.root_start is None and self.popen is None:
+                    self.root_start = start
         return changed
 
     def _members(self):
@@ -445,6 +609,9 @@ class _Run:
                         and int(start) >= root_ticks and state not in ("Z", "X", "x"):
                     if self.popen is not None or pid in self.registry:
                         seeds.add(pid)
+        if self.token:                                 # every process carrying the run token is ours
+            found, _ = _token_scan(self.token, self.since, table, self.cgroup)
+            seeds.update(found)
         children = collections.defaultdict(list)
         for pid, (_, ppid, _) in table.items():
             children[ppid].append(pid)
@@ -552,7 +719,15 @@ class _Run:
         n, jpids = self.job_active()
         if n:
             alive += [p for p in jpids if p not in alive] or [self.root_pid]
-        return sorted(set(alive))
+        if self.token:                                 # Linux: unregistered processes carrying the run token
+            try:
+                found, unreadable = _token_scan(self.token, self.since, _table(), self.cgroup)
+            except OSError:
+                found, unreadable = {}, [None]
+            alive += [p for p in found if p not in alive]
+            if unreadable:
+                self.unconfirmed = True
+        return sorted(set(p for p in alive if p is not None))
 
     def record(self):
         return {"root_pid": self.root_pid, "root_start": self.root_start,
@@ -666,57 +841,100 @@ def _children_of_me():
 def run_limited(argv, kind, cwd=None, env=None, stdin_bytes=None, stdout_path=None, stderr_path=None,
                 proc_path=None, on_line=None, proc_extra=None):
     """Run argv under the limits of LIMITS[kind] with full process-tree cleanup. See the module docstring.
-    Lifecycle record (proc_path): every save holds root_pid, root_start, registry, isolation, started_at,
-    signals_sent and timed_out; a signal is recorded (and the record saved) before it is sent, timed_out as soon as the
-    time limit is reached. proc_extra: a dict owned by the caller whose items are added to every save (the record's
-    own keys win); the caller may set keys in it from on_line and request a save by returning True from on_line.
-    The save itself is done by the supervising thread at its next poll (within POLL seconds), never on the reader
-    thread: the registry and the signal list are only ever touched by the supervising thread."""
+    Lifecycle record (proc_path): written before Popen (phase "launching"), on Windows again before the suspended
+    target is resumed (phase "pending_release", with the root identity), then from the start of supervision (phase
+    "running") every save holds root_pid, root_start, registry, isolation, started_at, signals_sent and timed_out (and on
+    Linux token, launch_ticks, boot_id); a signal is recorded (and the record saved) before it is sent, timed_out as
+    soon as the time limit is reached. proc_extra: a dict owned by the caller whose items are added to every save (the
+    record's own keys win); the caller may set keys in it from on_line and request a save by returning True from
+    on_line. The save itself is done by the supervising thread at its next poll (within POLL seconds), never on the
+    reader thread: the registry and the signal list are only ever touched by the supervising thread.
+    Raises IsolationFail / OSError when the target never ran, SupervisionError when it had started (see the module
+    docstring)."""
     lim = LIMITS[kind]
     try:
         ctx = _setup_isolation()
+        marks = _launch_marks() if os.name != "nt" else {}
     except OSError as e:
         raise IsolationFail(f"ISOLATION FAIL: {_isolation_name()} unavailable: {e}; the target was not started")
     isolation = _isolation_name()
+    started_at = _now()
+    child_env = env
+    if marks:                                         # the run token travels in the target's environment only
+        child_env = dict(os.environ if env is None else env)
+        child_env[TOKEN_VAR] = marks["token"]
+    base = dict(proc_extra or {})
+    base.update(isolation=isolation, started_at=started_at, signals_sent=[], timed_out=False, **marks)
+
+    def pre_save(**fields):
+        if proc_path:
+            _write_json(proc_path, dict(base, **fields))
+
+    def not_started(err):                             # best effort: the record says that nothing ran
+        try:
+            pre_save(phase="not_started", ended_at=_now(), alive_after=[], cleanup_unconfirmed=False,
+                     launch_error={"type": type(err).__name__, "errno": getattr(err, "errno", None)})
+        except Exception:
+            pass
+
+    try:
+        pre_save(phase="launching")                   # before the target can exist: a failure here starts nothing
+    except BaseException:
+        if ctx is not None:
+            ctx.close()
+        raise
     prior = _children_of_me()
     kw = {}
     if os.name == "nt":
         kw["creationflags"] = _CREATE_SUSPENDED
     try:
-        proc = subprocess.Popen(argv, cwd=cwd, env=env, stdin=subprocess.PIPE if stdin_bytes is not None
+        proc = subprocess.Popen(argv, cwd=cwd, env=child_env, stdin=subprocess.PIPE if stdin_bytes is not None
                                 else subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.PIPE, **kw)
-    except BaseException:
+    except BaseException as e:
         if ctx is not None:
             ctx.close()
+        not_started(e)
         raise
-    try:
-        if ctx is not None:
+    if ctx is not None:
+        # Windows: the target is suspended; until ResumeThread it has not run a single instruction, so every failure
+        # in this block is a launch failure (the target is killed while still suspended)
+        try:
             try:
                 ctx.assign(proc._handle)
             except OSError as e:
-                proc.kill()                            # still suspended: it never ran a single instruction
-                proc.wait()
-                raise IsolationFail(f"ISOLATION FAIL: job: {e}; the target was not started")
+                raise IsolationFail(f"ISOLATION FAIL: job: {e}; the target was not started") from None
             root_start = _start_of_handle(int(proc._handle))
+            pre_save(phase="pending_release", root_pid=proc.pid, root_start=root_start,
+                     registry=[[proc.pid, root_start]])
             _resume_process(proc.pid)
-        else:
-            _NO_REAP.add(proc.pid)
-            root_start = _start_time(proc.pid)
-    except BaseException:
-        if proc.poll() is None:
-            proc.kill()
-        proc.wait()
-        if ctx is not None:
+        except BaseException as e:
+            if proc.poll() is None:
+                proc.kill()
+            proc.wait()
             ctx.close()
-        raise
+            for pipe in (proc.stdout, proc.stderr, proc.stdin):
+                if pipe is not None:
+                    pipe.close()
+            not_started(e)
+            raise
+    else:
+        # Linux: Popen returned, so the target has exec'd and carries the run token; from here on every failure is
+        # a supervision failure
+        _NO_REAP.add(proc.pid)
+        try:
+            root_start = _start_time(proc.pid)
+        except OSError:
+            root_start = None                         # the Popen object and the run token still identify the run
     return _supervise(proc, ctx, isolation, root_start, prior, lim, stdin_bytes, stdout_path, stderr_path,
-                      proc_path, on_line, proc_extra)
+                      proc_path, on_line, proc_extra, started_at, marks)
 
 
 def _supervise(proc, ctx, isolation, root_start, prior, lim, stdin_bytes, stdout_path, stderr_path, proc_path,
-               on_line, proc_extra=None):
-    run = _Run(proc.pid, root_start, ctx, isolation, popen=proc, prior_children=prior)
-    started_at = _now()
+               on_line, proc_extra=None, started_at=None, marks=None):
+    marks = marks or {}
+    run = _Run(proc.pid, root_start, ctx, isolation, popen=proc, prior_children=prior, token=marks.get("token"),
+               since=marks.get("launch_ticks"), cgroup=marks.get("cgroup"))
+    started_at = started_at or _now()
     save_requested = threading.Event()               # set by the stdout reader (on_line), acted on by this thread
 
     def save(extra=None):
@@ -724,6 +942,8 @@ def _supervise(proc, ctx, isolation, root_start, prior, lim, stdin_bytes, stdout
             save_requested.clear()
             rec = dict(proc_extra or {})
             rec.update(run.record())
+            rec.update(marks)
+            rec["phase"] = "running"
             rec["started_at"] = started_at
             rec["signals_sent"] = list(run.signals)
             rec["timed_out"] = run.timed_out
@@ -746,6 +966,7 @@ def _supervise(proc, ctx, isolation, root_start, prior, lim, stdin_bytes, stdout
 
     out = err = None
     completed = False
+    failure = None                                    # (exception, (alive, unconfirmed)) of a supervision failure
     try:
         save()
         over_event = threading.Event()
@@ -804,8 +1025,10 @@ def _supervise(proc, ctx, isolation, root_start, prior, lim, stdin_bytes, stdout
         save({"ended_at": _now(), "alive_after": alive, "cleanup_unconfirmed": run.unconfirmed,
               "output_error": output_error})
         completed = True
+    except Exception as exc:                          # supervision failed after the target had started
+        failure = (exc, _emergency_stop(run, lim, save, exc))
     finally:
-        if not completed:
+        if not completed and failure is None:         # KeyboardInterrupt, SystemExit ...: stop, then propagate
             _emergency_stop(run, lim, save)
         if ctx is not None:
             ctx.close()                                # KILL_ON_JOB_CLOSE: nothing outlives the job handle
@@ -826,14 +1049,32 @@ def _supervise(proc, ctx, isolation, root_start, prior, lim, stdin_bytes, stdout
         if proc.poll() is None:
             _SURVIVORS.append(proc)
         _NO_REAP.discard(proc.pid)
+    if failure is not None:
+        exc, (alive, unconfirmed) = failure
+        raise _supervision_error(exc, proc, run, out, err, alive, unconfirmed) from exc
     if out is not None and out.error is not None:
+        if isinstance(out.error, Exception):          # on_line failed: the run was stopped and verified normally
+            raise _supervision_error(out.error, proc, run, out, err, res.killed_pids_alive,
+                                     res.cleanup_unconfirmed) from out.error
         raise out.error
     return res
 
 
-def _emergency_stop(run, lim, save):
+def _supervision_error(exc, proc, run, out, err, alive, unconfirmed):
+    return SupervisionError(
+        f"supervision of pid {proc.pid} failed after it had started: {exc.__class__.__name__}: {exc}; "
+        f"the tree was force-stopped (alive after: {alive}, unconfirmed: {unconfirmed})",
+        pid=proc.pid, root_start=run.root_start, isolation=run.isolation, rc=proc.poll(), timed_out=run.timed_out,
+        signals_sent=list(run.signals), killed_pids_alive=alive, cleanup_unconfirmed=unconfirmed,
+        stdout_bytes=len(out.buf) if out is not None else 0, stderr_bytes=len(err.buf) if err is not None else 0,
+        stdout_over=bool(out is not None and out.over), stderr_over=bool(err is not None and err.over),
+        cause_type=exc.__class__.__name__)
+
+
+def _emergency_stop(run, lim, save, exc=None):
     """The normal path raised (bad output path, proc record write failure, KeyboardInterrupt ...): force-stop the
-    whole tree and verify before the exception propagates; record ended_at/alive_after when possible."""
+    whole tree and verify before the exception propagates; record ended_at/alive_after when possible. Returns
+    (alive pids, unconfirmed); a failed verification counts as the root alive and unconfirmed."""
     alive, unconfirmed = None, True
     try:
         run.scan()
@@ -842,40 +1083,106 @@ def _emergency_stop(run, lim, save):
         unconfirmed = run.unconfirmed
     except BaseException:
         pass
+    if alive is None:
+        alive = [run.root_pid] if run.root_pid is not None else []
     try:
-        save({"ended_at": _now(), "alive_after": alive if alive is not None else [run.root_pid],
-              "cleanup_unconfirmed": unconfirmed, "aborted": True})
+        save({"ended_at": _now(), "alive_after": alive, "cleanup_unconfirmed": unconfirmed, "aborted": True,
+              "abort_error": exc.__class__.__name__ if exc is not None else "interrupted"})
     except BaseException:
         pass
+    return alive, unconfirmed
+
+
+def record_cleanup_failed(proc_record):
+    """True when a lifecycle record itself says that its run's cleanup failed or could not be confirmed (KILL FAIL):
+    alive_after not empty or cleanup_unconfirmed true. Recovery must stop on it."""
+    return bool(proc_record.get("alive_after")) or proc_record.get("cleanup_unconfirmed") is True
+
+
+def _ended_normally(rec):
+    return "ended_at" in rec and rec.get("alive_after") == [] and rec.get("cleanup_unconfirmed") is False \
+        and not rec.get("aborted")
+
+
+def _other_boot(rec):
+    """Linux: the record was written in another boot (then none of its processes can exist)."""
+    if os.name == "nt" or not rec.get("boot_id"):
+        return False
+    now = _boot_id()
+    return now is not None and now != rec["boot_id"]
+
+
+def _record_view(rec):
+    """(root_pid or None, entries {pid: start or None}, token or None, problem: True when the record cannot prove
+    anything about its run)."""
+    root = rec.get("root_pid")
+    root = int(root) if root is not None else None
+    entries = collections.OrderedDict()
+    if root is not None:
+        entries[root] = rec.get("root_start") or None
+    for pid, start in rec.get("registry") or []:
+        entries.setdefault(int(pid), start or None)
+    token = rec.get("token") if rec.get("isolation") == "subreaper" else None
+    problem = False
+    if not token:
+        # without a run token only the recorded identities can be checked: a missing root identity, or (Linux) a run
+        # that did not end normally (unregistered orphans lost their subreaper with the wrapper) proves nothing
+        if root is None or entries[root] is None:
+            problem = True
+        if rec.get("isolation") == "subreaper" and not _ended_normally(rec):
+            problem = True
+    return root, entries, token, problem
 
 
 def still_alive(proc_record):
     """(alive pids, unconfirmed) for a lifecycle record: the root and every registry entry, same pid AND same start
-    time. The second value is True when the process table could not be read for some entry."""
-    entries = collections.OrderedDict([(proc_record["root_pid"], proc_record.get("root_start"))])
-    for pid, start in proc_record.get("registry", []):
-        entries.setdefault(int(pid), start)
-    alive, unconfirmed = [], False
-    _reap(list(entries.items()))
+    time; on Linux also every process carrying the record's run token. The second value is True when the process
+    table could not be read for some entry, an environment of this user could not be read, or the record cannot prove
+    anything (no root identity and no token; a Linux record without token of a run that did not end normally)."""
+    if proc_record.get("phase") == "not_started":
+        return [], False
+    if _other_boot(proc_record):
+        return [], False
+    root, entries, token, unconfirmed = _record_view(proc_record)
+    alive = []
+    _reap([(p, s) for p, s in entries.items() if s is not None])
     for pid, start in entries.items():
+        if start is None:
+            continue
         try:
-            if _is_alive(int(pid), start):
-                alive.append(int(pid))
+            if _is_alive(pid, start):
+                alive.append(pid)
         except OSError:
             unconfirmed = True
+    if token:
+        if os.name == "nt":
+            unconfirmed = True
+        else:
+            try:
+                found, unreadable = _token_scan(token, proc_record.get("launch_ticks"), _table(),
+                                                proc_record.get("cgroup"))
+                alive += [p for p in found if p not in alive]
+                unconfirmed = unconfirmed or bool(unreadable)
+            except OSError:
+                unconfirmed = True
     return alive, unconfirmed
 
 
 def cleanup(proc_record, kind):
-    """The same two-stage cleanup as run_limited, for processes of an earlier run (from its lifecycle record)."""
+    """The same two-stage cleanup as run_limited, for processes of an earlier run (from its lifecycle record); on
+    Linux also every process carrying the record's run token."""
     lim = LIMITS[kind]
-    reg = [(proc_record["root_pid"], proc_record.get("root_start"))]
-    reg += [(int(p), s) for p, s in proc_record.get("registry", []) if int(p) != proc_record["root_pid"]]
-    run = _Run(proc_record["root_pid"], proc_record.get("root_start"), None,
-               proc_record.get("isolation", ""), registry=reg)
+    root, entries, token, problem = _record_view(proc_record)
+    if proc_record.get("phase") == "not_started" or _other_boot(proc_record):
+        return Limited(rc=None, timed_out=False, stdout_over=False, stderr_over=False, stdout=b"", stderr=b"",
+                       stdout_bytes=0, stderr_bytes=0, isolation=proc_record.get("isolation", ""))
+    reg = [(p, s) for p, s in entries.items() if s is not None or p == root]
+    run = _Run(root, entries.get(root) if root is not None else None, None, proc_record.get("isolation", ""),
+               registry=reg, token=token, since=proc_record.get("launch_ticks"), cgroup=proc_record.get("cgroup"))
     run.stop(lim, gentle=True)
     alive = run.verify()
+    unconfirmed = run.unconfirmed or problem or bool(token and os.name == "nt")
     return Limited(rc=None, timed_out=False, stdout_over=False, stderr_over=False, stdout=b"", stderr=b"",
                    stdout_bytes=0, stderr_bytes=0, signals_sent=list(run.signals), killed_pids_alive=alive,
-                   cleanup_unconfirmed=run.unconfirmed, registry=list(run.registry.items()),
+                   cleanup_unconfirmed=unconfirmed, registry=list(run.registry.items()),
                    isolation=run.isolation)
