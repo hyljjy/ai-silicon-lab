@@ -767,6 +767,65 @@ class RealGate(Base):
         probs = rnd_mod.preflight(1, "evaluate", self.ctx())
         self.assertIn(f"GATE FAIL {a}: gate.json differs from a re-run of the gate", probs)
 
+    # ---------------------------------------------------------------- gate infrastructure faults (fix round 1)
+    @staticmethod
+    def surviving(argv, kind, **kw):
+        """run_limited stand-in: the Yosys process could not be cleaned up (a process survives)."""
+        return limits.Limited(rc=-9, timed_out=True, stdout_over=False, stderr_over=False, stdout=b"", stderr=b"",
+                              stdout_bytes=0, stderr_bytes=0, killed_pids_alive=[4242], cleanup_unconfirmed=False)
+
+    def stop_records(self):
+        d = os.path.join(self.revise, "stops", "r1")
+        return [load(os.path.join(d, f)) for f in sorted(os.listdir(d)) if f.endswith(".json")] \
+            if os.path.isdir(d) else []
+
+    def no_gate_json(self):
+        for c in self.codes[1]:
+            self.assertFalse(os.path.exists(os.path.join(self.cdir(1, c), "gate.json")))
+
+    def test_real_gate_kill_fail_at_ingest_writes_stop_not_gate_json(self):
+        with mock.patch(f"{__name__}.ANSWER", self.answer_with(self.baseline_rtl())):
+            self.setup_round(1)
+        with mock.patch.object(gate.limits, "run_limited", side_effect=self.surviving):
+            rc, out = self.run_sub("ingest", 1)
+        self.assertEqual(rc, 1, out)
+        self.no_gate_json()
+        recs = self.stop_records()
+        self.assertEqual(len(recs), 1)
+        self.assertEqual((recs[0]["reason"], recs[0]["side"], recs[0]["details"]["source"]),
+                         ("KILL FAIL", "eval", "gate"))
+        self.assertEqual(recs[0]["details"]["evidence"]["killed_pids_alive"], [4242])
+        self.assertIn(f"STOP {recs[0]['stop_id']}: KILL FAIL", out)
+        self.assertIn("commit revise/stops/r1/", out)
+        rc, out = self.run_sub("ingest", 1)            # the open stop blocks everything until cleared
+        self.assertEqual(rc, 1, out)
+        self.no_gate_json()
+
+    def test_real_gate_yosys_missing_refuses_without_gate_json(self):
+        with mock.patch(f"{__name__}.ANSWER", self.answer_with(self.baseline_rtl())):
+            self.setup_round(1)
+        with mock.patch.dict(os.environ, {"PATH": "/usr/bin:/bin"}):     # the WSL Yosys is not on this PATH
+            rc, out = self.run_sub("ingest", 1)
+        self.assertEqual(rc, 1, out)
+        self.assertIn("GATE ERROR", out)
+        self.assertIn("could not start", out)
+        self.no_gate_json()
+        self.assertEqual(self.stop_records(), [])
+
+    def test_real_gate_kill_fail_in_evaluate_preflight_writes_stop(self):
+        with mock.patch(f"{__name__}.ANSWER", self.answer_with(self.baseline_rtl())):
+            self.setup_round(1)
+        self.phase_c(1)
+        buf = io.StringIO()
+        with mock.patch.object(gate.limits, "run_limited", side_effect=self.surviving),                 contextlib.redirect_stdout(buf):
+            probs = rnd_mod.preflight(1, "evaluate", self.ctx())
+        self.assertIn("STOP ", buf.getvalue())
+        self.assertTrue(any(p.startswith("KILL FAIL ") for p in probs), probs)
+        self.assertEqual([r["reason"] for r in self.stop_records()], ["KILL FAIL"])    # one stop, no further runs
+        rc, out = self.run_sub("evaluate", 1)
+        self.assertEqual(rc, 1, out)
+        self.assertEqual(self.attempts_of(1), [])
+
 
 if __name__ == "__main__":
     unittest.main()

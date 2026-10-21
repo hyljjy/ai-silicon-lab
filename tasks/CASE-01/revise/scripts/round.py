@@ -49,6 +49,9 @@ Subcommands
   ingest    runs the gate on every "ok" code and writes results/r<r>/<code>/gate.json (never rewritten; an existing
             file must hold the same bytes). The gate is injectable (Ctx(gate=...)); default: gate.gate(rtl_path,
             declared_L) -> GateResult(passed, hits, yosys_problem), hits with rule, line, kind, text (Task 4).
+            gate.GateInfraError (an infrastructure fault, not a verdict) never becomes a gate.json: kill_fail ->
+            a KILL FAIL stop record (eval side) and exit 1; otherwise GATE ERROR and exit 1. The evaluate preflight
+            treats a re-run of the gate the same way (stop for KILL FAIL; a problem either way).
   evaluate  first recovers attempts that have started.json only (run_grade.recover), then, code by code (sorted),
             runs attempt 1 (run_grade.attempt) of every gate-passed code (vetoed ones included) that has none. It
             never starts attempt 2 (controller ruling R22; plan Task 15 step 7): a code whose attempt 1 is attributed
@@ -117,6 +120,28 @@ def _now():
 def _default_gate(rtl_path, declared_L):
     import gate as gate_mod                           # Task 4 (revise/scripts/gate.py); lazy, injectable
     return gate_mod.gate(rtl_path, declared_L)
+
+
+def _gate_infra_error():
+    """gate.GateInfraError (Task 4 fix round 1), or () when gate.py cannot be imported (isinstance is then False)."""
+    try:
+        import gate as gate_mod
+    except ImportError:
+        return ()
+    return gate_mod.GateInfraError
+
+
+def _gate_infra(ctx, r, code, e, probs=None):
+    """A gate infrastructure fault: never a gate.json. kill_fail -> KILL FAIL stop (eval side, R12 commit line);
+    otherwise a refusal. Returns the refusal text (also appended to probs when given)."""
+    if e.kill_fail:
+        _stop(ctx, r, "KILL FAIL", code, {"source": "gate", "message": str(e), "evidence": e.evidence})
+        text = f"KILL FAIL {code}: gate: {e}; a stop record was written; gate.json is not written"
+    else:
+        text = f"GATE ERROR {code}: gate infrastructure fault ({e}); gate.json is not written"
+    if probs is not None:
+        probs.append(text)
+    return text
 
 
 class Ctx:
@@ -348,6 +373,11 @@ def _phase_c(ctx, r, codes, info, probs):
         rtl = os.path.join(ctx.case, "rtl", f"dot4sat_{code}.v")
         try:
             again = gate_bytes(ctx.gate(rtl, info[code]["declared_L"]))
+        except _gate_infra_error() as e:              # infrastructure fault: stop (KILL FAIL) or refuse
+            _gate_infra(ctx, r, code, e, probs)
+            if e.kill_fail:
+                break                                 # one stop; no further gate runs
+            continue
         except Exception as e:                        # ImportError (gate.py missing), gate failures
             probs.append(f"GATE FAIL {code}: the gate could not be re-run ({e.__class__.__name__}: {e})")
             continue
@@ -658,6 +688,9 @@ def cmd_ingest(ctx, r):
         rtl = os.path.join(ctx.case, "rtl", f"dot4sat_{code}.v")
         try:
             data = gate_bytes(ctx.gate(rtl, parsed["declared_L"]))
+        except _gate_infra_error() as e:              # infrastructure fault: stop (KILL FAIL) or refuse
+            print(_gate_infra(ctx, r, code, e), flush=True)
+            return 1
         except Exception as e:                        # ImportError (gate.py missing), gate failures
             print(f"GATE FAIL {code}: {e.__class__.__name__}: {e}", flush=True)
             return 1

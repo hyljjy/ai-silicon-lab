@@ -59,6 +59,7 @@ NEG = {
     "neg_escaped_clk_data": ({("G7", 9, X)}, False),
     "neg_unknown_char": ({("unrecognized", 9, X)}, True),
     "neg_syntax_error": ({("unrecognized", 9, X)}, True),
+    "neg_synopsys_full_case": ({("unrecognized", 13, X)}, True),
 }
 
 
@@ -201,6 +202,10 @@ class GateTest(unittest.TestCase):
     def test_neg_syntax_error(self):
         res = self.check_neg("neg_syntax_error")
         self.assertIn("stage 1", res.yosys_problem)
+
+    def test_neg_synopsys_full_case_is_unrecognized(self):
+        res = self.check_neg("neg_synopsys_full_case")       # Yosys parses the comment; pinned (fix round 1)
+        self.assertIn("TOK_SYNOPSYS_FULL_CASE", res.yosys_problem)
 
     def test_every_negative_fixture_has_a_test(self):
         names = {f[:-2] for f in os.listdir(FIX) if f.startswith("neg_") and f.endswith(".v")}
@@ -369,33 +374,81 @@ class GateTest(unittest.TestCase):
             return stage2
         return fake
 
-    def test_every_yosys_failure_is_unrecognized(self):
-        good = json.dumps({"modules": {"dot4sat": {"ports": {
+    def good_json(self):
+        return json.dumps({"modules": {"dot4sat": {"ports": {
             p: {"direction": d, "bits": list(range(w))} for p, d, w in gate.EXPECTED_PORTS}}}})
+
+    def test_yosys_read_failures_are_unrecognized(self):
+        # RV-01 item 4: non-zero exit, timeout, output over the limit or incomplete -> unrecognized in the result
         bad_cases = {
             "rc": limited(rc=1, stderr=b"x.v:3: ERROR: boom\n"),
             "timeout": limited(rc=-9, timed_out=True),
             "stdout over": limited(stdout_over=True),
             "stderr over": limited(stderr_over=True),
             "output error": limited(output_error="disk"),
-            "kill fail alive": limited(rc=-9, alive=[1234]),
-            "kill fail unconfirmed": limited(rc=-9, unconfirmed=True),
-            "supervision": limits.SupervisionError("boom", killed_pids_alive=[], cleanup_unconfirmed=False),
-            "supervision kill fail": limits.SupervisionError("boom", killed_pids_alive=[7], cleanup_unconfirmed=True),
-            "isolation": limits.IsolationFail("ISOLATION FAIL: x"),
-            "oserror": FileNotFoundError(2, "No such file", "yosys"),
         }
         for stage in (1, 2):
             for what, bad in bad_cases.items():
                 with self.subTest(stage=stage, what=what):
                     s1, s2 = (bad, limited()) if stage == 1 else (limited(), bad)
-                    with mock.patch.object(gate.limits, "run_limited", side_effect=self.fake_stages(s1, s2, good)):
+                    with mock.patch.object(gate.limits, "run_limited",
+                                           side_effect=self.fake_stages(s1, s2, self.good_json())):
                         res = self.run_gate(BASELINE)
                     self.assertFalse(res.passed)
                     self.assertIn(f"stage {stage}", res.yosys_problem)
                     self.assertEqual({h.rule for h in res.hits}, {"unrecognized"})
-                    if "kill fail" in what:
-                        self.assertIn("KILL FAIL", res.yosys_problem)
+
+    def test_infrastructure_faults_raise_never_a_result(self):
+        # fix round 1: KILL FAIL, start and supervision failures raise GateInfraError (never a gate.json)
+        cases = {
+            "kill fail alive": (limited(rc=-9, alive=[1234]), True),
+            "kill fail unconfirmed": (limited(rc=-9, unconfirmed=True), True),
+            "kill fail with timeout": (limited(rc=-9, timed_out=True, alive=[55]), True),
+            "supervision": (limits.SupervisionError("boom", killed_pids_alive=[], cleanup_unconfirmed=False), False),
+            "supervision kill fail": (limits.SupervisionError("boom", pid=9, killed_pids_alive=[7],
+                                                              cleanup_unconfirmed=True), True),
+            "isolation": (limits.IsolationFail("ISOLATION FAIL: x"), False),
+            "oserror": (FileNotFoundError(2, "No such file", "yosys"), False),
+        }
+        for stage in (1, 2):
+            for what, (bad, kill) in cases.items():
+                with self.subTest(stage=stage, what=what):
+                    s1, s2 = (bad, limited()) if stage == 1 else (limited(), bad)
+                    with mock.patch.object(gate.limits, "run_limited",
+                                           side_effect=self.fake_stages(s1, s2, self.good_json())):
+                        with self.assertRaises(gate.GateInfraError) as cm:
+                            self.run_gate(BASELINE)
+                    e = cm.exception
+                    self.assertIsInstance(e, gate.GateError)
+                    self.assertEqual(e.kill_fail, kill)
+                    self.assertIn(f"stage {stage}", str(e))
+                    self.assertEqual(e.evidence["stage"], stage)
+                    self.assertTrue(os.path.isdir(e.evidence["dir"]))
+                    json.dumps(e.evidence)                    # plain values: fit a stop record
+                    if kill:
+                        self.assertIn("KILL FAIL", str(e))
+                        self.assertTrue(e.evidence["killed_pids_alive"] or e.evidence["cleanup_unconfirmed"])
+                    with open(os.path.join(e.evidence["dir"], "evidence.json"), encoding="utf-8") as f:
+                        self.assertEqual(json.load(f)["kill_fail"], kill)
+
+    def test_unusable_path_raises(self):
+        odd = os.path.join(self.work, "odd name.v")
+        with open(BASELINE, "rb") as f, open(odd, "wb") as g:
+            g.write(f.read())
+        with self.assertRaises(gate.GateInfraError) as cm:
+            self.run_gate(odd)
+        self.assertFalse(cm.exception.kill_fail)
+
+    def test_cli_infrastructure_fault_exit_2(self):
+        out_json = os.path.join(self.work, "never.json")
+        env = dict(os.environ, PATH="/usr/bin:/bin")         # the WSL Yosys lives elsewhere: not startable
+        r = limits.run_limited([sys.executable, "-B", GATE_PY, BASELINE, "1", "--json", out_json, "--work-dir",
+                                self.work], "test", cwd=self.work, env=env)
+        self.assertEqual(r.rc, 2, r.stdout)
+        out = r.stdout.decode("utf-8")
+        self.assertTrue(out.startswith("GATE ERROR: stage 1 (read_verilog): could not start"), out)
+        self.assertNotIn("GATE FAIL", out)
+        self.assertFalse(os.path.exists(out_json))
 
     def test_unreadable_json_is_unrecognized(self):
         for what, text in {"missing": None, "empty": "", "not json": "{nope", "no modules": "{}",

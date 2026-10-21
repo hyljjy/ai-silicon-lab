@@ -15,10 +15,13 @@ G1 and the module set come from Yosys, in two separate fresh processes (RV-01), 
 "yosys") from the directory of the RTL file (so diagnostics name the file by its base name only):
   stage 1: yosys -q -p "read_verilog <file>"                         front-end read check only
   stage 2 (only after stage 1 succeeded): yosys -q -p "read_verilog -lib <file>; write_json <work>/ports.json"
-No proc, hierarchy, synth, flatten or clean-up pass is ever run. Any non-zero exit, timeout, output over the limit,
-incomplete output, failed or unconfirmed process cleanup (KILL FAIL), start or supervision failure, or a JSON that
-is missing or not a usable module description sets yosys_problem and an "unrecognized" hit; a JSON from an earlier run
-is never used (every call works in a new directory). Stage-1 warnings are kept as evidence only (no rule rejects on
+No proc, hierarchy, synth, flatten or clean-up pass is ever run. A non-zero exit, timeout, output over the limit or
+otherwise incomplete, or a JSON that is missing or not a usable module description (RV-01 item 4) sets yosys_problem
+and an "unrecognized" hit; a JSON from an earlier run is never used (every call works in a new directory).
+Infrastructure faults are not candidate verdicts and raise GateInfraError instead (never written into gate.json):
+failed or unconfirmed process cleanup (kill_fail True: KILL FAIL, round.py writes a stop), Yosys not startable
+(IsolationFail, OSError e.g. yosys missing from PATH), a supervision failure, an unusable path, a work directory or
+evidence write failure. Stage-1 warnings are kept as evidence only (no rule rejects on
 warnings). The tokenizer rules are recorded in every case, also when Yosys failed or the module counts disagree.
 Evidence: every call writes <work_dir>/<new dir>/ with stage<n>.out, stage<n>.err, stage<n>.proc.json, ports.json and
 evidence.json (argv, rc, flags, stderr text); work_dir defaults to tasks/CASE-01/runs/gate/ (git-ignored, kept).
@@ -28,8 +31,11 @@ grade.LINT_SYSTF is read from the frozen scripts/grade.py by explicit path under
 imports (check_sim, logcheck) served from the same directory by explicit path; nothing is put on sys.path, no bare
 module name is registered and no bytecode is written (ruling R25).
 CLI (WSL): python3 -B revise/scripts/gate.py <rtl> <L> [--json <out>] [--work-dir <dir>]
-  prints "GATE PASS" or one "GATE FAIL <rule> line <n> (<contract|extra>)" per hit (then "YOSYS PROBLEM: ..." when
-  set); exit 0 / 1 (2: usage or file error). Python standard library only."""
+  prints "GATE PASS" or one "GATE FAIL <rule> line <n> (<contract|extra>)" per hit; exit 0 / 1 (plan Task 4).
+  Extensions beyond the plan's CLI (for the revisions record): --work-dir <dir> (where the per-run evidence
+  directories go; default tasks/CASE-01/runs/gate/); a "YOSYS PROBLEM: <text>" line after the GATE FAIL lines when
+  yosys_problem is set; exit 2 with "KILL FAIL: ..." (cleanup failed / unconfirmed) or "GATE ERROR: ..." (other
+  infrastructure fault, unreadable RTL file, bad arguments) and no --json output. Python standard library only."""
 import argparse
 import builtins
 import datetime
@@ -82,6 +88,20 @@ _ERR_LINE = re.compile(r":(\d+):\s*ERROR")
 
 class GateError(Exception):
     pass
+
+
+class GateInfraError(GateError):
+    """An infrastructure fault of the gate run, never a verdict on the candidate (fix round 1): Yosys could not be
+    started (IsolationFail, OSError such as yosys missing from PATH), its supervision failed (SupervisionError), its
+    process cleanup failed or is unconfirmed (kill_fail True: killed_pids_alive / cleanup_unconfirmed), the work
+    directory or the evidence could not be written, or a path cannot be used in a Yosys command. It is raised, so it
+    can never be written into gate.json; round.py writes a KILL FAIL stop for kill_fail and otherwise refuses.
+    evidence: a dict of plain values (stage, dir, argv, rc, pid, killed_pids_alive, cleanup_unconfirmed, error)."""
+
+    def __init__(self, message, kill_fail=False, evidence=None):
+        super().__init__(message)
+        self.kill_fail = bool(kill_fail)
+        self.evidence = dict(evidence or {})
 
 
 @dataclass
@@ -423,32 +443,46 @@ def _first_error(text):
     return ""
 
 
+def _infra(label, n, d, ev, message, kill_fail=False):
+    info = {"stage": n, "dir": d, "argv": ev.get("argv"), "rc": ev.get("rc"), "pid": ev.get("pid"),
+            "killed_pids_alive": list(ev.get("killed_pids_alive") or []),
+            "cleanup_unconfirmed": bool(ev.get("cleanup_unconfirmed")), "error": ev.get("error")}
+    return GateInfraError(f"{label}: {message}", kill_fail=kill_fail, evidence=info)
+
+
 def _stage(n, argv, cwd, d, evidence):
-    """Run one stage; returns a problem text or None. The evidence entry keeps rc, flags and the output texts."""
+    """Run one stage; returns a problem text (RV-01 item 4: non-zero exit, timeout, output over the limit or
+    incomplete) or None; raises GateInfraError for infrastructure faults (KILL FAIL, start or supervision failure,
+    evidence write failure). The evidence entry keeps rc, flags and the output texts."""
     label = {1: "stage 1 (read_verilog)", 2: "stage 2 (read_verilog -lib; write_json)"}[n]
     ev = {"argv": argv, "cwd": cwd}
     evidence[f"stage{n}"] = ev
     try:
         r = limits.run_limited(argv, "yosys", cwd=cwd, proc_path=os.path.join(d, f"stage{n}.proc.json"))
     except limits.SupervisionError as e:
-        ev.update(error=f"SupervisionError: {e}", killed_pids_alive=e.killed_pids_alive,
+        ev.update(error=f"SupervisionError: {e}", pid=e.pid, rc=e.rc, killed_pids_alive=e.killed_pids_alive,
                   cleanup_unconfirmed=e.cleanup_unconfirmed)
         if e.killed_pids_alive or e.cleanup_unconfirmed:
-            return f"{label}: KILL FAIL (supervision failed and the process cleanup is not confirmed)"
-        return f"{label}: supervision failed ({e.cause_type or 'error'})"
+            raise _infra(label, n, d, ev, "KILL FAIL (supervision failed and the process cleanup is not confirmed)",
+                         kill_fail=True) from e
+        raise _infra(label, n, d, ev, f"supervision failed ({e.cause_type or 'error'})") from e
     except (limits.IsolationFail, OSError) as e:
         ev.update(error=f"{e.__class__.__name__}: {e}")
-        return f"{label}: could not start ({e.__class__.__name__})"
+        raise _infra(label, n, d, ev, f"could not start ({e.__class__.__name__}: {e})") from e
     err = r.stderr.decode("utf-8", "replace")
     ev.update(rc=r.rc, timed_out=r.timed_out, stdout_over=r.stdout_over, stderr_over=r.stderr_over,
               stdout_bytes=r.stdout_bytes, stderr_bytes=r.stderr_bytes, killed_pids_alive=r.killed_pids_alive,
               cleanup_unconfirmed=r.cleanup_unconfirmed, output_error=r.output_error,
               stdout=r.stdout.decode("utf-8", "replace"), stderr=err)
-    for suffix, data in (("out", r.stdout), ("err", r.stderr)):
-        with open(os.path.join(d, f"stage{n}.{suffix}"), "wb") as f:
-            f.write(data)
     if r.killed_pids_alive or r.cleanup_unconfirmed:
-        return f"{label}: KILL FAIL (process cleanup failed or not confirmed)"
+        raise _infra(label, n, d, ev, "KILL FAIL (process cleanup failed or not confirmed)", kill_fail=True)
+    try:
+        for suffix, data in (("out", r.stdout), ("err", r.stderr)):
+            with open(os.path.join(d, f"stage{n}.{suffix}"), "wb") as f:
+                f.write(data)
+    except OSError as e:
+        ev.update(error=f"{e.__class__.__name__}: {e}")
+        raise _infra(label, n, d, ev, f"evidence could not be written ({e.__class__.__name__})") from e
     if r.timed_out:
         return f"{label}: timed out (output incomplete)"
     if r.stdout_over or r.stderr_over:
@@ -490,13 +524,18 @@ def yosys_ports(rtl_path, work_dir=None, evidence=None):
     """(modules, None) or (None, problem): the two-stage read of RV-01 (module doc). evidence (a dict) receives the
     directory and per-stage records."""
     evidence = {} if evidence is None else evidence
-    d = _new_dir(work_dir)
+    try:
+        d = _new_dir(work_dir)
+    except OSError as e:
+        raise GateInfraError(f"work directory could not be created ({e.__class__.__name__}: {e})",
+                             evidence={"dir": work_dir or DEFAULT_WORK, "error": str(e)}) from e
     evidence["dir"] = d
     rtl = os.path.abspath(rtl_path)
     cwd, base = os.path.dirname(rtl), os.path.basename(rtl)
     out = os.path.join(d, "ports.json")
     if not _SAFE_PATH.match(base) or not _SAFE_PATH.match(out):
-        return None, "stage 1 (read_verilog): file or work path not usable in a Yosys command"
+        raise GateInfraError("file or work path not usable in a Yosys command",
+                             evidence={"dir": d, "rtl": rtl, "error": "unsafe path"})
     prob = _stage(1, ["yosys", "-q", "-p", f"read_verilog {base}"], cwd, d, evidence)
     if prob:
         return None, prob
@@ -525,7 +564,15 @@ def gate(rtl_path, declared_L, work_dir=None):
     tokens = tokenize(text)
     hits = list(token_rules(tokens))
     evidence = {}
-    ports, problem = yosys_ports(rtl_path, work_dir, evidence)
+    try:
+        ports, problem = yosys_ports(rtl_path, work_dir, evidence)
+    except GateInfraError as e:
+        if evidence.get("dir"):                       # best effort: the fault is kept with the run's evidence
+            try:
+                _write_evidence(evidence["dir"], dict(evidence, infra_error=str(e), kill_fail=e.kill_fail))
+            except OSError:
+                pass
+        raise
     if problem:
         hits.append(Hit("unrecognized", _problem_line(problem, len(lines)), "extra"))
     else:
@@ -538,12 +585,20 @@ def gate(rtl_path, declared_L, work_dir=None):
         h.text = lines[h.line - 1] if 1 <= h.line <= len(lines) else None
     res = GateResult(passed=not hits and problem is None, hits=hits, yosys_problem=problem, evidence=evidence)
     if evidence.get("dir"):
-        rec = dict(evidence, declared_L=declared_L if isinstance(declared_L, (int, str)) else repr(declared_L),
-                   gate=to_doc(res))
-        with open(os.path.join(evidence["dir"], "evidence.json"), "w", encoding="utf-8", newline="\n") as f:
-            json.dump(rec, f, indent=1, ensure_ascii=False, default=str)
-            f.write("\n")
+        try:
+            _write_evidence(evidence["dir"], dict(evidence, gate=to_doc(res),
+                                                  declared_L=declared_L if isinstance(declared_L, (int, str))
+                                                  else repr(declared_L)))
+        except OSError as e:
+            raise GateInfraError(f"evidence could not be written ({e.__class__.__name__}: {e})",
+                                 evidence={"dir": evidence["dir"], "error": str(e)}) from e
     return res
+
+
+def _write_evidence(d, rec):
+    with open(os.path.join(d, "evidence.json"), "w", encoding="utf-8", newline="\n") as f:
+        json.dump(rec, f, indent=1, ensure_ascii=False, default=str)
+        f.write("\n")
 
 
 def to_doc(res):
@@ -567,6 +622,9 @@ def main(argv=None):
     try:
         L = int(a.L) if re.fullmatch(r"[+-]?[0-9]+", a.L) else a.L
         res = gate(a.rtl, L, a.work_dir)
+    except GateInfraError as e:
+        print(f"{'KILL FAIL' if e.kill_fail else 'GATE ERROR'}: {e}", flush=True)
+        return 2
     except (OSError, GateError) as e:
         print(f"GATE ERROR: {e.__class__.__name__}: {e}", flush=True)
         return 2
