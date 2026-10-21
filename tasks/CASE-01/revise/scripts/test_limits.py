@@ -282,5 +282,68 @@ class TestRecords(Base):
         self.assertTrue(res.cleanup_unconfirmed)
 
 
+class TestFailurePaths(Base):
+    def assert_tree_gone_later(self):
+        # give a process that escaped the cleanup time to show up, then check every recorded pid
+        time.sleep(1.5)
+        for role, pid in self.pids().items():
+            self.assertFalse(alive(pid), f"{role} {pid} still alive")
+
+    def test_bad_output_path_cleans_tree(self):
+        bad = os.path.join(self.d, "no_such_dir", "out.txt")
+        t0 = time.monotonic()
+        with self.assertRaises(OSError):
+            self.tree("--new-session", stdout_path=bad)
+        self.assertLess(time.monotonic() - t0, 8)
+        self.assert_tree_gone_later()
+
+    def test_proc_record_failure_cleans_tree(self):
+        path = os.path.join(self.d, "proc.json")
+        real = limits._write_json
+        calls = []
+
+        def failing(p, obj):
+            calls.append(obj)
+            if len(calls) > 1 and "ended_at" not in obj:  # the first registry update after launch fails
+                raise OSError(28, "No space left on device")
+            real(p, obj)
+        t0 = time.monotonic()
+        with mock.patch.object(limits, "_write_json", failing):
+            with self.assertRaises(OSError):
+                self.tree("--new-session", proc_path=path)
+        self.assertLess(time.monotonic() - t0, 8)
+        self.assertGreaterEqual(len(self.pids()), 2)
+        self.assert_tree_gone_later()
+        with open(path, encoding="utf-8") as f:
+            rec = json.load(f)
+        self.assertEqual(rec["alive_after"], [])
+        self.assertIn("ended_at", rec)
+
+    def test_output_write_error_reported(self):
+        class Full:
+            def write(self, data):
+                raise OSError(28, "No space left on device")
+
+            def flush(self):
+                pass
+
+            def close(self):
+                pass
+        hooked = []
+        out = os.path.join(self.d, "o.txt")
+        t0 = time.monotonic()
+        with mock.patch.object(limits, "_open_output", lambda path: Full()), \
+                mock.patch("threading.excepthook", lambda args: hooked.append(args)):
+            res = limits.run_limited(CHATTY + ["--stdout", "100", "--sleep"], "fast", cwd=self.d, stdout_path=out)
+        self.assertLess(time.monotonic() - t0, 2)      # stopped on the write error, not by the 2 s timeout
+        self.assertFalse(res.timed_out)
+        self.assertIn("No space left on device", res.output_error)
+        self.assertTrue(res.incomplete)
+        self.assertEqual(res.killed_pids_alive, [])
+        self.assertFalse(res.cleanup_unconfirmed)
+        self.assertEqual(res.stdout_bytes, 100)            # still captured in memory
+        self.assertEqual(hooked, [])
+
+
 if __name__ == "__main__":
     unittest.main()

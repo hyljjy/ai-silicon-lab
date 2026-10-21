@@ -71,6 +71,11 @@ class TestRevpaths(unittest.TestCase):
                 for rel in rels:
                     f.write(f"{rp.sha256(os.path.join(rp.REPO, rel))}  {rel}\n")
             self.assertEqual(rp.reused_problems(good), [])
+            binary = os.path.join(d, "binary.sha256")      # Git Bash sha256sum writes "<hash> *<path>"
+            with open(binary, "w", encoding="utf-8", newline="\n") as f:
+                f.write(f"{rp.sha256(os.path.join(rp.REPO, rels[0]))} *{rels[0]}\n")
+                f.write(f"{rp.sha256(os.path.join(rp.REPO, rels[1]))}  {rels[1]}\n")
+            self.assertEqual(rp.reused_problems(binary), [])
             bad = os.path.join(d, "bad.sha256")
             with open(bad, "w", encoding="utf-8", newline="\n") as f:
                 f.write("0" * 64 + "  " + rels[0] + "\n")

@@ -4,6 +4,7 @@ import datetime
 import hashlib
 import json
 import os
+import re
 import shutil
 from decimal import ROUND_HALF_UP, Decimal
 
@@ -27,6 +28,9 @@ GB = 1024 ** 3                                       # disk threshold unit: GiB 
 WSL_DISTRO = "Ubuntu-24.04"
 # the two volumes of the disk check (Global Constraints "磁盘"): WSL root file system and the repository volume
 DISK_VOLUMES = ("WSL /", "D:\\") if os.name == "nt" else ("/", "/mnt/d")
+
+
+_SUM_LINE = re.compile(r"^([0-9a-fA-F]{64}) [ *](\S.*)$")
 
 
 class RevpathsError(Exception):
@@ -90,11 +94,11 @@ def reused_problems(hash_file=None):
         return [f"REUSED FAIL: {hash_file} lists no files"]
     problems = []
     for ln in lines:
-        parts = ln.split(None, 1)
-        if len(parts) != 2 or len(parts[0]) != 64:
+        m = _SUM_LINE.match(ln)                       # sha256sum text ("  ") and binary (" *") forms
+        if not m:
             problems.append(f"REUSED FAIL: malformed line in {hash_file}: {ln!r}")
             continue
-        want, rel = parts[0].lower(), parts[1].strip()
+        want, rel = m.group(1).lower(), m.group(2).strip()
         path = os.path.join(REPO, *rel.split("/"))
         try:
             got = sha256(path)

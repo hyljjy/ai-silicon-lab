@@ -67,11 +67,13 @@ class Limited:
     cleanup_unconfirmed: bool = False
     registry: list = field(default_factory=list)
     isolation: str = ""
+    output_error: object = None                       # str when writing stdout_path/stderr_path failed (run stopped)
 
     @property
     def incomplete(self):
-        """Output is not complete (limit exceeded or the process was stopped): write "超限，输出不完整"."""
-        return self.timed_out or self.stdout_over or self.stderr_over
+        """Output is not complete (limit exceeded, output file write failed, or the process was stopped): write
+        "超限，输出不完整"."""
+        return self.timed_out or self.stdout_over or self.stderr_over or bool(self.output_error)
 
 
 def _now():
@@ -135,7 +137,7 @@ if os.name == "nt":
     _CloseHandle = _proto("CloseHandle", wintypes.BOOL, _H)
     _OpenProcess = _proto("OpenProcess", _H, wintypes.DWORD, wintypes.BOOL, wintypes.DWORD)
     _GetProcessTimes = _proto("GetProcessTimes", wintypes.BOOL, _H, *([ctypes.POINTER(ctypes.c_uint64)] * 4))
-    _GetExitCodeProcess = _proto("GetExitCodeProcess", wintypes.BOOL, _H, ctypes.POINTER(wintypes.DWORD))
+    _WaitForSingleObject = _proto("WaitForSingleObject", wintypes.DWORD, _H, wintypes.DWORD)
     _TerminateProcess = _proto("TerminateProcess", wintypes.BOOL, _H, wintypes.UINT)
     _CreateToolhelp32Snapshot = _proto("CreateToolhelp32Snapshot", _H, wintypes.DWORD, wintypes.DWORD)
     _Thread32First = _proto("Thread32First", wintypes.BOOL, _H, ctypes.POINTER(_THREADENTRY32))
@@ -150,7 +152,9 @@ if os.name == "nt":
     _CREATE_SUSPENDED = 0x4
     _PROCESS_TERMINATE = 0x1
     _PROCESS_QUERY_LIMITED_INFORMATION = 0x1000
-    _STILL_ACTIVE = 259
+    _SYNCHRONIZE = 0x00100000
+    _WAIT_OBJECT_0 = 0x0
+    _WAIT_TIMEOUT = 0x102
     _ERROR_INVALID_PARAMETER = 87
     _TH32CS_SNAPTHREAD = 0x4
     _THREAD_SUSPEND_RESUME = 0x2
@@ -173,14 +177,16 @@ if os.name == "nt":
         c, e, k, u = (ctypes.c_uint64() for _ in range(4))
         if not _GetProcessTimes(h, ctypes.byref(c), ctypes.byref(e), ctypes.byref(k), ctypes.byref(u)):
             raise _winerr("GetProcessTimes")
-        code = wintypes.DWORD()
-        if not _GetExitCodeProcess(h, ctypes.byref(code)):
-            raise _winerr("GetExitCodeProcess")
-        return str(c.value) if code.value == _STILL_ACTIVE else None
+        state = _WaitForSingleObject(h, 0)             # signaled = exited (an exit code of 259 is no evidence)
+        if state == _WAIT_TIMEOUT:
+            return str(c.value)
+        if state == _WAIT_OBJECT_0:
+            return None
+        raise _winerr("WaitForSingleObject")
 
     def _start_time(pid):
         """Creation time (FILETIME, as a decimal string) of a running process; None when it does not run."""
-        h = _open(pid, _PROCESS_QUERY_LIMITED_INFORMATION)
+        h = _open(pid, _PROCESS_QUERY_LIMITED_INFORMATION | _SYNCHRONIZE)
         if h is None:
             return None
         try:
@@ -341,18 +347,33 @@ _SURVIVORS = []                                       # Popen objects whose proc
                                                       # kept referenced, never silently dropped
 
 
-def _reap(pids):
-    """Collect exit statuses of adopted (subreaper) children so they do not linger as zombies."""
+def _reap(entries):
+    """Collect exit statuses of adopted (subreaper) children so they do not linger as zombies. entries: (pid,
+    start) pairs; only a zombie whose parent is this process and whose start time is the registered one is reaped."""
+    for p in list(_SURVIVORS):                         # a KILL FAIL survivor that has exited since: collect it
+        if p.poll() is not None:
+            _SURVIVORS.remove(p)
+            for pipe in (p.stdout, p.stderr, p.stdin):
+                try:
+                    if pipe is not None:
+                        pipe.close()
+                except (OSError, ValueError):
+                    pass
     if os.name == "nt":
         return
-    for pid in pids:
+    me = os.getpid()
+    survivors = {p.pid for p in _SURVIVORS}
+    for pid, start in entries:
+        if pid in survivors:
+            continue
         if pid in _NO_REAP:
             continue
         try:
+            st = _stat(pid)
+            if st is None or st[0] != "Z" or st[1] != me or st[2] != start:
+                continue
             os.waitpid(pid, os.WNOHANG)
-        except ChildProcessError:
-            pass
-        except OSError:
+        except (OSError, ValueError, IndexError):
             pass
 
 
@@ -434,7 +455,7 @@ class _Run:
     def alive_registered(self):
         """Registered processes (root included) still alive with their registered start time. A failed check counts
         as alive-unknown: the run is marked unconfirmed."""
-        _reap(list(self.registry))
+        _reap(list(self.registry.items()))
         alive = []
         for pid, start in self.registry.items():
             if pid == self.root_pid:
@@ -547,18 +568,39 @@ def _write_json(path, obj):
             time.sleep(0.02)
 
 
+def _open_output(path):
+    return open(path, "ab")
+
+
 class _Reader(threading.Thread):
     """Reads one pipe in chunks: keeps and appends to file at most `limit` bytes, then discards the rest (the
-    process is being stopped) while still draining so the writer never blocks on a full pipe."""
+    process is being stopped) while still draining so the writer never blocks on a full pipe. A failed write to the
+    output file (e.g. disk full) is recorded in write_error, stops further file writes and triggers the stop path;
+    the pipe keeps draining."""
 
     def __init__(self, fd, limit, path, over_event, on_line=None):
         super().__init__(daemon=True)
         self.fd, self.limit, self.over_event, self.on_line = fd, limit, over_event, on_line
-        self.file = open(path, "ab") if path else None
+        self.path = path
+        self.file = _open_output(path) if path else None
         self.buf = bytearray()
         self.over = False
         self.partial = b""
         self.error = None
+        self.write_error = None
+
+    def _write(self, data):
+        try:
+            self.file.write(data)
+            self.file.flush()
+        except Exception as e:                      # disk full, I/O error ...: record, stop writing, stop the run
+            self.write_error = f"{self.path}: {e.__class__.__name__}: {e}"
+            f, self.file = self.file, None
+            try:
+                f.close()
+            except Exception:
+                pass
+            self.over_event.set()
 
     def run(self):
         try:
@@ -574,8 +616,7 @@ class _Reader(threading.Thread):
                 if keep:
                     self.buf += keep
                     if self.file:
-                        self.file.write(keep)
-                        self.file.flush()
+                        self._write(keep)
                     if self.on_line is not None and self.error is None:
                         self._lines(keep)
                 if len(chunk) > room and not self.over:
@@ -583,7 +624,11 @@ class _Reader(threading.Thread):
                     self.over_event.set()
         finally:
             if self.file:
-                self.file.close()
+                try:
+                    self.file.close()
+                except Exception as e:
+                    if self.write_error is None:
+                        self.write_error = f"{self.path}: {e.__class__.__name__}: {e}"
 
     def _lines(self, data):
         self.partial += data
@@ -664,6 +709,7 @@ def _supervise(proc, ctx, isolation, root_start, prior, lim, stdin_bytes, stdout
             _write_json(proc_path, rec)
 
     out = err = None
+    completed = False
     try:
         save()
         over_event = threading.Event()
@@ -676,7 +722,7 @@ def _supervise(proc, ctx, isolation, root_start, prior, lim, stdin_bytes, stdout
                 try:
                     proc.stdin.write(stdin_bytes)
                     proc.stdin.close()
-                except OSError:
+                except (OSError, ValueError):
                     pass
             threading.Thread(target=feed, daemon=True).start()
 
@@ -709,12 +755,18 @@ def _supervise(proc, ctx, isolation, root_start, prior, lim, stdin_bytes, stdout
             r.join(timeout=max(0.0, eof_deadline - time.monotonic()))
         if out.is_alive() or err.is_alive():
             run.unconfirmed = True
+        output_error = "; ".join(e for e in (out.write_error, err.write_error) if e) or None
         res = Limited(rc=proc.poll(), timed_out=timed_out, stdout_over=out.over, stderr_over=err.over,
                       stdout=bytes(out.buf), stderr=bytes(err.buf), stdout_bytes=len(out.buf),
                       stderr_bytes=len(err.buf), signals_sent=list(run.signals), killed_pids_alive=alive,
-                      cleanup_unconfirmed=run.unconfirmed, registry=list(run.registry.items()), isolation=isolation)
-        save({"ended_at": _now(), "alive_after": alive, "cleanup_unconfirmed": run.unconfirmed})
+                      cleanup_unconfirmed=run.unconfirmed, registry=list(run.registry.items()), isolation=isolation,
+                      output_error=output_error)
+        save({"ended_at": _now(), "alive_after": alive, "cleanup_unconfirmed": run.unconfirmed,
+              "output_error": output_error})
+        completed = True
     finally:
+        if not completed:
+            _emergency_stop(run, lim, save)
         if ctx is not None:
             ctx.close()                                # KILL_ON_JOB_CLOSE: nothing outlives the job handle
             try:
@@ -724,8 +776,8 @@ def _supervise(proc, ctx, isolation, root_start, prior, lim, stdin_bytes, stdout
         for r, pipe in ((out, proc.stdout), (err, proc.stderr)):
             if r is not None:
                 r.join(timeout=0.5 if ctx is not None else 0)
-                if not r.is_alive():                   # a reader still blocked on a pipe keeps it (daemon thread)
-                    pipe.close()
+            if r is None or not r.is_alive():          # a reader still blocked on a pipe keeps it (daemon thread)
+                pipe.close()
         if proc.stdin is not None and not proc.stdin.closed:
             try:
                 proc.stdin.close()
@@ -739,6 +791,24 @@ def _supervise(proc, ctx, isolation, root_start, prior, lim, stdin_bytes, stdout
     return res
 
 
+def _emergency_stop(run, lim, save):
+    """The normal path raised (bad output path, proc record write failure, KeyboardInterrupt ...): force-stop the
+    whole tree and verify before the exception propagates; record ended_at/alive_after when possible."""
+    alive, unconfirmed = None, True
+    try:
+        run.scan()
+        run.forced(lim.kill_wait)
+        alive = run.verify()
+        unconfirmed = run.unconfirmed
+    except BaseException:
+        pass
+    try:
+        save({"ended_at": _now(), "alive_after": alive if alive is not None else [run.root_pid],
+              "cleanup_unconfirmed": unconfirmed, "aborted": True})
+    except BaseException:
+        pass
+
+
 def still_alive(proc_record):
     """(alive pids, unconfirmed) for a lifecycle record: the root and every registry entry, same pid AND same start
     time. The second value is True when the process table could not be read for some entry."""
@@ -746,7 +816,7 @@ def still_alive(proc_record):
     for pid, start in proc_record.get("registry", []):
         entries.setdefault(int(pid), start)
     alive, unconfirmed = [], False
-    _reap(list(entries))
+    _reap(list(entries.items()))
     for pid, start in entries.items():
         try:
             if _is_alive(int(pid), start):
