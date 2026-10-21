@@ -23,12 +23,12 @@ RUNS = os.path.join(rp.CASE, "runs")
 BASELINE = os.path.join(rp.CASE, "rtl", "dot4sat.v")
 GATE_PY = os.path.join(HERE, "gate.py")
 GATE_RULES = os.path.join(rp.RULES, "gate_rules.md")
-CONSTRAINTS = os.path.join(rp.REVISE, "package_src", "constraints.md")
+PROTOCOL = os.path.join(rp.REVISE, "protocol.md")
 C, X = "contract", "extra"
 
 LEGAL = ("legal_ansi", "legal_nonansi", "legal_localparam_width", "legal_inverted_valid", "legal_escaped_keyword",
          "legal_attr_keep", "legal_signed", "legal_comments_strings", "legal_always_star", "legal_escaped_clk",
-         "legal_escaped_module_name")
+         "legal_escaped_module_name", "legal_translate_mention", "legal_wire_clk")
 
 # expected {(rule, line, kind)} of every negative fixture; YOSYS: the two-stage read must fail (yosys_problem set)
 NEG = {
@@ -60,6 +60,10 @@ NEG = {
     "neg_unknown_char": ({("unrecognized", 9, X)}, True),
     "neg_syntax_error": ({("unrecognized", 9, X)}, True),
     "neg_synopsys_full_case": ({("unrecognized", 13, X)}, True),
+    # RV-06: the tokenizer flags the translate comments itself; Yosys of this version also fails stage 1 here
+    "neg_translate_off_port": ({("unrecognized", 2, X), ("unrecognized", 7, X), ("unrecognized", 9, X)}, True),
+    "neg_translate_off_block": ({("unrecognized", 1, X), ("unrecognized", 8, X), ("unrecognized", 10, X)}, True),
+    "neg_wire_clk_assign": ({("G7", 7, X)}, False),
 }
 
 
@@ -207,6 +211,36 @@ class GateTest(unittest.TestCase):
         res = self.check_neg("neg_synopsys_full_case")       # Yosys parses the comment; pinned (fix round 1)
         self.assertIn("TOK_SYNOPSYS_FULL_CASE", res.yosys_problem)
 
+    def test_neg_translate_off_port_never_passes(self):
+        res = self.check_neg("neg_translate_off_port")       # the reviewer's probe (RV-06)
+        self.assertIn(("unrecognized", 7, X), triples(res))
+        self.assertEqual(res.hits[1].text, "    // synopsys translate_off")
+
+    def test_neg_translate_off_block(self):
+        self.check_neg("neg_translate_off_block")
+
+    def test_neg_wire_clk_assign(self):
+        self.check_neg("neg_wire_clk_assign")
+
+    def test_translate_comment_rule(self):
+        flagged = ["// synopsys translate_off", "//synthesis translate_on", "//   Synopsys \t TRANSLATE_OFF  rest",
+                   "/* synthesis translate_off */", "/*\n  synopsys translate_on */", "// SYNTHESIS translate_on;"]
+        ordinary = ["// no synopsys translate_off here", "// synopsys full_case", "// synopsys parallel_case",
+                    "/* synthesis keep */", "// synopsys_translate_off", "// synopsys translate_offx",
+                    "// translate_off", "// pragma translate_off"]
+        for c in flagged:
+            with self.subTest(flagged=c):
+                toks = gate.tokenize(f"module m;\nwire a; {c}\nendmodule")
+                self.assertEqual([t.kind for t in toks if t.kind == "translate"], ["translate"])
+                self.assertEqual([(h.rule, h.line, h.kind) for h in gate.token_rules(toks)],
+                                 [("unrecognized", 2, X)])
+                self.assertNotIn("translate_off", [t.text for t in toks if t.kind != "translate"])
+        for c in ordinary:
+            with self.subTest(ordinary=c):
+                toks = gate.tokenize(f"module m;\nwire a; {c}\nendmodule")
+                self.assertFalse(any(t.kind == "translate" for t in toks))
+                self.assertEqual(gate.token_rules(toks), [])
+
     def test_every_negative_fixture_has_a_test(self):
         names = {f[:-2] for f in os.listdir(FIX) if f.startswith("neg_") and f.endswith(".v")}
         self.assertEqual(names - {"neg_body_undeclared"}, set(NEG))
@@ -268,7 +302,7 @@ class GateTest(unittest.TestCase):
     # ---------------------------------------------------------------- tokenizer details
     def test_tokenizer_drops_comments_and_strings(self):
         src = ('a // parameter `define clk\nb /* parameter\n `x clk */ c "str \\" parameter clk" d\n'
-               '/* synopsys translate_off */ e')
+               '/* synopsys full_case */ e')
         toks = gate.tokenize(src)
         self.assertEqual([(t.kind, t.text, t.line) for t in toks],
                          [("ident", "a", 1), ("ident", "b", 2), ("ident", "c", 3), ("ident", "d", 3),
@@ -307,8 +341,14 @@ class GateTest(unittest.TestCase):
 
     def test_g7_positions(self):
         ok = ["module m (clk, a);\ninput clk;", "module m (input wire clk, input a);",
-              "module m (a, clk);\ninput wire a, clk;", "module m (\\clk , a);\ninput [0:0] \\clk ;"]
+              "module m (a, clk);\ninput wire a, clk;", "module m (\\clk , a);\ninput [0:0] \\clk ;",
+              "module m (clk);\ninput clk;\nwire clk;",                          # RV-07
+              "module m (clk);\ninput clk;\nwire /* c */ clk // c\n ;", "module m (clk);\nwire clk;\ninput clk;",
+              "module m (clk);\ninput clk;\nwire \\clk ;"]
         bad = [("module m (clk);\ninput clk;\noutput reg x = clk;", 3), ("module m (clk);\ninput clk;\nwire y = clk;", 3),
+               ("module m (clk);\ninput clk;\nwire clk = 1'b0;", 3), ("module m (clk);\ninput clk;\nwire [0:0] clk;", 3),
+               ("module m (clk);\ninput clk;\nwire clk, x;", 3), ("module m (a);\ninput a;\nwire clk;", 3),
+               ("module m (clk);\ninput clk;\nreg clk;", 3), ("module m (clk);\ninput clk;\nassign y = f(wire clk;);", 3),
                ("module m (clk);\ninput clk;\nassign y = \\clk ;", 3), ("module m (clk);\ninput clk;\nwire clk2 = clk;", 3),
                ("module m (input [clk:0] a);", 1), ("module m (clk);\ninput clk;\nalways @(negedge clk) a <= b;", 3)]
         for src in ok:
@@ -584,7 +624,7 @@ class GateTest(unittest.TestCase):
     def test_gate_rules_md_rows(self):
         texts = feedback.gate_rule_texts(GATE_RULES)
         self.assertEqual(set(texts), {f"G{i}" for i in range(1, 9)} | {"unrecognized"})
-        given = feedback.gate_rule_texts(CONSTRAINTS)     # the table given to the models (same row format)
+        given = feedback.gate_rule_texts(PROTOCOL)        # protocol v0.5 section 7.2 (RV-07 text of G7)
         for i in range(1, 9):
             self.assertEqual(texts[f"G{i}"], given[f"G{i}"])
         with open(GATE_RULES, encoding="utf-8") as f:
