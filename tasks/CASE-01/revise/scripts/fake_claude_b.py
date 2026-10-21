@@ -13,7 +13,9 @@ Configuration (environment; the wrapper removes ANTHROPIC_* and CLAUDE* but keep
   of --version / auth status, default 0; the expected text is printed anyway).
 Scenarios: ok_case01 max_tokens max_tokens_bad_lines cap_text_only multiturn_no_limit wrong_model hang prompt_echo
 private_in_rtl partial_limit_then_hang. Under CLAUDE_CODE_MAX_OUTPUT_TOKENS < 300 a "从 1 数到 300" prompt is cut
-off like the real CLI (cap text, num_turns > 1)."""
+off like the real CLI, and cap_text_only emits the same shape (protocol v0.5 RV-05, the stage A smoke records): an
+assistant event whose message.content[0].text and a result event (is_error true, num_turns 4) whose result both
+start with the CLI error sentence (cap_error), and no max_tokens anywhere."""
 import hashlib
 import json
 import os
@@ -23,7 +25,7 @@ import time
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
-import classify  # noqa: E402  (CAP_HIT: the same constant the classifier looks for)
+import classify  # noqa: E402  (CAP_RE: cap_error must match the prefix the classifier looks for)
 
 MAX_SECONDS = 10
 MAX_BYTES = 1024 * 1024
@@ -31,6 +33,14 @@ PLUGINS = [{"name": "cc-plugin-agents-md", "source": "cc-plugin-agents-md@builti
            {"name": "cc-plugin-plugin-authoring", "source": "cc-plugin-plugin-authoring@builtin"}]
 
 _written = [0]
+
+
+def cap_error(cap):
+    """The CLI error sentence of the stage A smoke records (RV-05), for an output cap of `cap` tokens."""
+    text = (f"API Error: Claude's response exceeded the {cap} output token maximum. To configure this behavior, "
+            f"set the CLAUDE_CODE_MAX_OUTPUT_TOKENS environment variable.")
+    assert classify.CAP_RE.match(text)
+    return text
 
 
 def _watchdog():
@@ -138,10 +148,9 @@ def main():
                 "stop_reason": stop, "result": text, "modelUsage": usage}
 
     emit(init)
-    if "数到 300" in user and cap < 300:
-        text = (f"API Error: Claude's response exceeded the {cap} {classify.CAP_HIT}. To configure this behavior, "
-                f"set the CLAUDE_CODE_MAX_OUTPUT_TOKENS environment variable.")
-        emit(assistant("1 2 3 4 5", "max_tokens"))
+    if ("数到 300" in user and cap < 300) or scenario == "cap_text_only":
+        text = cap_error(cap)
+        emit(assistant(text, "stop_sequence"))
         emit(result(text, "stop_sequence", 4, True))
         return 1
     if scenario in ("hang", "partial_limit_then_hang"):
@@ -160,11 +169,6 @@ def main():
         out("{not json\n")
         emit(result(partial, "max_tokens"))
         return 0
-    if scenario == "cap_text_only":
-        text = f"API Error: Claude's response exceeded the {cap} {classify.CAP_HIT}."
-        emit(assistant(text))
-        emit(result(text, "end_turn", 1, True, "error_during_execution"))
-        return 1
     if scenario == "multiturn_no_limit":
         emit(assistant("第一段"))
         emit(assistant("第二段"))

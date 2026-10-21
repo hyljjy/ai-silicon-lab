@@ -1,4 +1,4 @@
-"""Call classification for CASE-01 stage B (protocol v0.4 section 6.2). Pure function module: no files, no processes.
+"""Call classification for CASE-01 stage B (protocol v0.5 section 6.2, revision RV-05). Pure function module: no files, no processes.
 
 Mapping of the protocol table to flags (expect shape = diag/rules/expected.json, one model's entry):
   F_MODEL        init.model or any assistant message.model differs (init_model, assistant_model)
@@ -10,12 +10,16 @@ Mapping of the protocol table to flags (expect shape = diag/rules/expected.json,
   F_EXIT         exit code not 0, is_error true, result.subtype not success
   F_RECORD       unparsable line, no init/result, memory_dir_clean None (init lacks memory_paths.auto),
                  timeout, over_limit, interrupted, exit code unknown
-  F_LIMIT        output-cap evidence (stop_reason max_tokens anywhere, CAP_HIT text anywhere,
-                 num_turns > 1 together with either)
+  F_LIMIT        output-cap evidence: (1) stop_reason == "max_tokens" on any event (incl. message.stop_reason);
+                 (2) RV-05: a type "result" event whose `result` string, or a type "assistant" event whose
+                 message.content[i].text string, STARTS WITH the verified CLI sentence (CAP_RE, case-sensitive).
+                 The phrase elsewhere (mid-text, later line, other fields or event types, `_unparsed` raw lines)
+                 is not evidence; num_turns > 1 alone is not evidence
   F_MULTITURN    num_turns > 1 without cap evidence
   F_STOP         result.stop_reason is neither end_turn nor max_tokens
 api_retry events are only counted (Verdict.api_retries).
 Cap evidence is searched in all readable events; an incomplete record never short-circuits it."""
+import re
 from collections import namedtuple
 
 import revpaths
@@ -25,7 +29,9 @@ void_check = revpaths.load_diag("void_check")   # read-only reuse of stage A, lo
 parse_stream = void_check.parse_stream
 answer_text = void_check.answer_text
 
-CAP_HIT = "output token maximum"   # same value as stage A run_round.CAP_HIT; the author verifies it (plan Task 2 step 1)
+# RV-05: the fixed prefix of the CLI error sentence the author verified in the stage A smoke records
+# ("API Error: Claude's response exceeded the 64 output token maximum. To configure this behavior, ...")
+CAP_RE = re.compile(r"API Error: Claude's response exceeded the [0-9]+ output token maximum\.")
 
 F_MODEL = "模型不符"
 F_SHELL = "外壳不符"
@@ -42,13 +48,18 @@ F_STOP = "stop_reason 异常"
 Verdict = namedtuple("Verdict", "flags delivery retry_allowed global_stop api_retries parse_ok")
 
 
-def _has_string(obj, needle):
-    if isinstance(obj, str):
-        return needle in obj
-    if isinstance(obj, dict):
-        return any(_has_string(v, needle) for v in obj.values())
-    if isinstance(obj, (list, tuple)):
-        return any(_has_string(v, needle) for v in obj)
+def _starts_cap(s):
+    return isinstance(s, str) and CAP_RE.match(s) is not None
+
+
+def _cap_text(e):
+    """RV-05 evidence two: only result.result or assistant message.content[i].text, matched at the start."""
+    if e.get("type") == "result":
+        return _starts_cap(e.get("result"))
+    if e.get("type") == "assistant":
+        msg = e.get("message")
+        content = msg.get("content") if isinstance(msg, dict) else None
+        return isinstance(content, list) and any(isinstance(b, dict) and _starts_cap(b.get("text")) for b in content)
     return False
 
 
@@ -66,7 +77,7 @@ def classify(raw_stdout, expect, exit_code, timed_out, over_limit, interrupted, 
     unparsed = any(e.get("type") == "_unparsed" for e in events)
     api_retries = sum(e.get("subtype") == "api_retry" for e in events)
 
-    cap = any(_max_tokens_stop(e) for e in events) or any(_has_string(e, CAP_HIT) for e in events)
+    cap = any(_max_tokens_stop(e) for e in events) or any(_cap_text(e) for e in events)
     turns = (result or {}).get("num_turns")
     multi = isinstance(turns, int) and turns > 1
     if cap:

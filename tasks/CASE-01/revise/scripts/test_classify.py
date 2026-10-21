@@ -18,6 +18,9 @@ ASSISTANT = {"type": "assistant", "message": {"model": "claude-opus-5-5", "stop_
                                               "content": [{"type": "text", "text": "hi"}]}}
 RESULT = {"type": "result", "subtype": "success", "is_error": False, "num_turns": 1, "stop_reason": "end_turn",
           "result": "hi", "modelUsage": {"claude-opus-5-5": {"maxOutputTokens": 128000}}}
+# the CLI sentence verified by the author in the stage A smoke records (protocol v0.5 RV-05)
+CAP_SENTENCE = ("API Error: Claude's response exceeded the 64 output token maximum. To configure this behavior, "
+                "set the CLAUDE_CODE_MAX_OUTPUT_TOKENS environment variable.")
 
 
 def stream(*events, tail=""):
@@ -102,11 +105,88 @@ class ClassifyTests(unittest.TestCase):
         self.assertEqual((v.delivery, v.retry_allowed), ("delivery_fail", False))
 
     def test_cap_text_without_max_tokens_is_limit(self):
+        # the real shape (protocol v0.5 RV-05): assistant text and result both start with the CLI sentence,
+        # num_turns 4, is_error true, no max_tokens anywhere
         ev = good()
-        ev[2]["result"] = "API Error: exceeded the 32000 output token maximum"
+        ev[1]["message"]["content"][0]["text"] = CAP_SENTENCE
+        ev[1]["message"]["stop_reason"] = "stop_sequence"
+        ev[2].update(result=CAP_SENTENCE, num_turns=4, is_error=True, stop_reason="stop_sequence")
+        v = run(events=ev, exit_code=1)
+        self.assertIn(c.F_LIMIT, cats(v))
+        self.assertNotIn(c.F_MULTITURN, cats(v))
+        self.assertEqual((v.delivery, v.retry_allowed), ("delivery_fail", False))
+
+    def test_cap_text_in_result_only_is_limit(self):
+        v = run(events=mutated(2, "result", CAP_SENTENCE))
+        self.assertIn(c.F_LIMIT, cats(v))
+        self.assertEqual(v.delivery, "delivery_fail")
+        # the fixed prefix alone (any digit count) is enough
+        v = run(events=mutated(2, "result", "API Error: Claude's response exceeded the 128000 output token maximum."))
+        self.assertIn(c.F_LIMIT, cats(v))
+
+    def test_cap_text_in_assistant_only_is_limit(self):
+        ev = good()
+        ev[1]["message"]["content"] = [{"type": "thinking", "thinking": "x"},
+                                       {"type": "text", "text": CAP_SENTENCE}]
         v = run(events=ev)
         self.assertIn(c.F_LIMIT, cats(v))
-        self.assertEqual((v.delivery, v.retry_allowed), ("delivery_fail", False))
+        self.assertEqual(v.delivery, "delivery_fail")
+
+    def test_cap_text_in_partial_stream_is_limit(self):
+        ev = good()[:2]
+        ev[1]["message"]["content"][0]["text"] = CAP_SENTENCE
+        v = run(raw=stream(*ev, tail='{"type": "result", "res'))
+        self.assertIn(c.F_LIMIT, cats(v))
+        self.assertIn(c.F_RECORD, cats(v))
+        self.assertEqual(v.delivery, "delivery_fail")
+        self.assertFalse(v.parse_ok)
+
+    def test_cap_phrase_not_at_start_is_not_limit(self):
+        quoted = "The CLI says: " + CAP_SENTENCE
+        later = "My answer.\n" + CAP_SENTENCE
+        mid = "Note: a response may hit the 32000 output token maximum, so I keep this short."
+        for name, text in (("quoted", quoted), ("later line", later), ("mid text", mid),
+                           ("leading space", " " + CAP_SENTENCE), ("lower case", CAP_SENTENCE.lower()),
+                           ("no number", "API Error: Claude's response exceeded the output token maximum.")):
+            with self.subTest(name):
+                ev = good()
+                ev[1]["message"]["content"][0]["text"] = text
+                ev[2]["result"] = text
+                v = run(events=ev)
+                self.assertNotIn(c.F_LIMIT, cats(v))
+                self.assertEqual(v.delivery, "parse")
+
+    def test_cap_sentence_in_other_fields_is_not_limit(self):
+        cases = {
+            "init field": mutated(0, "note", CAP_SENTENCE),
+            "result other field": mutated(2, "error", CAP_SENTENCE),
+            "system event": good()[:1] + [{"type": "system", "subtype": "notice", "text": CAP_SENTENCE}] + good()[1:],
+            "user event text": good()[:2] + [{"type": "user", "message": {"content": [
+                {"type": "text", "text": CAP_SENTENCE}]}}] + good()[2:],
+            "stream_event result": good()[:2] + [{"type": "stream_event", "result": CAP_SENTENCE}] + good()[2:],
+        }
+        ev = good()
+        ev[1]["message"]["content"][0]["thinking"] = CAP_SENTENCE      # not the text field
+        cases["assistant other key"] = ev
+        ev = good()
+        ev[1]["message"]["text"] = CAP_SENTENCE                        # not inside content[i]
+        cases["assistant message.text"] = ev
+        for name, events in cases.items():
+            with self.subTest(name):
+                v = run(events=events)
+                self.assertNotIn(c.F_LIMIT, cats(v))
+                self.assertEqual(v.delivery, "parse")
+
+    def test_cap_sentence_in_unparsed_line_is_not_limit(self):
+        v = run(raw=stream(*good(), tail=CAP_SENTENCE + "\n"))
+        self.assertNotIn(c.F_LIMIT, cats(v))
+        self.assertIn(c.F_RECORD, cats(v))
+        self.assertEqual(v.delivery, "retry")
+
+    def test_cap_re_is_the_fixed_prefix(self):
+        self.assertTrue(c.CAP_RE.match(CAP_SENTENCE))
+        self.assertIsNone(c.CAP_RE.match("x" + CAP_SENTENCE))
+        self.assertIsNone(c.CAP_RE.match("API Error: Claude's response exceeded the 64 output token maximum"))
 
     def test_limit_in_partial_stream_found(self):
         ev = good()[:2]
