@@ -37,3 +37,4 @@ docs/cloud/
 tasks/CASE-01/revise/impl_plan.md
 tasks/CASE-01/revise/interventions.md
 tasks/CASE-01/revise/**/.lock
+tasks/CASE-01/revise/**/.lock.*
