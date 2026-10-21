@@ -11,7 +11,8 @@ up to 3 x 2 x 30 minutes, so start it in the background with its output in a log
 
 Exit codes: 0 done; 1 refused (PREREG / PREFLIGHT / DISK / STOPPED / LOCKED / MAPPING / PROMPT / ATTEMPTS ...;
 nothing was called and no attempt was used); 2 usage; 3 a global stop was raised (prompt hash mismatch, KILL FAIL,
-old call not confirmed gone, ISOLATION FAIL); 4 the public-answer redaction hit inside the first verilog block.
+old call not confirmed gone, ISOLATION FAIL, disk short before a formal call); 4 the public-answer
+redaction hit inside the first verilog block.
 
 Preconditions (round modes): round_lock(r, "call"); no open stop on either side; prereg.problems("formal") (smoke:
 "smoke"); reused files; disk; mapping.load(r); committed prompts; preflight (CLI sha256 vs revise/rules/cli.sha256,
@@ -33,7 +34,17 @@ interrupted call (classified from the output captured so far), and a failed or u
 REASON_KILL. Recovery (--resume, Codex BC1-01): without a usable lifecycle record (call<n>.proc.json) the old call
 cannot be confirmed gone -> REASON_RESUME stop (there is no "never started" inference); a record that itself says the
 cleanup failed (alive_after / cleanup_unconfirmed) -> REASON_KILL; a "not_started" record -> REASON_ISOLATION (as when
-the launch failure is seen live)."""
+the launch failure is seen live).
+
+Batch D (Codex BC1-08..11): a process ownership or cleanup failure (ISOLATION FAIL, KILL FAIL, a supervision failure
+whose cleanup failed) in a smoke call or a preflight command writes a persistent stop at once and nothing else is
+launched (exit 3); smoke and smoke-preflight stops are round-1 call-side stops with details["smoke"] = kind (no model
+name), checked by every smoke run and every formal run (check_stops). Ordinary smoke failures stay per model. Both
+disk volumes are checked before every model call (formal, retry, smoke) and before "consumed" moves; a shortage in a
+formal round raises REASON_DISK with the measured values and no other code is called. Preflight commands must exit 0;
+revise/models/originals.sha256 is parsed strictly and every model's settings hash is verified. Smoke prompt bytes
+(system prompt and stdin) are rebuilt from the frozen sources with build_prompt.py and must match before any launch;
+the canary words come from smoke_system.md / smoke_user.md."""
 import argparse
 import dataclasses
 import datetime
@@ -43,6 +54,7 @@ import re
 import secrets
 import sys
 
+import build_prompt          # before classify: classify puts diag/scripts (it also has a build_prompt.py) first
 import classify
 import extract
 import limits
@@ -52,13 +64,16 @@ import revpaths as rp
 import stops
 
 sys.path.insert(0, rp.DIAG_SCRIPTS)
+if os.path.dirname(os.path.abspath(build_prompt.__file__)) != os.path.dirname(os.path.abspath(__file__)):
+    raise ImportError("run_revise needs revise/scripts/build_prompt.py, not the stage A build_prompt.py")
 import privacy_check  # noqa: E402  (read-only reuse of stage A: account e-mail and user-directory pattern)
 
 CLI_PATH = r"D:\study\diag_sandbox\bin\claude-2.1.296.exe"
 CLI_VERSION = "2.1.296"
 MAX_OUTPUT_TOKENS = "32000"
 CAP_PROBE_TOKENS = "64"
-SMOKE_CANARIES = ("红杉-0815", "灰雁-2026")      # revise/prompts/smoke_system.md and smoke_user.md (Task 9)
+CANARY_RE = re.compile(r"暗号是：([^。\s]+)。")   # the canary words of smoke_system.md / smoke_user.md
+SMOKE_STOP_ROUND = 1      # smoke stops are written as round-1 call-side stops (details["smoke"] = kind)
 SMOKE_KINDS = ("probe", "canary", "rehearsal")
 HIDDEN = "<已隐去>"
 WORKDIR_RE = re.compile(r"rv-[0-9a-f]{12}")
@@ -72,6 +87,10 @@ REASON_PRIVATE = "公开答复脱敏时在第一个 verilog 代码块内有命�
 REASON_RESUME = "续跑时无法确认旧调用已退出"
 REASON_KILL = "KILL FAIL：调用结束后仍有存活进程或无法确认"
 REASON_ISOLATION = "ISOLATION FAIL：无法建立进程归属，调用未启动"
+REASON_DISK = "DISK FAIL：模型调用前磁盘可用空间不足（规程 16）"
+NOTE_OVER = "超限，输出不完整"
+NOTE_SUPERVISION = "监督失败，输出不完整"
+_SUM_LINE = re.compile(r"^([0-9a-f]{64}) [ *](\S.*)$")
 
 
 class Refused(Exception):
@@ -80,6 +99,14 @@ class Refused(Exception):
     def __init__(self, lines):
         super().__init__("; ".join(lines) if isinstance(lines, list) else lines)
         self.lines = list(lines) if isinstance(lines, list) else [lines]
+
+
+class Stopped(Exception):
+    """A persistent stop record was written (process ownership or cleanup failure): print the lines, exit 3."""
+
+    def __init__(self, lines):
+        super().__init__("; ".join(lines))
+        self.lines = list(lines)
 
 
 class Ctx:
@@ -164,12 +191,23 @@ def check_disk(ctx):
         raise Refused(probs + ["DISK FAIL: not started (protocol 16)"])
 
 
+def _is_smoke_stop(rec):
+    return isinstance(rec.get("details"), dict) and "smoke" in rec["details"]
+
+
 def check_stops(ctx, rnd):
-    open_ = stops.open_stops(rnd, revise=ctx.revise)
-    if open_:
-        raise Refused([f"STOPPED: round {rnd} has open stop {s['stop_id']} (side {s.get('side')}: "
-                       f"{s.get('reason')}; {s.get('why_open')})" for s in open_]
-                      + [f"STOPPED: commit revise/stops/r{rnd}/<stop_id>.cleared.md for each open stop first"])
+    """Refuse on an open stop of round rnd (either side). Smoke stops live in round SMOKE_STOP_ROUND; every other
+    round also refuses while one of them is open (Codex BC1-08)."""
+    found = [(rnd, s) for s in stops.open_stops(rnd, revise=ctx.revise)]
+    if rnd != SMOKE_STOP_ROUND:
+        found += [(SMOKE_STOP_ROUND, s) for s in stops.open_stops(SMOKE_STOP_ROUND, revise=ctx.revise)
+                  if _is_smoke_stop(s)]
+    if found:
+        raise Refused([f"STOPPED: round {r} has open stop {s['stop_id']} (side {s.get('side')}"
+                       f"{', smoke ' + str(s['details']['smoke']) if _is_smoke_stop(s) else ''}: "
+                       f"{s.get('reason')}; {s.get('why_open')})" for r, s in found]
+                      + [f"STOPPED: commit revise/stops/r{r}/<stop_id>.cleared.md for each open stop first"
+                         for r in sorted({r for r, _ in found})])
 
 
 def run_order(ctx):
@@ -200,8 +238,73 @@ def _fresh_workdir(ctx, sub):
             continue
 
 
-def preflight(ctx, models):
-    """Problems of the preflight (no attempt is used)."""
+def parse_originals(data):
+    """({settings file name: sha256}, problems) of revise/models/originals.sha256 ("<sha256>  <path>" lines).
+    Strict (Codex BC1-10, BC2 2.4): an empty list, a malformed line or a repeated file name is a problem."""
+    probs, out = [], {}
+    try:
+        text = data.decode("utf-8")
+    except UnicodeDecodeError:
+        return {}, ["PREFLIGHT FAIL: revise/models/originals.sha256 is not UTF-8 text"]
+    lines = text.split("\n")
+    if lines and lines[-1] == "":
+        lines.pop()                                                   # the final newline
+    if not lines:
+        return {}, ["PREFLIGHT FAIL: revise/models/originals.sha256 is empty"]
+    for i, ln in enumerate(lines, 1):
+        m = _SUM_LINE.match(ln)
+        if not m:
+            probs.append(f"PREFLIGHT FAIL: revise/models/originals.sha256 line {i} is malformed")
+            continue
+        name = m.group(2).strip().replace("\\", "/").rsplit("/", 1)[-1]
+        if name in out:
+            probs.append(f"PREFLIGHT FAIL: revise/models/originals.sha256 lists {name} more than once")
+            continue
+        out[name] = m.group(1)
+    return out, probs
+
+
+def _settings_name(entry):
+    return os.path.expandvars(entry["settings"]).replace("\\", "/").rsplit("/", 1)[-1]
+
+
+def originals_problems(ctx, models):
+    """Every model's settings file against revise/models/originals.sha256 (hash only; the content is never read
+    here). Every model is checked whatever the state of the list; a model without a usable entry is a problem."""
+    try:
+        data = rp.read_bytes(os.path.join(ctx.models_dir, "originals.sha256"))
+    except OSError:
+        data = None
+    if data is None:
+        originals, probs = {}, ["PREFLIGHT FAIL: revise/models/originals.sha256 is missing (model configuration "
+                                "not yet confirmed by the author)"]
+    else:
+        originals, probs = parse_originals(data)
+    for m in models:
+        name = _settings_name(m)
+        try:
+            got = rp.sha256(os.path.expandvars(m["settings"]))
+        except OSError:
+            got = None
+        if name not in originals:
+            probs.append(f"PREFLIGHT FAIL: settings file {name} has no entry in revise/models/originals.sha256; "
+                         f"it cannot be verified")
+        elif got != originals[name]:
+            probs.append(f"PREFLIGHT FAIL: settings file {name} differs from revise/models/originals.sha256")
+    return probs
+
+
+def _stop_now(ctx, rnd, reason, details):
+    """Write a persistent stop at once and end the run (Codex BC1-08): nothing else is launched."""
+    sid = stops.raise_stop(rnd, "call", reason, None, details, revise=ctx.revise)
+    line = f"STOP {sid}: {reason} — commit revise/stops/r{rnd}/{sid}.json now"
+    print(line, flush=True)
+    raise Stopped([line, "STOPPED: nothing else is launched; clear the stop before any further run"])
+
+
+def preflight(ctx, models, stop_rnd, stop_details=None):
+    """Problems of the preflight (no attempt is used). A preflight command whose processes were not cleaned up (or
+    whose cleanup cannot be confirmed) writes a round-stop_rnd stop at once and raises Stopped."""
     probs = []
     try:
         ctx.email()                                   # the redaction needs it; resolve it before any attempt
@@ -221,42 +324,35 @@ def preflight(ctx, models):
     cwd = _fresh_workdir(ctx, "preflight")
 
     def run(args):
+        cmd = " ".join(args)
         try:
             res = limits.run_limited(ctx.claude_cmd + args, "preflight", cwd=cwd, env=clean_env(ctx.base_env))
         except limits.SupervisionError as e:
-            kill = " and was not cleaned up" if e.killed_pids_alive or e.cleanup_unconfirmed else ""
-            probs.append(f"PREFLIGHT FAIL: {' '.join(args)} failed after it had started ({e.cause_type}){kill}")
+            if e.killed_pids_alive or e.cleanup_unconfirmed:
+                _stop_now(ctx, stop_rnd, REASON_KILL,
+                          dict(stop_details or {}, phase="preflight", command=cmd, cause=e.cause_type,
+                               alive=e.killed_pids_alive, unconfirmed=e.cleanup_unconfirmed))
+            probs.append(f"PREFLIGHT FAIL: {cmd} failed after it had started ({e.cause_type})")
             return None
         except (OSError, limits.IsolationFail) as e:
-            probs.append(f"PREFLIGHT FAIL: {' '.join(args)} could not run ({e.__class__.__name__})")
+            probs.append(f"PREFLIGHT FAIL: {cmd} could not run ({e.__class__.__name__})")
             return None
-        if res.incomplete or res.killed_pids_alive or res.cleanup_unconfirmed:
-            probs.append(f"PREFLIGHT FAIL: {' '.join(args)}: over the preflight limits or not cleaned up")
+        if res.killed_pids_alive or res.cleanup_unconfirmed:
+            _stop_now(ctx, stop_rnd, REASON_KILL,
+                      dict(stop_details or {}, phase="preflight", command=cmd, cause=None,
+                           alive=res.killed_pids_alive, unconfirmed=res.cleanup_unconfirmed))
+        if res.incomplete:
+            probs.append(f"PREFLIGHT FAIL: {cmd}: over the preflight limits")
+            return None
+        if res.rc != 0:
+            probs.append(f"PREFLIGHT FAIL: {cmd} exited with {res.rc}")
             return None
         return res.stdout.decode("utf-8", "replace")
 
     out = run(["--version"])
     if out is not None and (not out.split() or out.split()[0] != CLI_VERSION):
         probs.append(f"PREFLIGHT FAIL: CLI version is not {CLI_VERSION}")
-    originals = {}
-    try:
-        for ln in rp.read_bytes(os.path.join(ctx.models_dir, "originals.sha256")).decode("utf-8").splitlines():
-            parts = ln.split(None, 1)
-            if len(parts) == 2:
-                originals[parts[1].strip().replace("\\", "/").rsplit("/", 1)[-1]] = parts[0].lower()
-    except (OSError, UnicodeDecodeError):
-        probs.append("PREFLIGHT FAIL: revise/models/originals.sha256 is missing (model configuration not yet "
-                     "confirmed by the author)")
-    if originals:
-        for m in models:
-            path = os.path.expandvars(m["settings"])
-            name = path.replace("\\", "/").rsplit("/", 1)[-1]
-            try:
-                ok = rp.sha256(path) == originals.get(name)        # hash only; the content is never read here
-            except OSError:
-                ok = False
-            if not ok:
-                probs.append(f"PREFLIGHT FAIL: settings file {name} differs from revise/models/originals.sha256")
+    probs += originals_problems(ctx, models)
     out = run(["auth", "status", "--json"])
     if out is not None:
         try:
@@ -268,8 +364,8 @@ def preflight(ctx, models):
     return probs
 
 
-def check_preflight(ctx, models):
-    probs = preflight(ctx, models)
+def check_preflight(ctx, models, stop_rnd, stop_details=None):
+    probs = preflight(ctx, models, stop_rnd, stop_details)
     if probs:
         raise Refused(probs + ["PREFLIGHT FAIL: no model was called and no attempt was used"])
 
@@ -363,14 +459,15 @@ def one_call(ctx, entry, system, stdin, prompt_ok, raw_dir, n, expect, tokens, w
         kill = bool(res.killed_pids_alive or res.cleanup_unconfirmed)
         meta.update(kill={"alive": res.killed_pids_alive, "unconfirmed": res.cleanup_unconfirmed},
                     captured={"stdout": res.stdout_bytes, "stderr": res.stderr_bytes},
-                    incomplete="超限，输出不完整" if res.incomplete else None)
+                    incomplete=NOTE_OVER if res.incomplete else None)
     except limits.SupervisionError as e:
         # the CLI had started: not a launch problem; the call counts as interrupted, the cleanup result decides KILL
         rc, timed_out, over, interrupted = None, e.timed_out, bool(e.stdout_over or e.stderr_over), True
         kill = bool(e.killed_pids_alive or e.cleanup_unconfirmed)
         meta.update(supervision_error=f"{e.cause_type}: {e.__cause__}", interrupted=True,
                     kill={"alive": e.killed_pids_alive, "unconfirmed": e.cleanup_unconfirmed},
-                    captured={"stdout": e.stdout_bytes, "stderr": e.stderr_bytes}, incomplete="超限，输出不完整")
+                    captured={"stdout": e.stdout_bytes, "stderr": e.stderr_bytes},
+                    incomplete=NOTE_OVER if over else NOTE_SUPERVISION)
     except (OSError, limits.IsolationFail) as e:
         rc, timed_out, over = None, False, False
         launch = f"{e.__class__.__name__}: {e}"
@@ -530,6 +627,11 @@ def call_code(ctx, rnd, code, e, entry, expect, att):
     and only then saves the decided state (a crash in between leaves running<n>, never a decided state without its
     stop record; recovery may then raise a duplicate stop, the conservative failure)."""
     n = e["consumed"] + 1
+    disk = rp.disk_problems(free_bytes=ctx.free_bytes)               # before every call, before consumed moves
+    if disk:
+        for p in disk:
+            print(p, flush=True)
+        return [(REASON_DISK, {"before_call": n, "problems": disk})]
     e["consumed"], e["state"] = n, f"running{n}"
     save_attempts(ctx, rnd, att)                                      # before the call; never decreased
     print(f"CALL started (call {n} of at most 2 for this code)", flush=True)
@@ -643,7 +745,7 @@ def run_round(ctx, rnd, resume):
         expect = load_expect(ctx, "formal", models)
         todo = [c for c in codes if att["codes"][c]["state"] != "final"]
         _check_prompts(ctx, rnd, todo)
-        check_preflight(ctx, models)
+        check_preflight(ctx, models, rnd)
         if not resume:
             save_attempts(ctx, rnd, att)
         exit_code = EXIT_OK
@@ -708,7 +810,38 @@ def commit_codes(ctx, rnd, dry_run):
         return EXIT_OK
 
 
+def smoke_expected(ctx, kind, entry):
+    """(system bytes, stdin bytes) of a smoke call rebuilt from the frozen sources with build_prompt.py's smoke
+    builders (Codex BC1-11): probe = smoke_system.md + cap_probe_user.md; canary = smoke_system.md +
+    smoke_user.md; rehearsal = system.md + the rehearsal prompt built from round1_template.md, the package and the
+    model's stage A answer."""
+    templates = os.path.join(ctx.revise, "prompts")
+    if kind == "rehearsal":
+        system = rp.read_bytes(os.path.join(templates, "system.md"))
+        return system, build_prompt.rehearsal_bytes(entry["name"], package=os.path.join(ctx.revise, "package"),
+                                                    templates=templates)
+    system, user = build_prompt.canary_bytes(templates)
+    return system, (user if kind == "canary" else build_prompt.cap_probe_bytes(templates))
+
+
+def smoke_canaries(ctx):
+    """The two canary words, taken from smoke_system.md and smoke_user.md (one '暗号是：<word>。' each)."""
+    words = []
+    for data in build_prompt.canary_bytes(os.path.join(ctx.revise, "prompts")):
+        found = CANARY_RE.findall(data.decode("utf-8"))
+        if len(found) != 1:
+            raise Refused("SMOKE PROMPT FAIL: smoke_system.md and smoke_user.md must each hold exactly one canary "
+                          "word ('暗号是：<word>。')")
+        words.append(found[0])
+    return words
+
+
 def run_smoke(ctx, kind):
+    """Smoke calls (protocol 6.3). An ordinary failure of one model's call stays with that model; a process
+    ownership or cleanup failure (ISOLATION FAIL, KILL FAIL, a supervision failure whose cleanup failed) writes a
+    persistent stop at once (round SMOKE_STOP_ROUND, side call, details["smoke"] = kind, no model name) and nothing
+    else is launched; that stop blocks later smoke runs and every formal run (check_stops)."""
+    check_stops(ctx, SMOKE_STOP_ROUND)
     check_tags(ctx, "smoke")
     check_reused()
     check_disk(ctx)
@@ -722,27 +855,69 @@ def run_smoke(ctx, kind):
     missing = [p for p in [sys_path] + [os.path.join(prompts, user_of(m)) for m in models] if not os.path.isfile(p)]
     if missing:
         raise Refused([f"SMOKE FAIL: prompt file {_rel(ctx, p)} is missing (build_prompt.py)" for p in missing])
-    check_preflight(ctx, models)
+    canaries = smoke_canaries(ctx) if kind == "canary" else None
     stamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S") + "-" + secrets.token_hex(2) + "-" + kind
     raw_base = os.path.join(ctx.raw, "smoke", stamp)
     rec_dir = os.path.join(ctx.case, "runs", "revise-smoke", stamp)
-    tokens = CAP_PROBE_TOKENS if kind == "probe" else MAX_OUTPUT_TOKENS
-    summary, all_ok = [], True
+    # the bytes actually sent, checked against the bytes rebuilt from the sources, before any launch
+    inputs, checks, bad = [], [], []
     for m in models:
-        system = rp.read_bytes(sys_path)
-        stdin = rp.read_bytes(os.path.join(prompts, user_of(m)))
+        system, stdin = rp.read_bytes(sys_path), rp.read_bytes(os.path.join(prompts, user_of(m)))
+        try:
+            want_sys, want_stdin = smoke_expected(ctx, kind, m)
+        except (build_prompt.PromptError, OSError, rp.RevpathsError) as err:
+            raise Refused(f"SMOKE PROMPT FAIL: the expected prompt bytes cannot be rebuilt: {err}") from None
+        sys_ok, stdin_ok = system == want_sys, stdin == want_stdin
+        chk = {"name": m["name"], "system_sha": rp.sha256_bytes(system), "expected_system_sha":
+               rp.sha256_bytes(want_sys), "stdin_sha": rp.sha256_bytes(stdin),
+               "expected_stdin_sha": rp.sha256_bytes(want_stdin), "system_ok": sys_ok, "stdin_ok": stdin_ok,
+               "prompt_ok": sys_ok and stdin_ok}
+        inputs.append((system, stdin))
+        checks.append(chk)
+        if not chk["prompt_ok"]:
+            bad.append(chk)
+    if bad:
+        _write(os.path.join(rec_dir, "summary.json"), _dump({"kind": kind, "time": _now(), "refused": True,
+                                                             "rows": checks}))
+        raise Refused([f"SMOKE PROMPT FAIL: {c['name']}: "
+                       + "; ".join(f"{what} sha256 {c[what + '_sha']} != expected {c['expected_' + what + '_sha']}"
+                                   for what in ("system", "stdin") if not c[what + "_ok"]) for c in bad]
+                      + [f"SMOKE PROMPT FAIL: nothing was called -> {_rel(ctx, rec_dir)}"])
+    check_preflight(ctx, models, SMOKE_STOP_ROUND, {"smoke": kind, "stamp": stamp})
+    tokens = CAP_PROBE_TOKENS if kind == "probe" else MAX_OUTPUT_TOKENS
+    summary, all_ok, exit_code = [], True, None
+    for i, (m, (system, stdin), chk) in enumerate(zip(models, inputs, checks)):
+        disk = rp.disk_problems(free_bytes=ctx.free_bytes)           # before every call (Codex BC1-09)
+        if disk:
+            for p in disk:
+                print(p, flush=True)
+            summary.append(dict(chk, ok=False, disk=disk))
+            print(f"DISK FAIL: smoke stopped before {m['name']}; no further call", flush=True)
+            all_ok, exit_code = False, EXIT_REFUSED
+            break
         raw_dir = os.path.join(raw_base, m["name"])
-        verdict, meta, stdout, launch, kill = one_call(ctx, m, system, stdin, True, raw_dir, 1, expect[m["name"]],
-                                                       tokens, "smoke")
+        verdict, meta, stdout, launch, kill = one_call(ctx, m, system, stdin, chk["prompt_ok"], raw_dir, 1,
+                                                       expect[m["name"]], tokens, "smoke")
         cats = list(dict.fromkeys(c for c, _ in verdict.flags))
         text = answer_of(stdout)
-        row = {"name": m["name"], "categories": cats, "delivery": verdict.delivery, "system_sha": meta["system_sha"],
-               "stdin_sha": meta["stdin_sha"], "stdout_sha": meta["stdout_sha"], "launch_error": bool(launch),
-               "kill_fail": kill}
+        row = dict(chk, categories=cats, delivery=verdict.delivery, stdout_sha=meta["stdout_sha"],
+                   launch_error=bool(launch), kill_fail=kill)
+        if launch or kill:
+            # process ownership / cleanup failure: persistent stop now, nothing else launched (Codex BC1-08)
+            row["ok"] = False
+            summary.append(row)
+            all_ok = False
+            _write(os.path.join(rec_dir, "summary.json"), _dump({"kind": kind, "time": _now(), "rows": summary}))
+            exit_code = _raise(ctx, SMOKE_STOP_ROUND, None,
+                               [(REASON_ISOLATION if launch else REASON_KILL,
+                                 {"smoke": kind, "stamp": stamp, "run_order_index": i,
+                                  "interrupted": bool(meta.get("interrupted"))})])
+            print("STOPPED: nothing else is launched; clear the stop before any further run", flush=True)
+            break
         if kind == "probe":
             ok = classify.F_LIMIT in cats
         elif kind == "canary":
-            row["canaries"] = [c in text for c in SMOKE_CANARIES]
+            row["canaries"] = [c in text for c in canaries]
             ok = verdict.delivery == "parse" and all(row["canaries"])
         else:
             ok = verdict.delivery == "parse"
@@ -756,7 +931,6 @@ def run_smoke(ctx, kind):
                     row.update(rtl_sha_raw=cf.rtl_sha_raw, rtl_sha_lf=cf.rtl_sha_lf, cfg_sha=cf.cfg_sha,
                                candidate_equals_block=same)
                     ok = same
-        ok = ok and not launch and not kill
         row["ok"] = ok
         all_ok &= ok
         summary.append(row)
@@ -764,6 +938,8 @@ def run_smoke(ctx, kind):
               flush=True)
     _write(os.path.join(rec_dir, "summary.json"), _dump({"kind": kind, "time": _now(), "rows": summary}))
     print(f"SMOKE {kind} {'OK' if all_ok else 'FAIL'} -> {_rel(ctx, rec_dir)}", flush=True)
+    if exit_code is not None:
+        return exit_code
     return EXIT_OK if all_ok else EXIT_REFUSED
 
 
@@ -815,6 +991,10 @@ def main(argv=None, free_bytes=None, base_env=None):
         for line in e.lines:
             print(line, flush=True)
         return EXIT_REFUSED
+    except Stopped as e:                                              # the STOP line was printed when written
+        for line in e.lines[1:]:
+            print(line, flush=True)
+        return EXIT_STOP
     except stops.LockError as e:
         print(str(e), flush=True)
         return EXIT_REFUSED

@@ -9,7 +9,8 @@ Configuration (environment; the wrapper removes ANTHROPIC_* and CLAUDE* but keep
                     per model is counted in <plan>.count.<n> files next to the plan.
   FAKE_CLAUDE_LOG   optional JSONL file: one line per invocation {argv (system prompt replaced by its sha256),
                     model, scenario, stdin_sha256, cwd, max_output_tokens, leaked_env, pid}.
-  FAKE_CLAUDE_VERSION (default 2.1.296), FAKE_LOGGED_IN ("1" default).
+  FAKE_CLAUDE_VERSION (default 2.1.296), FAKE_LOGGED_IN ("1" default), FAKE_VERSION_RC / FAKE_AUTH_RC (exit code
+  of --version / auth status, default 0; the expected text is printed anyway).
 Scenarios: ok_case01 max_tokens max_tokens_bad_lines cap_text_only multiturn_no_limit wrong_model hang prompt_echo
 private_in_rtl partial_limit_then_hang. Under CLAUDE_CODE_MAX_OUTPUT_TOKENS < 300 a "从 1 数到 300" prompt is cut
 off like the real CLI (cap text, num_turns > 1)."""
@@ -95,10 +96,10 @@ def main():
     argv = sys.argv[1:]
     if argv == ["--version"]:
         out(os.environ.get("FAKE_CLAUDE_VERSION", "2.1.296") + " (Claude Code)\n")
-        return 0
+        return int(os.environ.get("FAKE_VERSION_RC", "0"))
     if argv[:2] == ["auth", "status"]:
         out(json.dumps({"loggedIn": os.environ.get("FAKE_LOGGED_IN", "1") == "1"}) + "\n")
-        return 0
+        return int(os.environ.get("FAKE_AUTH_RC", "0"))
     model = argv[argv.index("--model") + 1]
     system = argv[argv.index("--system-prompt") + 1]
     plan_path = os.environ.get("FAKE_CLAUDE_PLAN")

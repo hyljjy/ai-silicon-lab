@@ -4,6 +4,8 @@ configuration directory is never touched: every call runs fake_claude_b.py (it l
 every settings file is a temporary file. Everything is written in a temporary git repository and a temporary sandbox
 under tasks/CASE-01/runs/ (never the real revise/outputs, revise/stops, rtl/, config/ or D:\\study\\revise_sandbox)."""
 import contextlib
+import dataclasses
+import glob
 import hashlib
 import io
 import json
@@ -22,6 +24,7 @@ import revpaths as rp
 import stops
 
 if os.name == "nt":
+    import build_prompt
     import fake_claude_b
     import run_revise
 
@@ -120,6 +123,8 @@ class Base(unittest.TestCase):
         write(os.path.join(self.revise, "models", "originals.sha256"), "".join(originals))
         write(os.path.join(self.revise, "prompts", "system.md"), "你是被测模型。正式系统提示。\n")
         write(os.path.join(self.revise, "prompts", "smoke_system.md"), "系统暗号是：红杉-0815。\n")
+        write(os.path.join(self.revise, "prompts", "smoke_user.md"), "本题暗号是：灰雁-2026。\n")
+        write(os.path.join(self.revise, "prompts", "cap_probe_user.md"), "从 1 数到 300，数字之间用一个空格分隔。\n")
         git(self.repo, "add", "-A")
         git(self.repo, "commit", "-q", "-m", "init")
         self.set_plan({})
@@ -142,7 +147,8 @@ class Base(unittest.TestCase):
     def run_main(self, *args, no_tags=True, env=None):
         buf = io.StringIO()
         with contextlib.redirect_stdout(buf):
-            rc = run_revise.main(list(args) + self.flags(no_tags), free_bytes=lambda v: self.free,
+            rc = run_revise.main(list(args) + self.flags(no_tags),
+                                 free_bytes=lambda v: self.free(v) if callable(self.free) else self.free,
                                  base_env=env or self.env)
         self.out = buf.getvalue()
         return rc
@@ -853,6 +859,270 @@ class TestBytes(Base):
         self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
         self.assertIn("请提交这两个文件", r.stdout.decode("utf-8"))
         self.assertFalse(os.path.exists(os.path.join(self.revise, "outputs", "r1", "codes.txt")))
+
+
+# ------------------------------------------------------------------------------------- Codex BC1-08..11 (batch D)
+class TestBatchD(Base):
+    def smoke_dir(self):
+        return os.path.join(self.case, "runs", "revise-smoke", "prompts")
+
+    def canary_file(self, data=None):
+        src = rp.read_bytes(os.path.join(self.revise, "prompts", "smoke_user.md"))
+        write(os.path.join(self.smoke_dir(), "canary_user.md"), src if data is None else data)
+
+    def summaries(self):
+        return [load(p) for p in sorted(glob.glob(os.path.join(self.case, "runs", "revise-smoke", "*",
+                                                               "summary.json")))]
+
+    def flag_cleanup(self, kind, supervision=False, first_n=1):
+        """run_limited of `kind`: the first first_n runs report a failed cleanup (as a result flag, or as a
+        SupervisionError with a surviving pid); `self.kinds` lists every run_limited kind in order."""
+        real = limits.run_limited
+        self.kinds = []
+
+        def fake(argv, k, *a, **kw):
+            self.kinds.append(k)
+            res = real(argv, k, *a, **kw)
+            if k == kind and self.kinds.count(k) <= first_n:
+                if supervision:
+                    raise limits.SupervisionError("test", pid=res.registry[0][0] if res.registry else 1,
+                                                  killed_pids_alive=[999999], cause_type="OSError")
+                return dataclasses.replace(res, cleanup_unconfirmed=True)
+            return res
+        return mock.patch.object(limits, "run_limited", fake)
+
+    def assert_no_model_names(self, rec):
+        text = json.dumps(rec, ensure_ascii=False).lower()
+        for word in ("claude", "kimi", "deepseek", "opus", "k3[", "v4-pro"):
+            self.assertNotIn(word, text)
+
+    # ---- BC1-08: process-ownership / cleanup failures write a persistent stop and launch nothing else
+    def test_smoke_cleanup_failure_stops_and_blocks(self):
+        self.setup_round()
+        self.canary_file()
+        self.set_plan({n: ["prompt_echo"] for n, _ in MODELS})
+        with self.flag_cleanup("model"):
+            self.assertEqual(self.run_main("--smoke", "canary"), 3, self.out)
+        self.assertEqual(len(self.calls()), 1)
+        (rec,) = self.stop_records()
+        self.assertEqual((rec["side"], rec["reason"]), ("call", run_revise.REASON_KILL))
+        self.assertEqual(rec["details"]["smoke"], "canary")
+        self.assert_no_model_names(rec)
+        self.assertIn(f"STOP {rec['stop_id']}", self.out)
+        self.assertIn(f"commit revise/stops/r1/{rec['stop_id']}.json now", self.out)
+        self.assertNotIn("SMOKE canary OK", self.out)
+        # the stop blocks later smoke runs and formal runs
+        self.assertEqual(self.run_main("--smoke", "canary"), 1)
+        self.assertIn("STOPPED", self.out)
+        self.assertEqual(self.run_main("--round", "1"), 1)
+        self.assertIn("STOPPED", self.out)
+        self.assertEqual(len(self.calls()), 1)
+
+    def test_smoke_supervision_failure_with_failed_cleanup_stops(self):
+        self.canary_file()
+        self.set_plan({n: ["prompt_echo"] for n, _ in MODELS})
+        with self.flag_cleanup("model", supervision=True):
+            self.assertEqual(self.run_main("--smoke", "canary"), 3, self.out)
+        self.assertEqual(len(self.calls()), 1)
+        (rec,) = self.stop_records()
+        self.assertEqual(rec["reason"], run_revise.REASON_KILL)
+
+    def test_smoke_stop_blocks_round2(self):
+        self.canary_file()
+        with self.flag_cleanup("model"):
+            self.assertEqual(self.run_main("--smoke", "canary"), 3, self.out)
+        self.assertEqual(self.run_main("--commit-codes", "2"), 1)
+        self.assertIn("STOPPED", self.out)
+
+    def test_smoke_ordinary_failure_stays_per_model(self):
+        self.canary_file()
+        self.set_plan({"claude": ["wrong_model"], "kimi": ["prompt_echo"], "deepseek": ["prompt_echo"]})
+        self.assertEqual(self.run_main("--smoke", "canary"), 1, self.out)
+        self.assertEqual(len(self.calls()), 3)
+        self.assertEqual(self.stop_records(), [])
+        self.assertIn("SMOKE canary FAIL", self.out)
+        (s,) = self.summaries()
+        self.assertEqual([r["ok"] for r in s["rows"]], [False, True, True])
+
+    def test_preflight_supervision_failure_stops_round(self):
+        self.setup_round()
+        with self.flag_cleanup("preflight", supervision=True):
+            self.assertEqual(self.run_main("--round", "1"), 3, self.out)
+        self.assertEqual(self.kinds, ["preflight"])                       # nothing launched after the failure
+        self.assertEqual(self.calls(), [])
+        (rec,) = self.stop_records()
+        self.assertEqual((rec["side"], rec["reason"]), ("call", run_revise.REASON_KILL))
+        self.assertIn(f"commit revise/stops/r1/{rec['stop_id']}.json now", self.out)
+        self.assertFalse(os.path.exists(os.path.join(self.revise, "outputs", "r1", "attempts.json")))
+
+    def test_preflight_cleanup_flag_stops_smoke(self):
+        self.canary_file()
+        with self.flag_cleanup("preflight"):
+            self.assertEqual(self.run_main("--smoke", "canary"), 3, self.out)
+        self.assertEqual(self.kinds, ["preflight"])
+        self.assertEqual(self.calls(), [])
+        (rec,) = self.stop_records()
+        self.assertEqual(rec["reason"], run_revise.REASON_KILL)
+        self.assertEqual(rec["details"]["smoke"], "canary")
+
+    def test_supervision_failure_note_is_not_over_limit(self):
+        # batch A review: a supervision failure without any output limit hit is not recorded as "over the limits"
+        self.setup_round()
+        real = limits._write_json
+
+        def failing(p, obj):
+            if obj.get("phase") == "running" and "ended_at" not in obj:
+                raise OSError(28, "No space left on device")
+            real(p, obj)
+        with mock.patch.object(limits, "_write_json", failing):
+            self.assertEqual(self.run_main("--round", "1"), 0, self.out)
+        meta = load(self.raw("claude", "call1.meta.json"))
+        self.assertTrue(meta["interrupted"])
+        self.assertFalse(meta["over_limit"])
+        self.assertEqual(meta["incomplete"], run_revise.NOTE_SUPERVISION)
+
+    # ---- BC1-09: both volumes are checked before every model call
+    def test_disk_checked_before_each_call(self):
+        self.setup_round()
+        self.free = lambda v: 100 * GB if len(self.calls()) < 1 else 1 * GB
+        self.assertEqual(self.run_main("--round", "1"), 3, self.out)
+        self.assertEqual(len(self.calls()), 1)
+        self.assertEqual(self.entry("claude")["final"], "parse")
+        for name in ("kimi", "deepseek"):
+            self.assertEqual((self.entry(name)["state"], self.entry(name)["consumed"]), ("pending", 0))
+        (rec,) = self.stop_records()
+        self.assertEqual(rec["reason"], run_revise.REASON_DISK)
+        self.assertTrue(any("bytes free" in p for p in rec["details"]["problems"]))
+        self.assertIn(f"STOP {rec['stop_id']}", self.out)
+
+    def test_disk_checked_before_retry(self):
+        self.setup_round()
+        self.set_plan({"claude": ["wrong_model", "ok_case01"]})
+        self.free = lambda v: 100 * GB if len(self.calls()) < 1 else 1 * GB
+        self.assertEqual(self.run_main("--round", "1"), 3, self.out)
+        self.assertEqual(len(self.calls()), 1)
+        e = self.entry("claude")
+        self.assertEqual((e["state"], e["consumed"]), ("await_retry", 1))
+        (rec,) = self.stop_records()
+        self.assertEqual(rec["reason"], run_revise.REASON_DISK)
+
+    def test_smoke_disk_checked_before_each_call(self):
+        self.canary_file()
+        self.set_plan({n: ["prompt_echo"] for n, _ in MODELS})
+        self.free = lambda v: 100 * GB if len(self.calls()) < 1 else 1 * GB
+        self.assertEqual(self.run_main("--smoke", "canary"), 1, self.out)
+        self.assertEqual(len(self.calls()), 1)
+        self.assertIn("DISK FAIL", self.out)
+        self.assertEqual(self.stop_records(), [])
+
+    # ---- BC1-10: strict preflight
+    def test_preflight_nonzero_exit_fails(self):
+        self.setup_round()
+        for var in ("FAKE_VERSION_RC", "FAKE_AUTH_RC"):
+            self.assertEqual(self.run_main("--round", "1", env=dict(self.env, **{var: "1"})), 1, var)
+            self.assertIn("exited with 1", self.out)
+        self.assertEqual(self.calls(), [])
+        self.assertFalse(os.path.exists(os.path.join(self.revise, "outputs", "r1", "attempts.json")))
+
+    def test_originals_parsed_strictly(self):
+        self.setup_round()
+        path = os.path.join(self.revise, "models", "originals.sha256")
+        good = rp.read_bytes(path).decode("utf-8").splitlines(keepends=True)
+        cases = {"empty": "", "blank only": "\n\n", "bad line": "".join(good) + "not a hash line\n",
+                 "duplicate": "".join(good) + good[1], "missing model": good[0] + good[2],
+                 "short hash": "".join(good[:2]) + good[2][10:]}
+        for what, text in cases.items():
+            write(path, text)
+            self.assertEqual(self.run_main("--round", "1"), 1, what)
+            self.assertIn("originals.sha256", self.out, what)
+        os.remove(path)
+        self.assertEqual(self.run_main("--round", "1"), 1)
+        self.assertIn("originals.sha256 is missing", self.out)
+        self.assertEqual(self.calls(), [])
+        self.assertFalse(os.path.exists(os.path.join(self.revise, "outputs", "r1", "attempts.json")))
+
+    def test_originals_each_model_verified(self):
+        self.setup_round()
+        settings = os.path.join(self.tmp.name, "settings", "deepseek.json")
+        write(settings, rp.read_bytes(settings) + b" ")
+        self.assertEqual(self.run_main("--round", "1"), 1)
+        self.assertIn("settings file deepseek.json differs", self.out)
+        self.assertEqual(self.calls(), [])
+
+    # ---- BC1-11: smoke prompt bytes rebuilt from the frozen sources
+    def test_smoke_prompt_mismatch_refused_before_launch(self):
+        self.canary_file("本题暗号是：灰雁-2026。多了一句。\n".encode("utf-8"))
+        self.assertEqual(self.run_main("--smoke", "canary"), 1, self.out)
+        self.assertEqual(self.calls(), [])
+        actual = sha(rp.read_bytes(os.path.join(self.smoke_dir(), "canary_user.md")))
+        expected = rp.sha256(os.path.join(self.revise, "prompts", "smoke_user.md"))
+        self.assertIn(actual, self.out)
+        self.assertIn(expected, self.out)
+        (s,) = self.summaries()
+        self.assertTrue(s["refused"])
+        self.assertEqual({(r["stdin_sha"], r["expected_stdin_sha"], r["prompt_ok"]) for r in s["rows"]},
+                         {(actual, expected, False)})
+
+    def test_smoke_prompt_hashes_recorded(self):
+        self.canary_file()
+        self.set_plan({n: ["prompt_echo"] for n, _ in MODELS})
+        self.assertEqual(self.run_main("--smoke", "canary"), 0, self.out)
+        (s,) = self.summaries()
+        want_sys = rp.sha256(os.path.join(self.revise, "prompts", "smoke_system.md"))
+        for r in s["rows"]:
+            self.assertTrue(r["prompt_ok"])
+            self.assertEqual((r["system_sha"], r["expected_system_sha"]), (want_sys, want_sys))
+            self.assertEqual(r["stdin_sha"], r["expected_stdin_sha"])
+
+    def test_canary_words_come_from_prompt_sources(self):
+        write(os.path.join(self.revise, "prompts", "smoke_system.md"), "系统暗号是：松鼠-1234。\n")
+        write(os.path.join(self.revise, "prompts", "smoke_user.md"), "本题暗号是：白鹭-7777。\n")
+        self.canary_file()
+        self.set_plan({n: ["prompt_echo"] for n, _ in MODELS})
+        self.assertEqual(self.run_main("--smoke", "canary"), 0, self.out)
+        self.assertIn("SMOKE canary OK", self.out)
+
+    def test_probe_prompt_checked(self):
+        write(os.path.join(self.smoke_dir(), "cap_probe_user.md"), "从 1 数到 300。\n")
+        self.assertEqual(self.run_main("--smoke", "probe"), 1, self.out)
+        self.assertIn("SMOKE PROMPT FAIL", self.out)
+        self.assertEqual(self.calls(), [])
+        write(os.path.join(self.smoke_dir(), "cap_probe_user.md"),
+              rp.read_bytes(os.path.join(self.revise, "prompts", "cap_probe_user.md")))
+        self.assertEqual(self.run_main("--smoke", "probe"), 0, self.out)
+        self.assertEqual(len(self.calls()), 3)
+
+    def test_rehearsal_prompt_rebuilt_from_sources(self):
+        import build_package
+        pkg = os.path.join(self.revise, "package")
+        sums = ""
+        for n in build_package.ORDER:
+            data = f"{n} 的内容\n第二行\n".encode("utf-8")
+            write(os.path.join(pkg, n), data)
+            sums += f"{sha(data)}  {n}\n"
+        write(os.path.join(pkg, "SHA256SUMS"), sums)
+        stage_a = os.path.join(self.tmp.name, "stage_a")
+        for letter in "ABC":
+            write(os.path.join(stage_a, f"{letter}.md"), f"阶段 A 答复 {letter}\n")
+        prompts = os.path.join(self.revise, "prompts")
+        write(os.path.join(prompts, "round1_template.md"), "前言\n{{材料}}\n{{附件}}\n## 作答要求\n正式要求\n")
+        write(os.path.join(prompts, "smoke_rehearsal_template.md"), "{{题目前部}}\n\n## 作答要求（演练）\n演练\n")
+        with mock.patch.object(build_prompt, "STAGE_A_ROUND2", stage_a):
+            for name, _ in MODELS:
+                write(os.path.join(self.smoke_dir(), f"rehearsal_{name}.md"),
+                      build_prompt.rehearsal_bytes(name, package=pkg, templates=prompts))
+            self.run_main("--smoke", "rehearsal")
+            self.assertEqual(len(self.calls()), 3, self.out)
+            (s,) = self.summaries()
+            self.assertTrue(all(r["prompt_ok"] for r in s["rows"]))
+            want_sys = rp.sha256(os.path.join(prompts, "system.md"))
+            self.assertTrue(all(r["expected_system_sha"] == want_sys for r in s["rows"]))
+            # a stale rehearsal prompt of one model is refused before any launch
+            f = os.path.join(self.smoke_dir(), "rehearsal_kimi.md")
+            write(f, rp.read_bytes(f) + b"\n")
+            self.assertEqual(self.run_main("--smoke", "rehearsal"), 1, self.out)
+            self.assertIn("SMOKE PROMPT FAIL", self.out)
+            self.assertEqual(len(self.calls()), 3)
 
 
 if __name__ == "__main__":
