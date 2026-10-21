@@ -1,0 +1,7 @@
+{
+  "models": [
+    {"name": "claude", "model": "claude-opus-5-5", "settings": "%USERPROFILE%\\.diag-models\\claude.json"},
+    {"name": "kimi", "model": "k3[1M]", "settings": "%USERPROFILE%\\.diag-models\\kimi.json"},
+    {"name": "deepseek", "model": "deepseek-v4-pro[1M]", "settings": "%USERPROFILE%\\.diag-models\\deepseek.json"}
+  ]
+}
