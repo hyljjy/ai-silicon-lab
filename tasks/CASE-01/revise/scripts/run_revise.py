@@ -196,6 +196,10 @@ def preflight(ctx, models):
     """Problems of the preflight (no attempt is used)."""
     probs = []
     try:
+        ctx.email()                                   # the redaction needs it; resolve it before any attempt
+    except SystemExit:
+        probs.append("PREFLIGHT FAIL: git config user.email is empty; the public answers cannot be redacted")
+    try:
         want = rp.read_bytes(os.path.join(ctx.rules, "cli.sha256")).decode("ascii").split()[0].lower()
     except (OSError, IndexError, UnicodeDecodeError):
         want = None
@@ -502,7 +506,9 @@ def _raise(ctx, rnd, code, stops_to_raise):
 
 
 def call_code(ctx, rnd, code, e, entry, expect, att):
-    """One call of `code` (state pending or await_retry). Returns the list of stops to raise."""
+    """One call of `code` (state pending or await_retry). Returns the list of stops to raise; the caller raises them
+    and only then saves the decided state (a crash in between leaves running<n>, never a decided state without its
+    stop record; recovery may then raise a duplicate stop, the conservative failure)."""
     n = e["consumed"] + 1
     e["consumed"], e["state"] = n, f"running{n}"
     save_attempts(ctx, rnd, att)                                      # before the call; never decreased
@@ -512,9 +518,7 @@ def call_code(ctx, rnd, code, e, entry, expect, att):
     verdict, meta, stdout, launch, kill = one_call(ctx, entry, system, stdin, ok, raw_dir, n, expect,
                                                    MAX_OUTPUT_TOKENS, f"r{rnd}")
     extra = REASON_ISOLATION if launch else REASON_KILL if kill else None
-    out = apply_verdict(ctx, rnd, code, e, n, verdict, stdout, raw_dir, meta, extra_stop=extra)
-    save_attempts(ctx, rnd, att)
-    return out
+    return apply_verdict(ctx, rnd, code, e, n, verdict, stdout, raw_dir, meta, extra_stop=extra)
 
 
 def recover(ctx, rnd, code, e, expect, att):
@@ -523,12 +527,19 @@ def recover(ctx, rnd, code, e, expect, att):
     raw_dir = os.path.join(ctx.raw, f"r{rnd}", code)
     base = os.path.join(raw_dir, f"call{n}")
     proc = _load_json(base + ".proc.json")
-    if not isinstance(proc, dict) or "root_pid" not in proc:
+    has_output = os.path.isfile(base + ".jsonl") and os.path.getsize(base + ".jsonl") > 0
+    if not os.path.exists(base + ".proc.json") and not has_output:
+        # the shell stopped after saving running<n> but before run_limited wrote the lifecycle record: no CLI
+        # process ever existed; the call counts as interrupted (it was started: consumed is not decreased)
+        proc, alive, unconfirmed = {}, [], False
+        print(f"RESUME: call {n} of a code never started a CLI process (no lifecycle record, no output)", flush=True)
+    elif not isinstance(proc, dict) or "root_pid" not in proc:
         return [(REASON_RESUME, {"call": n, "why": "no usable lifecycle record"})], False
-    try:
-        alive, unconfirmed = limits.still_alive(proc)
-    except Exception:                                                 # noqa: BLE001 - any failure = unconfirmed
-        alive, unconfirmed = [], True
+    else:
+        try:
+            alive, unconfirmed = limits.still_alive(proc)
+        except Exception:                                             # noqa: BLE001 - any failure = unconfirmed
+            alive, unconfirmed = [], True
     if unconfirmed:
         return [(REASON_RESUME, {"call": n, "why": "process state cannot be confirmed"})], False
     if alive:
@@ -552,9 +563,7 @@ def recover(ctx, rnd, code, e, expect, att):
                     stdout_sha=rp.sha256_bytes(stdout), flags=verdict.flags, delivery=verdict.delivery)
     if interrupted and verdict.delivery == "parse":                  # cannot happen (interrupted is a flag)
         raise AssertionError("an interrupted call was classified as parse")
-    out = apply_verdict(ctx, rnd, code, e, n, verdict, stdout, raw_dir, meta, interrupted=interrupted)
-    save_attempts(ctx, rnd, att)
-    return out, True
+    return apply_verdict(ctx, rnd, code, e, n, verdict, stdout, raw_dir, meta, interrupted=interrupted), True
 
 
 # ------------------------------------------------------------------------------------- modes
@@ -612,15 +621,20 @@ def run_round(ctx, rnd, resume):
             for entry, code in order:                                 # running* first (resume)
                 e = att["codes"][code]
                 if e["state"] in ("running1", "running2"):
-                    raised, _ = recover(ctx, rnd, code, e, expect[entry["name"]], att)
+                    raised, decided = recover(ctx, rnd, code, e, expect[entry["name"]], att)
+                    rc = _raise(ctx, rnd, code, raised) if raised else EXIT_OK
+                    if decided:
+                        save_attempts(ctx, rnd, att)
                     if raised:
-                        return _raise(ctx, rnd, code, raised)
+                        return rc
             for entry, code in order:
                 e = att["codes"][code]
                 while e["state"] in ("pending", "await_retry"):
                     raised = call_code(ctx, rnd, code, e, entry, expect[entry["name"]], att)
+                    rc = _raise(ctx, rnd, code, raised) if raised else EXIT_OK
+                    save_attempts(ctx, rnd, att)
                     if raised:
-                        return _raise(ctx, rnd, code, raised)
+                        return rc
         finally:
             write_status(ctx, rnd, att)
             for code, e in sorted(att["codes"].items()):
@@ -743,6 +757,9 @@ def main(argv=None, free_bytes=None, base_env=None):
     ap.add_argument("--repo-root", help="tests only: a temporary repository")
     ap.add_argument("--no-tags", action="store_true", help="tests only: refused once a revise-prereg* tag exists")
     args = ap.parse_args(argv)
+    if (args.repo_root or args.no_tags) and not (args.sandbox_root and args.claude_cmd):
+        print("usage: --repo-root and --no-tags are for tests only and need --sandbox-root and --claude-cmd", flush=True)
+        return EXIT_USAGE
     r_text = args.commit_codes or args.round or args.resume
     rnd = _round_arg(r_text) if r_text is not None else None
     if r_text is not None and rnd is None:

@@ -300,6 +300,26 @@ class TestModes(Base):
         self.assertEqual(self.calls(), [])
         self.assertFalse(os.path.exists(os.path.join(self.revise, "outputs", "r1", "attempts.json")))
 
+    def test_empty_account_email_fails_preflight(self):
+        self.setup_round()
+        with mock.patch.dict(os.environ, {"CASE01_PRIVACY_EMAIL": ""}):
+            self.assertEqual(self.run_main("--round", "1"), 1)
+        self.assertIn("PREFLIGHT FAIL: git config user.email is empty", self.out)
+        self.assertEqual(self.calls(), [])
+        self.assertFalse(os.path.exists(os.path.join(self.revise, "outputs", "r1", "attempts.json")))
+
+    def test_test_only_flags_need_sandbox_and_cmd(self):
+        cmd = ["--claude-cmd", json.dumps([sys.executable, "-B", FAKE])]
+        box = ["--sandbox-root", self.sandbox]
+        for args in (["--round", "1", "--no-tags"], ["--round", "1", "--repo-root", self.repo],
+                     ["--commit-codes", "1", "--no-tags", "--repo-root", self.repo] + box,
+                     ["--commit-codes", "1", "--no-tags", "--repo-root", self.repo] + cmd):
+            buf = io.StringIO()
+            with contextlib.redirect_stdout(buf):
+                self.assertEqual(run_revise.main(args, free_bytes=lambda v: self.free, base_env=self.env), 2, args)
+            self.assertIn("tests only", buf.getvalue())
+        self.assertFalse(os.path.exists(os.path.join(self.revise, "outputs", "r1", "codes.txt")))
+
     def test_low_disk_refuses(self):
         self.setup_round()
         self.free = 1 * GB
@@ -495,6 +515,20 @@ class TestStops(Base):
         for name in ("kimi", "deepseek"):
             self.assertEqual(self.entry(name)["final"], "parse")
 
+    def test_stop_raised_before_state_saved(self):
+        self.setup_round()
+        self.set_plan({"claude": ["private_in_rtl"]})
+        seen = []
+        orig = stops.raise_stop
+
+        def spy(*a, **kw):
+            seen.append(self.entry("claude")["state"])               # state on disk when the stop is written
+            return orig(*a, **kw)
+        with mock.patch.object(stops, "raise_stop", spy):
+            self.assertEqual(self.run_main("--round", "1"), 4, self.out)
+        self.assertEqual(seen, ["running1"])
+        self.assertEqual(self.entry("claude")["state"], "final")
+
     def test_resume_refused_while_stopped(self):
         self.setup_round()
         with self.tamper("claude", {1}):
@@ -590,6 +624,31 @@ class TestRecovery(Base):
         self.assertTrue(e["calls"][0]["interrupted"])
         second = [c for c in self.calls("claude") if c["pid"] != cli.pid][-1]
         self.assertNotEqual(second["pid"], cli.pid)
+
+    def test_resume_without_lifecycle_record_retries(self):
+        # the shell stopped after saving running1 but before the CLI was started: no proc record, no output
+        self.setup_round()
+        att = run_revise.new_attempts(1, sorted(self.code.values()))
+        att["codes"][self.code["claude"]].update(state="running1", consumed=1)
+        write(os.path.join(self.revise, "outputs", "r1", "attempts.json"), json.dumps(att))
+        self.assertEqual(self.run_main("--resume", "1"), 0, self.out)
+        e = self.entry("claude")
+        self.assertEqual((e["state"], e["consumed"], e["final"]), ("final", 2, "parse"))
+        self.assertTrue(e["calls"][0]["interrupted"])
+        self.assertEqual(self.stop_records(), [])
+        self.assertEqual(len(self.calls("claude")), 1)
+
+    def test_resume_output_without_lifecycle_record_stops(self):
+        self.setup_round()
+        att = run_revise.new_attempts(1, sorted(self.code.values()))
+        att["codes"][self.code["claude"]].update(state="running1", consumed=1)
+        write(os.path.join(self.revise, "outputs", "r1", "attempts.json"), json.dumps(att))
+        write(self.raw("claude", "call1.jsonl"), b'{"type": "system", "subtype": "init"}' + b"\n")
+        self.assertEqual(self.run_main("--resume", "1"), 3, self.out)
+        (rec,) = self.stop_records()
+        self.assertEqual(rec["reason"], run_revise.REASON_RESUME)
+        self.assertEqual(self.entry("claude")["state"], "running1")
+        self.assertEqual(self.calls(), [])
 
     def test_resume_unconfirmed_raises_stop(self):
         self.setup_round()
