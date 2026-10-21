@@ -396,6 +396,13 @@ class _Run:
         self.prior_children = set(prior_children)
         self.signals = []
         self.unconfirmed = False
+        self.timed_out = False
+        self.on_signal = None                         # called after a signal is recorded and BEFORE it is sent
+
+    def _note_signal(self, text):
+        self.signals.append(text)
+        if self.on_signal is not None:
+            self.on_signal()
 
     def root_alive(self):
         """Root still running: the Popen object (when we own it) or the process table, pid AND start time."""
@@ -487,10 +494,14 @@ class _Run:
         """POSIX: SIGTERM to the root only, then wait until everything is gone or `wait` seconds passed."""
         if os.name == "nt" or not self.root_alive():
             return
+        text = f"SIGTERM {self.root_pid}"
+        self._note_signal(text)
         try:
             os.kill(self.root_pid, signal.SIGTERM)
-            self.signals.append(f"SIGTERM {self.root_pid}")
         except ProcessLookupError:
+            self.signals.remove(text)                 # not sent: the root had already gone
+            if self.on_signal is not None:
+                self.on_signal()
             return
         self._wait_gone(wait)
 
@@ -507,17 +518,17 @@ class _Run:
                 return
             if time.monotonic() >= deadline:
                 return
+            if first:
+                if self.ctx is not None:
+                    self._note_signal("TerminateJobObject")
+                else:
+                    name = "TerminateProcess" if os.name == "nt" else "SIGKILL"
+                    self._note_signal(name + " " + " ".join(str(p) for p in alive))
+                first = False
             try:
                 _force_kill(self.ctx, alive)
             except OSError:
                 pass
-            if first:
-                if self.ctx is not None:
-                    self.signals.append("TerminateJobObject")
-                else:
-                    name = "TerminateProcess" if os.name == "nt" else "SIGKILL"
-                    self.signals.append(name + " " + " ".join(str(p) for p in alive))
-                first = False
             time.sleep(POLL * 2)
 
     def _wait_gone(self, wait):
@@ -653,8 +664,13 @@ def _children_of_me():
 
 
 def run_limited(argv, kind, cwd=None, env=None, stdin_bytes=None, stdout_path=None, stderr_path=None,
-                proc_path=None, on_line=None):
-    """Run argv under the limits of LIMITS[kind] with full process-tree cleanup. See the module docstring."""
+                proc_path=None, on_line=None, proc_extra=None):
+    """Run argv under the limits of LIMITS[kind] with full process-tree cleanup. See the module docstring.
+    Lifecycle record (proc_path): every save holds root_pid, root_start, registry, isolation, started_at,
+    signals_sent and timed_out; a signal is recorded (and the record saved) before it is sent, timed_out as soon as the
+    time limit is reached. proc_extra: a dict owned by the caller whose items are added to every save (the record's
+    own keys win); the caller may change it from on_line and request an immediate save by returning True from
+    on_line."""
     lim = LIMITS[kind]
     try:
         ctx = _setup_isolation()
@@ -693,20 +709,39 @@ def run_limited(argv, kind, cwd=None, env=None, stdin_bytes=None, stdout_path=No
             ctx.close()
         raise
     return _supervise(proc, ctx, isolation, root_start, prior, lim, stdin_bytes, stdout_path, stderr_path,
-                      proc_path, on_line)
+                      proc_path, on_line, proc_extra)
 
 
 def _supervise(proc, ctx, isolation, root_start, prior, lim, stdin_bytes, stdout_path, stderr_path, proc_path,
-               on_line):
+               on_line, proc_extra=None):
     run = _Run(proc.pid, root_start, ctx, isolation, popen=proc, prior_children=prior)
     started_at = _now()
+    save_lock = threading.Lock()                     # saves come from the supervisor and from the stdout reader
 
     def save(extra=None):
         if proc_path:
-            rec = run.record()
-            rec["started_at"] = started_at
-            rec.update(extra or {})
-            _write_json(proc_path, rec)
+            with save_lock:
+                rec = dict(proc_extra or {})
+                rec.update(run.record())
+                rec["started_at"] = started_at
+                rec["signals_sent"] = list(run.signals)
+                rec["timed_out"] = run.timed_out
+                rec.update(extra or {})
+                _write_json(proc_path, rec)
+
+    def save_quietly():                               # a failed save never prevents a signal from being sent
+        try:
+            save()
+        except Exception:
+            pass
+
+    run.on_signal = save_quietly
+    if on_line is not None:
+        user_on_line = on_line
+
+        def on_line(line):
+            if user_on_line(line) is True:
+                save()
 
     out = err = None
     completed = False
@@ -735,6 +770,8 @@ def _supervise(proc, ctx, isolation, root_start, prior, lim, stdin_bytes, stdout
             now = time.monotonic()
             if now >= deadline:
                 timed_out = True
+                run.timed_out = True
+                save_quietly()
                 break
             if now >= next_scan:
                 if run.scan():

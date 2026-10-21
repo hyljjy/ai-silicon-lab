@@ -237,6 +237,61 @@ class TestRecords(Base):
         self.assertTrue({self.pids()["root"], self.pids()["child"], self.pids()["grandchild"]} <= reg)
         self.assertEqual([tuple(e) for e in last["registry"]], [tuple(e) for e in res.registry])
 
+    def test_proc_record_shows_signals_and_timeout(self):
+        path = os.path.join(self.d, "proc.json")
+        seen = []
+        real_kill = os.kill
+
+        def spy(pid, sig):                          # what the record says at the moment a signal is sent
+            with open(path, encoding="utf-8") as f:
+                seen.append((sig, json.load(f)))
+            return real_kill(pid, sig)
+
+        if POSIX:
+            with mock.patch.object(limits.os, "kill", spy):
+                res = self.tree("--ignore-term", proc_path=path)
+        else:
+            res = self.tree(proc_path=path)
+        self.assertTrue(res.timed_out)
+        with open(path, encoding="utf-8") as f:
+            last = json.load(f)
+        self.assertIs(last["timed_out"], True)
+        self.assertEqual(last["signals_sent"], res.signals_sent)
+        self.assertTrue(last["signals_sent"])
+        if POSIX:
+            import signal as sg
+            term = [rec for sig, rec in seen if sig == sg.SIGTERM]
+            kill = [rec for sig, rec in seen if sig == sg.SIGKILL]
+            self.assertTrue(term and kill)
+            self.assertIs(term[0]["timed_out"], True)
+            self.assertTrue(term[0]["signals_sent"][0].startswith("SIGTERM"))
+            self.assertTrue(any(s.startswith("SIGKILL") for s in kill[0]["signals_sent"]))
+
+    def test_proc_extra_saved_on_request(self):
+        path = os.path.join(self.d, "proc.json")
+        extra = {}
+        saves = []
+        real = limits._write_json
+
+        def spy(p, obj):
+            saves.append(dict(obj))
+            real(p, obj)
+
+        def on_line(line):
+            extra["run_id"] = "r1"
+            extra["root_pid"] = -1                   # the record's own keys win
+            return True                              # save now
+
+        with mock.patch.object(limits, "_write_json", spy):
+            self.tree("--no-children", proc_path=path, on_line=on_line, proc_extra=extra)
+        first = next(r for r in saves if "run_id" in r)
+        self.assertIs(first["timed_out"], False)     # saved on request, before the time limit
+        self.assertNotIn("ended_at", first)
+        with open(path, encoding="utf-8") as f:
+            last = json.load(f)
+        self.assertEqual(last["run_id"], "r1")
+        self.assertEqual(last["root_pid"], self.pids()["root"])
+
     def test_still_alive_detects_survivor_and_pid_reuse(self):
         import subprocess
         proc = subprocess.Popen(TREE + ["--pidfile", self.pidfile, "--no-children"], stdout=subprocess.DEVNULL,

@@ -20,8 +20,10 @@ that the old processes exited; low disk after the run.
 
 Roots are injectable for tests: case (tasks/CASE-01; revise = case/revise), repo (env/ hash files), env (environment of
 the dependency check and of grade.py), free_bytes (revpaths.disk_problems), preflight (round.preflight, Task 11).
-The proc.json run_id: limits rewrites proc.json on every registry change, so while grade.py runs this module wraps
-limits._write_json to keep the run_id in every rewrite (one run_limited per process, see limits).
+The proc.json run_id goes through limits.run_limited(proc_extra=...); proc.json also records the wrapper's own
+signals_sent and timed_out (limits), which recovery uses: an interrupt is external evidence only when the record
+shows that the wrapper sent no signal; a record without that information (older format) gives no such evidence.
+Recovery cannot know the exit code, nor (old records) timed_out / over_limit: they are written as "unknown".
 
 Command line (WSL, from tasks/CASE-01):  python3 -B revise/scripts/run_grade.py <code> <rnd> [--retry]"""
 import datetime
@@ -31,7 +33,6 @@ import os
 import re
 import shutil
 import sys
-import threading
 
 import limits
 import revpaths as rp
@@ -50,6 +51,8 @@ FINAL_RE = re.compile(r"^GRADE (OK|FAIL): ")
 ATTEMPT_DIR_RE = re.compile(r"^attempt([1-9][0-9]*)$")
 RECOVERED = "由包装器恢复"
 WRAPPER_INTERRUPTED = "wrapper_interrupted"
+SIGNALS_UNKNOWN = "wrapper signals unknown (recovered)"
+UNKNOWN = "unknown"
 
 
 class RunGradeError(Exception):
@@ -179,7 +182,9 @@ def failure_location(steps, final_line):
 
 def attribution(attempt, steps):
     """("external" | "no_external_evidence", evidence). attempt: the attempt record, plus "dependency_check" (the
-    check before the start, from started.json) and, for recovery, "wrapper_interrupted": True."""
+    check before the start, from started.json) and, for recovery, "wrapper_interrupted": True and
+    "wrapper_signals_unknown": True (the lifecycle record does not say which signals the wrapper sent: then neither
+    the exit code nor a step's "interrupted" key counts as an external interrupt)."""
     ev = []
     for s in steps or []:
         if isinstance(s, dict) and s.get("step") in ("env_snapshot", "versions") and s.get("returncode") != 0:
@@ -193,7 +198,7 @@ def attribution(attempt, steps):
         ev += [f"dependency_missing_before_start: {i['path']}" for i in before["items"] if not i["exists"]]
     elif after is not None and not after.get("ok"):
         ev += [f"dependency_missing_after_run: {i['path']}" for i in after["items"] if not i["exists"]]
-    if not attempt.get("signals_sent"):
+    if not attempt.get("signals_sent") and not attempt.get("wrapper_signals_unknown"):
         ec = attempt.get("exit_code")
         if isinstance(ec, int) and not isinstance(ec, bool) and (ec in (143, 130) or ec < 0):
             ev.append(f"external_interrupt: exit_code={ec} and the wrapper sent no signal")
@@ -326,21 +331,30 @@ def _finish(ctx, code, rnd, k, adir, started, info, recovered=False, wrapper_int
     disk_after = _disk(ctx)
     run_dir = os.path.join(ctx.case, "runs", run_id) if run_id else None
     files, steps = _archive(adir, run_dir, run_id, started_ok, final_line)
+    def flag(v):
+        return v if v == UNKNOWN else bool(v)
+
     rec = {"code": code, "rnd": rnd, "k": k, "cmd": started["cmd"], "start": started["start"], "end": _now(),
-           "exit_code": info.get("exit_code"), "timed_out": bool(info.get("timed_out")),
-           "over_limit": bool(info.get("over_limit")), "signals_sent": list(info.get("signals_sent") or []),
+           "exit_code": info.get("exit_code"), "timed_out": flag(info.get("timed_out")),
+           "over_limit": flag(info.get("over_limit")), "signals_sent": list(info.get("signals_sent") or []),
            "launch_error": info.get("launch_error"), "run_id": run_id, "final_line": final_line,
            "final_line_missing": final_line is None,
            "failure_location": failure_location(steps, final_line), "attribution": None,
            "attribution_evidence": None, "disk_before": started.get("disk_before"), "disk_after": disk_after,
            "dependency_after": dep_after, "files": files}
     attr, ev = attribution(dict(rec, dependency_check=started.get("dependency_check"),
-                                wrapper_interrupted=wrapper_interrupted), steps)
+                                wrapper_interrupted=wrapper_interrupted,
+                                wrapper_signals_unknown=bool(info.get("signals_unknown"))), steps)
+    # the notes below are not evidence (attr is already decided)
     if wrapper_interrupted and _final_line(text):
         ev.append("stdout has a final line but runs/<RUN_ID>/steps.json is missing")
+    if info.get("signals_unknown"):
+        ev.append(SIGNALS_UNKNOWN)
     if recovered:
         ev.append(RECOVERED)
     rec["attribution"], rec["attribution_evidence"] = attr, ev
+    # attempt.json first: a failure while raising the stops can never make recovery rewrite this attempt
+    _write_once(os.path.join(adir, "attempt.json"), rec)
 
     raised = []
     kill = info.get("kill") or {}
@@ -356,47 +370,34 @@ def _finish(ctx, code, rnd, k, adir, started, info, recovered=False, wrapper_int
     if k >= 2 and not ok and (attr == "external" or final_line is None):
         raised.append(_stop(ctx, rnd, "infra_fail: the second attempt is still an external fault or still has no "
                                       "final line", code, {"attempt": k, "attribution_evidence": ev}))
-    _write_once(os.path.join(adir, "attempt.json"), rec)
     return dict(rec, stops=raised)
 
 
 # ------------------------------------------------------------------------------------- one attempt
 def _launch(ctx, cmd, adir):
     proc_path = os.path.join(adir, "proc.json")
-    state = {"first": False, "run_id": None}
-    lock = threading.Lock()
-    orig = limits._write_json
-
-    def write_json(path, obj):                       # keep run_id in every rewrite of proc.json by limits
-        with lock:
-            if path == proc_path and state["run_id"] and "run_id" not in obj:
-                obj = dict(obj, run_id=state["run_id"])
-            orig(path, obj)
+    extra = {}                                        # limits proc_extra: added to every save of proc.json
+    state = {"first": False}
 
     def on_line(line):
         if state["first"]:
-            return
+            return False
         state["first"] = True
         m = RUN_ID_RE.match(line)
         if m:
-            with lock:
-                state["run_id"] = m.group(1)
-                rec = _load_json(proc_path)
-                rec = rec if isinstance(rec, dict) else {}
-                rec["run_id"] = state["run_id"]
-                orig(proc_path, rec)
+            extra["run_id"] = m.group(1)
+            return True                               # save proc.json now
+        return False
 
-    limits._write_json = write_json
     try:
         res = limits.run_limited(cmd, "grade", cwd=ctx.case, env=ctx.env,
                                  stdout_path=os.path.join(adir, "stdout.txt"),
-                                 stderr_path=os.path.join(adir, "stderr.txt"), proc_path=proc_path, on_line=on_line)
+                                 stderr_path=os.path.join(adir, "stderr.txt"), proc_path=proc_path, on_line=on_line,
+                                 proc_extra=extra)
     except limits.IsolationFail as e:
         return {"launch_error": {"errno": None, "type": "IsolationFail", "message": str(e)}}
     except OSError as e:
         return {"launch_error": {"errno": e.errno, "type": type(e).__name__}}
-    finally:
-        limits._write_json = orig
     return {"exit_code": res.rc, "timed_out": res.timed_out,
             "over_limit": bool(res.stdout_over or res.stderr_over or res.output_error),
             "signals_sent": list(res.signals_sent),
@@ -500,7 +501,11 @@ def _recover(ctx, code, rnd):
         run_id = proc.get("run_id") or _first_run_id(text)
         complete = bool(_final_line(text) and run_id and RUN_ID_RE.match(f"RUN_ID={run_id}")
                         and os.path.isfile(os.path.join(ctx.case, "runs", run_id, "steps.json")))
-        info = {"exit_code": None, "timed_out": False, "over_limit": False, "signals_sent": signals}
+        known = isinstance(proc.get("signals_sent"), list)
+        info = {"exit_code": UNKNOWN, "over_limit": UNKNOWN,
+                "timed_out": proc["timed_out"] if known and isinstance(proc.get("timed_out"), bool) else UNKNOWN,
+                "signals_sent": (list(proc["signals_sent"]) if known else []) + signals,
+                "signals_unknown": not known}
         out.append(_finish(ctx, code, rnd, k, adir, started, info, recovered=True,
                            wrapper_interrupted=not complete))
     return out

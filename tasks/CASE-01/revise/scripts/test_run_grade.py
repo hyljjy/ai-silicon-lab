@@ -164,8 +164,15 @@ class Base(unittest.TestCase):
         except (OSError, ValueError):
             return None
 
-    def craft_crash(self, stdout_text, run_files=None, run_id="20261101-120000-cand_ab12-T27.91-1"):
-        """State of a wrapper that died after starting grade: started.json, proc.json of a process that is gone,
+    def registry_ready(self):
+        """The proc record once its registry holds the root and at least one descendant (read once per poll)."""
+        rec = self.proc_record()
+        return rec if rec and len(rec.get("registry") or []) >= 2 else None
+
+    def craft_crash(self, stdout_text, run_files=None, run_id="20261101-120000-cand_ab12-T27.91-1",
+                    proc_fields=None):
+        """State of a wrapper that died after starting grade: started.json, proc.json of a process that is gone
+        (plus proc_fields; without them the record has the older format that lacks signals_sent / timed_out),
         partial stdout.txt; optional run directory files copied from a fixture sample."""
         adir = self.adir(1)
         os.makedirs(adir)
@@ -175,9 +182,10 @@ class Base(unittest.TestCase):
         touch(os.path.join(adir, "started.json"), json.dumps(started).encode())
         gone = subprocess.Popen([sys.executable, "-B", "-c", "pass"])
         gone.wait()
-        touch(os.path.join(adir, "proc.json"), json.dumps(
-            {"root_pid": gone.pid, "root_start": "1", "registry": [[gone.pid, "1"]], "isolation": "subreaper",
-             "started_at": "2026-11-01T12:00:00+08:00", "run_id": run_id}).encode())
+        proc = {"root_pid": gone.pid, "root_start": "1", "registry": [[gone.pid, "1"]], "isolation": "subreaper",
+                "started_at": "2026-11-01T12:00:00+08:00", "run_id": run_id}
+        proc.update(proc_fields or {})
+        touch(os.path.join(adir, "proc.json"), json.dumps(proc).encode())
         touch(os.path.join(adir, "stdout.txt"), stdout_text.encode())
         touch(os.path.join(adir, "stderr.txt"), b"")
         if run_files:
@@ -413,9 +421,10 @@ class TestAttempts(Base):
         first = rp.read_bytes(stdout).decode().splitlines()[0]
         self.assertTrue(first.startswith("RUN_ID="))
         # wait for a registry update written after the child started: run_id must survive that rewrite
-        rec = wait_for(lambda: (self.proc_record() or {}).get("registry") and len(self.proc_record()["registry"]) >= 2
-                       and self.proc_record())
+        rec = wait_for(self.registry_ready)
         self.assertEqual(rec.get("run_id"), first[len("RUN_ID="):])
+        self.assertEqual(rec.get("signals_sent"), [])
+        self.assertIs(rec.get("timed_out"), False)
         self.assertTrue(alive(rec["root_pid"]))
         self.assertTrue(th.is_alive())
         os.kill(rec["root_pid"], signal.SIGTERM)
@@ -437,6 +446,9 @@ class TestAttempts(Base):
             self.assertFalse(alive(pid))
         self.assertEqual(rec["attribution"], "no_external_evidence")
         self.assertEqual(self.stop_records(), [])
+        proc = self.proc_record()
+        self.assertIs(proc["timed_out"], True)
+        self.assertEqual(proc["signals_sent"], rec["signals_sent"])
 
 
 class TestRecovery(Base):
@@ -465,9 +477,12 @@ class TestRecovery(Base):
         kw = {"code": CODE, "cmd": self.cmd("hang"), "case": self.case, "repo": self.repo, "env": self.env}
         wrapper = subprocess.Popen([sys.executable, "-B", "-c", driver, json.dumps(kw)], stdin=subprocess.DEVNULL,
                                    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        self.addCleanup(lambda: wrapper.poll() is None and wrapper.kill())
-        rec = wait_for(lambda: (self.proc_record() or {}).get("registry") and len(self.proc_record()["registry"]) >= 2
-                       and self.proc_record(), timeout=15)
+        def stop_wrapper():
+            if wrapper.poll() is None:
+                wrapper.kill()
+            wrapper.wait(10)
+        self.addCleanup(stop_wrapper)
+        rec = wait_for(self.registry_ready, timeout=15)
         children = [p for p, _ in rec["registry"] if p != rec["root_pid"]]
         os.kill(wrapper.pid, signal.SIGKILL)       # only the wrapper dies
         wrapper.wait(10)
@@ -488,7 +503,7 @@ class TestRecovery(Base):
     def test_recovery_uses_completed_result(self):
         rid = "20261101-120000-cand_ab12-T27.91-1"
         self.craft_crash(f"RUN_ID={rid}\nfrozen inputs copied\nGRADE OK: {rid} functional_pass analysis_valid\n",
-                         run_files="check_sta_fail", run_id=rid)
+                         run_files="success", run_id=rid)
         self.recover()
         rec = load(os.path.join(self.adir(1), "attempt.json"))
         self.assertFalse(rec["final_line_missing"])
@@ -497,6 +512,41 @@ class TestRecovery(Base):
         self.assertNotIn("wrapper_interrupted", rec["attribution_evidence"])
         self.assertIn("由包装器恢复", rec["attribution_evidence"])
         self.assertEqual(self.file_entry(rec, "steps.json")["state"], "produced")
+        self.assertEqual(rec["exit_code"], "unknown")
+        self.assertEqual(rec["timed_out"], "unknown")
+        self.assertEqual(rec["over_limit"], "unknown")
+
+    def crash_after_sigterm(self, proc_fields):
+        """grade.py was stopped by SIGTERM (interrupted step, final 'GRADE FAIL: interrupted' line, steps.json), then
+        the wrapper died before writing attempt.json."""
+        rid = "20261101-120000-cand_ab12-T27.91-1"
+        self.craft_crash(f"RUN_ID={rid}\nrunning rtl_sim\nGRADE FAIL: interrupted: SystemExit\n",
+                         run_files="interrupted_no_final", run_id=rid, proc_fields=proc_fields)
+        self.recover()
+        rec = load(os.path.join(self.adir(1), "attempt.json"))
+        self.assertEqual(rec["final_line"], "GRADE FAIL: interrupted: SystemExit")
+        self.assertEqual(rec["failure_location"], "rtl_sim")
+        self.assertNotIn("wrapper_interrupted", rec["attribution_evidence"])
+        return rec
+
+    def test_recovery_after_wrapper_timeout_not_external(self):
+        rec = self.crash_after_sigterm({"signals_sent": ["SIGTERM 4242"], "timed_out": True})
+        self.assertEqual(rec["attribution"], "no_external_evidence")
+        self.assertIs(rec["timed_out"], True)
+        self.assertEqual(rec["signals_sent"], ["SIGTERM 4242"])
+        with self.assertRaises(run_grade.RunGradeError):
+            self.run_attempt("success", retry=True)
+
+    def test_recovery_unknown_wrapper_signals_not_external(self):
+        rec = self.crash_after_sigterm(None)
+        self.assertEqual(rec["attribution"], "no_external_evidence")
+        self.assertIn("wrapper signals unknown (recovered)", rec["attribution_evidence"])
+        self.assertEqual(rec["timed_out"], "unknown")
+
+    def test_recovery_known_no_signal_interrupt_is_external(self):
+        rec = self.crash_after_sigterm({"signals_sent": [], "timed_out": False})
+        self.assertEqual(rec["attribution"], "external")
+        self.assertIs(rec["timed_out"], False)
 
     def test_recovery_unconfirmed_raises_stop(self):
         self.craft_crash("RUN_ID=20261101-120000-cand_ab12-T27.91-1\n")
