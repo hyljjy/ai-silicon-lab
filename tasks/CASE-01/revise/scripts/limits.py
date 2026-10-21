@@ -669,8 +669,9 @@ def run_limited(argv, kind, cwd=None, env=None, stdin_bytes=None, stdout_path=No
     Lifecycle record (proc_path): every save holds root_pid, root_start, registry, isolation, started_at,
     signals_sent and timed_out; a signal is recorded (and the record saved) before it is sent, timed_out as soon as the
     time limit is reached. proc_extra: a dict owned by the caller whose items are added to every save (the record's
-    own keys win); the caller may change it from on_line and request an immediate save by returning True from
-    on_line."""
+    own keys win); the caller may set keys in it from on_line and request a save by returning True from on_line.
+    The save itself is done by the supervising thread at its next poll (within POLL seconds), never on the reader
+    thread: the registry and the signal list are only ever touched by the supervising thread."""
     lim = LIMITS[kind]
     try:
         ctx = _setup_isolation()
@@ -716,18 +717,18 @@ def _supervise(proc, ctx, isolation, root_start, prior, lim, stdin_bytes, stdout
                on_line, proc_extra=None):
     run = _Run(proc.pid, root_start, ctx, isolation, popen=proc, prior_children=prior)
     started_at = _now()
-    save_lock = threading.Lock()                     # saves come from the supervisor and from the stdout reader
+    save_requested = threading.Event()               # set by the stdout reader (on_line), acted on by this thread
 
     def save(extra=None):
         if proc_path:
-            with save_lock:
-                rec = dict(proc_extra or {})
-                rec.update(run.record())
-                rec["started_at"] = started_at
-                rec["signals_sent"] = list(run.signals)
-                rec["timed_out"] = run.timed_out
-                rec.update(extra or {})
-                _write_json(proc_path, rec)
+            save_requested.clear()
+            rec = dict(proc_extra or {})
+            rec.update(run.record())
+            rec["started_at"] = started_at
+            rec["signals_sent"] = list(run.signals)
+            rec["timed_out"] = run.timed_out
+            rec.update(extra or {})
+            _write_json(proc_path, rec)
 
     def save_quietly():                               # a failed save never prevents a signal from being sent
         try:
@@ -739,9 +740,9 @@ def _supervise(proc, ctx, isolation, root_start, prior, lim, stdin_bytes, stdout
     if on_line is not None:
         user_on_line = on_line
 
-        def on_line(line):
+        def on_line(line):                            # runs on the stdout reader thread: only flags the save
             if user_on_line(line) is True:
-                save()
+                save_requested.set()
 
     out = err = None
     completed = False
@@ -777,6 +778,8 @@ def _supervise(proc, ctx, isolation, root_start, prior, lim, stdin_bytes, stdout
                 if run.scan():
                     save()
                 next_scan = now + SCAN_INTERVAL
+            if save_requested.is_set():
+                save()
             over_event.wait(POLL)
 
         run.stop(lim, gentle=proc.poll() is None)

@@ -292,6 +292,36 @@ class TestRecords(Base):
         self.assertEqual(last["run_id"], "r1")
         self.assertEqual(last["root_pid"], self.pids()["root"])
 
+    def test_requested_saves_stay_on_supervising_thread(self):
+        # regression (review of 4214c49): a save requested from on_line must not read the registry on the reader
+        # thread while the supervisor's scan() inserts into it (OrderedDict mutated during iteration)
+        import threading
+        path = os.path.join(self.d, "proc.json")
+        extra = {}
+        threads = []
+        lines = []
+        real = limits._Run.record
+
+        def record(run_self):
+            threads.append(threading.current_thread())
+            return real(run_self)
+
+        def on_line(line):
+            lines.append(line)
+            extra["n"] = len(lines)
+            return True                              # request a save for every line
+
+        with mock.patch.object(limits._Run, "record", record):
+            res = limits.run_limited(CHATTY + ["--stdout", "960"], "fast", cwd=self.d, proc_path=path, on_line=on_line,
+                                     proc_extra=extra)
+        self.assertGreater(len(lines), 10)
+        self.assertTrue(threads)
+        self.assertEqual({t for t in threads}, {threading.current_thread()})
+        self.assertFalse(res.stdout_over)            # a healthy run is not stopped by the requested saves
+        with open(path, encoding="utf-8") as f:
+            last = json.load(f)
+        self.assertEqual(last["n"], len(lines))
+
     def test_still_alive_detects_survivor_and_pid_reuse(self):
         import subprocess
         proc = subprocess.Popen(TREE + ["--pidfile", self.pidfile, "--no-children"], stdout=subprocess.DEVNULL,
