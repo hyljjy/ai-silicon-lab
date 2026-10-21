@@ -738,10 +738,137 @@ class TestRecordChecks(unittest.TestCase):
         seq = iter([None, "510"])
         found, _, _, stable = scan(start_time=lambda pid: next(seq))
         self.assertEqual((found, stable, len(listings)), ({Q: "510"}, True, 2))
-        # a zombie started since the launch: accepted once a second listing shows the same zombie
+        # a zombie leader whose thread group has finished (task/ holds only the leader): accepted once a second
+        # listing shows the same finished zombie
         tables[:] = [{P: ("Z", 1, "505")}, {P: ("Z", 1, "505")}]
-        found, _, _, stable = scan()
+        listings.clear()
+        found, _, _, stable = limits._stable_token_scan(token, "400", None, listing=listing, read_environ=read_environ,
+                                                        start_time=lambda pid: None,
+                                                        group_state=lambda pid: ("finished", None))
         self.assertEqual((found, stable, len(listings)), ({}, True, 2))
+
+    @unittest.skipUnless(POSIX, "the run token is the Linux ownership marker")
+    def test_zombie_leader_with_live_thread(self):
+        # Codex BC4-01: a leader that called pthread_exit shows Z while a worker thread T keeps running (and can
+        # fork). Its group is not finished: the environment is read through T and the process counts as running
+        token = "a1" * 16
+        base = os.getpid() + 4000000
+        P, T, Q = base + 1, base + 5, base + 2
+        env_tok = b"\0".join([b"PATH=/bin", (limits.TOKEN_VAR + "=" + token).encode("ascii"), b""])
+        tables, n = [], []
+
+        def listing():
+            n.append(1)
+            return tables[min(len(n), len(tables)) - 1], set()
+
+        reads = []
+
+        def read_environ(pid, tid=None):
+            reads.append((pid, tid))
+            return env_tok if tid == T or pid == Q else b"PATH=/bin\0"
+
+        def scan(group):
+            n.clear()
+            return limits._stable_token_scan(token, "400", None, listing=listing, read_environ=read_environ,
+                                             start_time=lambda pid: "510" if pid == Q else None, group_state=group)
+        tables[:] = [{P: ("Z", 1, "505")}]
+        found, _, _, stable = scan(lambda pid: ("live", T))
+        self.assertEqual((found, stable, len(n)), ({P: "505"}, True, 1))
+        self.assertIn((P, T), reads)
+        # live in pass 1, finished in pass 2 (T may have forked Q after the second listing, then exited): the
+        # finished zombie is accepted only after a pass that already found it finished, by then Q is listed
+        # (pass 1 repeats anyway: another listed pid vanished before its stat could be read)
+        states = iter([("live", T), ("live", T), ("finished", None), ("finished", None)])
+        steps = [({P: ("Z", 1, "505")}, {base + 9}), ({P: ("Z", 1, "505")}, set()),
+                 ({P: ("Z", 1, "505"), Q: ("S", 1, "510")}, set())]
+        n.clear()
+        found, _, _, stable = limits._stable_token_scan(
+            token, "400", None, listing=lambda: n.append(1) or steps[len(n) - 1], read_environ=read_environ,
+            start_time=lambda pid: "510" if pid == Q else None, group_state=lambda pid: next(states))
+        self.assertEqual((found, stable, len(n)), ({Q: "510"}, True, 3))
+        # a thread group that cannot be read: unconfirmed at once
+        tables[:] = [{P: ("Z", 1, "505")}]
+        found, _, _, stable = scan(lambda pid: ("unknown", None))
+        self.assertEqual((found, stable, len(n)), ({}, False, 1))
+        # a zombie reaped meanwhile (task/ gone): rescan
+        tables[:] = [{P: ("Z", 1, "505")}, {Q: ("S", 1, "510")}]
+        found, _, _, stable = scan(lambda pid: ("gone", None))
+        self.assertEqual((found, stable, len(n)), ({Q: "510"}, True, 2))
+        # registry checks: a Z leader with a live thread (or an unreadable group) is not exited
+        for gs, want in ((("live", T), "505"), (("unknown", None), "505"), (("finished", None), None)):
+            with mock.patch.object(limits, "_stat", lambda pid, flags=False: ("Z", 1, "505")), \
+                    mock.patch.object(limits, "_group_state", lambda pid: gs):
+                self.assertEqual(limits._start_time(P), want, gs)
+                self.assertEqual(limits._alive_in({P: ("Z", 1, "505")}, P, "505"), want is not None, gs)
+
+    @unittest.skipUnless(POSIX, "the run token is the Linux ownership marker")
+    def test_real_zombie_leader_with_live_thread(self):
+        # the real kernel behaviour: the main thread calls pthread_exit, a worker keeps running (limited to 8 s)
+        import subprocess
+        marks = limits._launch_marks()
+        env = dict(os.environ, **{limits.TOKEN_VAR: marks["token"]})
+        code = ("import ctypes, os, threading, time\n"
+                "def worker():\n    time.sleep(8)\n    os._exit(0)\n"
+                "threading.Thread(target=worker).start()\n"
+                "ctypes.CDLL(None).pthread_exit(None)\n")
+        p = subprocess.Popen([sys.executable, "-B", "-c", code], env=env, stdin=subprocess.DEVNULL)
+        self.addCleanup(lambda: (p.poll() is None and p.kill(), p.wait(10)))
+        deadline = time.monotonic() + 5
+        while time.monotonic() < deadline:
+            st = limits._stat(p.pid)
+            if st is not None and st[0] == "Z" and limits._group_state(p.pid)[0] == "live":
+                break
+            time.sleep(0.02)
+        else:
+            self.fail("the leader did not become a zombie with a live thread")
+        self.assertEqual(limits._start_time(p.pid), st[2])
+        gone = self.gone()
+        rec = dict(marks, phase="running", isolation="subreaper", root_pid=gone, root_start="1",
+                   registry=[[gone, "1"]])
+        self.assertEqual(limits.still_alive(rec), ([p.pid], False))
+        res = limits.cleanup(rec, "test")
+        self.assertEqual(res.killed_pids_alive, [])
+        self.assertFalse(res.cleanup_unconfirmed)
+        p.wait(10)
+        self.assertEqual(limits.still_alive(rec), ([], False))
+
+    @unittest.skipUnless(POSIX, "the run token is the Linux ownership marker")
+    def test_partial_environ_read_rescans(self):
+        # Codex BC4-02: the read returns a non-empty prefix without the token (the token is appended last) because P
+        # exited during the read, after forking Q; the identity re-check after the read sees P gone -> rescan
+        token = "b2" * 16
+        base = os.getpid() + 5000000
+        P, Q = base + 1, base + 2
+        env_q = b"\0".join([b"PATH=/bin", (limits.TOKEN_VAR + "=" + token).encode("ascii"), b""])
+        tables = [{P: ("S", 1, "500")}, {Q: ("S", 1, "510")}]
+        n = []
+
+        def listing():
+            n.append(1)
+            return tables[min(len(n), len(tables)) - 1], set()
+        starts = {Q: "510"}                              # P: gone after the read
+
+        def prefix(pid, tid=None):
+            return b"PATH=/bin\0HOME=/x" if pid == P else env_q
+        found, unreadable, _, stable = limits._stable_token_scan(token, "400", None, listing=listing,
+                                                                 read_environ=prefix, start_time=starts.get)
+        self.assertEqual((found, unreadable, stable, len(n)), ({Q: "510"}, [], True, 2))
+        # the generic OSError branch: P is found gone right after the failed read -> vanished, not skipped
+        n.clear()
+
+        def denied(pid, tid=None):
+            if pid == P:
+                raise PermissionError(13, "Permission denied")
+            return env_q
+        found, unreadable, _, stable = limits._stable_token_scan(token, "400", None, listing=listing,
+                                                                 read_environ=denied, start_time=starts.get)
+        self.assertEqual((found, unreadable, stable, len(n)), ({Q: "510"}, [], True, 2))
+        # a token-less read whose process is still the same: a complete non-member check, no rescan
+        n.clear()
+        tables[:] = [{P: ("S", 1, "500")}]
+        found, _, _, stable = limits._stable_token_scan(token, "400", None, listing=listing, read_environ=prefix,
+                                                        start_time=lambda pid: "500")
+        self.assertEqual((found, stable, len(n)), ({}, True, 1))
 
     @unittest.skipUnless(POSIX, "the run token is the Linux ownership marker")
     def test_stable_scan_empty_environ_is_vanished(self):

@@ -33,18 +33,26 @@ Ownership (primary):
     after exec succeeded). A record without the root identity (phase "launching": the wrapper died before the
     "running" save) therefore never counts as confirmed: still_alive / cleanup report it unconfirmed (cleanup still
     stops every token carrier it finds) and recovery stops, whatever the token scan finds.
-    Stable snapshot (Codex BC3-02): a token scan that sees a listed process vanish during the pass (its stat or
-    environment can no longer be read or reads as 0 bytes, as for a zombie or a task inside do_exit, a token carrier
-    exits after its environment was read, a new zombie) is repeated from a fresh /proc listing, since a process forked
-    by it before it exited is listed only by then; when SCAN_PASSES passes in a row see such a disappearance, the
-    result is unconfirmed (still_alive, cleanup, verify). Kernel threads (PF_KTHREAD) are left out of the listing.
-    Residual limits: (1) conservative, not unsafe: on a busy system unrelated processes started since the launch that
-    exit during every pass, or a user process whose environment is really empty, make the result unconfirmed (a stop
-    the author clears), never a false confirmation. (2) A /proc readdir is not an atomic snapshot: with pid
-    wraparound during one listdir, a carrier whose pid the cursor has not reached yet can fork a child with a lower
-    pid (already passed) and exit and be reaped before the cursor reaches it; neither then appears in that pass. The
-    stable-scan rule narrows this window (the next pass lists the child) but does not eliminate it, since the same
-    can happen in every pass; everywhere else the result direction stays conservative. (3) A
+    Stable snapshot (Codex BC3-02, BC4-01, BC4-02): a token scan pass is repeated from a fresh /proc listing when it
+    sees a listed process vanish or change: its stat or environment can no longer be read or reads as 0 bytes (a
+    zombie, a task inside do_exit), or, after ANY environment read (token or not, also a failed one), it no longer
+    runs with its listed start time or is now a zombie (a read can return a prefix without the token, which is
+    appended last, when the process exits during the read). A process forked by it before it exited is listed by
+    then. Zombies: /proc lists only thread-group leaders, and a leader that called pthread_exit shows Z while other
+    threads keep running and can fork; so a zombie leader is looked up in /proc/<pid>/task/. A live other thread ->
+    the process counts as running (its environment is read through that thread; also _start_time and the registry
+    checks treat it as running); every other task Z/X or none -> finished, accepted only when the previous pass also
+    found it finished (its pre-exit children are listed by then); task/ unreadable -> unconfirmed at once. When
+    SCAN_PASSES passes in a row see a change, the result is unconfirmed (still_alive, cleanup, verify). Kernel
+    threads (PF_KTHREAD) are left out of the listing.
+    Known residual limits: (1) conservative, not unsafe: on a busy system unrelated processes started since the
+    launch that exit during every pass, or a user process whose environment is really empty, make the result
+    unconfirmed (a stop the author clears), never a false confirmation. (2) A /proc readdir is not an atomic
+    snapshot: with pid wraparound during one listdir, a carrier whose pid the cursor has not reached yet can fork a
+    child with a lower pid (already passed) and exit and be reaped before the cursor reaches it; neither then appears
+    in that pass. The stable-scan rule narrows this window (the next pass lists the child) but does not eliminate it,
+    since the same can happen in every pass. The same holds for the readdir of /proc/<pid>/task/ with tid
+    wraparound (a thread creating a lower-tid thread and exiting). (3) A
     migration mediated by PID 1 or by root (e.g. "systemd-run --user --scope", which asks the user manager to move
     the process into user@<uid>.service) can carry a descendant out of the launch cgroup; if it is then also unreadable
     it is not counted. The graded flow (grade.py and its tools) does neither.
@@ -403,12 +411,48 @@ else:
             return rest[0], int(rest[1]), rest[19], int(rest[6])
         return rest[0], int(rest[1]), rest[19]
 
-    def _start_time(pid):
-        """Start time (clock ticks since boot, as a decimal string) of a running process; None when it does not
-        exist or is a zombie (exited, not yet reaped)."""
+    def _group_state(pid):
+        """State of the thread group of pid whose leader is a zombie (Codex BC4-01: a leader that called
+        pthread_exit shows Z while its other threads keep running and can fork): ("finished", None) when task/ holds
+        no task other than the leader or every other task is Z/X; ("live", tid) for a running other task; ("gone",
+        None) when the process no longer exists; ("unknown", None) when task/ or a task's stat cannot be read."""
+        try:
+            tids = sorted(int(t) for t in os.listdir(f"/proc/{pid}/task") if t.isdigit())
+        except (FileNotFoundError, ProcessLookupError):
+            return "gone", None
+        except OSError:
+            return "unknown", None
+        for tid in tids:
+            if tid == pid:
+                continue
+            try:
+                with open(f"/proc/{pid}/task/{tid}/stat", "rb") as f:
+                    data = f.read().decode("ascii", "replace")
+                state = data[data.rindex(")") + 2:].split()[0]
+            except (FileNotFoundError, ProcessLookupError):
+                continue                               # that thread has exited
+            except (OSError, ValueError, IndexError):
+                return "unknown", None
+            if state not in ("Z", "X", "x"):
+                return "live", tid
+        return "finished", None
+
+    def _running_start(pid):
+        """Start time of pid when it exists and its stat state is not Z/X (else None); no thread-group lookup."""
         st = _stat(pid)
         if st is None or st[0] in ("Z", "X", "x"):
             return None
+        return st[2]
+
+    def _start_time(pid):
+        """Start time (clock ticks since boot, as a decimal string) of a running process; None when it does not
+        exist or has exited (X, or a zombie whose whole thread group has finished, not yet reaped). A zombie leader
+        with a live other thread, or whose thread group cannot be read, counts as running (Codex BC4-01)."""
+        st = _stat(pid)
+        if st is None or st[0] in ("X", "x"):
+            return None
+        if st[0] == "Z":
+            return st[2] if _group_state(pid)[0] in ("live", "unknown") else None
         return st[2]
 
     def _table_scan(listdir=None, stat=None):
@@ -443,8 +487,11 @@ else:
     def _resume_process(pid):
         pass
 
-    def _read_environ(pid):
-        with open(f"/proc/{pid}/environ", "rb") as f:
+    def _read_environ(pid, tid=None):
+        """Environment of pid (tid: through that thread, /proc/<pid>/task/<tid>/environ). May be a prefix when the
+        process exits during the read (Codex BC4-02): callers re-check the identity afterwards."""
+        path = f"/proc/{pid}/environ" if tid is None else f"/proc/{pid}/task/{tid}/environ"
+        with open(path, "rb") as f:
             return f.read()
 
     def _same_user(pid, uid):
@@ -478,35 +525,59 @@ else:
             return False
         return cg != launch_cg and not cg.startswith(launch_cg.rstrip("/") + "/")
 
-    def _token_scan(token, since, table, launch_cg=None, read_environ=None, start_time=None):
-        """({pid: start} of the running processes whose environment holds TOKEN_VAR=token, [pids of this user whose
-        environment could not be read], {pids that exited during the pass}) among the processes of `table` started at
-        or after `since` clock ticks. An unreadable process outside the launch cgroup subtree (launch_cg) is not
-        counted (module docstring). "Exited during the pass" (Codex BC3-02): the environment read failed with
-        ENOENT/ESRCH, or a token carrier no longer runs with its listed start time after its environment was read; a
-        process it forked before exiting may be missing from `table`. A zombie started since `since` is reported too
-        (it may have forked before exiting, after the listing); _stable_token_scan accepts it once a later pass lists
-        the same zombie again. read_environ / start_time: injectable readers (tests); default the /proc readers."""
+    def _token_scan(token, since, table, launch_cg=None, read_environ=None, start_time=None, group_state=None):
+        """One pass over `table` (the processes started at or after `since` clock ticks): (found {pid: start} of the
+        processes whose environment holds TOKEN_VAR=token, unreadable [pids of this user whose environment could not
+        be read], vanished {pids that exited or changed during the pass}, zombies {(pid, start) of zombie leaders
+        whose whole thread group has finished}, uncertain {pids whose membership cannot be established}). An
+        unreadable process outside the launch cgroup subtree (launch_cg) is not counted (module docstring).
+        Vanished (Codex BC3-02, BC4-02): the environment read failed with ENOENT/ESRCH or returned 0 bytes, or, after
+        ANY environment read (token or not, also a failed one), the process no longer runs with its listed start time
+        or is now a zombie: a read can return a prefix without the token (it is appended last) when the process exits
+        during the read. A process it forked before exiting may be missing from `table`, so the pass is repeated.
+        Zombie leaders (Codex BC4-01): the thread group is looked up (_group_state). Finished -> zombies (accepted
+        by _stable_token_scan only once the previous pass also found it finished); live -> the environment is read
+        through the live thread and the process is treated as running (found when it carries the token); gone ->
+        vanished; unknown -> uncertain (the caller reports unconfirmed).
+        read_environ(pid, tid=None) / start_time(pid) (start time when running and not Z/X, else None) /
+        group_state(pid): injectable readers (tests); default the /proc readers."""
         read_environ = read_environ or _read_environ
-        start_time = start_time or _start_time
+        start_time = start_time or _running_start
+        group_state = group_state or _group_state
         needle = f"{TOKEN_VAR}={token}".encode("ascii")
         me, uid = os.getpid(), os.getuid()
-        found, unreadable, vanished = {}, [], set()
+        found, unreadable, vanished, zombies, uncertain = {}, [], set(), set(), set()
         for pid, (state, _, start) in table.items():
             if pid == me:
                 continue
             if since is not None and int(start) < int(since):
                 continue
+            tid = None
             if state in ("Z", "X", "x"):
-                vanished.add(pid)
-                continue
+                gs, tid = group_state(pid)
+                if gs == "finished":
+                    zombies.add((pid, start))
+                    continue
+                if gs == "gone":
+                    vanished.add(pid)
+                    continue
+                if gs != "live":
+                    uncertain.add(pid)
+                    continue
+
+            def same():                                # identity and state re-checked after the read (BC4-02)
+                if tid is None:
+                    return start_time(pid) == start
+                return group_state(pid)[0] == "live"
             try:
-                data = read_environ(pid)
+                data = read_environ(pid) if tid is None else read_environ(pid, tid)
             except (FileNotFoundError, ProcessLookupError):
                 vanished.add(pid)
                 continue
             except OSError:
-                if _same_user(pid, uid) and not _outside(_cgroup(pid), launch_cg):
+                if not same():
+                    vanished.add(pid)
+                elif _same_user(pid, uid) and not _outside(_cgroup(pid), launch_cg):
                     unreadable.append(pid)
                 continue
             if not data:
@@ -516,32 +587,33 @@ else:
                 # empty makes every pass repeat, so the result is unconfirmed (conservative)
                 vanished.add(pid)
                 continue
+            if not same():
+                vanished.add(pid)
+                continue
             if needle in data.split(b"\0"):
-                if start_time(pid) == start:
-                    found[pid] = start
-                else:
-                    vanished.add(pid)
-        return found, unreadable, vanished
+                found[pid] = start
+        return found, unreadable, vanished, zombies, uncertain
 
     def _stable_token_scan(token, since, launch_cg=None, listing=None, read_environ=None, start_time=None,
-                           passes=None):
-        """Token scan over a stable process snapshot (Codex BC3-02): (found, unreadable, table, stable). A pass in
-        which a listed process vanished (its stat or environment could not be read any more: ENOENT/ESRCH), a token
-        carrier exited after its environment was read, or a zombie appeared that the previous pass had not listed,
-        is repeated from a fresh listing: a process forked by the vanished one before it exited is listed by then.
-        stable is False when no pass out of `passes` (default SCAN_PASSES) was free of such disappearances; the
-        caller must then count the result as unconfirmed. listing / read_environ / start_time: injectable readers
-        (tests); listing returns (table, vanished pids) like _table_scan."""
+                           group_state=None, passes=None):
+        """Token scan over a stable process snapshot (Codex BC3-02, BC4-01, BC4-02): (found, unreadable, table,
+        stable). A pass in which a listed process vanished or changed (see _token_scan), or which found a finished
+        zombie leader that the previous pass had not already found finished, is repeated from a fresh listing: a
+        process forked before the exit is listed by then. stable is False when no pass out of `passes` (default
+        SCAN_PASSES) was free of such changes, or at once when a zombie leader's thread group cannot be read; the
+        caller must then count the result as unconfirmed. listing / read_environ / start_time / group_state:
+        injectable readers (tests); listing returns (table, vanished pids) like _table_scan."""
         listing = listing or _table_scan
         passes = SCAN_PASSES if passes is None else passes
         zombies_before = set()
         found, unreadable, table = {}, [], {}
         for _ in range(passes):
             table, gone = listing()
-            found, unreadable, vanished = _token_scan(token, since, table, launch_cg, read_environ, start_time)
-            zombies = {(pid, table[pid][2]) for pid in vanished if pid in table and table[pid][0] in ("Z", "X", "x")}
-            churn = set(gone) | {pid for pid in vanished if pid not in table or table[pid][0] not in ("Z", "X", "x")}
-            if not churn and zombies <= zombies_before:
+            found, unreadable, vanished, zombies, uncertain = _token_scan(token, since, table, launch_cg, read_environ,
+                                                                          start_time, group_state)
+            if uncertain:
+                return found, unreadable, table, False
+            if not gone and not vanished and zombies <= zombies_before:
                 return found, unreadable, table, True
             zombies_before = zombies
         return found, unreadable, table, False
@@ -694,7 +766,7 @@ class _Run:
             for pid, (state, ppid, start) in table.items():
                 # adopted orphans: re-parented to this (subreaper) process and started after the root
                 if ppid == me and pid not in self.prior_children and pid != self.root_pid \
-                        and int(start) >= root_ticks and state not in ("Z", "X", "x"):
+                        and int(start) >= root_ticks and _state_running(pid, state):
                     if self.popen is not None or pid in self.registry:
                         seeds.add(pid)
         if self.token:                                 # every process carrying the run token is ours
@@ -710,7 +782,7 @@ class _Run:
             if pid in out or pid not in table:
                 continue
             state, _, start = table[pid]
-            if state not in ("Z", "X", "x"):
+            if _state_running(pid, state):
                 out[pid] = start
             stack.extend(children.get(pid, ()))
         return out
@@ -827,9 +899,19 @@ class _Run:
                 "registry": [[p, s] for p, s in self.registry.items()], "isolation": self.isolation}
 
 
+def _state_running(pid, state):
+    """A table entry counts as running: any state but Z/X, or (Codex BC4-01) a zombie leader whose thread group still
+    has a live thread or cannot be read."""
+    if state in ("X", "x"):
+        return False
+    if state == "Z":
+        return os.name != "nt" and _group_state(pid)[0] in ("live", "unknown")
+    return True
+
+
 def _alive_in(table, pid, start):
     st = table.get(pid)
-    return st is not None and st[2] == start and st[0] not in ("Z", "X", "x")
+    return st is not None and st[2] == start and _state_running(pid, st[0])
 
 
 def _write_json(path, obj):
