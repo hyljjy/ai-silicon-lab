@@ -70,13 +70,7 @@ def same_criterion(a, b):
 
 
 def _prev_fn(prev):
-    if callable(prev):
-        return prev
-    if isinstance(prev, dict):
-        return prev.get
-    import mapping                                         # only when the real mapping is needed
-    m = mapping.load(2)
-    return lambda c: mapping.prev_code(m, c)
+    return judge.prev_fn(prev, 2)
 
 
 def _index(rows, label, probs):

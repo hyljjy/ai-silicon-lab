@@ -252,7 +252,15 @@ class Judgments(unittest.TestCase):
         self.assertTrue(judge.eval3(atom("matrix.ss_100C_1v60.setup.global.slack", "<", "-3.999999"), st, mx))
         self.assertTrue(judge.eval3(atom("matrix.summary.worst_setup.slack", ">=", "-4"), st, mx))
         self.assertTrue(judge.eval3(atom("matrix.extra.area", ">", "1001"), st, mx))
-        self.assertIsNone(judge.eval3(atom("status.cfg_L", "<", "abc"), st, mx))
+        with self.assertRaises(judge.JudgeError):
+            judge.eval3(atom("status.cfg_L", "<", "abc"), st, mx)
+
+    def test_ordering_op_with_text_value_rejected(self):
+        for op in ("<", "<=", "==", ">=", ">"):
+            self.assertTrue(judge.expr_problems(atom("status.state", op, "grade_fail")), op)
+            self.assertTrue(judge.expr_problems(atom("status.cfg_L", op, "NaN")), op)
+        self.assertEqual(judge.expr_problems(atom("status.state", "is", "grade_fail")), [])
+        self.assertEqual(judge.expr_problems(atom("status.cfg_L", "==", "2")), [])
 
     def test_failure_condition_judged_on_grade_fail(self):
         st = status(state="grade_fail", grade_status="GRADE FAIL", gl_sim="fail", sta_analysis="not_run",
@@ -369,6 +377,60 @@ class Files(FileBase):
         self.assertEqual(rc, 1)
         self.assertIn("CRITERIA FAIL", out)
         self.assertFalse(os.path.exists(os.path.join(self.pred_dir, "r1_judgments.jsonl")))
+
+    def test_ordering_op_with_text_value_is_criteria_fail(self):
+        self.setup_round([fc("F1", expr={"or": [atom("status.state", "==", "grade_fail"),
+                                                 atom("status.gl_sim", "is", "fail")]})])
+        rc, out = self.run_quiet(judge.run, 1, case=self.case)
+        self.assertEqual(rc, 1)
+        self.assertIn("CRITERIA FAIL", out)
+        self.assertIn("finite decimal", out)
+
+    def make_baseline(self, area="1000.0", verdict_bytes=None):
+        root = os.path.join(self.tmp.name, "F1")
+        arch = os.path.join(root, "archive", judge.baseline.RUN)
+        files = {"verdict.json": verdict_bytes if verdict_bytes is not None else
+                 ('{"area_um2": ' + area + '}\n').encode("utf-8"),
+                 "sta/sta_results.tsv": b"corner\tws\n"}
+        for kind in ("max", "min"):
+            for c in CORNERS:
+                files[f"sta/path_{kind}_{c}.rpt"] = f"Corner: {c}\n".encode("ascii")
+        sums = []
+        for rel, data in files.items():
+            wbytes(os.path.join(arch, *rel.split("/")), data)
+            sums.append(f"{rp.sha256_bytes(data)}  ./{judge.baseline.RUN}/{rel}\n")
+        wbytes(os.path.join(root, "archive", "SHA256SUMS"), "".join(sums).encode("ascii"))
+        wbytes(os.path.join(root, "f1_run_verdict.json"), files["verdict.json"])
+        wbytes(os.path.join(root, "sta_results.tsv"), files["sta/sta_results.tsv"])
+        return root
+
+    def test_area_delta_uses_baseline_without_compare(self):
+        row = pred("p1", metric="area", check="", corner="", category="", unit="µm²", direction="改善")
+        st = status(state="grade_fail", grade_status="GRADE FAIL", gl_sim="fail", sta_analysis="not_run",
+                    area_um2="990.5")
+        self.setup_round([row], st=st, mx=None)
+        root = self.make_baseline()
+        rc, out = self.run_quiet(judge.run, 1, case=self.case, base_root=root)
+        self.assertEqual(rc, 0, out)
+        got = json.loads(rp.read_bytes(os.path.join(self.pred_dir, "r1_judgments.jsonl")).decode("utf-8"))
+        self.assertEqual((got["actual"], got["judgment"]), ("-9.5", "支持"))
+        self.assertIn({"file": f"evidence/F1/archive/{judge.baseline.RUN}/verdict.json", "field": "area_um2"},
+                      got["evidence"])
+        # unreadable / malformed baseline verdict: CRITERIA FAIL, no traceback, nothing written
+        os.remove(os.path.join(self.pred_dir, "r1_judgments.jsonl"))
+        for bad in (b"{not json", b'{"area_um2": "x"}\n'):
+            root = self.make_baseline(verdict_bytes=bad)
+            rc, out = self.run_quiet(judge.run, 1, case=self.case, base_root=root)
+            self.assertEqual(rc, 1, bad)
+            self.assertIn("CRITERIA FAIL", out)
+            self.assertIn("baseline verdict.json", out)
+            self.assertFalse(os.path.exists(os.path.join(self.pred_dir, "r1_judgments.jsonl")))
+        # baseline that fails verification
+        root = self.make_baseline()
+        wbytes(os.path.join(root, "f1_run_verdict.json"), b"{}\n")
+        rc, out = self.run_quiet(judge.run, 1, case=self.case, base_root=root)
+        self.assertEqual(rc, 1)
+        self.assertIn("BASELINE FAIL", out)
 
     def test_tsv_view_is_deterministic(self):
         rows = [pred("p1", direction="改善", action="a\tb"),

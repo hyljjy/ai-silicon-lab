@@ -13,6 +13,12 @@ Criteria rows (revise/predictions/r<r>_criteria.jsonl, the only data source; one
   judging always come from that file): slack increase 0.000001 decimal; area decrease 0.0001 decimal;
   L equal "" integer; function equal "" text. A row whose metric is not one of the four leaves them empty.
   r1_ref is "" in round 1.
+  same_as (round >= 2, controller ruling R16): a prediction row whose id is "same_as=<X>" keeps id, action and
+  basis verbatim from its own extracted row; its fields metric check corner category value_kind direction low high
+  unit point are those of round rnd-1 extracted row X of the predecessor candidate (mapping prev_code) and are
+  checked against that row; source must say it was resolved via same_as. X missing, no predecessor, a field that
+  differs from X, or the model's own row filling a field differently from X: CRITERIA FAIL.
+  Atoms with < <= == >= > need a finite decimal value (text comparisons use "is"): otherwise CRITERIA FAIL.
 
 Boolean expressions: {"atom": {"field", "op": "<"|"<="|"=="|">="|">"|"is", "value": "<string>"}},
   {"untestable": "<text>"}, {"and": [..]}, {"or": [..]}, {"not": expr}. Fields: status.<status.json key>,
@@ -68,6 +74,8 @@ JUDGMENT_FIELDS = ("actual", "direction_judgment", "range_judgment", "judgment",
 PRED_WORDS = ("支持", "反对", "未判定", "无结果", "不适用", "格式问题")
 FC_WORDS = ("触发", "未触发", "未判定")
 
+SAME_AS = re.compile(r"same_as\s*=\s*(\S+)")
+SAME_AS_FIELDS = ("metric check corner category value_kind direction low high unit point").split()
 _MATRIX_CELL = re.compile(r"^matrix\.([^.]+)\.(setup|hold)\.([^.]+)\.slack$")
 
 
@@ -352,6 +360,9 @@ def expr_problems(expr, where="expr"):
             probs.append(f"{where}.atom: op {v['op']!r} not one of {' '.join(OPS)}")
         if not isinstance(v["value"], str):
             probs.append(f"{where}.atom: value must be a string")
+        elif v["op"] in OPS and v["op"] != "is" and _dec(v["value"]) is None:
+            probs.append(f"{where}.atom: op {v['op']} needs a finite decimal value, not {v['value']!r} "
+                         f"(use \"is\" for text)")
         f = v["field"]
         ok = isinstance(f, str) and (
             re.fullmatch(r"status\.[^.\s]+", f) or re.fullmatch(r"matrix\.(summary|extra)(\.[^.\s]+)+", f)
@@ -526,9 +537,71 @@ def ref_of(row):
     return row.get("prediction_id") if row.get("row_type") == "prediction" else row.get("fc_id")
 
 
-def criteria_problems(rows, rnd, extracted=None):
-    """Problems of the criteria rows of round rnd; extracted: the r<rnd>_extracted.jsonl rows (checked verbatim)."""
+def prev_fn(prev, rnd=2):
+    """{code: previous code} dict or callable as given; None -> mapping.prev_code on mapping.load(rnd)."""
+    if callable(prev):
+        return prev
+    if isinstance(prev, dict):
+        return prev.get
+    import mapping                                         # only when the real mapping is needed
+    m = mapping.load(rnd)
+    return lambda c: mapping.prev_code(m, c)
+
+
+def _same_as_problems(r, where, x, rnd, ext_pred, prev_extracted, prev, cache):
+    """Round >= 2 row whose id is same_as=<x>: id, action and basis verbatim from this round's extracted row; the
+    object and criterion fields SAME_AS_FIELDS equal round rnd-1 extracted row x of the predecessor candidate."""
     probs = []
+    own = [e for e in ext_pred if e.get("code") == r["candidate"] and e.get("id") == r["id"]
+           and e.get("action") == r["action"] and e.get("basis") == r["basis"]]
+    if not own:
+        probs.append(f"{where}: no extracted prediction row of {r['candidate']} has exactly this id, action and "
+                     f"basis (kept verbatim)")
+    if "same_as" not in r["source"]:
+        probs.append(f"{where}: source must record that the row was resolved via same_as")
+    if "fn" not in cache:
+        try:
+            cache["fn"] = prev_fn(prev, rnd)
+        except Exception as e:                             # mapping.MappingError and file errors
+            cache["fn"] = None
+            cache["err"] = str(e)
+    if cache["fn"] is None:
+        probs.append(f"{where}: same_as cannot be resolved: the round-{rnd} mapping cannot be loaded "
+                     f"({cache.get('err')})")
+        return probs
+    try:
+        pc = cache["fn"](r["candidate"])
+    except Exception:
+        pc = None
+    if not pc:
+        probs.append(f"{where}: same_as cannot be resolved: {r['candidate']} has no predecessor candidate")
+        return probs
+    if prev_extracted is None:
+        probs.append(f"{where}: same_as cannot be resolved: r{rnd - 1}_extracted.jsonl is not available")
+        return probs
+    xs = [e for e in prev_extracted if e.get("row_type") == "prediction" and e.get("code") == pc
+          and isinstance(e.get("id"), str) and e["id"].strip() == x]
+    if not xs:
+        probs.append(f"{where}: same_as={x}: round {rnd - 1} candidate {pc} has no extracted prediction {x!r}")
+        return probs
+    src = xs[0]
+    diff = [c for c in SAME_AS_FIELDS if r[c] != src.get(c)]
+    if diff:
+        probs.append(f"{where}: same_as={x}: fields {' '.join(diff)} differ from round {rnd - 1} extracted row {x} "
+                     f"of {pc} (they are carried verbatim)")
+    for e in own:
+        clash = [c for c in SAME_AS_FIELDS if (e.get(c) or "").strip() and e.get(c) != src.get(c)]
+        if clash:
+            probs.append(f"{where}: same_as={x}: the model's own row fills {' '.join(clash)} differently from {x}")
+    return probs
+
+
+def criteria_problems(rows, rnd, extracted=None, prev_extracted=None, prev=None):
+    """Problems of the criteria rows of round rnd; extracted: the r<rnd>_extracted.jsonl rows (checked verbatim);
+    prev_extracted: the r<rnd-1>_extracted.jsonl rows and prev: the code mapping (see prev_fn), both used only to
+    resolve same_as=<X> rows (protocol 10.1, 10.4)."""
+    probs = []
+    cache = {}
     dirs = rp.directions()
     seen_pid, seen_ref = set(), set()
     ext_pred = [e for e in extracted or [] if e.get("row_type") == "prediction"]
@@ -580,7 +653,10 @@ def criteria_problems(rows, rnd, extracted=None):
             elif r["orientation"] or r["epsilon"] or r["comparator"]:
                 probs.append(f"{where}: metric {metric!r} is not judged; orientation / epsilon / comparator must be "
                              f"empty")
-            if extracted is not None and not any(
+            same_as = SAME_AS.fullmatch(_s(r, "id"))
+            if same_as and rnd >= 2:
+                probs += _same_as_problems(r, where, same_as.group(1), rnd, ext_pred, prev_extracted, prev, cache)
+            elif extracted is not None and not any(
                     e.get("code") == r["candidate"] and all(e.get(c) == r[c] for c in EXTRACTED_PREDICTION_COLUMNS)
                     for e in ext_pred):
                 probs.append(f"{where}: no extracted prediction row of {r['candidate']} has exactly these fields "
@@ -606,12 +682,16 @@ def _paths(case, rnd):
             "coverage_tsv": os.path.join(pred, "r2_coverage.tsv")}
 
 
-def load_criteria(case, rnd):
-    """Validated criteria rows of round rnd (JudgeError with every problem)."""
+def load_criteria(case, rnd, prev=None):
+    """Validated criteria rows of round rnd (JudgeError with every problem). same_as rows (round >= 2) also read
+    r<rnd-1>_extracted.jsonl and the code mapping (prev, see prev_fn)."""
     p = _paths(case, rnd)
     rows = read_jsonl(p["criteria"])
     extracted = read_jsonl(p["extracted"])
-    probs = criteria_problems(rows, rnd, extracted)
+    prev_extracted = None
+    if rnd >= 2 and any(r.get("row_type") == "prediction" and SAME_AS.fullmatch(_s(r, "id")) for r in rows):
+        prev_extracted = read_jsonl(_paths(case, rnd - 1)["extracted"])
+    probs = criteria_problems(rows, rnd, extracted, prev_extracted, prev)
     if probs:
         raise JudgeError("; ".join(probs))
     return rows
@@ -646,14 +726,20 @@ def load_candidate(case, rnd, code, base_root=None, need_baseline_area=False):
         probs = baseline.verify(base_root)
         if probs:
             raise JudgeError("; ".join(probs))
-        v = rp.load_json_decimal(baseline.source(base_root)["verdict"])
+        vp = baseline.source(base_root)["verdict"]
+        try:
+            v = rp.load_json_decimal(vp)
+        except (OSError, ValueError) as e:
+            raise JudgeError(f"baseline verdict.json cannot be read ({e.__class__.__name__}: {e})")
+        if not isinstance(v, dict) or _dec(v.get("area_um2")) is None:
+            raise JudgeError("baseline verdict.json has no numeric area_um2")
         mx = {"baseline": {"extra": {"area": v.get("area_um2")}}, "_baseline_file": True}
         files["baseline"] = f"evidence/F1/archive/{baseline.RUN}/verdict.json"
     return st, mx, files
 
 
-def judgment_rows(case, rnd, base_root=None):
-    rows = load_criteria(case, rnd)
+def judgment_rows(case, rnd, base_root=None, prev=None):
+    rows = load_criteria(case, rnd, prev)
     cache = {}
     out = []
     seen = set()
@@ -740,11 +826,11 @@ def _write_or_check(case, targets, check):
     return problems
 
 
-def run(rnd, check=False, case=None, base_root=None):
+def run(rnd, check=False, case=None, base_root=None, prev=None):
     """Write (or with check=True compare) r<rnd>_judgments.jsonl and .md. Returns 0 or 1 (problems printed)."""
     case = case or rp.CASE
     try:
-        rows = judgment_rows(case, rnd, base_root)
+        rows = judgment_rows(case, rnd, base_root, prev)
     except (JudgeError, rp.RevpathsError) as e:
         print(f"CRITERIA FAIL: {e}", flush=True)
         return 1
@@ -777,7 +863,7 @@ def views(rnd, check=False, case=None, prev=None):
     case = case or rp.CASE
     p = _paths(case, rnd)
     try:
-        rows = load_criteria(case, rnd)
+        rows = load_criteria(case, rnd, prev)
         targets = [(p["tsv"], tsv_bytes(rows, CRITERIA_COLUMNS))]
         if rnd == 2:
             import coverage                                # local import: coverage imports judge

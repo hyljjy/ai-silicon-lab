@@ -307,6 +307,62 @@ class Compute(ComputeBase):
         self.assertIn("COVERAGE FAIL", out)
         self.assertFalse(os.path.exists(os.path.join(self.pred_dir, "r2_coverage_result.json")))
 
+    # ---- round-2 same_as rows (controller ruling R16)
+    def setup_same_as(self, x="P1", alter=None, model_fields=None):
+        r1 = [p1("a1", id="P1", direction="改善", low="0.1")]
+        r2row = p2("b1", id=f"same_as={x}", direction="改善", low="0.1",
+                   source=f"line 12; same_as={x} resolved from round-1 row {x} of {C1}")
+        r2row.update(alter or {})
+        rows = [cov("keep", "a1", "b1", same_object=True, same_criterion=True)]
+        self.setup(r1, [r2row], rows, {"a1": "反对"}, {"b1": "支持"})
+        tj.wjsonl(os.path.join(self.pred_dir, "r1_extracted.jsonl"), tj.extracted_of(r1))
+        own = {c: "" for c in tj.judge.EXTRACTED_PREDICTION_COLUMNS}
+        own.update({"id": f"same_as={x}", "action": r2row["action"], "basis": r2row["basis"]}, **(model_fields or {}))
+        tj.wjsonl(os.path.join(self.pred_dir, "r2_extracted.jsonl"),
+                  [{"code": C2, "row_type": "prediction", "index": 1, **own}])
+
+    def views2(self, prev=PREV):
+        buf = io.StringIO()
+        with contextlib.redirect_stdout(buf):
+            rc = tj.judge.views(2, case=self.case, prev=prev)
+        return rc, buf.getvalue()
+
+    def test_same_as_row_is_keep_and_counted(self):
+        self.setup_same_as()
+        rc, out = self.views2()
+        self.assertEqual(rc, 0, out)
+        res = self.result()
+        self.assertEqual(res["actions"]["prediction"]["keep"], 1)
+        self.assertEqual(res["predictions"]["counts"]["预测改对"], 1)
+        self.assertEqual(res["predictions"]["records"][0]["action"], "keep")
+        # the model's own row may repeat X's values; it is still a same_as row
+        self.setup_same_as(model_fields={"metric": "slack", "low": "0.1"})
+        self.assertEqual(self.views2()[0], 0)
+
+    def test_same_as_nonexistent_target_is_criteria_fail(self):
+        self.setup_same_as(x="P9")
+        rc, out = self.views2()
+        self.assertEqual(rc, 1)
+        self.assertIn("CRITERIA FAIL", out)
+        self.assertIn("P9", out)
+        self.setup_same_as()
+        rc, out = self.views2(prev={C2: "cand_zzzz"})          # predecessor mismatch
+        self.assertEqual(rc, 1)
+        self.assertIn("CRITERIA FAIL", out)
+        rc, out = self.views2(prev={})                         # no predecessor
+        self.assertEqual(rc, 1)
+
+    def test_same_as_altered_fields_is_criteria_fail(self):
+        for alter in ({"low": "0.2"}, {"category": "reg2out"}, {"direction": "退化"}):
+            self.setup_same_as(alter=alter)
+            rc, out = self.views2()
+            self.assertEqual(rc, 1, alter)
+            self.assertIn("CRITERIA FAIL", out)
+        self.setup_same_as(alter={"source": "line 12"})       # source must record the same_as resolution
+        self.assertEqual(self.views2()[0], 1)
+        self.setup_same_as(model_fields={"low": "0.3"})        # the model's own row contradicts X
+        self.assertEqual(self.views2()[0], 1)
+
     def test_coverage_tsv_view(self):
         r1 = [p1("a1", direction="改善")]
         r2 = [p2("b1", direction="改善")]
