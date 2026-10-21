@@ -1,6 +1,7 @@
 """Tests for revpaths (CASE-01 stage B, Task 1). Run per module, never with discover."""
 import json
 import os
+import sys
 import tempfile
 import unittest
 from decimal import Decimal
@@ -178,6 +179,37 @@ class TestRevpaths(unittest.TestCase):
         self.assertEqual(rp.directions(), {"slack": {"better": "increase", "epsilon": Decimal("0.000001")},
                                            "area": {"better": "decrease", "epsilon": Decimal("0.0001")},
                                            "L": {"compare": "equal"}, "function": {"compare": "equal"}})
+
+
+class LoadDiagTests(unittest.TestCase):
+    def diag_dir_entries(self):
+        want = os.path.normcase(rp.DIAG_SCRIPTS)
+        return [e for e in sys.path if os.path.normcase(os.path.abspath(e or ".")) == want]
+
+    def test_alias_only_and_cached(self):
+        vc = rp.load_diag("void_check")
+        self.assertIs(vc, sys.modules["diag_void_check"])
+        self.assertIs(rp.load_diag("void_check"), vc)
+        self.assertTrue(callable(vc.parse_stream))
+        self.assertNotIn("void_check", sys.modules)
+        self.assertEqual(self.diag_dir_entries(), [])
+
+    def test_missing_module(self):
+        with self.assertRaises(rp.RevpathsError):
+            rp.load_diag("no_such_module_xyz")
+
+    def test_no_shadowing_after_importing_stage_b_users(self):
+        import classify
+        if os.name == "nt":
+            import run_revise  # noqa: F401
+        self.assertEqual(self.diag_dir_entries(), [])
+        here = os.path.normcase(rp.HERE)
+        for name in ("build_prompt", "build_package"):
+            mod = __import__(name)
+            self.assertEqual(os.path.normcase(os.path.dirname(os.path.abspath(mod.__file__))), here, name)
+        self.assertIs(classify.void_check, sys.modules["diag_void_check"])
+        for bare in ("void_check", "privacy_check", "diagpaths"):
+            self.assertNotIn(bare, sys.modules)
 
 
 if __name__ == "__main__":

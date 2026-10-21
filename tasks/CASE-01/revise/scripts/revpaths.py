@@ -2,10 +2,12 @@
 Python standard library only; works on Windows (python 3.13) and in WSL (python3 3.12.3)."""
 import datetime
 import hashlib
+import importlib.util
 import json
 import os
 import re
 import shutil
+import sys
 from decimal import ROUND_HALF_UP, Decimal
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -28,6 +30,39 @@ GB = 1024 ** 3                                       # disk threshold unit: GiB 
 WSL_DISTRO = "Ubuntu-24.04"
 # the two volumes of the disk check (Global Constraints "磁盘"): WSL root file system and the repository volume
 DISK_VOLUMES = ("WSL /", "D:\\") if os.name == "nt" else ("/", "/mnt/d")
+
+
+DIAG_ALIAS_PREFIX = "diag_"
+
+
+def load_diag(name):
+    """Load the stage-A module diag/scripts/<name>.py by explicit file path under the alias diag_<name>.
+    Nothing is put on sys.path and the bare name is never registered, so a stage-A module can never shadow a stage-B
+    one of the same name (build_prompt, build_package and test_build exist in both directories). The alias is cached
+    in sys.modules. Choice for sibling imports: the reused stage-A modules (void_check, privacy_check) import only the
+    standard library; with no diag/scripts on sys.path a stage-A module importing a sibling fails with ImportError
+    instead of silently resolving, and the bare name is not registered (checked after loading)."""
+    alias = DIAG_ALIAS_PREFIX + name
+    mod = sys.modules.get(alias)
+    if mod is not None:
+        return mod
+    path = os.path.join(DIAG_SCRIPTS, name + ".py")
+    if not os.path.isfile(path):
+        raise RevpathsError(f"stage A module {name}.py not found in diag/scripts")
+    before = set(sys.modules)
+    spec = importlib.util.spec_from_file_location(alias, path)
+    mod = importlib.util.module_from_spec(spec)
+    sys.modules[alias] = mod
+    try:
+        spec.loader.exec_module(mod)
+    except BaseException:
+        sys.modules.pop(alias, None)
+        raise
+    for extra in set(sys.modules) - before - {alias}:
+        m = getattr(sys.modules[extra], "__file__", None)
+        if m and os.path.normcase(os.path.dirname(os.path.abspath(m))) == os.path.normcase(DIAG_SCRIPTS):
+            del sys.modules[extra]
+    return mod
 
 
 _SUM_LINE = re.compile(r"^([0-9a-fA-F]{64}) [ *](\S.*)$")

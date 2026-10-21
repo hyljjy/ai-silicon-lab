@@ -59,7 +59,7 @@ import re
 import secrets
 import sys
 
-import build_prompt          # before classify: classify puts diag/scripts (it also has a build_prompt.py) first
+import build_prompt
 import classify
 import extract
 import limits
@@ -68,12 +68,11 @@ import prereg
 import revpaths as rp
 import stops
 
-sys.path.insert(0, rp.DIAG_SCRIPTS)
 _HERE = os.path.normcase(os.path.dirname(os.path.abspath(__file__)))
 for _mod in (build_prompt, build_prompt.bp):
     if os.path.normcase(os.path.dirname(os.path.abspath(_mod.__file__))) != _HERE:
         raise ImportError(f"run_revise needs revise/scripts/{os.path.basename(_mod.__file__)}, not the stage A one")
-import privacy_check  # noqa: E402  (read-only reuse of stage A: account e-mail and user-directory pattern)
+privacy_check = rp.load_diag("privacy_check")   # read-only reuse of stage A: account e-mail and user-directory pattern
 
 CLI_PATH = r"D:\study\diag_sandbox\bin\claude-2.1.296.exe"
 CLI_VERSION = "2.1.296"

@@ -16,13 +16,11 @@ Mapping of the protocol table to flags (expect shape = diag/rules/expected.json,
   F_STOP         result.stop_reason is neither end_turn nor max_tokens
 api_retry events are only counted (Verdict.api_retries).
 Cap evidence is searched in all readable events; an incomplete record never short-circuits it."""
-import sys
 from collections import namedtuple
 
 import revpaths
 
-sys.path.insert(0, revpaths.DIAG_SCRIPTS)
-import void_check  # noqa: E402  (read-only reuse of stage A)
+void_check = revpaths.load_diag("void_check")   # read-only reuse of stage A, loaded by explicit path (no sys.path)
 
 parse_stream = void_check.parse_stream
 answer_text = void_check.answer_text
