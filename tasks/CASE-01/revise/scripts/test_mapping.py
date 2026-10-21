@@ -74,6 +74,15 @@ class TestMapping(Base):
             mapping.code_of(m, "unknown-model")
         with self.assertRaises(mapping.MappingError):           # a round is committed once
             mapping.commit_codes(1, MODELS, None, **self.kw)
+        # round 2: previous codes that do not match the committed round-1 mapping are refused, nothing is written
+        swapped = {MODELS[0]: codes[1], MODELS[1]: codes[0], MODELS[2]: codes[2]}
+        with self.assertRaises(mapping.MappingError):
+            mapping.commit_codes(2, MODELS, swapped, **self.kw)
+        with self.assertRaises(mapping.MappingError):
+            mapping.commit_codes(2, MODELS, {MODELS[0]: codes[0]}, **self.kw)
+        self.assertFalse(os.path.exists(os.path.join(self.revise, "outputs", "r2")))
+        self.assertFalse(os.path.exists(os.path.join(self.revise, "outputs", "mapping_r2.sha256")))
+        self.assertFalse(os.path.exists(os.path.join(self.sealed, "mapping_r2.json")))
         # round 2 records each model's round-1 code
         prev = {model: mapping.code_of(m, model) for model in MODELS}
         codes2 = mapping.commit_codes(2, MODELS, prev, **self.kw)
@@ -81,9 +90,8 @@ class TestMapping(Base):
         m2 = mapping.load(2, **self.kw)
         for model, code in zip(MODELS, codes2):
             self.assertEqual(mapping.prev_code(m2, code), prev[model])
-        with self.assertRaises(mapping.MappingError):           # prev must match the committed round-1 mapping
-            mapping.commit_codes(3, MODELS, {MODELS[0]: codes[1], MODELS[1]: codes[0], MODELS[2]: codes[2]},
-                                 **self.kw)
+        with self.assertRaises(mapping.MappingError):           # round 3 needs the round-2 codes, not round 1's
+            mapping.commit_codes(3, MODELS, prev, **self.kw)
 
     def test_load_refuses_uncommitted_commitment(self):
         mapping.commit_codes(1, MODELS, None, **self.kw)

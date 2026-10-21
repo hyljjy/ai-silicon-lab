@@ -6,11 +6,15 @@ contract; protocol v0.4 section 16).
 - open_stops(rnd) returns every stop record of the round (both sides, "call" and "eval") that has no valid clearance.
   A clearance revise/stops/r<rnd>/<stop_id>.cleared.md is valid only when it is tracked by git and equal to HEAD, and
   its first two lines are exactly "stop_id: <id>" and "stop_sha256: <sha256 of the stop record file>". An unreadable
-  stop record counts as open.
+  stop record counts as open. The records are the union of the working tree and HEAD: a record committed in HEAD
+  that is missing from the working tree or differs from HEAD counts as open (deleting a record never clears it).
 - round_lock(rnd, side) holds revise/outputs/r<rnd>/.lock (side "call") or revise/results/r<rnd>/.lock (side "eval"),
-  created with O_CREAT | O_EXCL; content {pid, start, side, acquired_at}. An existing lock whose holder still runs
-  (same pid AND start time, limits.still_alive) or cannot be verified -> LockError "LOCKED ..."; a holder that has
-  exited -> one line in revise/stops/r<rnd>/lock_history.txt (time, old holder, new holder), then taken over.
+  created with O_CREAT | O_EXCL; content {pid, start, side, acquired_at, platform}. These trees are shared by Windows
+  and WSL (/mnt/d), where pids and start times mean different things: a lock written on another platform
+  (sys.platform differs or is missing) -> LockError "LOCKED ... held from another OS", never taken over. Same
+  platform: a holder that still runs (same pid AND start time, limits.still_alive) or cannot be verified -> LOCKED;
+  a holder that has exited -> the lock is moved aside (os.replace to a unique name, content re-checked), one line is
+  appended to revise/stops/r<rnd>/lock_history.txt (time, old holder, new holder), and the lock is created anew.
 Every function takes revise= (the revise directory) so tests can work in a temporary repository.
 Python standard library only; Windows and WSL."""
 import contextlib
@@ -18,6 +22,7 @@ import datetime
 import json
 import os
 import secrets
+import sys
 
 import limits
 import prereg
@@ -96,18 +101,50 @@ def _clearance_problem(d, stop_id, record_sha):
     return None
 
 
+def _head_record_names(d, revise):
+    """File names of the stop records (*.json) of directory d committed in HEAD; empty when there is no HEAD."""
+    base = revise or rp.REVISE
+    rc, _ = prereg.git(["rev-parse", "--verify", "-q", "HEAD^{commit}"], base)
+    if rc != 0:
+        return set()
+    rel = os.path.relpath(d, base).replace(os.sep, "/")
+    rc, out = prereg.git(["ls-tree", "-z", "--name-only", "--full-name", "HEAD", "--", rel + "/"], base)
+    if rc != 0:
+        raise StopsError(f"git ls-tree HEAD {rel}/ failed; open stops cannot be determined")
+    names = set()
+    for full in out.decode("utf-8").split("\0"):
+        name = full.rsplit("/", 1)[-1]
+        if full and name.endswith(".json"):
+            names.add(name)
+    return names
+
+
 def open_stops(rnd, revise=None):
     """Stop records of round rnd (both sides) without a valid clearance. Each item is the stop record plus
-    "file", "sha256" and "why_open"; sorted by stop_id."""
+    "file", "sha256" and "why_open"; sorted by stop_id. Records are taken from the working tree and from HEAD."""
     d = stops_dir(rnd, revise)
-    if not os.path.isdir(d):
-        return []
+    work = {n for n in os.listdir(d) if n.endswith(".json")} if os.path.isdir(d) else set()
+    head = _head_record_names(d, revise)
     out = []
-    for name in sorted(os.listdir(d)):
-        if not name.endswith(".json"):
-            continue
+    for name in sorted(work | head):
         stop_id = name[:-len(".json")]
         path = os.path.join(d, name)
+        if name in head:
+            base = revise or rp.REVISE
+            rel = os.path.relpath(path, base).replace(os.sep, "/")
+            rc, committed = prereg.git(["cat-file", "blob", f"HEAD:./{rel}"], base)
+            if rc != 0:
+                raise StopsError(f"cannot read {rel} from HEAD; open stops cannot be determined")
+            current = rp.read_bytes(path) if name in work else None
+            if current != committed:
+                try:
+                    rec = json.loads(committed.decode("utf-8"))
+                    rec = rec if isinstance(rec, dict) else {}
+                except ValueError:
+                    rec = {}
+                out.append(dict(rec, stop_id=stop_id, file=path, sha256=rp.sha256_bytes(committed),
+                                why_open="stop record missing or changed vs HEAD"))
+                continue
         data = rp.read_bytes(path)
         sha = rp.sha256_bytes(data)
         try:
@@ -136,7 +173,7 @@ def round_lock(rnd, side, revise=None):
     start = limits._start_time(os.getpid())
     if start is None:
         raise LockError("LOCKED: the start time of this process cannot be read; lock not taken")
-    mine = {"pid": os.getpid(), "start": start, "side": side, "acquired_at": _now()}
+    mine = {"pid": os.getpid(), "start": start, "side": side, "acquired_at": _now(), "platform": sys.platform}
     data = (json.dumps(mine) + "\n").encode("utf-8")
 
     def create():
@@ -158,20 +195,36 @@ def round_lock(rnd, side, revise=None):
         except (ValueError, KeyError, TypeError) as e:
             raise LockError(f"LOCKED: {path} exists and cannot be read ({e}); remove it only after checking "
                             f"by hand that no run of round {rnd} side {side} is active") from None
+        if old.get("platform") != sys.platform:
+            raise LockError(f"LOCKED: round {rnd} side {side} is held from another OS (platform "
+                            f"{old.get('platform')!r}, here {sys.platform!r}; {_holder_text(old)}); cannot verify "
+                            f"the holder from here, the lock is not taken over")
         alive, unconfirmed = limits.still_alive({"root_pid": old_pid, "root_start": old_start, "registry": []})
         if alive:
             raise LockError(f"LOCKED: round {rnd} side {side} is held by a running process ({_holder_text(old)})")
         if unconfirmed:
             raise LockError(f"LOCKED: round {rnd} side {side}: cannot confirm that the holder "
                             f"({_holder_text(old)}) has exited")
-        if rp.read_bytes(path) != old_raw:          # changed meanwhile: somebody else took it over
-            raise LockError(f"LOCKED: round {rnd} side {side}: the lock changed while it was checked")
+        # move the stale lock aside under a unique name, then check that what was moved is the lock just verified
+        aside = f"{path}.stale-{secrets.token_hex(6)}"
+        try:
+            os.replace(path, aside)
+        except FileNotFoundError:
+            raise LockError(f"LOCKED: round {rnd} side {side}: the lock changed while it was checked") from None
+        if rp.read_bytes(aside) != old_raw:         # another process took it over meanwhile: put its lock back
+            try:
+                os.link(aside, path)                # fails when a lock exists again; never overwrites one
+                os.remove(aside)
+                note = "its lock was put back"
+            except OSError as e:
+                note = f"its lock could not be put back ({e}); it is kept at {aside}"
+            raise LockError(f"LOCKED: round {rnd} side {side}: another process took the lock over first; {note}")
+        os.remove(aside)
         hist_dir = stops_dir(rnd, revise)
         os.makedirs(hist_dir, exist_ok=True)
         with open(os.path.join(hist_dir, "lock_history.txt"), "ab") as f:
             f.write(f"{_now()}\tside={side}\ttaken over\told: {_holder_text(old)} (exited)\t"
                     f"new: {_holder_text(mine)}\n".encode("utf-8"))
-        os.remove(path)
         try:
             create()
         except FileExistsError:

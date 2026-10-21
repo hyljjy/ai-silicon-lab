@@ -31,8 +31,8 @@ class Base(unittest.TestCase):
         for rel in [f"{R}/protocol.md", f"{R}/prompts/template.md", f"{R}/scripts/tool.py"]:
             self.write(rel, f"content of {rel}\n")
         self.write(LOCAL, "local plan\n")
-        self.manifest = {"tier1": {"tracked": TIER1, "local_hash": {LOCAL: rp.sha256(self.p(LOCAL))}},
-                         "tier2": {"tracked": TIER2},
+        self.manifest = {"tier1": {"tracked": list(TIER1), "local_hash": {LOCAL: rp.sha256(self.p(LOCAL))}},
+                         "tier2": {"tracked": list(TIER2)},
                          "generated": [f"{R}/outputs/", f"{R}/results/"]}
         self.write(f"{R}/rules/preregistered.json", json.dumps(self.manifest, indent=1) + "\n")
         self.commit(*[r for r in TIER1 if not r.endswith(".sha256")])
@@ -113,6 +113,19 @@ class TestPrereg(Base):
         self.commit(f"{R}/rules/preregistered.json", f"{R}/outputs/r1/codes.txt")
         self.smoke_tag()
         self.assertTrue(any("generated" in p for p in prereg.problems("smoke", repo=self.repo)))
+
+    def test_untracked_file_in_scripts_rejected(self):
+        self.smoke_tag()
+        # untracked, would shadow an import of the frozen scripts
+        self.write(f"{R}/scripts/extra.py", "x = 1\n")
+        probs = prereg.problems("smoke", repo=self.repo)
+        self.assertTrue(any("extra.py" in p for p in probs), probs)
+        os.remove(self.p(f"{R}/scripts/extra.py"))
+        self.write(f"{R}/scripts/__pycache__/tool.cpython-312.pyc", "x")   # byte-code cache is not reported
+        self.assertEqual(prereg.problems("smoke", repo=self.repo), [])
+        self.write(f"{R}/.gitignore", "scripts/ignored.py\n")
+        self.write(f"{R}/scripts/ignored.py", "x = 1\n")    # ignored files count as well
+        self.assertTrue(any("ignored.py" in p for p in prereg.problems("smoke", repo=self.repo)))
 
     def test_hash_lists_are_inside_the_tag(self):
         git(self.repo, "tag", prereg.TAGS["smoke"])          # tag first, lists committed afterwards

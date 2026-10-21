@@ -81,6 +81,15 @@ def _tracked_under(repo, prefix):
     return sorted(p for p in out.decode("utf-8").split("\0") if p)
 
 
+def _untracked_under(repo, prefix):
+    """Files under prefix that git does not track, ignored ones included; __pycache__/ is left out."""
+    rc, out = git(["ls-files", "-z", "--others", "--", prefix], repo)
+    if rc != 0:
+        raise PreregError(f"git ls-files --others {prefix} failed")
+    return sorted(p for p in out.decode("utf-8").split("\0")
+                  if p and "__pycache__/" not in p and not p.endswith("/__pycache__"))
+
+
 def _list_text(repo, rels, overlay=None):
     lines = []
     for rel in rels:
@@ -141,7 +150,8 @@ def problems(mode, repo=None):
     if rc != 0:
         return [f"PREREG FAIL: tag {tag} does not exist (mode {mode})"]
 
-    raw = blob_at(tag, _abs(repo, MANIFEST))
+    tag_ref = f"refs/tags/{tag}"
+    raw = blob_at(tag_ref, _abs(repo, MANIFEST))
     if raw is None:
         return [f"PREREG FAIL: {MANIFEST} is not in tag {tag}"]
     try:
@@ -165,12 +175,18 @@ def problems(mode, repo=None):
         if not committed_unchanged(path):
             probs.append(f"PREREG FAIL: {what} {rel} is not tracked or differs from HEAD")
             return False
-        if blob_at(tag, path) != rp.read_bytes(path):
+        if blob_at(tag_ref, path) != rp.read_bytes(path):
             probs.append(f"PREREG FAIL: {what} {rel} is not in tag {tag} or differs from the tagged version")
             return False
         return True
 
     same_in_tag(MANIFEST, "manifest")
+    try:
+        for rel in _untracked_under(repo, SCRIPTS_DIR):
+            probs.append(f"PREREG FAIL: untracked file {rel} under {SCRIPTS_DIR} (not preregistered; it could shadow "
+                         f"an import of the preregistered scripts)")
+    except PreregError as e:
+        probs.append(f"PREREG FAIL: {e}")
     for rel in sorted(set(tracked)):
         same_in_tag(rel, "preregistered file")
 

@@ -6,6 +6,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from unittest import mock
 
 import limits
 import revpaths as rp
@@ -132,6 +133,25 @@ class TestStops(Base):
             f.write(b"edited\n")
         self.assertEqual([s["stop_id"] for s in stops.open_stops(1, revise=self.revise)], [sid])
 
+    def test_committed_record_deleted_or_changed_stays_open(self):
+        sid = stops.raise_stop(1, "call", "x", revise=self.revise)
+        rec = os.path.join(self.rdir(1), f"{sid}.json")
+        self.commit(rec)
+        os.remove(rec)                                   # deleting the record does not clear the stop
+        opened = stops.open_stops(1, revise=self.revise)
+        self.assertEqual([s["stop_id"] for s in opened], [sid])
+        self.assertIn("HEAD", opened[0]["why_open"])
+        # a record changed in the working tree, with a clearance made for the changed bytes: still open
+        with open(rec, "wb") as f:
+            f.write(json.dumps({"stop_id": sid, "rnd": 1, "side": "call", "reason": "edited", "code": None,
+                                "details": None, "time": "t"}).encode())
+        self.clear(1, sid, commit=False)
+        git(self.repo, "add", "--", os.path.join(self.rdir(1), f"{sid}.cleared.md"))
+        git(self.repo, "commit", "-q", "-m", "clearance only")
+        opened = stops.open_stops(1, revise=self.revise)
+        self.assertEqual([s["stop_id"] for s in opened], [sid])
+        self.assertIn("HEAD", opened[0]["why_open"])
+
     def test_both_sides_checked(self):
         sid = stops.raise_stop(2, "eval", "KILL FAIL in run_grade", revise=self.revise)
         # the call-side entry point (run_revise) checks the same round and sees the evaluation-side stop
@@ -167,6 +187,49 @@ class TestLocks(Base):
             with stops.round_lock(1, "x", revise=self.revise):
                 pass
 
+    def test_lock_from_other_os_refused(self):
+        path = self.lock_path(1, "eval")
+        os.makedirs(os.path.dirname(path))
+        other = "linux" if sys.platform == "win32" else "win32"
+        raw = json.dumps({"pid": 999999, "start": "1", "side": "eval", "acquired_at": "t0", "platform": other})
+        with open(path, "w", encoding="utf-8", newline="\n") as f:
+            f.write(raw)
+        with self.assertRaises(stops.LockError) as cm:   # pid 999999 does not run here, still never taken over
+            with stops.round_lock(1, "eval", revise=self.revise):
+                pass
+        self.assertIn("LOCKED", str(cm.exception))
+        self.assertIn("another OS", str(cm.exception))
+        with open(path, encoding="utf-8") as f:
+            self.assertEqual(f.read(), raw)
+        self.assertFalse(os.path.exists(os.path.join(self.rdir(1), "lock_history.txt")))
+        with stops.round_lock(1, "call", revise=self.revise):
+            with open(self.lock_path(1, "call"), encoding="utf-8") as f:
+                self.assertEqual(json.load(f)["platform"], sys.platform)
+
+    def test_takeover_race_puts_other_lock_back(self):
+        path = self.lock_path(1, "eval")
+        os.makedirs(os.path.dirname(path))
+        with open(path, "w", encoding="utf-8", newline="\n") as f:      # stale: same pid, other start time
+            json.dump({"pid": os.getpid(), "start": "1", "side": "eval", "acquired_at": "t0",
+                       "platform": sys.platform}, f)
+        fresh = b'{"pid": 1, "start": "2", "side": "eval", "acquired_at": "t1", "platform": "x"}\n'
+        real_replace = os.replace
+
+        def racing_replace(src, dst):
+            # another process took the stale lock over between our check and our move
+            with open(src, "wb") as f:
+                f.write(fresh)
+            real_replace(src, dst)
+        with mock.patch.object(stops.os, "replace", racing_replace):
+            with self.assertRaises(stops.LockError) as cm:
+                with stops.round_lock(1, "eval", revise=self.revise):
+                    pass
+        self.assertIn("another process took the lock over first", str(cm.exception))
+        with open(path, "rb") as f:
+            self.assertEqual(f.read(), fresh)
+        self.assertEqual([n for n in os.listdir(os.path.dirname(path)) if n != ".lock"], [])
+        self.assertFalse(os.path.exists(os.path.join(self.rdir(1), "lock_history.txt")))
+
     def test_unreadable_lock_refused(self):
         path = self.lock_path(1, "eval")
         os.makedirs(os.path.dirname(path))
@@ -186,7 +249,8 @@ class TestLocks(Base):
             path = self.lock_path(1, "eval")
             os.makedirs(os.path.dirname(path))
             with open(path, "w", encoding="utf-8", newline="\n") as f:
-                json.dump({"pid": p.pid, "start": start, "side": "eval", "acquired_at": "t0"}, f)
+                json.dump({"pid": p.pid, "start": start, "side": "eval", "acquired_at": "t0",
+                           "platform": sys.platform}, f)
             with self.assertRaises(stops.LockError):                  # holder still alive
                 with stops.round_lock(1, "eval", revise=self.revise):
                     pass
@@ -206,7 +270,8 @@ class TestLocks(Base):
         self.assertEqual(stops.open_stops(1, revise=self.revise), [])   # lock_history is not a stop record
         # same pid, different start time (pid reuse): not the holder, taken over as well
         with open(path, "w", encoding="utf-8", newline="\n") as f:
-            json.dump({"pid": os.getpid(), "start": "1", "side": "eval", "acquired_at": "t1"}, f)
+            json.dump({"pid": os.getpid(), "start": "1", "side": "eval", "acquired_at": "t1",
+                       "platform": sys.platform}, f)
         with stops.round_lock(1, "eval", revise=self.revise):
             pass
         with open(hist, encoding="utf-8") as f:
