@@ -635,6 +635,23 @@ class TestRecovery(Base):
         self.recover()
         self.assertTrue(os.path.exists(os.path.join(self.adir(1), "attempt.json")))
         self.assertIn("KILL FAIL", [s["reason"] for s in self.stop_records()])
+        rec = load(os.path.join(self.adir(1), "attempt.json"))
+        self.assertNotIn("wrapper_interrupted", rec["attribution_evidence"])
+        self.assertEqual(rec["attribution"], "no_external_evidence")
+
+    def test_recovery_ended_record_without_final_line_not_external(self):
+        # the wrapper finished the run itself (ended normally) and died before attempt.json: a missing final line is
+        # grade.py's own result, not a wrapper interruption (R17 narrowed)
+        self.craft_crash("RUN_ID=20261101-120000-cand_ab12-T27.91-1\nrunning rtl_sim\n",
+                         proc_fields={"ended_at": "x", "alive_after": [], "cleanup_unconfirmed": False,
+                                      "signals_sent": [], "timed_out": False})
+        self.recover()
+        rec = load(os.path.join(self.adir(1), "attempt.json"))
+        self.assertTrue(rec["final_line_missing"])
+        self.assertNotIn("wrapper_interrupted", rec["attribution_evidence"])
+        self.assertEqual(rec["attribution"], "no_external_evidence")
+        with self.assertRaises(run_grade.RunGradeError):
+            self.run_attempt("success", retry=True)
 
     def test_recovery_aborted_record_is_supervision_error(self):
         self.craft_crash("RUN_ID=20261101-120000-cand_ab12-T27.91-1\nrunning rtl_sim\n",

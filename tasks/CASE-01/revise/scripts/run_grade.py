@@ -503,20 +503,23 @@ def _recover(ctx, code, rnd):
             sid = _stop(ctx, rnd, "恢复时无法确认旧进程已退出", code,
                         {"attempt": k, "why": "proc.json missing or unreadable"})
             raise RunGradeError(f"STOP {sid}: attempt {k} of {code}: no usable proc.json")
+        seen = {}                                     # "unreadable": pids whose environment could not be read
         try:
-            alive, unconfirmed = limits.still_alive(proc)
+            alive, unconfirmed = limits.still_alive(proc, details=seen)
         except Exception:                                             # noqa: BLE001 - any failure = unconfirmed
             alive, unconfirmed = [], True
         signals = []
         if unconfirmed:
-            sid = _stop(ctx, rnd, "恢复时无法确认旧进程已退出", code, {"attempt": k, "alive": alive})
+            sid = _stop(ctx, rnd, "恢复时无法确认旧进程已退出", code,
+                        {"attempt": k, "alive": alive, "unreadable": seen.get("unreadable", [])})
             raise RunGradeError(f"STOP {sid}: attempt {k} of {code}: process state cannot be confirmed")
         if alive:
             res = limits.cleanup(proc, "grade")
             signals = list(res.signals_sent)
             if res.killed_pids_alive or res.cleanup_unconfirmed:
                 sid = _stop(ctx, rnd, "恢复时无法确认旧进程已退出", code,
-                            {"attempt": k, "alive": res.killed_pids_alive, "unconfirmed": res.cleanup_unconfirmed})
+                            {"attempt": k, "alive": res.killed_pids_alive, "unconfirmed": res.cleanup_unconfirmed,
+                             "unreadable": list(res.unreadable)})
                 raise RunGradeError(f"STOP {sid}: attempt {k} of {code}: old processes still alive or unconfirmed")
         if proc.get("phase") == "not_started":
             # Popen failed (or the suspended target was killed before release): grade.py never ran
@@ -540,11 +543,14 @@ def _recover(ctx, code, rnd):
                             "unconfirmed": proc.get("cleanup_unconfirmed") is True}
         # a supervision failure (not a wrapper interruption): the wrapper force-stopped grade.py itself; an abort by
         # KeyboardInterrupt/SystemExit (abort_error "interrupted") is a wrapper interruption
-        aborted = bool(proc.get("aborted")) and proc.get("abort_error") != "interrupted"
-        if aborted:
+        interrupt_abort = proc.get("abort_error") == "interrupted"
+        if proc.get("aborted") and not interrupt_abort:
             info["supervision_error"] = {"type": proc.get("abort_error") or UNKNOWN, "errno": None}
+        # R17 narrowed: only a genuine wrapper interruption counts; a record that ended (normally, or aborted by a
+        # supervision failure) was finished by the wrapper itself, so a missing final line is grade.py's own result
+        interrupted = not complete and ("ended_at" not in proc or interrupt_abort)
         out.append(_finish(ctx, code, rnd, k, adir, started, info, recovered=True,
-                           wrapper_interrupted=not complete and not aborted))
+                           wrapper_interrupted=interrupted))
     return out
 
 

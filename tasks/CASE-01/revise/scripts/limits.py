@@ -23,8 +23,17 @@ Ownership (primary):
     lets an unprivileged process migrate only below a common ancestor whose cgroup.procs it may write (here a
     root-owned one). This exempts e.g. "systemd --user" and "(sd-pam)" (same uid, not dumpable after their credential
     change, in user@<uid>.service), which a new WSL session starts. Without cgroup v2 information ("0::/" or none)
-    there is no exemption. boot_id: in another boot nothing of the run exists. Residual limit: a child frozen between fork and exec does not carry the token yet; Popen returns
-    only after exec succeeded, and the window only matters if the wrapper dies inside it AND the child stays frozen.
+    there is no exemption. This unreadable-process rule applies only after the wrapper is gone (still_alive, cleanup);
+    while the wrapper lives, the subreaper adoption already brings every orphan back to it, so the live verification
+    merges token matches but does not count unreadable processes (they would only be false alarms: ssh-agent,
+    gpg-agent, sudo ... started by the user meanwhile in the same cgroup). The unreadable pids are reported
+    (Limited.unreadable, still_alive(details=...)) so the author knows what to clear. boot_id: in another boot nothing
+    of the run exists.
+    Residual limits: (1) a child frozen between fork and exec does not carry the token yet; Popen returns only after
+    exec succeeded, and the window only matters if the wrapper dies inside it AND the child stays frozen. (2) A
+    migration mediated by PID 1 or by root (e.g. "systemd-run --user --scope", which asks the user manager to move
+    the process into user@<uid>.service) can carry a descendant out of the launch cgroup; if it is then also unreadable
+    it is not counted. The graded flow (grade.py and its tools) does neither.
   - Windows across lifetimes: the job is unnamed and its only handle belongs to the wrapper; when the wrapper process
     exits, the handle is closed and KILL_ON_JOB_CLOSE ends every member, registered or not. A fresh process cannot open
     the job, so it checks the root and the registry by pid AND start time and relies on that guarantee (recovery runs
@@ -121,6 +130,7 @@ class Limited:
     killed_pids_alive: list = field(default_factory=list)
     cleanup_unconfirmed: bool = False
     registry: list = field(default_factory=list)
+    unreadable: list = field(default_factory=list)    # recovery: pids of this user whose environment is unreadable
     isolation: str = ""
     output_error: object = None                       # str when writing stdout_path/stderr_path failed (run stopped)
 
@@ -556,6 +566,7 @@ class _Run:
         self.prior_children = set(prior_children)
         self.signals = []
         self.unconfirmed = False
+        self.unreadable = []
         self.timed_out = False
         self.on_signal = None                         # called after a signal is recorded and BEFORE it is sent
 
@@ -723,9 +734,11 @@ class _Run:
             try:
                 found, unreadable = _token_scan(self.token, self.since, _table(), self.cgroup)
             except OSError:
-                found, unreadable = {}, [None]
+                found, unreadable = {}, []
+                self.unconfirmed = True
             alive += [p for p in found if p not in alive]
-            if unreadable:
+            if unreadable and self.popen is None:      # only once the wrapper (and its subreaper role) is gone
+                self.unreadable = sorted(set(self.unreadable) | set(unreadable))
                 self.unconfirmed = True
         return sorted(set(p for p in alive if p is not None))
 
@@ -864,7 +877,10 @@ def run_limited(argv, kind, cwd=None, env=None, stdin_bytes=None, stdout_path=No
         child_env = dict(os.environ if env is None else env)
         child_env[TOKEN_VAR] = marks["token"]
     base = dict(proc_extra or {})
-    base.update(isolation=isolation, started_at=started_at, signals_sent=[], timed_out=False, **marks)
+    # no signals_sent / timed_out before supervision starts (R13: unknown = no evidence); the wrapper's own identity
+    # lets the author find a suspended orphan left by a crash between Popen and the job (Windows)
+    base.update(isolation=isolation, started_at=started_at, wrapper_pid=os.getpid(),
+                wrapper_start=_start_time(os.getpid()), **marks)
 
     def pre_save(**fields):
         if proc_path:
@@ -1134,11 +1150,12 @@ def _record_view(rec):
     return root, entries, token, problem
 
 
-def still_alive(proc_record):
+def still_alive(proc_record, details=None):
     """(alive pids, unconfirmed) for a lifecycle record: the root and every registry entry, same pid AND same start
     time; on Linux also every process carrying the record's run token. The second value is True when the process
     table could not be read for some entry, an environment of this user could not be read, or the record cannot prove
-    anything (no root identity and no token; a Linux record without token of a run that did not end normally)."""
+    anything (no root identity and no token; a Linux record without token of a run that did not end normally).
+    details: an optional dict that receives "unreadable" (pids whose environment could not be read)."""
     if proc_record.get("phase") == "not_started":
         return [], False
     if _other_boot(proc_record):
@@ -1163,9 +1180,34 @@ def still_alive(proc_record):
                                                 proc_record.get("cgroup"))
                 alive += [p for p in found if p not in alive]
                 unconfirmed = unconfirmed or bool(unreadable)
+                if details is not None:
+                    details["unreadable"] = list(unreadable)
             except OSError:
                 unconfirmed = True
     return alive, unconfirmed
+
+
+def _gentle_top_carriers(run, token, proc_record, wait):
+    """No root identity (a "launching" record): SIGTERM the top-level token carriers (whose parent does not carry the
+    token; normally the root), recorded before sending, then wait like the gentle stage of run_limited."""
+    try:
+        table = _table()
+        found, _ = _token_scan(token, proc_record.get("launch_ticks"), table, proc_record.get("cgroup"))
+    except OSError:
+        run.unconfirmed = True
+        return
+    tops = sorted(p for p in found if table[p][1] not in found)
+    sent = False
+    for pid in tops:
+        text = f"SIGTERM {pid}"
+        run.signals.append(text)
+        try:
+            os.kill(pid, signal.SIGTERM)
+            sent = True
+        except ProcessLookupError:
+            run.signals.remove(text)
+    if sent:
+        run._wait_gone(wait)
 
 
 def cleanup(proc_record, kind):
@@ -1179,10 +1221,12 @@ def cleanup(proc_record, kind):
     reg = [(p, s) for p, s in entries.items() if s is not None or p == root]
     run = _Run(root, entries.get(root) if root is not None else None, None, proc_record.get("isolation", ""),
                registry=reg, token=token, since=proc_record.get("launch_ticks"), cgroup=proc_record.get("cgroup"))
+    if root is None and token and os.name != "nt":
+        _gentle_top_carriers(run, token, proc_record, lim.term_wait)
     run.stop(lim, gentle=True)
     alive = run.verify()
     unconfirmed = run.unconfirmed or problem or bool(token and os.name == "nt")
     return Limited(rc=None, timed_out=False, stdout_over=False, stderr_over=False, stdout=b"", stderr=b"",
                    stdout_bytes=0, stderr_bytes=0, signals_sent=list(run.signals), killed_pids_alive=alive,
                    cleanup_unconfirmed=unconfirmed, registry=list(run.registry.items()),
-                   isolation=run.isolation)
+                   isolation=run.isolation, unreadable=list(run.unreadable))

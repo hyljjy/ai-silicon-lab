@@ -545,6 +545,10 @@ class TestLifecycle(Base):
         rec = self.record()
         self.assertEqual(rec["phase"], "launching")
         self.assertNotIn("root_pid", rec)
+        self.assertEqual(rec["wrapper_pid"], p.pid)      # lets the author find a suspended orphan (Windows)
+        self.assertTrue(rec["wrapper_start"])
+        self.assertNotIn("signals_sent", rec)            # unknown before supervision starts (R13)
+        self.assertNotIn("timed_out", rec)
         if POSIX:
             # the target runs; the record written before Popen holds the run token that every process of the run
             # carries in its environment: a fresh process finds it although no pid was recorded
@@ -554,6 +558,7 @@ class TestLifecycle(Base):
             res = limits.cleanup(rec, "fast")
             self.assertEqual(res.killed_pids_alive, [])
             self.assertFalse(res.cleanup_unconfirmed)
+            self.assertEqual(res.signals_sent[0], f"SIGTERM {pid}")   # gentle stop of the top token carrier first
             self.assertFalse(alive(pid))
             self.assertEqual(limits.still_alive(rec), ([], False))
         else:
@@ -675,6 +680,39 @@ class TestRecordChecks(unittest.TestCase):
         finally:
             p.kill()
             p.wait(10)
+
+    @unittest.skipUnless(POSIX, "the run token is the Linux ownership marker")
+    def test_unreadable_counts_only_after_wrapper_gone(self):
+        # a process of this user with an unreadable environment (ssh-agent, sudo ...) started during a run: the live
+        # wrapper still owns every orphan through the subreaper, so it is no reason for KILL FAIL; after the wrapper
+        # is gone it makes recovery unconfirmed, and the pid is reported
+        import subprocess
+        os.makedirs(RUNS, exist_ok=True)
+        other = subprocess.Popen([sys.executable, "-B", "-c", "import time; time.sleep(8)"], stdin=subprocess.DEVNULL)
+        self.addCleanup(lambda: (other.kill(), other.wait(10)))
+        real = limits._read_environ
+
+        def denied(pid):
+            if pid == other.pid:
+                raise PermissionError(13, "Permission denied")
+            return real(pid)
+        with tempfile.TemporaryDirectory(prefix="limits_", dir=RUNS) as d, \
+                mock.patch.object(limits, "_read_environ", denied), \
+                mock.patch.dict(limits.LIMITS, {"fast": FAST}):
+            path = os.path.join(d, "proc.json")
+            res = limits.run_limited(CHATTY + ["--first-line", "hi"], "fast", cwd=d, proc_path=path)
+            self.assertEqual(res.killed_pids_alive, [])
+            self.assertFalse(res.cleanup_unconfirmed)
+            self.assertEqual(res.unreadable, [])
+            with open(path, encoding="utf-8") as f:
+                rec = json.load(f)
+            rec.pop("ended_at")                          # as if the wrapper had died
+            details = {}
+            self.assertEqual(limits.still_alive(rec, details=details), ([], True))
+            self.assertEqual(details["unreadable"], [other.pid])
+            res2 = limits.cleanup(rec, "fast")
+            self.assertTrue(res2.cleanup_unconfirmed)
+            self.assertEqual(res2.unreadable, [other.pid])
 
     @unittest.skipUnless(POSIX, "prctl is Linux only")
     def test_prctl_prototype(self):
