@@ -887,7 +887,7 @@ class TestRecordChecks(unittest.TestCase):
                 raise PermissionError(13, "Permission denied")
             return env_q
 
-        def scan(user, cgroup=lambda pid: ("ok", None), starts=None):
+        def scan(user, cgroup=lambda pid: ("ok", None), starts=None, launch_cg=None):
             n.clear()
             order.clear()
             alive_p = iter(starts or ["500"] * 10)
@@ -895,7 +895,7 @@ class TestRecordChecks(unittest.TestCase):
             def start_time(pid):
                 order.append(("stat", pid))
                 return next(alive_p) if pid == P else "510"
-            return limits._stable_token_scan(token, "400", None, listing=listing, read_environ=read,
+            return limits._stable_token_scan(token, "400", launch_cg, listing=listing, read_environ=read,
                                              start_time=start_time, user_match=user, cgroup_state=cgroup)
 
         def user_gone(pid, uid):
@@ -907,7 +907,21 @@ class TestRecordChecks(unittest.TestCase):
         # the cgroup read finds P gone -> rescan
         found, unreadable, _, stable = scan(lambda pid, uid: "same", cgroup=lambda pid: ("gone", None))
         self.assertEqual((found, unreadable, stable, len(n)), ({Q: "510"}, [], True, 2))
-        # "different user" (or an exempt cgroup), but the re-check AFTER the auxiliary reads finds P gone -> rescan
+        # an explicit launch cgroup and P outside its subtree (exempt): the final re-check finds P gone -> rescan;
+        # P still there -> skipped, not reported; inside the subtree -> reported
+        out_cg = lambda pid: ("ok", "/other/run")
+        found, unreadable, _, stable = scan(lambda pid, uid: "same", cgroup=out_cg, starts=["500", None],
+                                            launch_cg="/a/run")
+        self.assertEqual((found, unreadable, stable, len(n)), ({Q: "510"}, [], True, 2))
+        self.assertEqual(order[:3], [("environ", P), ("stat", P), ("stat", P)])   # re-check, cgroup read, re-check
+        tables[:] = [{P: ("S", 1, "500")}]
+        found, unreadable, _, stable = scan(lambda pid, uid: "same", cgroup=out_cg, launch_cg="/a/run")
+        self.assertEqual((found, unreadable, stable, len(n)), ({}, [], True, 1))
+        found, unreadable, _, stable = scan(lambda pid, uid: "same", cgroup=lambda pid: ("ok", "/a/run/sub"),
+                                            launch_cg="/a/run")
+        self.assertEqual((found, unreadable, stable, len(n)), ({}, [P], True, 1))
+        tables[:] = [{P: ("S", 1, "500")}, {Q: ("S", 1, "510")}]
+        # "different user", but the re-check AFTER the auxiliary reads finds P gone -> rescan
         found, unreadable, _, stable = scan(lambda pid, uid: "different", starts=["500", None])
         self.assertEqual((found, unreadable, stable, len(n)), ({Q: "510"}, [], True, 2))
         found, unreadable, _, stable = scan(lambda pid, uid: "same", starts=["500", None])
@@ -928,6 +942,21 @@ class TestRecordChecks(unittest.TestCase):
         self.assertEqual(limits._user_match(os.getpid(), os.getuid() + 12345), "different")
         self.assertEqual(limits._cgroup_state(gone), ("gone", None))
         self.assertEqual(limits._cgroup_state(os.getpid())[0], "ok")
+
+    @unittest.skipUnless(POSIX, "/proc is Linux only")
+    def test_unparsable_stat_is_vanished(self):
+        # Codex BC6-S1: an empty or truncated stat read is "vanished" (None), never a crash or a confirmation
+        full = b"123 (a) b) S 1 2 3 4 5 4194304 " + b"0 " * 12 + b"777 0\n"
+        for data in (b"", b"123 (x", b"123 (x) S 1", b"123 (x) S notanumber 3 4 5 6 7"):
+            with mock.patch("builtins.open", mock.mock_open(read_data=data)):
+                self.assertIsNone(limits._stat(1), data)
+                self.assertIsNone(limits._stat(1, flags=True), data)
+        with mock.patch("builtins.open", mock.mock_open(read_data=full)):
+            self.assertEqual(limits._stat(1), ("S", 1, "777"))
+            self.assertEqual(limits._stat(1, flags=True), ("S", 1, "777", 4194304))
+        # through the table scan: listed but unparsable -> in the vanished set
+        with mock.patch("builtins.open", mock.mock_open(read_data=b"")):
+            self.assertEqual(limits._table_scan(listdir=lambda p: ["4242"]), ({}, {4242}))
 
     @unittest.skipUnless(POSIX, "/proc/<pid>/environ is Linux only")
     def test_environ_single_read(self):

@@ -68,6 +68,8 @@ Ownership (primary):
     "env -i") produces token-less descendants. (6) /proc/<pid>/environ shows the current environment memory of the
     process, not a copy made at exec: a member that overwrites that memory (setproctitle-style) or moves it with
     prctl(PR_SET_MM_ENV_START / PR_SET_MM_ENV_END) loses the token without any exec, and so do its later children.
+    (7) If /proc is mounted with hidepid (or a security module hides other processes' status/environ), owner checks
+    are unreadable and the run ends as unconfirmed (conservative), never as a false confirmation.
     The graded flow (grade.py and its tools) does none of (4) to (6).
   - Windows across lifetimes: the job is unnamed and its only handle belongs to the wrapper; when the wrapper process
     exits, the handle is closed and KILL_ON_JOB_CLOSE ends every member, registered or not. A fresh process cannot open
@@ -418,16 +420,21 @@ else:
 
     def _stat(pid, flags=False):
         """(state, ppid, starttime) from /proc/<pid>/stat (with flags=True: plus the task flags as an int); None when
-        the process does not exist."""
+        the process does not exist or its stat read is empty or unparsable (Codex BC6-S1: a vanishing process can
+        yield an empty or truncated read; that counts as vanished, so the caller rescans, never as a confirmation and
+        never as a crash)."""
         try:
             with open(f"/proc/{pid}/stat", "rb") as f:
                 data = f.read().decode("ascii", "replace")
         except (FileNotFoundError, ProcessLookupError):
             return None
-        rest = data[data.rindex(")") + 2:].split()
-        if flags:
-            return rest[0], int(rest[1]), rest[19], int(rest[6])
-        return rest[0], int(rest[1]), rest[19]
+        try:
+            rest = data[data.rindex(")") + 2:].split()
+            if flags:
+                return rest[0], int(rest[1]), rest[19], int(rest[6])
+            return rest[0], int(rest[1]), rest[19]
+        except (ValueError, IndexError):
+            return None
 
     def _task_stat_state(pid, tid):
         with open(f"/proc/{pid}/task/{tid}/stat", "rb") as f:
