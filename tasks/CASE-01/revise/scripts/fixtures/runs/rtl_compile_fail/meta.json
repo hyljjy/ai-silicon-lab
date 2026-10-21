@@ -1,0 +1,5 @@
+{
+ "run_dir": true,
+ "exit": 1,
+ "final": "GRADE FAIL: GradeError: rtl_compile failed (exit 1, see rtl_sim/compile.log): | rtl/dot4sat_cand_x.v:7: syntax error"
+}

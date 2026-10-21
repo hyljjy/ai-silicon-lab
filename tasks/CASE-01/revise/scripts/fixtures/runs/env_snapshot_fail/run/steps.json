@@ -1,0 +1,18 @@
+[
+ {
+  "step": "env_snapshot",
+  "argv": [
+   "bash",
+   "/mnt/d/study/ai_native_design/env/snapshot.sh",
+   "check"
+  ],
+  "returncode": 1,
+  "timed_out": false,
+  "timeout_s": 600,
+  "seconds": 0.62,
+  "logs": [
+   "env_snapshot.log"
+  ],
+  "log_problems": []
+ }
+]

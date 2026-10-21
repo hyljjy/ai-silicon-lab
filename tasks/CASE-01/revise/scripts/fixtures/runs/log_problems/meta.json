@@ -1,0 +1,5 @@
+{
+ "run_dir": true,
+ "exit": 1,
+ "final": "GRADE FAIL: GradeError: RTL simulation: checked=2856; rtl_sim/sim.log:2: line not in the warning whitelist: WARNING: x"
+}

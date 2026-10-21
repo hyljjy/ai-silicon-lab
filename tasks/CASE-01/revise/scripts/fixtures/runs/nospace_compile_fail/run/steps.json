@@ -1,0 +1,79 @@
+[
+ {
+  "step": "env_snapshot",
+  "argv": [
+   "bash",
+   "/mnt/d/study/ai_native_design/env/snapshot.sh",
+   "check"
+  ],
+  "returncode": 0,
+  "timed_out": false,
+  "timeout_s": 600,
+  "seconds": 0.62,
+  "logs": [
+   "env_snapshot.log"
+  ],
+  "log_problems": []
+ },
+ {
+  "step": "versions",
+  "argv": [
+   "bash",
+   "-c",
+   "set -e -o pipefail; v=$(iverilog -V 2>&1); printf \"%s\\n\" \"${v%%$'\\n'*}\"; yosys -V; s=$(sta -version); echo \"OpenSTA $s\"; \"$1\" --version",
+   "versions",
+   "/usr/bin/python3"
+  ],
+  "returncode": 0,
+  "timed_out": false,
+  "timeout_s": 120,
+  "seconds": 0.067,
+  "logs": [
+   "versions.log"
+  ],
+  "log_problems": []
+ },
+ {
+  "step": "gen_vectors",
+  "argv": [
+   "/usr/bin/python3",
+   "-B",
+   "/mnt/d/study/ai_native_design/tasks/CASE-01/runs/20261009-092827-base-T27.91/inputs/ref/gen_vectors.py",
+   "--L",
+   "1",
+   "--lmax",
+   "3",
+   "--seed",
+   "1",
+   "--out",
+   "vectors"
+  ],
+  "returncode": 0,
+  "timed_out": false,
+  "timeout_s": 600,
+  "seconds": 0.169,
+  "logs": [
+   "vectors/gen.log"
+  ],
+  "log_problems": []
+ },
+ {
+  "step": "rtl_compile",
+  "argv": [
+   "iverilog",
+   "-g2012",
+   "-o",
+   "rtl_sim/sim.vvp",
+   "/mnt/d/study/ai_native_design/tasks/CASE-01/runs/20261009-092827-base-T27.91/inputs/tb/tb_dot4sat.v",
+   "/mnt/d/study/ai_native_design/tasks/CASE-01/runs/20261009-092827-base-T27.91/inputs/rtl/dot4sat.v"
+  ],
+  "returncode": 1,
+  "timed_out": false,
+  "timeout_s": 600,
+  "seconds": 0.034,
+  "logs": [
+   "rtl_sim/compile.log"
+  ],
+  "log_problems": []
+ }
+]

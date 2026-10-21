@@ -1,0 +1,43 @@
+{
+ "functional_pass": false,
+ "analysis_valid": false,
+ "run_id": "20261009-092827-base-T27.91",
+ "phase": "post-F1",
+ "impl": {
+  "name": "base",
+  "top": "dot4sat",
+  "rtl": "rtl/dot4sat.v",
+  "L": "1"
+ },
+ "T_ns": 27.91,
+ "C_load_pF": 0.0024,
+ "L_max": 3,
+ "seed": 1,
+ "sceneset": "std",
+ "calib_session": "runs/20261009-080227-calib-20261009-073842-base-T20",
+ "timing_target": {
+  "rule": "setup_ge_0_std",
+  "met": null,
+  "worst_setup_std": null,
+  "note": "not evaluated: no valid analysis"
+ },
+ "area": {
+  "area_um2": null,
+  "cap_um2": 56729.408,
+  "within_cap": null
+ },
+ "rtl_lint": [],
+ "env_ids": {
+  "env/SHA256SUMS": "5b9923d297888992dd0bc4b35d5cd675d3cd87ae9095e30aa6b8b5a0c44366eb",
+  "env/tools.sha256": "e26b403cf83dc1397ca3daffb42034ce6869ec7a09b3f229b65225b3fd49594d",
+  "$SKY130_KIT/MANIFEST.txt": "0fa8891a1f3c1dcbdb359cf9d5ba0a62f7aad361c786d2961cbd1f8bdbff994c"
+ },
+ "tool_versions": [
+  "Icarus Verilog version 14.0 (devel) (s20260301-508-g2f296d88a-dirty)",
+  "Yosys 0.69+187 (git sha1 2f08661dd, Release, Clang /usr/bin/clang++ 21.1.8)",
+  "OpenSTA 3.1.0",
+  "Python 3.12.3"
+ ],
+ "whitelist_hits": {},
+ "error": "GradeError: rtl_compile failed (exit 1, see rtl_sim/compile.log):\nrtl/dot4sat_cand_x.v:7: syntax error"
+}

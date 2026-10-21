@@ -1,0 +1,6 @@
+{
+ "run_dir": true,
+ "exit": 0,
+ "final": "GRADE OK: {run_id} functional_pass analysis_valid worst_setup={'slack': -4.189726018044011, 'corner': 'ss_n40C_1v60', 'category': 'in2reg'} worst_hold={'slack': 0.059112952317363035, 'corner': 'ff_100C_1v95'} area=45383.5264 timing_target=setup_ge_0_std:not_met area_cap=56729.408:within",
+ "sta_files": true
+}

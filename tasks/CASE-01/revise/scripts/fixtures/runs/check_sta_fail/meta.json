@@ -1,0 +1,5 @@
+{
+ "run_dir": true,
+ "exit": 1,
+ "final": "GRADE FAIL: GradeError: check_sta failed (exit 1, see sta/check.log): | CHECK FAIL: unconstrained endpoints"
+}

@@ -1,0 +1,5 @@
+{
+ "run_dir": true,
+ "exit": 1,
+ "final": "GRADE FAIL: GradeError: sta failed (exit 1, see sta/sta.log): | Error: cannot read liberty"
+}

@@ -1,0 +1,5 @@
+{
+ "run_dir": true,
+ "exit": 1,
+ "final": "GRADE FAIL: GradeError: RTL lint: rtl/dot4sat_cand_x.v uses constructs a candidate must not use (file access, plusargs, shell, waveform dumps, `include, macro token pasting; spec 1): line 12: $fopen"
+}

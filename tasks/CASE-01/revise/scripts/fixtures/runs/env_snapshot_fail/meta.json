@@ -1,0 +1,5 @@
+{
+ "run_dir": true,
+ "exit": 1,
+ "final": "GRADE FAIL: GradeError: env_snapshot failed (exit 1, see env_snapshot.log): | FAIL: live environment differs from the snapshot"
+}
