@@ -744,6 +744,50 @@ class TestRecordChecks(unittest.TestCase):
         self.assertEqual((found, stable, len(listings)), ({}, True, 2))
 
     @unittest.skipUnless(POSIX, "the run token is the Linux ownership marker")
+    def test_stable_scan_empty_environ_is_vanished(self):
+        # BC3-02 fix 1: /proc/<pid>/environ reads 0 bytes (no error) for an unreaped zombie and for a task in do_exit
+        # whose stat still says R: P is listed alive, forks Q (not listed) and exits; the empty read repeats the pass
+        token = "ef" * 16
+        base = os.getpid() + 3000000
+        P, Q, K = base + 1, base + 2, base + 3
+        env_q = b"\0".join([(limits.TOKEN_VAR + "=" + token).encode("ascii"), b""])
+        tables = [{P: ("R", 1, "500")}, {Q: ("S", 1, "510")}]
+        n = []
+
+        def listing():
+            n.append(1)
+            return tables[min(len(n), len(tables)) - 1], set()
+
+        def read_environ(pid):
+            return b"" if pid in (P, K) else env_q
+        found, _, _, stable = limits._stable_token_scan(token, "400", None, listing=listing, read_environ=read_environ,
+                                                        start_time=lambda pid: "510" if pid == Q else None)
+        self.assertEqual((found, stable, len(n)), ({Q: "510"}, True, 2))
+        # an empty environment that persists (a user process with a really empty environment): unconfirmed
+        n.clear()
+        tables[:] = [{P: ("S", 1, "500")}]
+        found, _, _, stable = limits._stable_token_scan(token, "400", None, listing=listing, read_environ=read_environ,
+                                                        start_time=lambda pid: None)
+        self.assertEqual((found, stable, len(n)), ({}, False, limits.SCAN_PASSES))
+        # a kernel thread (PF_KTHREAD; empty environment) is left out of the listing: no churn
+        stats = {K: ("I", 2, "520", limits._PF_KTHREAD | 0x40), Q: ("S", 1, "510", 0x400000)}
+        listdir = lambda path: ["self", str(K), str(Q)]
+        stat = lambda pid, flags=False: stats.get(pid)
+        table, gone = limits._table_scan(listdir=listdir, stat=stat)
+        self.assertEqual((table, gone), ({Q: ("S", 1, "510")}, set()))
+        found, _, _, stable = limits._stable_token_scan(
+            token, "400", None, listing=lambda: limits._table_scan(listdir=listdir, stat=stat),
+            read_environ=read_environ, start_time=lambda pid: "510" if pid == Q else None)
+        self.assertEqual((found, stable), ({Q: "510"}, True))
+        # pid 2 is identified by its flag only: in WSL it is a user-space init whose children are ordinary processes
+        real = limits._table()
+        for pid, (_, ppid, _) in real.items():
+            st = limits._stat(pid, flags=True)
+            if st is not None:
+                self.assertFalse(st[3] & limits._PF_KTHREAD, pid)
+        self.assertIn(os.getpid(), real)
+
+    @unittest.skipUnless(POSIX, "the run token is the Linux ownership marker")
     def test_stable_scan_persistent_churn_unconfirmed(self):
         # every pass sees a listed process vanish: no stable snapshot within SCAN_PASSES passes -> unconfirmed
         token = "cd" * 16

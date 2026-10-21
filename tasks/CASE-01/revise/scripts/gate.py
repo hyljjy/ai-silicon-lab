@@ -45,7 +45,10 @@ CLI (WSL): python3 -B revise/scripts/gate.py <rtl> <L> [--json <out>] [--work-di
   so the CLI is tied to the stop mechanism of that round: it refuses (exit 2, "GATE ERROR: refused: ...") while
   stops.open_stops(r) is not empty, and on KILL FAIL it writes stops.raise_stop(r, "eval", "KILL FAIL",
   details={"source": "gate-cli", ...}) and prints "STOP <id>: KILL FAIL — commit revise/stops/r<r>/<id>.json now"
-  before exiting 2 (other infrastructure faults: exit 2 without a stop). Python standard library only."""
+  before exiting 2 (other infrastructure faults: exit 2 without a stop). The CLI does not take the round lock: a stop
+  raised concurrently by another entry during a gate run does not abort it (it stays in force afterwards). Because
+  the default is --stop-round 1, an ad-hoc run that hits KILL FAIL writes a round-1 eval stop. Python standard
+  library only."""
 import argparse
 import builtins
 import datetime
@@ -683,7 +686,9 @@ def doc_bytes(res):
 
 
 def main(argv=None, revise=None):
-    """CLI. revise: the revise directory for the stop records (tests use a temporary one; default revise/)."""
+    """CLI. revise: the revise directory for the stop records (tests use a temporary one; default revise/). No round
+    lock is taken (a stop raised concurrently does not abort a running gate; it stays in force afterwards); with the
+    default --stop-round 1, an ad-hoc run writes a round-1 eval stop on KILL FAIL."""
     import stops                                      # only the CLI writes stops (round.py does it for its own runs)
     ap = argparse.ArgumentParser(description="CASE-01 stage B contract gate G1-G8 (WSL)")
     ap.add_argument("rtl")

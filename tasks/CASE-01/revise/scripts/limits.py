@@ -34,11 +34,17 @@ Ownership (primary):
     "running" save) therefore never counts as confirmed: still_alive / cleanup report it unconfirmed (cleanup still
     stops every token carrier it finds) and recovery stops, whatever the token scan finds.
     Stable snapshot (Codex BC3-02): a token scan that sees a listed process vanish during the pass (its stat or
-    environment can no longer be read, a token carrier exits after its environment was read, a new zombie) is
-    repeated from a fresh /proc listing, since a process forked by it before it exited is listed only by then; when
-    SCAN_PASSES passes in a row see such a disappearance, the result is unconfirmed (still_alive, cleanup, verify).
+    environment can no longer be read or reads as 0 bytes, as for a zombie or a task inside do_exit, a token carrier
+    exits after its environment was read, a new zombie) is repeated from a fresh /proc listing, since a process forked
+    by it before it exited is listed only by then; when SCAN_PASSES passes in a row see such a disappearance, the
+    result is unconfirmed (still_alive, cleanup, verify). Kernel threads (PF_KTHREAD) are left out of the listing.
     Residual limits: (1) conservative, not unsafe: on a busy system unrelated processes started since the launch that
-    exit during every pass make the result unconfirmed (a stop the author clears), never a false confirmation. (2) A
+    exit during every pass, or a user process whose environment is really empty, make the result unconfirmed (a stop
+    the author clears), never a false confirmation. (2) A /proc readdir is not an atomic snapshot: with pid
+    wraparound during one listdir, a carrier whose pid the cursor has not reached yet can fork a child with a lower
+    pid (already passed) and exit and be reaped before the cursor reaches it; neither then appears in that pass. The
+    stable-scan rule narrows this window (the next pass lists the child) but does not eliminate it, since the same
+    can happen in every pass; everywhere else the result direction stays conservative. (3) A
     migration mediated by PID 1 or by root (e.g. "systemd-run --user --scope", which asks the user manager to move
     the process into user@<uid>.service) can carry a descendant out of the launch cgroup; if it is then also unreadable
     it is not counted. The graded flow (grade.py and its tools) does neither.
@@ -382,14 +388,19 @@ else:
     def _isolation_name():
         return "subreaper"
 
-    def _stat(pid):
-        """(state, ppid, starttime) from /proc/<pid>/stat; None when the process does not exist."""
+    _PF_KTHREAD = 0x00200000                           # task flag of kernel threads (include/linux/sched.h)
+
+    def _stat(pid, flags=False):
+        """(state, ppid, starttime) from /proc/<pid>/stat (with flags=True: plus the task flags as an int); None when
+        the process does not exist."""
         try:
             with open(f"/proc/{pid}/stat", "rb") as f:
                 data = f.read().decode("ascii", "replace")
         except (FileNotFoundError, ProcessLookupError):
             return None
         rest = data[data.rindex(")") + 2:].split()
+        if flags:
+            return rest[0], int(rest[1]), rest[19], int(rest[6])
         return rest[0], int(rest[1]), rest[19]
 
     def _start_time(pid):
@@ -400,17 +411,23 @@ else:
             return None
         return st[2]
 
-    def _table_scan():
-        """({pid: (state, ppid, starttime)} for every process, {pids listed in /proc that vanished before their stat
-        could be read}); raises OSError when /proc cannot be read."""
+    def _table_scan(listdir=None, stat=None):
+        """({pid: (state, ppid, starttime)} for every process except kernel threads, {pids listed in /proc that
+        vanished before their stat could be read}); raises OSError when /proc cannot be read. Kernel threads (task
+        flag PF_KTHREAD; kthreadd and its children, e.g. kworkers) are left out: they never belong to a run and their
+        empty environment would make every token scan pass repeat (BC3-02 fix 1). They are recognised by the flag,
+        not by "parent pid 2": in WSL pid 2 is a user-space init whose children are ordinary processes.
+        listdir / stat: injectable readers (tests); stat(pid, flags=True) like _stat."""
+        listdir = listdir or os.listdir
+        stat = stat or _stat
         out, vanished = {}, set()
-        for name in os.listdir("/proc"):
+        for name in listdir("/proc"):
             if name.isdigit():
-                st = _stat(int(name))
-                if st is not None:
-                    out[int(name)] = st
-                else:
+                st = stat(int(name), flags=True)
+                if st is None:
                     vanished.add(int(name))
+                elif not st[3] & _PF_KTHREAD:
+                    out[int(name)] = st[:3]
         return out, vanished
 
     def _table():
@@ -491,6 +508,13 @@ else:
             except OSError:
                 if _same_user(pid, uid) and not _outside(_cgroup(pid), launch_cg):
                     unreadable.append(pid)
+                continue
+            if not data:
+                # Linux gives 0 bytes (no error) for an unreaped zombie and for a task in do_exit after exit_mm (its
+                # stat may still say R/D): it may have forked before exiting, so the pass is repeated (BC3-02 fix 1).
+                # Kernel threads are not in the table (_table_scan); a user process whose environment is really
+                # empty makes every pass repeat, so the result is unconfirmed (conservative)
+                vanished.add(pid)
                 continue
             if needle in data.split(b"\0"):
                 if start_time(pid) == start:
