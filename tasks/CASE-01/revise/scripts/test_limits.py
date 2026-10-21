@@ -676,9 +676,10 @@ class TestRecordChecks(unittest.TestCase):
             with mock.patch.object(limits, "_read_environ", denied):
                 self.assertEqual(limits.still_alive(rec), ([], True))
                 # ... unless it lies outside the wrapper's cgroup v2 subtree (e.g. "systemd --user")
-                real_cg = limits._cgroup
+                real_cg = limits._cgroup_state
                 user_mgr = "/user.slice/user-1000.slice/user@1000.service/init.scope"
-                with mock.patch.object(limits, "_cgroup", lambda pid: user_mgr if pid == p.pid else real_cg(pid)):
+                with mock.patch.object(limits, "_cgroup_state",
+                                       lambda pid: ("ok", user_mgr) if pid == p.pid else real_cg(pid)):
                     want = ([], True) if rec.get("cgroup") in (None, "/") else ([], False)
                     self.assertEqual(limits.still_alive(rec), want)
         finally:
@@ -863,6 +864,70 @@ class TestRecordChecks(unittest.TestCase):
         found, unreadable, _, stable = limits._stable_token_scan(token, "400", None, listing=listing,
                                                                  read_environ=denied, start_time=starts.get)
         self.assertEqual((found, unreadable, stable, len(n)), ({Q: "510"}, [], True, 2))
+
+    @unittest.skipUnless(POSIX, "the run token is the Linux ownership marker")
+    def test_unreadable_branch_aux_reads_gone(self):
+        # Codex BC5-01: the environment read fails with a generic OSError, the first identity re-check passes, then
+        # P forks Q and exits; the owner (status) or cgroup read finds P gone. That is never "another user's" or a
+        # skip: the pass repeats and finds Q
+        token = "e5" * 16
+        base = os.getpid() + 8000000
+        P, Q = base + 1, base + 2
+        env_q = b"\0".join([(limits.TOKEN_VAR + "=" + token).encode("ascii"), b""])
+        tables = [{P: ("S", 1, "500")}, {Q: ("S", 1, "510")}]
+        n, order = [], []
+
+        def listing():
+            n.append(1)
+            return tables[min(len(n), len(tables)) - 1], set()
+
+        def read(pid, tid=None):
+            order.append(("environ", pid))
+            if pid == P:
+                raise PermissionError(13, "Permission denied")
+            return env_q
+
+        def scan(user, cgroup=lambda pid: ("ok", None), starts=None):
+            n.clear()
+            order.clear()
+            alive_p = iter(starts or ["500"] * 10)
+
+            def start_time(pid):
+                order.append(("stat", pid))
+                return next(alive_p) if pid == P else "510"
+            return limits._stable_token_scan(token, "400", None, listing=listing, read_environ=read,
+                                             start_time=start_time, user_match=user, cgroup_state=cgroup)
+
+        def user_gone(pid, uid):
+            order.append(("status", pid))
+            return "gone"
+        found, unreadable, _, stable = scan(user_gone)
+        self.assertEqual((found, unreadable, stable, len(n)), ({Q: "510"}, [], True, 2))
+        self.assertEqual(order[:3], [("environ", P), ("stat", P), ("status", P)])   # re-check passed, then gone
+        # the cgroup read finds P gone -> rescan
+        found, unreadable, _, stable = scan(lambda pid, uid: "same", cgroup=lambda pid: ("gone", None))
+        self.assertEqual((found, unreadable, stable, len(n)), ({Q: "510"}, [], True, 2))
+        # "different user" (or an exempt cgroup), but the re-check AFTER the auxiliary reads finds P gone -> rescan
+        found, unreadable, _, stable = scan(lambda pid, uid: "different", starts=["500", None])
+        self.assertEqual((found, unreadable, stable, len(n)), ({Q: "510"}, [], True, 2))
+        found, unreadable, _, stable = scan(lambda pid, uid: "same", starts=["500", None])
+        self.assertEqual((found, unreadable, stable, len(n)), ({Q: "510"}, [], True, 2))
+        # an unreadable owner -> unconfirmed at once
+        found, _, _, stable = scan(lambda pid, uid: "unknown")
+        self.assertEqual((found, stable, len(n)), ({}, False, 1))
+        # still there after the reads: another user's process is skipped, this user's is reported unreadable
+        tables[:] = [{P: ("S", 1, "500")}]
+        found, unreadable, _, stable = scan(lambda pid, uid: "different")
+        self.assertEqual((found, unreadable, stable, len(n)), ({}, [], True, 1))
+        found, unreadable, _, stable = scan(lambda pid, uid: "same")
+        self.assertEqual((found, unreadable, stable, len(n)), ({}, [P], True, 1))
+        # the real readers are tri-state: a pid that does not exist is "gone", this process is "same"
+        gone = self.gone()
+        self.assertEqual(limits._user_match(gone, os.getuid()), "gone")
+        self.assertEqual(limits._user_match(os.getpid(), os.getuid()), "same")
+        self.assertEqual(limits._user_match(os.getpid(), os.getuid() + 12345), "different")
+        self.assertEqual(limits._cgroup_state(gone), ("gone", None))
+        self.assertEqual(limits._cgroup_state(os.getpid())[0], "ok")
 
     @unittest.skipUnless(POSIX, "/proc/<pid>/environ is Linux only")
     def test_environ_single_read(self):

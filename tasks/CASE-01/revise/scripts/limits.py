@@ -536,29 +536,42 @@ else:
             raise EnvironOverflow(f"{path}: {len(data)} bytes, the single read may be truncated")
         return data
 
-    def _same_user(pid, uid):
-        """True when the real or effective uid of pid is uid (also when that cannot be read: conservative)."""
+    def _user_match(pid, uid):
+        """Whether the real or effective uid of pid is uid (Codex BC5-01: tri-state, a vanished process is never
+        mistaken for another user's): "same", "different", "gone" (the process no longer exists: the caller rescans)
+        or "unknown" (status unreadable or without a Uid line: the caller reports unconfirmed)."""
         try:
             with open(f"/proc/{pid}/status", "rb") as f:
-                for line in f.read().decode("ascii", "replace").splitlines():
-                    if line.startswith("Uid:"):
-                        return str(uid) in line.split()[1:3]
+                text = f.read().decode("ascii", "replace")
         except (FileNotFoundError, ProcessLookupError):
-            return False
+            return "gone"
         except OSError:
-            return True
-        return True
+            return "unknown"
+        if not text:
+            return "gone"                              # 0 bytes: the task is being torn down
+        for line in text.splitlines():
+            if line.startswith("Uid:"):
+                return "same" if str(uid) in line.split()[1:3] else "different"
+        return "unknown"
+
+    def _cgroup_state(pid):
+        """("ok", cgroup v2 path or None) from the "0::<path>" line of /proc/<pid>/cgroup; ("gone", None) when the
+        process no longer exists (BC5-01: the caller rescans); ("unknown", None) when the file cannot be read."""
+        try:
+            with open(f"/proc/{pid}/cgroup", "rb") as f:
+                text = f.read().decode("utf-8", "replace")
+        except (FileNotFoundError, ProcessLookupError):
+            return "gone", None
+        except OSError:
+            return "unknown", None
+        for line in text.splitlines():
+            if line.startswith("0::"):
+                return "ok", line[3:].strip() or None
+        return "ok", None
 
     def _cgroup(pid):
         """cgroup v2 path of pid ("0::<path>" line of /proc/<pid>/cgroup), or None."""
-        try:
-            with open(f"/proc/{pid}/cgroup", "rb") as f:
-                for line in f.read().decode("utf-8", "replace").splitlines():
-                    if line.startswith("0::"):
-                        return line[3:].strip() or None
-        except OSError:
-            return None
-        return None
+        return _cgroup_state(pid)[1]
 
     def _outside(cg, launch_cg):
         """True when cgroup cg is known to lie outside the subtree of launch_cg (never when either is unknown or the
@@ -567,7 +580,8 @@ else:
             return False
         return cg != launch_cg and not cg.startswith(launch_cg.rstrip("/") + "/")
 
-    def _token_scan(token, since, table, launch_cg=None, read_environ=None, start_time=None, group_state=None):
+    def _token_scan(token, since, table, launch_cg=None, read_environ=None, start_time=None, group_state=None,
+                    user_match=None, cgroup_state=None):
         """One pass over `table` (the processes started at or after `since` clock ticks): (found {pid: start} of the
         processes whose environment holds TOKEN_VAR=token, unreadable [pids of this user whose environment could not
         be read], vanished {pids that exited or changed during the pass}, zombies {(pid, start) of zombie leaders
@@ -584,10 +598,18 @@ else:
         through the live thread and the process is treated as running (found when it carries the token); gone or
         changed (a listed thread vanished) -> vanished; unknown -> uncertain (the caller reports unconfirmed).
         read_environ(pid, tid=None) / start_time(pid) (start time when running and not Z/X, else None) /
-        group_state(pid): injectable readers (tests); default the /proc readers."""
+        group_state(pid) / user_match(pid, uid) / cgroup_state(pid): injectable readers (tests); default the /proc
+        readers.
+        Unreadable environment (Codex BC5-01): every auxiliary read of that branch is tri-state, and its "gone" is
+        never taken for a skip-worthy answer: identity re-check (gone -> vanished), owner (_user_match: gone ->
+        vanished, different -> skip, unknown -> uncertain), cgroup (_cgroup_state: gone -> vanished, unknown -> not
+        exempt), then the identity re-check again AFTER those reads (gone -> vanished) before the pid is skipped or
+        recorded as unreadable: a process that forked and exited meanwhile always makes the pass repeat."""
         read_environ = read_environ or _read_environ
         start_time = start_time or _running_start
         group_state = group_state or _group_state
+        user_match = user_match or _user_match
+        cgroup_state = cgroup_state or _cgroup_state
         needle = f"{TOKEN_VAR}={token}".encode("ascii")
         me, uid = os.getpid(), os.getuid()
         found, unreadable, vanished, zombies, uncertain = {}, [], set(), set(), set()
@@ -624,7 +646,25 @@ else:
             except OSError:
                 if not same():
                     vanished.add(pid)
-                elif _same_user(pid, uid) and not _outside(_cgroup(pid), launch_cg):
+                    continue
+                owner = user_match(pid, uid)
+                if owner == "gone":
+                    vanished.add(pid)
+                    continue
+                if owner == "unknown":
+                    uncertain.add(pid)
+                    continue
+                count = False
+                if owner == "same":
+                    cg_state, cg = cgroup_state(pid)
+                    if cg_state == "gone":
+                        vanished.add(pid)
+                        continue
+                    count = not _outside(cg, launch_cg)   # unknown cgroup: cg None, never exempt
+                if not same():                         # it may have forked and exited during the reads above
+                    vanished.add(pid)
+                    continue
+                if count:
                     unreadable.append(pid)
                 continue
             if not data:
@@ -642,22 +682,23 @@ else:
         return found, unreadable, vanished, zombies, uncertain
 
     def _stable_token_scan(token, since, launch_cg=None, listing=None, read_environ=None, start_time=None,
-                           group_state=None, passes=None):
+                           group_state=None, user_match=None, cgroup_state=None, passes=None):
         """Token scan over a stable process snapshot (Codex BC3-02, BC4-01, BC4-02): (found, unreadable, table,
         stable). A pass in which a listed process vanished or changed (see _token_scan), or which found a finished
         zombie leader that the previous pass had not already found finished, is repeated from a fresh listing: a
         process forked before the exit is listed by then. stable is False when no pass out of `passes` (default
-        SCAN_PASSES) was free of such changes, or at once when a zombie leader's thread group cannot be read; the
-        caller must then count the result as unconfirmed. listing / read_environ / start_time / group_state:
-        injectable readers (tests); listing returns (table, vanished pids) like _table_scan."""
+        SCAN_PASSES) was free of such changes, or at once when a pass found a pid whose membership cannot be
+        established (thread group or owner unreadable, environment overflow); the caller must then count the result
+        as unconfirmed. listing / read_environ / start_time / group_state / user_match / cgroup_state: injectable
+        readers (tests); listing returns (table, vanished pids) like _table_scan."""
         listing = listing or _table_scan
         passes = SCAN_PASSES if passes is None else passes
         zombies_before = set()
         found, unreadable, table = {}, [], {}
         for _ in range(passes):
             table, gone = listing()
-            found, unreadable, vanished, zombies, uncertain = _token_scan(token, since, table, launch_cg, read_environ,
-                                                                          start_time, group_state)
+            found, unreadable, vanished, zombies, uncertain = _token_scan(
+                token, since, table, launch_cg, read_environ, start_time, group_state, user_match, cgroup_state)
             if uncertain:
                 return found, unreadable, table, False
             if not gone and not vanished and zombies <= zombies_before:
