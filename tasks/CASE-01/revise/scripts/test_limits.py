@@ -863,12 +863,116 @@ class TestRecordChecks(unittest.TestCase):
         found, unreadable, _, stable = limits._stable_token_scan(token, "400", None, listing=listing,
                                                                  read_environ=denied, start_time=starts.get)
         self.assertEqual((found, unreadable, stable, len(n)), ({Q: "510"}, [], True, 2))
-        # a token-less read whose process is still the same: a complete non-member check, no rescan
+
+    @unittest.skipUnless(POSIX, "/proc/<pid>/environ is Linux only")
+    def test_environ_single_read(self):
+        # BC4 round 2: the post-read re-stat cannot see a prefix (exit_mm and execve keep the start time and the R
+        # state), so the environment is read with ONE read(2) of ENVIRON_MAX bytes: complete or empty
+        calls = []
+
+        def opener(path, flags):
+            calls.append(("open", path, flags))
+            return 99
+
+        def closer(fd):
+            calls.append(("close", fd))
+
+        def reader_of(data):
+            def reader(fd, n):
+                calls.append(("read", fd, n))
+                return data
+            return reader
+        got = limits._read_environ(1234, opener=opener, reader=reader_of(b"A=1\0B=2\0"), closer=closer)
+        self.assertEqual(got, b"A=1\0B=2\0")
+        self.assertEqual(calls, [("open", "/proc/1234/environ", os.O_RDONLY), ("read", 99, limits.ENVIRON_MAX),
+                                 ("close", 99)])            # exactly one read, of the full buffer size
+        calls.clear()
+        limits._read_environ(1234, 1240, opener=opener, reader=reader_of(b"A=1\0"), closer=closer)
+        self.assertEqual(calls[0][1], "/proc/1234/task/1240/environ")
+        # 0 bytes: the address space is gone (exit_mm, or an execve released it) -> returned as empty (vanished)
+        self.assertEqual(limits._read_environ(1234, opener=opener, reader=reader_of(b""), closer=closer), b"")
+        # a full buffer may be truncated: EnvironOverflow (not an OSError), the fd is still closed
+        calls.clear()
+        with self.assertRaises(limits.EnvironOverflow):
+            limits._read_environ(1234, opener=opener, reader=reader_of(b"x" * limits.ENVIRON_MAX), closer=closer)
+        self.assertFalse(issubclass(limits.EnvironOverflow, OSError))
+        self.assertEqual(calls[-1], ("close", 99))
+        # the real reader returns the same bytes as a complete read of this (unchanging) process
+        with open(f"/proc/{os.getpid()}/environ", "rb") as f:
+            self.assertEqual(limits._read_environ(os.getpid()), f.read())
+        # in the scan: an empty single read -> rescan (Q found); an overflow -> unconfirmed at once
+        token = "c3" * 16
+        base = os.getpid() + 6000000
+        P, Q = base + 1, base + 2
+        env_q = b"\0".join([(limits.TOKEN_VAR + "=" + token).encode("ascii"), b""])
+        tables = [{P: ("S", 1, "500")}, {Q: ("S", 1, "510")}]
+        n = []
+
+        def listing():
+            n.append(1)
+            return tables[min(len(n), len(tables)) - 1], set()
+
+        def read(pid, tid=None):
+            return b"" if pid == P else env_q
+        found, _, _, stable = limits._stable_token_scan(token, "400", None, listing=listing, read_environ=read,
+                                                        start_time=lambda pid: {P: "500", Q: "510"}[pid])
+        self.assertEqual((found, stable, len(n)), ({Q: "510"}, True, 2))
         n.clear()
-        tables[:] = [{P: ("S", 1, "500")}]
-        found, _, _, stable = limits._stable_token_scan(token, "400", None, listing=listing, read_environ=prefix,
+
+        def overflow(pid, tid=None):
+            raise limits.EnvironOverflow("full")
+        found, _, _, stable = limits._stable_token_scan(token, "400", None, listing=listing, read_environ=overflow,
                                                         start_time=lambda pid: "500")
-        self.assertEqual((found, stable, len(n)), ({}, True, 1))
+        self.assertEqual((found, stable, len(n)), ({}, False, 1))
+
+    @unittest.skipUnless(POSIX, "thread groups are read from /proc on Linux")
+    def test_group_state_vanished_thread_is_changed(self):
+        # BC4 round 2: a listed thread that is gone when its stat is read proves only that one thread exited
+        P = os.getpid() + 7000000
+        token = "d4" * 16
+        env_tok = b"\0".join([(limits.TOKEN_VAR + "=" + token).encode("ascii"), b""])
+        # (a) handoff: worker Tk creates Tk+1 and exits; every listing shows [P, Tk] and Tk is gone at its stat
+        k = [10]
+
+        def handoff_listdir(path):
+            k[0] += 1
+            return [str(P), str(P + k[0])]
+
+        def gone_stat(pid, tid):
+            raise FileNotFoundError(2, "No such file or directory")
+        gs = limits._group_state(P, listdir=handoff_listdir, task_state=gone_stat)
+        self.assertEqual(gs, ("changed", None))
+        n = []
+
+        def listing():
+            n.append(1)
+            return {P: ("Z", 1, "505")}, set()
+        found, _, _, stable = limits._stable_token_scan(
+            token, "400", None, listing=listing, read_environ=lambda pid, tid=None: env_tok,
+            start_time=lambda pid: None,
+            group_state=lambda pid: limits._group_state(pid, listdir=handoff_listdir, task_state=gone_stat))
+        self.assertEqual((found, stable, len(n)), ({}, False, limits.SCAN_PASSES))   # steady handoff: unconfirmed
+        # (b) the task/ readdir stops early when the thread under its cursor dies: [P, T1, T2] lists only T1, which
+        # then exits; T2 lives. The pass is repeated; the next listing shows T2 alive -> running, found
+        T1, T2 = P + 1, P + 2
+        lists = iter([[str(P), str(T1)], [str(P), str(T2)], [str(P), str(T2)]])
+        states = {T2: "S"}
+
+        def stat_b(pid, tid):
+            if tid not in states:
+                raise FileNotFoundError(2, "No such file or directory")
+            return states[tid]
+        group_b = lambda pid: limits._group_state(pid, listdir=lambda path: next(lists), task_state=stat_b)
+        n.clear()
+        found, _, _, stable = limits._stable_token_scan(token, "400", None, listing=listing,
+                                                        read_environ=lambda pid, tid=None: env_tok,
+                                                        start_time=lambda pid: None, group_state=group_b)
+        self.assertEqual((found, stable, len(n)), ({P: "505"}, True, 2))
+        # liveness checks: a changed group counts as running (never as exited)
+        with mock.patch.object(limits, "_stat", lambda pid, flags=False: ("Z", 1, "505")), \
+                mock.patch.object(limits, "_group_state", lambda pid: ("changed", None)):
+            self.assertEqual(limits._start_time(P), "505")
+            self.assertTrue(limits._alive_in({P: ("Z", 1, "505")}, P, "505"))
 
     @unittest.skipUnless(POSIX, "the run token is the Linux ownership marker")
     def test_stable_scan_empty_environ_is_vanished(self):
