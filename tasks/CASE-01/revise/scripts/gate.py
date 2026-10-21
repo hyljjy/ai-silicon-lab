@@ -7,11 +7,13 @@ Rules (texts and recognition method: revise/rules/gate_rules.md):
      combinational only assign / wire with assignment / always @* / always @(*); no initial, # delay, negedge (an
      event control "@" anywhere else than directly after "always" is also G6); G7 clk only in the module header port
      list, in port declarations, directly after posedge, and (RV-07) in a net declaration of exactly the form
-     "wire clk;" (a statement outside parentheses, in a module whose header lists the port clk)  extra (stage B)
+     "wire clk;" (a module-level statement: outside parentheses and outside generate, begin/end, function, task
+     and other blocks, in a module whose header lists the port clk)                              extra (stage B)
   G8 DECLARED_L in 1..3                                                                          extra
   unrecognized ("门槛无法识别"): a character the tokenizer does not know, a failed or unusable Yosys read, Yosys and
      the tokenizer disagreeing on the number of modules, or (RV-06) a dropped comment whose text, after leading
-     whitespace, starts with synopsys/synthesis followed by translate_off/translate_on (case-insensitive; the
+     whitespace, starts with synopsys/synthesis followed, with or without blanks, by translate_off/translate_on
+     (e.g. "//synopsystranslate_off", which Yosys also honours; case-insensitive; the
      tokenizer marks it with a "translate" token that takes no other part; Yosys warning text is never used). Also a
      gate_reject, reported separately, never as a proven rule violation.
 G1 and the module set come from Yosys, in two separate fresh processes (RV-01), both via limits.run_limited(kind=
@@ -88,7 +90,10 @@ _DEC = re.compile(r"[0-9][0-9_]*")
 _SAFE_PATH = re.compile(r"^[A-Za-z0-9_./+-]+$")
 _ERR_LINE = re.compile(r":(\d+):\s*ERROR")
 # RV-06: a dropped comment whose text (after leading whitespace) starts with synopsys/synthesis translate_off/_on
-_TRANSLATE = re.compile(r"\s*(?:synopsys|synthesis)\s+translate_(?:off|on)(?![A-Za-z0-9_$])", re.I)
+_TRANSLATE = re.compile(r"\s*(?:synopsys|synthesis)\s*translate_(?:off|on)(?![A-Za-z0-9_$])", re.I)
+# blocks inside which "wire clk;" would declare a new local net (RV-07 allows it at module top level only)
+BLOCK_OPEN = ("begin", "generate", "function", "task", "fork", "case", "casex", "casez", "specify")
+BLOCK_CLOSE = ("end", "endgenerate", "endfunction", "endtask", "join", "endcase", "endspecify")
 SKIP_KINDS = ("attr", "translate")                    # tokens that take no part in the rules
 
 
@@ -302,13 +307,19 @@ def _is_clk(t):
 def _scan(toks):
     """Module declarations [(name or None, kw line, kw index)], and per token index the region: "header" (module
     keyword up to the ';' ending the header), "portdecl" (input/output/inout up to ';'), or None; plus the square
-    bracket depth and the parenthesis depth before each token."""
+    bracket depth, the parenthesis depth and the block nesting depth (BLOCK_OPEN / BLOCK_CLOSE keywords) before
+    each token."""
     modules, region, depth = [], [None] * len(toks), [0] * len(toks)
-    pdepth = [0] * len(toks)
-    sq, mode, paren = 0, None, 0
+    pdepth, bdepth = [0] * len(toks), [0] * len(toks)
+    sq, mode, paren, block = 0, None, 0, 0
     for i, t in enumerate(toks):
         depth[i] = sq
         pdepth[i] = paren
+        bdepth[i] = block
+        if _is(t, "kw") and t.text in BLOCK_OPEN:
+            block += 1
+        elif _is(t, "kw") and t.text in BLOCK_CLOSE:
+            block = max(0, block - 1)
         if _is(t, "kw") and t.text in MODULE_KW:
             nxt = toks[i + 1] if i + 1 < len(toks) else None
             name = nxt.text if nxt is not None and nxt.kind in ("ident", "esc_ident") else None
@@ -327,14 +338,14 @@ def _scan(toks):
             paren = max(0, paren - 1)
         elif _is(t, "op", ";") and (mode == "portdecl" or (mode == "header" and paren == 0)):
             mode = None
-    return modules, region, depth, pdepth
+    return modules, region, depth, pdepth, bdepth
 
 
 def token_rules(tokens):
     """Hits of G2-G7 and unrecognized from the tokens (attributes take no part); deduplicated, sorted."""
     lint = set(lint_systf())
     toks = [t for t in tokens if t.kind not in SKIP_KINDS]
-    modules, region, depth, pdepth = _scan(toks)
+    modules, region, depth, pdepth, bdepth = _scan(toks)
     header_clk = _header_clk(toks, modules, region, depth)
     hits = [Hit("unrecognized", t.line, "extra") for t in tokens if t.kind == "translate"]     # RV-06
     if len(modules) != 1:
@@ -359,7 +370,7 @@ def token_rules(tokens):
         elif t.kind == "unknown":
             hits.append(Hit("unrecognized", t.line, "extra"))
         if (_is_clk(t) and not _clk_ok(prev, nxt, region[i], depth[i])
-                and not _wire_clk_ok(toks, i, pdepth[i], header_clk, modules)):
+                and not _wire_clk_ok(toks, i, pdepth[i], bdepth[i], header_clk, modules)):
             hits.append(Hit("G7", t.line, "extra"))
     return _sorted(hits)
 
@@ -400,10 +411,11 @@ def _header_clk(toks, modules, region, depth):
     return out
 
 
-def _wire_clk_ok(toks, i, pdepth, header_clk, modules):
-    """RV-07: exactly "wire clk;" as a statement of a module whose header lists the port clk, outside parentheses
-    (comments are already dropped; no assignment, no range, no second name)."""
-    if i < 2 or i + 1 >= len(toks) or pdepth != 0:
+def _wire_clk_ok(toks, i, pdepth, bdepth, header_clk, modules):
+    """RV-07: exactly "wire clk;" as a module-level statement (not inside parentheses, generate, begin/end,
+    function, task or any other block, where it would declare a new local net) of a module whose header lists the
+    port clk (comments are already dropped; no assignment, no range, no second name)."""
+    if i < 2 or i + 1 >= len(toks) or pdepth != 0 or bdepth != 0:
         return False
     before, prev, nxt = toks[i - 2], toks[i - 1], toks[i + 1]
     if not (_is(prev, "kw", "wire") and _is(nxt, "op", ";")):
@@ -456,7 +468,7 @@ def structure_rules(ports, tokens):
     """G1 from the Yosys module description {module: {port: (direction, width)}}; a module count different from the
     tokenizer's -> unrecognized (line 0). The full module set is used: no top selection, no removal."""
     toks = [t for t in tokens if t.kind not in SKIP_KINDS]
-    modules, region, _, _ = _scan(toks)
+    modules, region, _, _, _ = _scan(toks)
     hits = []
     if len(ports) != len(modules):
         hits.append(Hit("unrecognized", 0, "extra"))
@@ -572,8 +584,10 @@ def _read_ports(path):
 
 
 def yosys_ports(rtl_path, work_dir=None, evidence=None):
-    """(modules, None) or (None, problem): the two-stage read of RV-01 (module doc). evidence (a dict) receives the
-    directory and per-stage records."""
+    """(modules, None) or (None, problem): the two-stage read of RV-01 (module doc); problem covers RV-01 item 4
+    (non-zero exit, timeout, output over the limit or incomplete, unusable JSON). Raises GateInfraError for
+    infrastructure faults (KILL FAIL, start or supervision failure, unusable path, work directory or evidence write
+    failure), which never become a result. evidence (a dict) receives the directory and per-stage records."""
     evidence = {} if evidence is None else evidence
     try:
         d = _new_dir(work_dir)

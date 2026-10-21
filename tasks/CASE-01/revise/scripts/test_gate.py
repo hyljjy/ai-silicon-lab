@@ -64,6 +64,8 @@ NEG = {
     "neg_translate_off_port": ({("unrecognized", 2, X), ("unrecognized", 7, X), ("unrecognized", 9, X)}, True),
     "neg_translate_off_block": ({("unrecognized", 1, X), ("unrecognized", 8, X), ("unrecognized", 10, X)}, True),
     "neg_wire_clk_assign": ({("G7", 7, X)}, False),
+    # RV-06 without a separator: Yosys honours these comments, reads 7 ports and passes both stages (hidden ports)
+    "neg_translate_nosep_ansi": ({("unrecognized", n, X) for n in (10, 12, 13, 15)}, False),
 }
 
 
@@ -219,12 +221,21 @@ class GateTest(unittest.TestCase):
     def test_neg_translate_off_block(self):
         self.check_neg("neg_translate_off_block")
 
+    def test_neg_translate_nosep_hidden_port_never_passes(self):
+        res = self.check_neg("neg_translate_nosep_ansi")
+        self.assertIsNone(res.yosys_problem)                 # Yosys alone would have passed it (7 ports)
+        self.assertEqual({h.text for h in res.hits}, {"//synopsystranslate_off", "//synopsystranslate_on",
+                                                      "/*synthesistranslate_off*/", "/*synthesistranslate_on*/"})
+
     def test_neg_wire_clk_assign(self):
         self.check_neg("neg_wire_clk_assign")
 
     def test_translate_comment_rule(self):
         flagged = ["// synopsys translate_off", "//synthesis translate_on", "//   Synopsys \t TRANSLATE_OFF  rest",
-                   "/* synthesis translate_off */", "/*\n  synopsys translate_on */", "// SYNTHESIS translate_on;"]
+                   "/* synthesis translate_off */", "/*\n  synopsys translate_on */", "// SYNTHESIS translate_on;",
+                   "//synopsystranslate_off", "//synopsystranslate_on", "//synthesistranslate_off",
+                   "//synthesistranslate_on", "/*synopsystranslate_off*/", "/*synthesistranslate_on*/",
+                   "// SynopsysTranslate_Off"]
         ordinary = ["// no synopsys translate_off here", "// synopsys full_case", "// synopsys parallel_case",
                     "/* synthesis keep */", "// synopsys_translate_off", "// synopsys translate_offx",
                     "// translate_off", "// pragma translate_off"]
@@ -344,11 +355,16 @@ class GateTest(unittest.TestCase):
               "module m (a, clk);\ninput wire a, clk;", "module m (\\clk , a);\ninput [0:0] \\clk ;",
               "module m (clk);\ninput clk;\nwire clk;",                          # RV-07
               "module m (clk);\ninput clk;\nwire /* c */ clk // c\n ;", "module m (clk);\nwire clk;\ninput clk;",
-              "module m (clk);\ninput clk;\nwire \\clk ;"]
+              "module m (clk);\ninput clk;\nwire \\clk ;",
+              "module m (clk);\ninput clk;\ngenerate\nendgenerate\nwire clk;",
+              "module m (clk);\ninput clk;\nalways @(posedge clk) begin end\nwire clk;"]
         bad = [("module m (clk);\ninput clk;\noutput reg x = clk;", 3), ("module m (clk);\ninput clk;\nwire y = clk;", 3),
                ("module m (clk);\ninput clk;\nwire clk = 1'b0;", 3), ("module m (clk);\ninput clk;\nwire [0:0] clk;", 3),
                ("module m (clk);\ninput clk;\nwire clk, x;", 3), ("module m (a);\ninput a;\nwire clk;", 3),
                ("module m (clk);\ninput clk;\nreg clk;", 3), ("module m (clk);\ninput clk;\nassign y = f(wire clk;);", 3),
+               ("module m (clk);\ninput clk;\ngenerate\nwire clk;\nendgenerate", 4),
+               ("module m (clk);\ninput clk;\ngenerate if (1) begin : g\nwire clk;\nend endgenerate", 4),
+               ("module m (clk);\ninput clk;\ninitial begin end\nfunction f; input a; begin\nwire clk;\nend endfunction", 5),
                ("module m (clk);\ninput clk;\nassign y = \\clk ;", 3), ("module m (clk);\ninput clk;\nwire clk2 = clk;", 3),
                ("module m (input [clk:0] a);", 1), ("module m (clk);\ninput clk;\nalways @(negedge clk) a <= b;", 3)]
         for src in ok:

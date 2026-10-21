@@ -5,7 +5,6 @@ module dot4sat (clk, rst, in_valid, in_a, in_b, out_valid, out_data);
     output out_valid;
     output [31:0] out_data;
     wire clk;
-    wire /* the clock */ clk ;
     reg out_valid;
     reg [31:0] out_data;
     always @(posedge clk) begin
