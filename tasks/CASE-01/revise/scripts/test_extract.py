@@ -205,11 +205,74 @@ class Predictions(unittest.TestCase):
         t = base + "## 失败条件\n- a\n### 子节\n- b\n## 下一节\n- c\n"
         self.assertEqual([f["text"] for f in x.parse_answer(t, 1).failure_conditions], ["a", "b"])
 
-    def test_non_ok_has_no_predictions(self):
+    def test_non_ok_still_extracts_predictions(self):
         t = load("normal").replace("DECLARED_L = 2\n", "")
         p = x.parse_answer(t, 1)
-        self.assertEqual((p.status, p.reason, p.predictions, p.failure_conditions, p.prediction_table_problem),
-                         ("delivery_fail", "no_declared_L", [], [], None))
+        self.assertEqual((p.status, p.reason), ("delivery_fail", "no_declared_L"))
+        self.assertEqual([r["id"] for r in p.predictions], ["P1", "P2"])
+        self.assertEqual(len(p.failure_conditions), 3)
+        self.assertIsNone(p.prediction_table_problem)
+        self.assertFalse(p.prediction_L_mismatch)                  # declared_L is None
+
+    def test_declined_records_no_prediction_heading(self):
+        p = x.parse_answer(load("only_no_submission"), 2)
+        self.assertEqual((p.status, p.predictions, p.prediction_table_problem, p.failure_conditions),
+                         ("declined", [], "no_prediction_heading", []))
+
+    def test_conflicting_declared_keeps_predictions_and_flags_nothing(self):
+        t = load("normal").replace("DECLARED_L = 2\n", "DECLARED_L = 2\nDECLARED_L = 3\n")
+        p = x.parse_answer(t, 1)
+        self.assertEqual((p.reason, len(p.predictions), p.prediction_L_mismatch), ("conflicting_declared_L", 2, False))
+
+    def test_unclosed_block_loses_content_after_fence(self):
+        t = "````verilog\nmodule a;\nDECLARED_L = 1\n\n## 预测表\n" + load("prediction_L_mismatch").split("## 预测表\n")[1]
+        p = x.parse_answer(t, 1)
+        self.assertEqual((p.reason, p.predictions, p.prediction_table_problem),
+                         ("unclosed_block", [], "no_prediction_heading"))
+        # content before the fence survives
+        t2 = load("prediction_L_mismatch").split("```verilog")[0] + "## 预测表\n" +             load("prediction_L_mismatch").split("## 预测表\n")[1] + "````verilog\nmodule a;\n"
+        p2 = x.parse_answer(t2, 1)
+        self.assertEqual((p2.reason, len(p2.predictions)), ("unclosed_block", 1))
+
+    def test_L_mismatch_only_for_integer_point_that_differs(self):
+        base = load("prediction_L_mismatch")                       # declared 1, row point "2"
+        self.assertTrue(x.parse_answer(base, 1).prediction_L_mismatch)
+        for point, want in (("1", False), ("", False), ("same_as=cand_ab12", False), ("2.0", False),
+                            ("两", False), ("3", True)):
+            t = base.replace("| 2 | x.v:1 |", f"| {point} | x.v:1 |")
+            self.assertEqual(x.parse_answer(t, 1).prediction_L_mismatch, want, point)
+
+    def test_same_as_id_row_with_empty_point_is_not_mismatch(self):
+        t = load("prediction_L_mismatch").replace("| P1 |", "| same_as=cand_ab12 |").replace("| 2 | x.v:1 |",
+                                                                                           "|  | x.v:1 |")
+        p = x.parse_answer(t, 2)
+        self.assertEqual((p.status, p.predictions[0]["id"], p.predictions[0]["point"], p.prediction_L_mismatch),
+                         ("ok", "same_as=cand_ab12", "", False))
+
+    def test_nested_failure_bullets_two_and_four_spaces(self):
+        base = "```verilog\nm\n```\nDECLARED_L = 1\n## 失败条件\n"
+        for indent in ("  ", "    ", " "*3):
+            t = base + f"- a\n{indent}- b\n- c\n"
+            fcs = x.parse_answer(t, 1).failure_conditions
+            self.assertEqual([(f["fc_id"], f["text"]) for f in fcs], [("F1", "a\n- b"), ("F2", "c")], repr(indent))
+
+    def test_prediction_table_search_bounded_by_next_heading(self):
+        t = ("```verilog\nm\n```\nDECLARED_L = 1\n## 预测表\n无\n## 其他\n"
+             "| id | action |\n|---|---|\n| P1 | x |\n")
+        self.assertEqual(x.parse_answer(t, 1).prediction_table_problem, "no_prediction_table")
+        t2 = t.replace("## 其他", "### 子节")                      # a deeper heading does not end the section
+        self.assertEqual(x.parse_answer(t2, 1).prediction_table_problem.split(":")[0], "bad_columns")
+
+    def test_trigger_lines(self):
+        def tl(name, rnd=1):
+            return x.parse_answer(load(name), rnd).trigger_lines
+        self.assertEqual(tl("conflicting_declared"), [5, 7])
+        self.assertEqual(tl("no_submission_with_code", 2), [6])
+        self.assertEqual(tl("first_unclosed_later_complete"), [1])
+        self.assertEqual(tl("no_declared"), [])
+        self.assertEqual(tl("no_block"), [])
+        self.assertEqual(tl("normal"), [])
+        self.assertEqual(tl("only_no_submission", 2), [])
 
     def test_extracted_rows(self):
         p = x.parse_answer(load("normal"), 1)

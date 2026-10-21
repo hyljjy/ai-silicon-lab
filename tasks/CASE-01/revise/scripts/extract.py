@@ -46,6 +46,9 @@ class Parsed:
     prediction_table_problem: Optional[str] = None
     failure_conditions: List[dict] = field(default_factory=list)
     prediction_L_mismatch: bool = False
+    # trigger_lines: 1-based lines that explain a delivery_fail: conflicting_declared_L -> the DECLARED_L lines;
+    # no_submission_with_code -> the NO_SUBMISSION lines; unclosed_block -> [opening fence]; others and ok -> [].
+    trigger_lines: List[int] = field(default_factory=list)
 
 
 @dataclass
@@ -117,13 +120,14 @@ def parse_answer(text: str, rnd: int) -> Parsed:
     Block content = the raw lines strictly between the opening and the closing fence, concatenated with their
     ORIGINAL line endings. rtl_sha_raw is the sha256 of that content encoded as UTF-8, before any newline
     conversion; rtl (and rtl_sha_lf) is the content with CRLF and lone CR converted to LF, encoded as UTF-8.
-    status is "ok" | "declined" | "delivery_fail"; predictions and failure conditions are extracted only for "ok"."""
+    status is "ok" | "declined" | "delivery_fail"; predictions and failure conditions are
+    extracted for every status (text outside fences; after an unclosed fence nothing is outside it)."""
     raw_lines = _split_lines(text)
     kinds, blocks = _scan(raw_lines)
     first = next((b for b in blocks if b["verilog"]), None)
     unrun = ["".join(b["body"]) for b in blocks if b is not first]
 
-    declared, no_submission = [], False
+    declared, decl_lines, ns_lines = [], [], []
     for i, raw in enumerate(raw_lines):
         if kinds[i] != "out":
             continue
@@ -133,37 +137,38 @@ def parse_answer(text: str, rnd: int) -> Parsed:
         m = _DECLARED.fullmatch(s)
         if m:
             declared.append(int(m.group(1)))
+            decl_lines.append(i + 1)
         elif s == "NO_SUBMISSION":
-            no_submission = True
-    no_submission = no_submission and rnd == 2        # in round 1 it has no effect
+            ns_lines.append(i + 1)
+    no_submission = bool(ns_lines) and rnd == 2        # in round 1 it has no effect
     lines = [] if first is None else [first["open"]] + ([first["close"]] if first["close"] else [])
     distinct = sorted(set(declared))
     decl = distinct[0] if len(distinct) == 1 else None
 
-    def result(status, reason=None, **kw):
-        return Parsed(status=status, reason=reason, lines=lines, declared_L=decl, unrun_blocks=unrun, **kw)
+    predictions, problem = _predictions(raw_lines, kinds)
+    fcs = _failure_conditions(raw_lines, kinds)
+
+    def result(status, reason=None, trigger=(), **kw):
+        return Parsed(status=status, reason=reason, lines=lines, declared_L=decl, unrun_blocks=unrun,
+                      predictions=predictions, prediction_table_problem=problem, failure_conditions=fcs,
+                      prediction_L_mismatch=_L_mismatch(predictions, decl), trigger_lines=list(trigger), **kw)
 
     if no_submission:
         if first is None:
             return result("declined")
-        return result("delivery_fail", "no_submission_with_code")
+        return result("delivery_fail", "no_submission_with_code", ns_lines)
     if first is None:
         return result("delivery_fail", "no_verilog_block")
     if first["close"] is None:
-        return result("delivery_fail", "unclosed_block")
+        return result("delivery_fail", "unclosed_block", [first["open"]])
     if not distinct:
         return result("delivery_fail", "no_declared_L")
     if len(distinct) > 1:
-        return result("delivery_fail", "conflicting_declared_L")
+        return result("delivery_fail", "conflicting_declared_L", decl_lines)
 
     block_text = "".join(first["body"])
     rtl = _to_lf(block_text).encode("utf-8")
-    parsed = result("ok", rtl=rtl, rtl_sha_raw=sha256_bytes(block_text.encode("utf-8")),
-                    rtl_sha_lf=sha256_bytes(rtl))
-    parsed.predictions, parsed.prediction_table_problem = _predictions(raw_lines, kinds)
-    parsed.failure_conditions = _failure_conditions(raw_lines, kinds)
-    parsed.prediction_L_mismatch = _L_mismatch(parsed.predictions, decl)
-    return parsed
+    return result("ok", rtl=rtl, rtl_sha_raw=sha256_bytes(block_text.encode("utf-8")), rtl_sha_lf=sha256_bytes(rtl))
 
 
 def _heading(raw, kind):
@@ -206,17 +211,24 @@ def _is_delim(line):
 
 
 def _predictions(raw_lines, kinds):
-    """The first Markdown table after the first heading whose text is exactly "预测表" (outside fences)."""
-    start = None
+    """The first Markdown table after the first heading whose text is exactly "预测表" (outside fences), before the
+    next heading of the same or a higher level."""
+    start = level = None
     for i, raw in enumerate(raw_lines):
         h = _heading(raw, kinds[i])
         if h and h[1] == PREDICTION_HEADING:
-            start = i + 1
+            start, level = i + 1, h[0]
             break
     if start is None:
         return [], "no_prediction_heading"
+    end = len(raw_lines)                           # the search stops at the next heading of the same/higher level
+    for k in range(start, len(raw_lines)):
+        h = _heading(raw_lines[k], kinds[k])
+        if h and h[0] <= level:
+            end = k
+            break
     i = start
-    while i + 1 < len(raw_lines):
+    while i + 1 < end:
         head, nxt = _content(raw_lines[i]), _content(raw_lines[i + 1])
         if (kinds[i] == "out" and kinds[i + 1] == "out" and "|" in head and "|" in nxt and _is_delim(nxt)
                 and len(_split_row(head)) == len(_split_row(nxt))):
@@ -245,8 +257,8 @@ def _predictions(raw_lines, kinds):
 
 def _failure_conditions(raw_lines, kinds):
     """List items after the first heading "失败条件" up to the next heading of the same or a higher level.
-    A top-level item starts at 0-3 spaces; following non-blank lines indented by at least two spaces (including
-    nested list markers) are continuation text, joined with LF. source is "line <n>" of the item's first line."""
+    A top-level item starts at 0-3 spaces (0-1 while an item is open); while an item is open, non-blank lines
+    indented by at least two spaces (including nested list markers) are continuation text, joined with LF. source is "line <n>" of the item's first line."""
     start = level = None
     for i, raw in enumerate(raw_lines):
         h = _heading(raw, kinds[i])
@@ -262,12 +274,15 @@ def _failure_conditions(raw_lines, kinds):
         if h and h[0] <= level:
             break
         s = _content(raw_lines[i])
-        m = _ITEM.match(s) if kinds[i] == "out" else None
+        if kinds[i] != "out":
+            continue
+        if open_item and re.match(r"^ {2,}\S", s):    # while an item is open, indent >= 2 is continuation
+            items[-1][1].append(s.strip())
+            continue
+        m = _ITEM.match(s)
         if m:
             items.append([i + 1, [m.group(1).strip()]])
             open_item = True
-        elif open_item and s.strip() and re.match(r"^ {2,}\S", s):
-            items[-1][1].append(s.strip())
         elif not s.strip():
             continue
         else:
@@ -276,12 +291,13 @@ def _failure_conditions(raw_lines, kinds):
 
 
 def _L_mismatch(predictions, declared):
-    """True when some prediction row has metric L whose point is not the declared L (an unparsable point counts)."""
+    """True only when some metric-L row has a point that parses as an integer and differs from declared_L. An empty
+    point (also a round-2 same_as row) or an unparsable one is not a mismatch (protocol 10.2: unknown)."""
+    if declared is None:
+        return False
     for row in predictions:
-        if row.get("metric") != "L":
-            continue
         pt = row.get("point", "")
-        if not re.fullmatch(r"[0-9]+", pt) or int(pt) != declared:
+        if row.get("metric") == "L" and re.fullmatch(r"[0-9]+", pt) and int(pt) != declared:
             return True
     return False
 
