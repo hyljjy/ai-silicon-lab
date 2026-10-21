@@ -1,0 +1,292 @@
+{
+ "functional_pass": true,
+ "analysis_valid": true,
+ "run_id": "20261009-091106-pipe2-T20",
+ "phase": "pre-F1",
+ "impl": {
+  "name": "pipe2",
+  "top": "dot4sat",
+  "rtl": "tb/selftest/dot4sat_pipe.v",
+  "L": "2"
+ },
+ "T_ns": 20.0,
+ "C_load_pF": 0.0024,
+ "L_max": 3,
+ "seed": 1,
+ "sceneset": "std",
+ "timing_target": {
+  "rule": null,
+  "met": null,
+  "note": "pre-F1: no frozen target"
+ },
+ "area": {
+  "area_um2": 46444.544,
+  "cap_um2": null,
+  "within_cap": null,
+  "note": "pre-F1: no frozen cap"
+ },
+ "rtl_lint": [],
+ "env_ids": {
+  "env/SHA256SUMS": "5b9923d297888992dd0bc4b35d5cd675d3cd87ae9095e30aa6b8b5a0c44366eb",
+  "env/tools.sha256": "e26b403cf83dc1397ca3daffb42034ce6869ec7a09b3f229b65225b3fd49594d",
+  "$SKY130_KIT/MANIFEST.txt": "0fa8891a1f3c1dcbdb359cf9d5ba0a62f7aad361c786d2961cbd1f8bdbff994c"
+ },
+ "tool_versions": [
+  "Icarus Verilog version 14.0 (devel) (s20260301-508-g2f296d88a-dirty)",
+  "Yosys 0.69+187 (git sha1 2f08661dd, Release, Clang /usr/bin/clang++ 21.1.8)",
+  "OpenSTA 3.1.0",
+  "Python 3.12.3"
+ ],
+ "frozen_checks": [
+  "rtl_sim",
+  "gl_sim",
+  "end of run"
+ ],
+ "rtl_sim": "checked=2835",
+ "area_um2": 46444.544,
+ "netlist_sha256": "a76d63f95933af1f5f7a2e5940f3142cd6ccdfa8864f50cf668ec55fcb9b9d39",
+ "netlist_checks": [
+  "gate-level simulation",
+  "STA",
+  "after STA"
+ ],
+ "gl_sim": "checked=2835",
+ "latency_L": 2,
+ "throughput": "1 transaction per cycle",
+ "worst_setup": {
+  "slack": -10.919105928491199,
+  "corner": "ss_n40C_1v60",
+  "category": "in2reg"
+ },
+ "worst_hold": {
+  "slack": 0.06857570261298768,
+  "corner": "ff_100C_1v95"
+ },
+ "hold_note": "min hold slack under the ideal-clock, post-synthesis model only (spec 4.4)",
+ "topology": {
+  "in2reg": 130,
+  "reg2reg": 33,
+  "reg2out": 33
+ },
+ "corners": {
+  "tt_025C_1v80": {
+   "ws_max": 4.646130722769643,
+   "ws_min": 0.10778314656976047,
+   "categories": {
+    "in2reg_max": {
+     "slack": 4.646131,
+     "start": "in_a[17]",
+     "end": "_11924_/D"
+    },
+    "in2reg_min": {
+     "slack": 0.107783,
+     "start": "rst",
+     "end": "_11956_/D"
+    },
+    "reg2reg_max": {
+     "slack": 19.510481,
+     "start": "_11956_/Q",
+     "end": "_11957_/D"
+    },
+    "reg2reg_min": {
+     "slack": 0.309586,
+     "start": "_11924_/Q",
+     "end": "_11958_/D"
+    },
+    "reg2out_max": {
+     "slack": 15.719794,
+     "start": "_11958_/Q",
+     "end": "out_data[0]"
+    },
+    "reg2out_min": {
+     "slack": 0.27252,
+     "start": "_11958_/Q",
+     "end": "out_data[0]"
+    }
+   }
+  },
+  "tt_100C_1v80": {
+   "ws_max": 4.773259256290441,
+   "ws_min": 0.10426314967616458,
+   "categories": {
+    "in2reg_max": {
+     "slack": 4.773259,
+     "start": "in_a[17]",
+     "end": "_11924_/D"
+    },
+    "in2reg_min": {
+     "slack": 0.104263,
+     "start": "rst",
+     "end": "_11956_/D"
+    },
+    "reg2reg_max": {
+     "slack": 19.51429,
+     "start": "_11956_/Q",
+     "end": "_11957_/D"
+    },
+    "reg2reg_min": {
+     "slack": 0.314458,
+     "start": "_11924_/Q",
+     "end": "_11958_/D"
+    },
+    "reg2out_max": {
+     "slack": 15.717441,
+     "start": "_11958_/Q",
+     "end": "out_data[0]"
+    },
+    "reg2out_min": {
+     "slack": 0.278449,
+     "start": "_11958_/Q",
+     "end": "out_data[0]"
+    }
+   }
+  },
+  "ss_100C_1v60": {
+   "ws_max": -7.456265149687489,
+   "ws_min": 0.21105283396092392,
+   "categories": {
+    "in2reg_max": {
+     "slack": -7.456265,
+     "start": "in_a[17]",
+     "end": "_11924_/D"
+    },
+    "in2reg_min": {
+     "slack": 0.211053,
+     "start": "rst",
+     "end": "_11956_/D"
+    },
+    "reg2reg_max": {
+     "slack": 18.956915,
+     "start": "_11956_/Q",
+     "end": "_11957_/D"
+    },
+    "reg2reg_min": {
+     "slack": 0.642039,
+     "start": "_11924_/Q",
+     "end": "_11958_/D"
+    },
+    "reg2out_max": {
+     "slack": 15.414086,
+     "start": "_11958_/Q",
+     "end": "out_data[0]"
+    },
+    "reg2out_min": {
+     "slack": 0.538051,
+     "start": "_11958_/Q",
+     "end": "out_data[0]"
+    }
+   }
+  },
+  "ss_n40C_1v60": {
+   "ws_max": -10.919105928491199,
+   "ws_min": 0.2157636630433057,
+   "categories": {
+    "in2reg_max": {
+     "slack": -10.919106,
+     "start": "in_a[1]",
+     "end": "_11924_/D"
+    },
+    "in2reg_min": {
+     "slack": 0.215764,
+     "start": "rst",
+     "end": "_11956_/D"
+    },
+    "reg2reg_max": {
+     "slack": 18.846695,
+     "start": "_11956_/Q",
+     "end": "_11957_/D"
+    },
+    "reg2reg_min": {
+     "slack": 0.662826,
+     "start": "_11924_/Q",
+     "end": "_11958_/D"
+    },
+    "reg2out_max": {
+     "slack": 15.364433,
+     "start": "_11958_/Q",
+     "end": "out_data[0]"
+    },
+    "reg2out_min": {
+     "slack": 0.548442,
+     "start": "_11958_/Q",
+     "end": "out_data[0]"
+    }
+   }
+  },
+  "ff_n40C_1v95": {
+   "ws_max": 9.445278604369683,
+   "ws_min": 0.07303781397524357,
+   "categories": {
+    "in2reg_max": {
+     "slack": 9.445278,
+     "start": "in_a[1]",
+     "end": "_11924_/D"
+    },
+    "in2reg_min": {
+     "slack": 0.073038,
+     "start": "rst",
+     "end": "_11956_/D"
+    },
+    "reg2reg_max": {
+     "slack": 19.691679,
+     "start": "_11956_/Q",
+     "end": "_11957_/D"
+    },
+    "reg2reg_min": {
+     "slack": 0.187472,
+     "start": "_11924_/Q",
+     "end": "_11958_/D"
+    },
+    "reg2out_max": {
+     "slack": 15.826276,
+     "start": "_11958_/Q",
+     "end": "out_data[0]"
+    },
+    "reg2out_min": {
+     "slack": 0.173251,
+     "start": "_11958_/Q",
+     "end": "out_data[0]"
+    }
+   }
+  },
+  "ff_100C_1v95": {
+   "ws_max": 9.431791614685098,
+   "ws_min": 0.06857570261298768,
+   "categories": {
+    "in2reg_max": {
+     "slack": 9.431791,
+     "start": "in_a[17]",
+     "end": "_11924_/D"
+    },
+    "in2reg_min": {
+     "slack": 0.068576,
+     "start": "rst",
+     "end": "_11956_/D"
+    },
+    "reg2reg_max": {
+     "slack": 19.689266,
+     "start": "_11956_/Q",
+     "end": "_11957_/D"
+    },
+    "reg2reg_min": {
+     "slack": 0.195954,
+     "start": "_11924_/Q",
+     "end": "_11958_/D"
+    },
+    "reg2out_max": {
+     "slack": 15.815078,
+     "start": "_11958_/Q",
+     "end": "out_data[0]"
+    },
+    "reg2out_min": {
+     "slack": 0.179844,
+     "start": "_11958_/Q",
+     "end": "out_data[0]"
+    }
+   }
+  }
+ },
+ "whitelist_hits": {
+  "3": 1
+ }
+}
