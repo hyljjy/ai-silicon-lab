@@ -41,9 +41,31 @@
 - **计划条文替换**：Task 7"判据行"字段清单在 `prediction_id` 之后加 `extract_index`；`round.preflight` 的 evaluate 核验从"每个有预测或失败条件的编号都有判据行"改为"判据与抽取行一一对应"。
 - **影响范围**：`judge.py`、`round.py`、`coverage.py`（只改文档）及测试。第 2 轮 `same_as` 行先按 `extract_index` 绑定本轮抽取行，再解析到第 1 轮 X（RV 之前的 R16 不变）。
 
+## RV-05（预留）
+
+Task 2 上限证据的范围，见文末"待定"。
+
+## RV-06 `translate_off` 类综合注释（规程 §7.2；计划 Task 4）
+
+- **发现**：Task 4 审查（2026-10-21）用探针复现：非 ANSI 模块头写 `, dbg`、把 `output dbg;` 包在 `// synopsys translate_off … translate_on` 里，`gate.py` 给出 `GATE PASS`——Yosys 只看到 7 个端口，仿真器看到 8 个；G1"不多不少"被绕过。分词器按规程把综合控制注释当注释丢弃，Yosys 却遵守它。其余规则（G2、G4–G7）不受影响，因为分词器仍看得到其间的代码。
+- **作者决定**（2026-10-21）：记为"门槛无法识别"；暂不在 `constraints.md` 里告知模型。
+- **修订后的规则**：分词器丢弃的注释（`//` 或 `/* */`）去掉前导空白后以 `synopsys` 或 `synthesis` 开头、随后是 `translate_off` 或 `translate_on`（不区分大小写）时，记 `Hit("unrecognized", 行号, "extra")`；该注释照常按注释丢弃。不根据 Yosys 的警告文字判断（RV-01 第 5 条）。`gate_rules.md` 的 `unrecognized` 一行同步写明。
+- **影响范围**：`gate.py`、`test_gate.py`、`gate_rules.md`。
+
+## RV-07 G7 允许对端口 `clk` 的线网声明（规程 §7.2；计划 Task 4）
+
+- **发现**：Task 4 实现按 G7 字面把非 ANSI 写法中单独的 `wire clk;` 判为违规；按 IEEE 1364-2005 这是对端口的线网声明，不是端口声明，但 G7 的目的是"不把时钟用作数据或条件"。
+- **作者决定**（2026-10-21）：允许。
+- **修订后的规则**：G7 允许位置增加"对模块头端口 `clk` 的不带赋值、不在括号内的线网声明（只限 `wire clk;` 这一形式，可带空白和注释）"；带赋值（`wire clk = …;`）或出现在其他位置仍按 G7 拒绝。
+- **影响范围**：`gate.py`、`test_gate.py`、`gate_rules.md`。
+
 ## 作者检查点 1 的措辞修改（不涉及规程条文，记录备查）
 
 作者 2026-10-21 决定全部采纳 Codex `CASE01_BC2_codex.md` §2.3 的措辞建议：删除 `round1_template.md` 附件前"这份答复只供参考，其中的判断不一定正确"；删除 `constraints.md` 末尾结果字段清单，第 83 行收敛为简短的阶段 A 查询语境说明；`round1_template.md` 失败条件提示收敛为"尽量写成可以用评估结果直接检查的条件"；演练题"只做格式检查"改为"交付结果将用于抽取和提交门槛检查，不运行 `grade.py`"；补充纯格式说明（不先复述模板、竖线写 `\|`、每条失败条件一个顶层 `- ` 项、表头用原始列名、声明行保持精确格式）；反馈日志标题改"日志末尾摘要（最多 40 个物理行）"；`unavailable` 的第 2 轮拼题顺序统一为"第 1 轮完整题目 → 自己的有效答复（若有）→ 第 2 轮规则 → 机械反馈 → 对应固定结尾"，第 1 轮题目只出现一次。这些属于计划 Task 9 Step 5 的正常定稿（介入日志记"人工修改"）。
+
+## Task 4 命令行扩展（记录备查）
+
+`gate.py` 命令行在计划写明的 `GATE PASS`/`GATE FAIL …`、退出码 0/1 之外增加：`--work-dir`、`YOSYS PROBLEM:` 行、基础设施故障（`KILL FAIL:`/`GATE ERROR:`）退出码 2 且不写 `--json`。基础设施故障抛 `GateInfraError`，永不写入 `gate.json`；`round.py` 遇 KILL FAIL 写评估侧停止记录（提交 1e98410）。
 
 ## 待定
 
