@@ -3,18 +3,26 @@
 
 Criteria rows (revise/predictions/r<r>_criteria.jsonl, the only data source; one JSON object per line):
   common       candidate row_type source criteria_version
-  prediction   prediction_id r1_ref id action metric check corner category value_kind direction low high unit point
-               basis orientation epsilon source_field comparator  (all strings; the model's fields id .. basis are
-               kept verbatim from r<r>_extracted.jsonl: an extracted prediction row of the same candidate must have
-               exactly these values; low / high / point are parsed only when judging)
+  prediction   prediction_id extract_index r1_ref id action metric check corner category value_kind direction low
+               high unit point basis orientation epsilon source_field comparator  (all strings; extract_index is the
+               decimal "index" of the extracted prediction row of the same candidate this row transcribes; the
+               model's fields id .. basis are kept verbatim from that row; low / high / point are parsed only when
+               judging)
   failure_condition  fc_id r1_ref text expr  (text verbatim from the extracted row with the same fc_id; expr a
                boolean expression, see eval3)
+  One-to-one correspondence (Codex BC1-05; protocol 10.1 transcription, 10.2 repeated ids, 10.4 completeness),
+  checked per candidate against r<r>_extracted.jsonl (correspondence_problems): every extracted prediction has
+  exactly one criteria row (bound by extract_index) and every extracted failure condition exactly one (bound by
+  fc_id); no criteria row is unbound or bound twice; a candidate's prediction rows, and its failure-condition rows,
+  appear in the extracted order. So "only the first row of a repeated id is judged" follows the extracted order and
+  cannot be changed by reordering criteria rows. Rows of different candidates, and a candidate's prediction and
+  failure-condition rows, may interleave.
   orientation / epsilon / comparator must agree with revise/rules/metric_directions.json (the values used in
   judging always come from that file): slack increase 0.000001 decimal; area decrease 0.0001 decimal;
   L equal "" integer; function equal "" text. A row whose metric is not one of the four leaves them empty.
   r1_ref is "" in round 1.
-  same_as (round >= 2, controller ruling R16): a prediction row whose id is "same_as=<X>" keeps id, action and
-  basis verbatim from its own extracted row; its fields metric check corner category value_kind direction low high
+  same_as (round >= 2, controller ruling R16; resolved after the correspondence): a prediction row whose id is
+  "same_as=<X>" keeps id, action and basis verbatim from its own (extract_index) extracted row; its fields metric check corner category value_kind direction low high
   unit point are those of round rnd-1 extracted row X of the predecessor candidate (mapping prev_code) and are
   checked against that row; source must say it was resolved via same_as. X missing, no predecessor, a field that
   differs from X, or the model's own row filling a field differently from X: CRITERIA FAIL.
@@ -65,7 +73,7 @@ OPS = ("<", "<=", "==", ">=", ">", "is")
 COMMON_FIELDS = ("candidate", "row_type", "source", "criteria_version")
 EXTRACTED_PREDICTION_COLUMNS = ("id action metric check corner category value_kind direction low high unit point "
                                 "basis").split()
-PREDICTION_FIELDS = ("prediction_id r1_ref id action metric check corner category value_kind direction low high "
+PREDICTION_FIELDS = ("prediction_id extract_index r1_ref id action metric check corner category value_kind direction low high "
                      "unit point basis orientation epsilon source_field comparator").split()
 FC_FIELDS = ("fc_id", "r1_ref", "text", "expr")
 CRITERIA_COLUMNS = tuple(COMMON_FIELDS) + tuple(PREDICTION_FIELDS) + ("fc_id", "text", "expr")
@@ -75,6 +83,7 @@ PRED_WORDS = ("支持", "反对", "未判定", "无结果", "不适用", "格式
 FC_WORDS = ("触发", "未触发", "未判定")
 
 SAME_AS = re.compile(r"same_as\s*=\s*(\S+)")
+EXTRACT_INDEX = re.compile(r"[1-9][0-9]*")
 SAME_AS_FIELDS = ("metric check corner category value_kind direction low high unit point").split()
 _MATRIX_CELL = re.compile(r"^matrix\.([^.]+)\.(setup|hold)\.([^.]+)\.slack$")
 
@@ -548,15 +557,18 @@ def prev_fn(prev, rnd=2):
     return lambda c: mapping.prev_code(m, c)
 
 
-def _same_as_problems(r, where, x, rnd, ext_pred, prev_extracted, prev, cache):
-    """Round >= 2 row whose id is same_as=<x>: id, action and basis verbatim from this round's extracted row; the
-    object and criterion fields SAME_AS_FIELDS equal round rnd-1 extracted row x of the predecessor candidate."""
+def _same_as_problems(r, where, x, rnd, bound, prev_extracted, prev, cache):
+    """Round >= 2 row whose id is same_as=<x>: id, action and basis verbatim from its own extracted row `bound` (the
+    row named by extract_index; None: unbound, reported by correspondence_problems); the object and criterion fields
+    SAME_AS_FIELDS equal round rnd-1 extracted row x of the predecessor candidate."""
     probs = []
-    own = [e for e in ext_pred if e.get("code") == r["candidate"] and e.get("id") == r["id"]
-           and e.get("action") == r["action"] and e.get("basis") == r["basis"]]
-    if not own:
-        probs.append(f"{where}: no extracted prediction row of {r['candidate']} has exactly this id, action and "
-                     f"basis (kept verbatim)")
+    own = []
+    if bound is not None:
+        if all(bound.get(c) == r[c] for c in ("id", "action", "basis")):
+            own = [bound]
+        else:
+            probs.append(f"{where}: extracted prediction index {r['extract_index']} of {r['candidate']} does not "
+                         f"have exactly this id, action and basis (kept verbatim)")
     if "same_as" not in r["source"]:
         probs.append(f"{where}: source must record that the row was resolved via same_as")
     if "fn" not in cache:
@@ -596,16 +608,95 @@ def _same_as_problems(r, where, x, rnd, ext_pred, prev_extracted, prev, cache):
     return probs
 
 
+def _index_key(v):
+    """The extracted row's index as the decimal string extract_index must equal (None: not a positive int)."""
+    return str(v) if isinstance(v, int) and not isinstance(v, bool) and v >= 1 else None
+
+
+def _extracted_by_code(extracted):
+    """({code: [(index string, row)]}, {code: [(fc_id, row)]}, problems), each list in the extracted order."""
+    preds, fcs, probs = {}, {}, []
+    for n, e in enumerate(extracted, 1):
+        code, rt = e.get("code"), e.get("row_type")
+        if rt == "prediction":
+            k = _index_key(e.get("index"))
+            if k is None:
+                probs.append(f"extracted row {n}: prediction of {code} has index {e.get('index')!r}, not a positive "
+                             f"integer")
+                continue
+            if any(k == j for j, _ in preds.get(code, [])):
+                probs.append(f"extracted row {n}: prediction index {k} of {code} is repeated")
+                continue
+            preds.setdefault(code, []).append((k, e))
+        elif rt == "failure_condition":
+            f = e.get("fc_id")
+            if not isinstance(f, str) or not f:
+                probs.append(f"extracted row {n}: failure condition of {code} has no fc_id")
+                continue
+            if any(f == j for j, _ in fcs.get(code, [])):
+                probs.append(f"extracted row {n}: failure condition {f} of {code} is repeated")
+                continue
+            fcs.setdefault(code, []).append((f, e))
+    return preds, fcs, probs
+
+
+def correspondence_problems(rows, extracted, codes=None):
+    """One-to-one correspondence of criteria rows and extracted rows per candidate (Codex BC1-05; see the module
+    doc). rows: criteria rows (need not be otherwise valid); extracted: r<r>_extracted.jsonl rows; codes: the
+    candidates to check (None: every candidate of either file)."""
+    preds, fcs, probs = _extracted_by_code(extracted)
+    crit_p, crit_f = {}, {}
+    for n, r in enumerate(rows, 1):
+        if not isinstance(r, dict):
+            continue
+        rt, code = r.get("row_type"), r.get("candidate")
+        if rt == "prediction":
+            crit_p.setdefault(code, []).append((n, r.get("extract_index"), r.get("prediction_id")))
+        elif rt == "failure_condition":
+            crit_f.setdefault(code, []).append((n, r.get("fc_id"), r.get("fc_id")))
+    every = set(preds) | set(fcs) | set(crit_p) | set(crit_f)
+    want = every if codes is None else every & set(codes)
+    for code in sorted(want, key=str):
+        for kind, ext, crit, key_name in (
+                ("prediction", preds.get(code, []), crit_p.get(code, []), "extract_index"),
+                ("failure condition", fcs.get(code, []), crit_f.get(code, []), "fc_id")):
+            pos = {k: i for i, (k, _) in enumerate(ext)}
+            bound, order = {}, []
+            for n, key, ref in crit:
+                if not isinstance(key, str) or key not in pos:
+                    probs.append(f"criteria row {n}: {key_name} {key!r} names no {kind} of {code} in the extracted "
+                                 f"rows")
+                    continue
+                bound.setdefault(key, []).append((n, ref))
+                order.append(pos[key])
+            for k, e in ext:
+                what = (f"extracted prediction index {k} (id {e.get('id')!r})" if kind == "prediction"
+                        else f"extracted failure condition {k}")
+                got = bound.get(k, [])
+                if not got:
+                    probs.append(f"{code}: {what} has no criteria row (every extracted {kind} is transcribed "
+                                 f"exactly once)")
+                elif len(got) > 1:
+                    probs.append(f"{code}: {what} is transcribed by {len(got)} criteria rows "
+                                 f"({', '.join(f'row {n} {ref!r}' for n, ref in got)}; exactly one required)")
+            if any(b <= a for a, b in zip(order, order[1:])):
+                probs.append(f"{code}: the {kind} criteria rows are not in the extracted order ({key_name} sequence "
+                             f"{' '.join(ext[i][0] for i in order)}; extracted {' '.join(k for k, _ in ext)})")
+    return probs
+
+
 def criteria_problems(rows, rnd, extracted=None, prev_extracted=None, prev=None):
-    """Problems of the criteria rows of round rnd; extracted: the r<rnd>_extracted.jsonl rows (checked verbatim);
+    """Problems of the criteria rows of round rnd; extracted: the r<rnd>_extracted.jsonl rows (one-to-one
+    correspondence, then each row checked verbatim against the extracted row it is bound to);
     prev_extracted: the r<rnd-1>_extracted.jsonl rows and prev: the code mapping (see prev_fn), both used only to
     resolve same_as=<X> rows (protocol 10.1, 10.4)."""
     probs = []
     cache = {}
     dirs = rp.directions()
     seen_pid, seen_ref = set(), set()
-    ext_pred = [e for e in extracted or [] if e.get("row_type") == "prediction"]
-    ext_fc = [e for e in extracted or [] if e.get("row_type") == "failure_condition"]
+    ext_pred, ext_fc, _ = _extracted_by_code(extracted or [])
+    if extracted is not None:
+        probs += correspondence_problems(rows, extracted)
     for n, r in enumerate(rows, 1):
         where = f"criteria row {n}"
         rt = r.get("row_type")
@@ -637,6 +728,10 @@ def criteria_problems(rows, rnd, extracted=None, prev_extracted=None, prev=None)
             if ref in seen_pid:
                 probs.append(f"{where}: prediction_id {ref!r} repeated")
             seen_pid.add(ref)
+            if not EXTRACT_INDEX.fullmatch(r["extract_index"]):
+                probs.append(f"{where}: extract_index {r['extract_index']!r} must be the decimal index of the "
+                             f"extracted prediction row it transcribes")
+            bound = dict(ext_pred.get(r["candidate"], [])).get(r["extract_index"])
             metric = _s(r, "metric")
             if metric in METRICS:
                 spec = dirs.get(metric)
@@ -655,19 +750,17 @@ def criteria_problems(rows, rnd, extracted=None, prev_extracted=None, prev=None)
                              f"empty")
             same_as = SAME_AS.fullmatch(_s(r, "id"))
             if same_as and rnd >= 2:
-                probs += _same_as_problems(r, where, same_as.group(1), rnd, ext_pred, prev_extracted, prev, cache)
-            elif extracted is not None and not any(
-                    e.get("code") == r["candidate"] and all(e.get(c) == r[c] for c in EXTRACTED_PREDICTION_COLUMNS)
-                    for e in ext_pred):
-                probs.append(f"{where}: no extracted prediction row of {r['candidate']} has exactly these fields "
-                             f"{' '.join(EXTRACTED_PREDICTION_COLUMNS)} (they are kept verbatim)")
+                probs += _same_as_problems(r, where, same_as.group(1), rnd, bound, prev_extracted, prev, cache)
+            elif bound is not None and not all(bound.get(c) == r[c] for c in EXTRACTED_PREDICTION_COLUMNS):
+                probs.append(f"{where}: extracted prediction index {r['extract_index']} of {r['candidate']} does not "
+                             f"have exactly these fields {' '.join(EXTRACTED_PREDICTION_COLUMNS)} (they are kept "
+                             f"verbatim)")
         else:
             probs += expr_problems(r["expr"], f"{where}.expr")
-            if extracted is not None and not any(
-                    e.get("code") == r["candidate"] and e.get("fc_id") == r["fc_id"] and e.get("text") == r["text"]
-                    for e in ext_fc):
-                probs.append(f"{where}: no extracted failure condition {r['fc_id']} of {r['candidate']} with exactly "
-                             f"this text (kept verbatim)")
+            bound = dict(ext_fc.get(r["candidate"], [])).get(r["fc_id"])
+            if bound is not None and bound.get("text") != r["text"]:
+                probs.append(f"{where}: extracted failure condition {r['fc_id']} of {r['candidate']} does not have "
+                             f"exactly this text (kept verbatim)")
     return probs
 
 

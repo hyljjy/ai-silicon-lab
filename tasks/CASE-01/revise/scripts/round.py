@@ -29,8 +29,9 @@ preflight(r, stage) -> list of problems (empty: go). Stages are cumulative: inge
           blanks, and then 合同条款 and RTL行号 not empty; 耗时分钟 a non-negative number; every code in codes.txt, at
           most one row each); r<r>_criteria.jsonl and .tsv committed and judge.views(r, check=True) passes (round 2:
           also r2_coverage.jsonl / .tsv committed; judge.views(2) validates the coverage table with
-          coverage.validate after the same_as resolution of the criteria); every code with an extracted prediction or
-          failure-condition row has criteria rows; baseline.verify().
+          coverage.validate after the same_as resolution of the criteria); every extracted prediction and failure
+          condition has exactly one criteria row, in the extracted order (judge.correspondence_problems);
+          baseline.verify().
   finalize  + every gate-passed code has attempts, all with attempt.json, and a final status.build state (never
           await_retry, never undeterminable).
   close   + revise/outputs/r<r>/round_complete.json does not exist yet; stage-D products committed: every file under
@@ -72,7 +73,8 @@ round.py evaluate and the direct run_grade.py entry (Codex BC1-06; run_grade.att
 before any attempt directory exists): codes.txt committed and the code in it; the stage-B checks of that code (call.json
 final "parse", parsed.json status "ok", committed candidate equal to the recorded hashes, extracted rows); gate.json
 committed with passed true; review/r<r>.tsv committed, valid, with the code's row; r<r>_criteria.jsonl committed and
-holding criteria rows when the code has extracted prediction or failure-condition rows. The gate is not re-run here
+in one-to-one correspondence with the code's extracted predictions and failure conditions
+(judge.correspondence_problems). The gate is not re-run here
 (the evaluate preflight does that once for the whole round).
 
 Roots are injectable for tests (Ctx): case (tasks/CASE-01), sealed (mapping), repo (run_grade env files), env,
@@ -376,15 +378,14 @@ def _phase_c(ctx, r, codes, info, probs):
 
 
 def _missing_criteria(ctx, r, codes):
-    """CRITERIA FAIL problems: codes (None: every code) with extracted prediction or failure-condition rows but no row
-    in r<r>_criteria.jsonl (the caller has checked that the file is committed). Shared with target_problems."""
-    have = {row.get("candidate") for row in judge.read_jsonl(ctx.pred(f"r{r}_criteria.jsonl"))}
+    """CRITERIA FAIL problems of codes (None: every code): the one-to-one correspondence of r<r>_criteria.jsonl with
+    r<r>_extracted.jsonl (judge.correspondence_problems, Codex BC1-05: every extracted prediction and failure
+    condition has exactly one criteria row, none is transcribed twice, the extracted order is kept). The caller has
+    checked that the criteria file is committed. Shared with target_problems."""
+    crit = judge.read_jsonl(ctx.pred(f"r{r}_criteria.jsonl"))
     ext = ctx.pred(f"r{r}_extracted.jsonl")
     rows = judge.read_jsonl(ext) if os.path.isfile(ext) else []
-    need = sorted({e.get("code") for e in rows if e.get("row_type") in ("prediction", "failure_condition")
-                   and (codes is None or e.get("code") in codes)})
-    return [f"CRITERIA FAIL {code}: it has predictions or failure conditions but no criteria row"
-            for code in need if code not in have]
+    return [f"CRITERIA FAIL: {p}" for p in judge.correspondence_problems(crit, rows, codes)]
 
 
 def target_problems(r, code, ctx=None):

@@ -7,6 +7,9 @@ Coverage rows (revise/predictions/r2_coverage.jsonl; view r2_coverage.tsv by jud
   r1_ref / r2_ref name a criteria row of candidate_r1 (round 1) / candidate_r2 (round 2): its prediction_id
   (prediction rows) or fc_id (failure-condition rows); "" when absent. same_object / same_criterion are true / false
   on rows with both references, null otherwise. action: keep modify withdraw new not_mentioned.
+  The criteria rows of both rounds are those of judge.load_criteria (one-to-one with their round's extracted rows,
+  Codex BC1-05). A prediction row's extract_index is its position in its own round's extracted table, not part of
+  the object or the criterion: it is never compared across rounds.
 
 validate(r1_rows, r2_rows, coverage_rows, prev=None) -> problems (empty: valid). prev: {candidate_r2: candidate_r1}
   or a callable; default: mapping.prev_code(mapping.load(2), candidate_r2).

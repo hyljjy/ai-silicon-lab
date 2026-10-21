@@ -206,7 +206,8 @@ class Base(unittest.TestCase):
             if e["row_type"] != "prediction":
                 continue
             row = {"candidate": e["code"], "row_type": "prediction", "source": "line 12", "criteria_version": "v1",
-                   "prediction_id": f"{e['code']}-p1", "r1_ref": f"{prev[e['code']]}-p1" if r == 2 else ""}
+                   "prediction_id": f"{e['code']}-p1", "extract_index": str(e["index"]),
+                   "r1_ref": f"{prev[e['code']]}-p1" if r == 2 else ""}
             for k in judge.EXTRACTED_PREDICTION_COLUMNS:
                 row[k] = e[k]
             row["orientation"], row["epsilon"] = ORIENT["slack"][0], ORIENT["slack"][1]
@@ -526,6 +527,26 @@ class TargetEligibility(Base):
         self.assertTrue(any("criteria" in p for p in pa), pa)
         pb = rnd_mod.target_problems(1, b, self.ctx())
         self.assertTrue(any(f"NOT ELIGIBLE {b}" in p and "parse" in p for p in pb), pb)
+
+    def test_evaluate_refuses_omitted_prediction(self):
+        # Codex BC1-05: a code with criteria rows that omit an extracted prediction is not ready for evaluate
+        self.setup_round(1)
+        self.phase_c(1)
+        a, b = sorted(self.codes[1])
+        p = self.pred("r1_extracted.jsonl")
+        ext = judge.read_jsonl(p)
+        p1 = [e for e in ext if e["code"] == a and e["row_type"] == "prediction"][0]
+        ext.insert(ext.index(p1) + 1, dict(p1, index=2, id="P2"))
+        touch(p, jsonl(ext))
+        self.commit("extracted P2 of a without a criteria row")
+        rc, out = self.run_sub("evaluate", 1)
+        self.assertEqual(rc, 1, out)
+        self.assertIn("CRITERIA FAIL", out)
+        self.assertIn("index 2", out)
+        self.assertEqual(self.attempts_of(1), [])
+        pa = rnd_mod.target_problems(1, a, self.ctx())
+        self.assertTrue(any(f"NOT ELIGIBLE {a}" in x and "CRITERIA FAIL" in x and "index 2" in x for x in pa), pa)
+        self.assertEqual(rnd_mod.target_problems(1, b, self.ctx()), [])
 
 
 class StatusAndDiskKill(Base):

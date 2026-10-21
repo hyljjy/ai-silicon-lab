@@ -161,6 +161,15 @@ class Validate(unittest.TestCase):
         probs = self.v(r1, r2, [cov("modify", "a1", "b1", same_object=None, same_criterion=False)])
         self.assertTrue(any("same_object" in p for p in probs), probs)
 
+    def test_extract_index_is_not_compared(self):
+        # extract_index is the row's position in its own round's extracted table (Codex BC1-05), not part of the
+        # object or the criterion: the same prediction at another position is still keep
+        r1 = tj.numbered([p1("a1", direction="退化"), p1("a2", direction="改善")])
+        r2 = tj.numbered([p2("b1", direction="改善")])
+        self.assertEqual((r1[1]["extract_index"], r2[0]["extract_index"]), ("2", "1"))
+        rows = [cov("not_mentioned", "a1"), cov("keep", "a2", "b1", same_object=True, same_criterion=True)]
+        self.assertEqual(self.v(r1, r2, rows), [])
+
     def test_fc_link_requires_basis(self):
         r1, r2 = [f1("F1", EXPR_A)], [f2("F2", EXPR_A)]
         probs = self.v(r1, r2, [cov("keep", "F1", "F2", row_type="failure_condition", same_object=True,
@@ -180,6 +189,7 @@ class ComputeBase(unittest.TestCase):
     def setup(self, r1, r2, rows, j1, j2, st2=None, mx2=None):
         """j1 / j2: {ref: judgment word}; st2: round-2 status of C2."""
         for rnd, crit, js in ((1, r1, j1), (2, r2, j2)):
+            tj.numbered(crit)
             tj.wjsonl(os.path.join(self.pred_dir, f"r{rnd}_criteria.jsonl"), crit)
             jrows = []
             for r in crit:

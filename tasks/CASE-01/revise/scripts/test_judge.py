@@ -57,7 +57,7 @@ ORIENT = {"slack": ("increase", "0.000001", "decimal"), "area": ("decrease", "0.
 
 def pred(pid="p1", **kw):
     row = {"candidate": CODE, "row_type": "prediction", "source": "line 10", "criteria_version": "v1",
-           "prediction_id": pid, "r1_ref": "", "id": "P1", "action": "pipeline the adder",
+           "prediction_id": pid, "extract_index": "", "r1_ref": "", "id": "P1", "action": "pipeline the adder",
            "metric": "slack", "check": "setup", "corner": "ss_100C_1v60", "category": "global",
            "value_kind": "delta", "direction": "未知", "low": "未知", "high": "未知", "unit": "ns", "point": "",
            "basis": "rtl/dot4sat.v:10", "orientation": "", "epsilon": "", "source_field": "", "comparator": ""}
@@ -276,13 +276,24 @@ class Judgments(unittest.TestCase):
 
 
 # ---------------------------------------------------------------------------------------------- file tests
-def extracted_of(rows):
-    out = []
-    k = 0
+def numbered(rows):
+    """Fill the empty extract_index of prediction rows in place, 1, 2, ... per candidate in row order (as
+    extract.extracted_rows numbers them); returns rows."""
+    k = {}
     for r in rows:
         if r["row_type"] == "prediction":
-            k += 1
-            out.append({"code": r["candidate"], "row_type": "prediction", "index": k,
+            k[r["candidate"]] = k.get(r["candidate"], 0) + 1
+            if not r["extract_index"]:
+                r["extract_index"] = str(k[r["candidate"]])
+    return rows
+
+
+def extracted_of(rows):
+    """r<r>_extracted.jsonl rows for criteria rows (prediction index = the row's extract_index)."""
+    out = []
+    for r in numbered(rows):
+        if r["row_type"] == "prediction":
+            out.append({"code": r["candidate"], "row_type": "prediction", "index": int(r["extract_index"]),
                         **{c: r[c] for c in judge.EXTRACTED_PREDICTION_COLUMNS}})
         else:
             out.append({"code": r["candidate"], "row_type": "failure_condition", "fc_id": r["fc_id"],
@@ -313,6 +324,7 @@ class FileBase(unittest.TestCase):
         self.pred_dir = os.path.join(self.case, "revise", "predictions")
 
     def setup_round(self, rows, rnd=1, st=None, mx="default", code=CODE):
+        numbered(rows)
         wjsonl(os.path.join(self.pred_dir, f"r{rnd}_criteria.jsonl"), rows)
         wjsonl(os.path.join(self.pred_dir, f"r{rnd}_extracted.jsonl"), extracted_of(rows))
         wjson(os.path.join(self.case, "revise", "results", f"r{rnd}", code, "status.json"),
@@ -377,6 +389,80 @@ class Files(FileBase):
         self.assertEqual(rc, 1)
         self.assertIn("CRITERIA FAIL", out)
         self.assertFalse(os.path.exists(os.path.join(self.pred_dir, "r1_judgments.jsonl")))
+
+    # ---- one-to-one correspondence with the extracted rows (Codex BC1-05)
+    def criteria_fail(self, crit, *needles):
+        wjsonl(os.path.join(self.pred_dir, "r1_criteria.jsonl"), crit)
+        for fn in (judge.run, judge.views):
+            rc, out = self.run_quiet(fn, 1, case=self.case)
+            self.assertEqual(rc, 1, out)
+            self.assertIn("CRITERIA FAIL", out)
+            for n in needles:
+                self.assertIn(n, out)
+        self.assertFalse(os.path.exists(os.path.join(self.pred_dir, "r1_judgments.jsonl")))
+        self.assertFalse(os.path.exists(os.path.join(self.pred_dir, "r1_criteria.tsv")))
+
+    def three(self):
+        rows = [pred("p1", id="P1", direction="改善"), pred("p2", id="P2", direction="退化"),
+                fc("F1", expr=atom("status.gl_sim", "is", "fail")),
+                fc("F2", text="面积超限", expr=atom("status.within_cap", "is", "false"))]
+        self.setup_round(rows)
+        return rows
+
+    def test_omitted_prediction_is_criteria_fail(self):
+        rows = self.three()
+        self.criteria_fail([rows[0], rows[2], rows[3]], "index 2", "no criteria row")
+
+    def test_omitted_failure_condition_is_criteria_fail(self):
+        rows = self.three()
+        self.criteria_fail(rows[:3], "F2", "no criteria row")
+
+    def test_candidate_without_any_criteria_row_is_criteria_fail(self):
+        rows = self.three()
+        other = numbered([pred("q1", candidate="cand_zz99", direction="改善")])
+        wjsonl(os.path.join(self.pred_dir, "r1_extracted.jsonl"), extracted_of(rows) + extracted_of(other))
+        self.criteria_fail(rows, "cand_zz99")
+
+    def test_duplicate_transcription_is_criteria_fail(self):
+        rows = self.three()
+        twin = dict(rows[0], prediction_id="p1b")          # extracted row 1 again, under another prediction_id
+        self.criteria_fail([rows[0], twin, rows[1], rows[2], rows[3]], "index 1", "p1b")
+        # the same extracted row bound twice with the model's id altered to look like P2 is also refused
+        self.criteria_fail([rows[0], dict(rows[0], prediction_id="p2", id="P2", direction="退化"),
+                            rows[2], rows[3]])
+
+    def test_extract_index_must_name_an_extracted_row(self):
+        rows = self.three()
+        for bad in ("9", "01", "", "x"):
+            self.criteria_fail([dict(rows[0], extract_index=bad)] + rows[1:], "extract_index")
+        # bound to the other extracted row: the verbatim check uses the bound row, not any row of the candidate
+        self.criteria_fail([dict(rows[0], extract_index="2"), dict(rows[1], extract_index="1")] + rows[2:])
+
+    def test_reordered_duplicate_id_is_refused(self):
+        rows = [pred("p1", id="P1", direction="改善"), pred("p2", id="P1", direction="退化")]
+        self.setup_round(rows)
+        self.criteria_fail([rows[1], rows[0]], "extracted order")
+        # failure conditions keep the extracted order too
+        rows = self.three()
+        self.criteria_fail([rows[0], rows[1], rows[3], rows[2]], "extracted order")
+        # the extracted order decides which row of a repeated id is judged
+        rows = [pred("p1", id="P1", direction="改善"), pred("p2", id="P1", direction="退化")]
+        self.setup_round(rows)
+        rc, out = self.run_quiet(judge.run, 1, case=self.case)
+        self.assertEqual(rc, 0, out)
+        got = [json.loads(ln) for ln in rp.read_bytes(os.path.join(self.pred_dir, "r1_judgments.jsonl"))
+               .decode("utf-8").splitlines()]
+        self.assertEqual([(g["extract_index"], g["judgment"]) for g in got], [("1", "支持"), ("2", "格式问题")])
+
+    def test_criteria_of_two_candidates_may_interleave(self):
+        rows = [pred("p1", direction="改善"), pred("q1", candidate="cand_zz99", direction="改善"),
+                pred("p2", id="P2", direction="退化")]
+        self.setup_round(rows)
+        wjson(os.path.join(self.case, "revise", "results", "r1", "cand_zz99", "status.json"),
+              status(code="cand_zz99"))
+        wjson(os.path.join(self.case, "revise", "compare", "r1_cand_zz99.json"), mdoc())
+        rc, out = self.run_quiet(judge.run, 1, case=self.case)
+        self.assertEqual(rc, 0, out)
 
     def test_ordering_op_with_text_value_is_criteria_fail(self):
         self.setup_round([fc("F1", expr={"or": [atom("status.state", "==", "grade_fail"),
@@ -453,6 +539,8 @@ class Files(FileBase):
         self.assertEqual(json.loads(f["text"]), "第一行\n第二行")
         self.assertEqual(json.loads(f["expr"]), rows[1]["expr"])
         self.assertEqual(p["fc_id"], "")
+        self.assertEqual(p["extract_index"], "1")
+        self.assertEqual(judge.CRITERIA_COLUMNS[4:7], ("prediction_id", "extract_index", "r1_ref"))
         self.assertEqual(f["metric"], "")
 
     def test_edited_tsv_view_detected(self):
