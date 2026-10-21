@@ -105,8 +105,9 @@ class ClassifyTests(unittest.TestCase):
         self.assertEqual((v.delivery, v.retry_allowed), ("delivery_fail", False))
 
     def test_cap_text_without_max_tokens_is_limit(self):
-        # the real shape (protocol v0.5 RV-05): assistant text and result both start with the CLI sentence,
-        # num_turns 4, is_error true, no max_tokens anywhere
+        # verified shape (protocol v0.5 RV-05): assistant text and result both start with the CLI sentence and there is
+        # no max_tokens anywhere; num_turns 4, is_error true and stop_reason stop_sequence are test values, not verified
+        # by the author (they do not decide the cap evidence or the no-retry rule)
         ev = good()
         ev[1]["message"]["content"][0]["text"] = CAP_SENTENCE
         ev[1]["message"]["stop_reason"] = "stop_sequence"

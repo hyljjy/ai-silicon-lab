@@ -15,7 +15,10 @@ Scenarios: ok_case01 max_tokens max_tokens_bad_lines cap_text_only multiturn_no_
 private_in_rtl partial_limit_then_hang. Under CLAUDE_CODE_MAX_OUTPUT_TOKENS < 300 a "从 1 数到 300" prompt is cut
 off like the real CLI, and cap_text_only emits the same shape (protocol v0.5 RV-05, the stage A smoke records): an
 assistant event whose message.content[0].text and a result event (is_error true, num_turns 4) whose result both
-start with the CLI error sentence (cap_error), and no max_tokens anywhere."""
+start with the CLI error sentence (cap_error), and no max_tokens anywhere. Only the error text, the event types and
+the field positions were verified by the author against the stage A records; stop_reason ("stop_sequence"), subtype,
+is_error and num_turns are test values, not a real-CLI contract (they do not decide whether the cap evidence holds
+or that it is never retried; stop_sequence additionally raises F_STOP)."""
 import hashlib
 import json
 import os

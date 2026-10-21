@@ -155,7 +155,7 @@ git 的提交顺序只是作者自己作证的记录，不构成第三方证明�
 | modelUsage 中的 `maxOutputTokens` 与冒烟实测值不符 | 非内容故障（这个字段不是实际上限，只用来发现外壳状态变化） |
 | CLI 退出码非 0、`is_error` 为真、`result.subtype` 不是 success | 非内容故障（同时有输出上限证据时按下面的判定顺序） |
 | stream-json 不完整或无法解析；外壳中断；调用超时 | 非内容故障，类别"记录不完整"；中断计为一次尝试 |
-| **输出上限证据**：`stop_reason` 为 `max_tokens`；记录中有可归属于 CLI 的输出上限报错——句式和位置在实现规则中事先固定：`result` 事件的 `result` 字段或 `assistant` 事件内容块的 `text` 字段以 `API Error: Claude's response exceeded the <数字> output token maximum.` 开头；普通答复正文中对这句话的引用不算（v0.5 修订，RV-05）；因输出上限自动续写 | **交付失败**，不重新调用，不拼接续写的内容 |
+| **输出上限证据**：`stop_reason` 为 `max_tokens`；记录中有可归属于 CLI 的输出上限报错——句式和位置在实现规则中事先固定：`result` 事件的 `result` 字段或 `assistant` 事件内容块的 `text` 字段以 `API Error: Claude's response exceeded the <数字> output token maximum.` 开头；带引导语、引用标记、前导空白或位于正文中间的引用不算，但答复若在上述字段的开头原样写出这句话仍会被判为上限证据（已知残余，v0.5 修订，RV-05）；因输出上限自动续写 | **交付失败**，不重新调用，不拼接续写的内容 |
 | `num_turns` > 1，但没有输出上限证据 | 非内容故障，类别"异常多轮"；多轮内容不拼接、不作为交付 |
 | `stop_reason` 既不是 `end_turn` 也不是 `max_tokens` | 非内容故障 |
 | 出现 `api_retry` | 不作废，只记录（同阶段 A） |

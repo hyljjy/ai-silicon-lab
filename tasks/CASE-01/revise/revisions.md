@@ -53,6 +53,7 @@
   3. 证据二：`type == "result"` 事件的 `result` 字段，或 `type == "assistant"` 事件 `message.content[i].text` 字段，**以** `API Error: Claude's response exceeded the <一个或多个数字> output token maximum.` **开头**（区分大小写，按上面原句的固定前缀匹配）；
   4. 其他位置、正文中间出现的同一短语都不算上限证据；坏行（`_unparsed`）中的文字也不算（阶段 A 解析器只保留前 200 字符，无法确认归属）；
   5. 多轮本身不是上限证据（照旧）。
+  6. **已知残余**（Codex `CASE01_BC7_codex.md` BC7-S1）：正常答复若在 `result.result` 或某个 `assistant` 内容块 `text` 的开头原样写出这句报错，仍会被判为上限证据；规则只排除带引导语、引用标记、前导空白或位于正文中间的引用。未经核对不额外要求错误退出、特定 `subtype` 或两处同时命中。
 - **计划条文替换**：Task 2 `classify` 的"任一事件的任何字符串字段中出现 `CAP_HIT`"改为上面第 3 条；`CAP_HIT` 常量改为固定前缀的正则。
 - **影响范围**：`classify.py`、`test_classify.py`、`fake_claude_b.py`（假 CLI 的上限场景须产生上面的事件形态），以及可能引用 `CAP_HIT` 的 `run_revise.py` 测试。
 
