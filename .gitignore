@@ -32,3 +32,8 @@ tasks/CASE-01/diag/INCIDENT-2026-10-12-run-limited-windows.md
 
 # working notes: kept locally, not published (2026-10-17)
 docs/cloud/
+
+# CASE-01 stage B implementation plan, intervention log and lock files: kept locally (2026-10-20)
+tasks/CASE-01/revise/impl_plan.md
+tasks/CASE-01/revise/interventions.md
+tasks/CASE-01/revise/**/.lock
