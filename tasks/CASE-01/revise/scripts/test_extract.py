@@ -274,6 +274,19 @@ class Predictions(unittest.TestCase):
         self.assertEqual(tl("normal"), [])
         self.assertEqual(tl("only_no_submission", 2), [])
 
+    def test_trigger_texts(self):
+        def tt(name, rnd=1):
+            p = x.parse_answer(load(name), rnd)
+            self.assertEqual(len(p.trigger_texts), len(p.trigger_lines))
+            return p.trigger_texts
+        self.assertEqual(tt("conflicting_declared"), ["DECLARED_L = 1", "DECLARED_L = 2"])
+        self.assertEqual(tt("no_submission_with_code", 2), ["NO_SUBMISSION"])
+        self.assertEqual(tt("first_unclosed_later_complete"), ["````verilog"])
+        self.assertEqual(tt("no_declared"), [])
+        self.assertEqual(tt("normal"), [])
+        crlf = "```verilog\r\nm\r\n```\r\n  DECLARED_L = 1 \r\nDECLARED_L = 2\r\n"
+        self.assertEqual(x.parse_answer(crlf, 1).trigger_texts, ["  DECLARED_L = 1 ", "DECLARED_L = 2"])
+
     def test_extracted_rows(self):
         p = x.parse_answer(load("normal"), 1)
         rows = x.extracted_rows("cand_ab12", p)

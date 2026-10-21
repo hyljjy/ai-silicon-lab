@@ -13,8 +13,10 @@ table of the plan (paths relative to tasks/CASE-01; a missing value is "not_avai
   attempt<selected>/attempt.json, steps.json, the archived logs, stdout.txt, stderr.txt
                                                    failure location, exit code, timed_out, log summary
   revise/outputs/r<rnd>/<code>.call.json          "final" and, per call, "categories" (see below)
-  revise/outputs/r<rnd>/<code>.parsed.json        "status", "reason", "trigger_lines" (content delivery failure)
-  revise/results/r<rnd>/<code>/gate.json          "passed", "hits": [{"rule", "line", "kind"}] (GateResult, Task 4)
+  revise/outputs/r<rnd>/<code>.parsed.json        "status", "reason", "trigger_lines" and the parallel
+                                                   "trigger_texts" (content delivery failure; extract.Parsed)
+  revise/results/r<rnd>/<code>/gate.json          "passed", "hits": [{"rule", "line", "kind", "text"}] (GateResult,
+                                                   Task 4; format below)
   revise/rules/gate_rules.md                      the rule texts (format below)
 Never read: the author's review table, status.json "state" (only render() reads it, to choose the template),
 "flags", "author_veto", "improvement", "eligible_target_met".
@@ -24,6 +26,13 @@ call.json (written by run_revise, Task 10) is expected as
    "calls": [{"categories": [<classify flag category>, ...], "delivery", "retry_allowed", "global_stop"}, ...]}
 in call order; only "final" and "categories" are read here.
 
+gate.json (written by Task 4, round.py ingest):
+  {"passed": bool, "hits": [{"rule": "G1".."G8" | "unrecognized", "line": int, "kind": "contract" | "extra",
+                             "text": <the submitted RTL line, verbatim, without its line ending>}],
+   "yosys_problem": str | null}
+Every hit with a positive line must carry "text" (a string); hits on the same line must carry the same text. A hit
+without a positive line (e.g. G8, which is about DECLARED_L) lists its rule but no RTL line.
+
 gate_rules.md (written by Task 4): one Markdown table row per rule whose first cell is the rule id (G1 ... G8, and
 "unrecognized" for "门槛无法识别") and whose second cell is the rule text given to the model, e.g.
   | G4 | 不用 `parameter`（可以用 `localparam`） | 附加提交格式限制 | ... |
@@ -32,7 +41,10 @@ Other lines are ignored; an id must not appear in two rows; "\\|" inside a cell 
 render(r1_code): mapping.load(1) and mapping.load(2) first (MappingError when either is not committed); the code
 must be in the round-1 mapping and be the prev_code of exactly one round-2 code. The round-1 state selects the
 template (TEMPLATE_OF) and the ending (endings.md); unavailable also gets the full committed round-1 prompt.
-Writes revise/prompts/r2/<r1_code>_feedback.md (new, or the same bytes already there; never rewritten).
+A state whose evidence is missing (delivery_fail without a parsed.json delivery_fail or a call.json truncation;
+gate_reject without a gate.json with passed false) is refused. Writes revise/prompts/r2/<r1_code>_feedback.md and,
+when the feedback contains a log summary, <r1_code>_log_summary.txt (the summary) and <r1_code>_log_summary.sha256
+("<sha256>  <r1_code>_log_summary.txt"); every file new, or the same bytes already there; never rewritten.
 Python standard library only; Windows and WSL."""
 import os
 import re
@@ -163,11 +175,17 @@ def _normalizer(repo, run_id):
     return norm
 
 
+def _lf(text):
+    return text.replace("\r\n", "\n").replace("\r", "\n")
+
+
 def log_summary(attempt_dir, repo=None):
     """Protocol 11 'log summary' of one attempt: the failing step's logs in steps.json "logs" order (a missing file
     becomes the line '<日志未生成：<name>>'), or stdout.txt then stderr.txt when the location is outside the steps
     (outside_steps / no_final_line); paths normalized (run directory -> <RUN>/, then repository root -> <REPO>/);
-    the last 40 physical lines; the failing step's log_problems (normalized, never cut) as a prefix.
+    content normalization: CRLF -> LF, then every remaining bare CR -> LF (a CR-only progress line counts as its
+    own physical line); the last 40 physical lines; the failing step's log_problems (normalized, never cut) as a
+    prefix.
     repo: the repository root as it appears in the logs (default: the WSL form of this repository)."""
     att = _load(os.path.join(attempt_dir, "attempt.json"), "attempt.json")
     loc = att.get("failure_location")
@@ -183,7 +201,7 @@ def log_summary(attempt_dir, repo=None):
         if step is None:
             raise FeedbackError(f"FEEDBACK FAIL: {attempt_dir}: step {loc} is not in steps.json")
         sources = [str(x) for x in step.get("logs") or []]
-        problems = [str(p) for p in step.get("log_problems") or []]
+        problems = [_lf(str(p)) for p in step.get("log_problems") or []]
     body = ""
     for rel in sources:
         path = os.path.join(attempt_dir, *rel.replace("\\", "/").split("/"))
@@ -191,9 +209,8 @@ def log_summary(attempt_dir, repo=None):
         if piece and not piece.endswith("\n"):
             piece += "\n"
         body += piece
-    body = norm(body)
+    body = _lf(norm(body))
     lines = body.split("\n")[:-1] if body else []
-    lines = [ln[:-1] if ln.endswith("\r") else ln for ln in lines]
     out = []
     if problems:
         out += [PROBLEMS_HEADER] + [norm(p) for p in problems] + [""]
@@ -222,9 +239,21 @@ def _worst(obj):
     return None
 
 
-def _first_lines(values):
-    lines = sorted({v for v in values if isinstance(v, int) and not isinstance(v, bool) and v > 0})
-    return lines[:MAX_LINES]
+def _line_no(v):
+    return isinstance(v, int) and not isinstance(v, bool) and v > 0
+
+
+def _first_lines(pairs, what):
+    """[(line, text)] deduplicated by line, ascending, the first MAX_LINES; one line with two texts is refused."""
+    seen = {}
+    for n, t in pairs:
+        if not _line_no(n):
+            continue
+        if not isinstance(t, str):
+            raise FeedbackError(f"FEEDBACK FAIL: {what}: line {n} has no text")
+        if seen.setdefault(n, t) != t:
+            raise FeedbackError(f"FEEDBACK FAIL: {what}: line {n} has two different texts")
+    return sorted(seen.items())[:MAX_LINES]
 
 
 def mechanical_view(code, rnd, case=None, repo=None, rules=None):
@@ -303,7 +332,10 @@ def mechanical_view(code, rnd, case=None, repo=None, rules=None):
         if reason not in CHECK_NAMES:
             raise FeedbackError(f"FEEDBACK FAIL: {code}.parsed.json: unknown delivery_fail reason {reason!r}")
         v["delivery_check"] = reason
-        v["delivery_lines"] = _first_lines(parsed.get("trigger_lines") or [])
+        nums, texts = parsed.get("trigger_lines") or [], parsed.get("trigger_texts")
+        if not isinstance(nums, list) or not isinstance(texts, list) or len(texts) != len(nums):
+            raise FeedbackError(f"FEEDBACK FAIL: {code}.parsed.json: trigger_texts must parallel trigger_lines")
+        v["delivery_lines"] = _first_lines(zip(nums, texts), f"{code}.parsed.json")
 
     # unavailable: the categories of every call
     v["unavailable_categories"] = NA
@@ -326,9 +358,9 @@ def mechanical_view(code, rnd, case=None, repo=None, rules=None):
                 ids.append(r)
         ids.sort(key=lambda r: (1, 0) if r == "unrecognized" else (0, int(r[1:])))
         v["gate_rules"] = [(r, texts[r]) for r in ids]
-        lines = _first_lines([h.get("line") for h in hits])
-        v["gate_lines"] = [(ln, [r for r in ids if any(h.get("rule") == r and h.get("line") == ln for h in hits)])
-                           for ln in lines]
+        lines = _first_lines([(h.get("line"), h.get("text")) for h in hits], f"gate.json of {code}")
+        v["gate_lines"] = [(ln, [r for r in ids if any(h.get("rule") == r and h.get("line") == ln for h in hits)],
+                            text) for ln, text in lines]
     return v
 
 
@@ -423,14 +455,14 @@ def _values(v):
         "log_summary": _fenced(v["log_summary"]),
         "delivery_check": (_s(v["delivery_check"]) if v["delivery_check"] not in CHECK_NAMES else
                            f"{CHECK_NAMES[v['delivery_check']]}（{v['delivery_check']}）"),
-        "delivery_lines": ("、".join(f"第 {n} 行" for n in lines) or NO_LINE) if isinstance(lines, list)
-        else _s(lines),
+        "delivery_lines": ((_fenced("\n".join(f"第 {n} 行：{t}" for n, t in lines)) if lines else NO_LINE)
+                           if isinstance(lines, list) else _s(lines)),
         "unavailable_categories": ("；".join(f"第 {i} 次调用：{'、'.join(c) or NA}" for i, c in enumerate(cats, 1))
                                    if isinstance(cats, list) else _s(cats)),
         "gate_rules": ("\n".join(f"- {r}：{t}" for r, t in v["gate_rules"]) if isinstance(v["gate_rules"], list)
                        else _s(v["gate_rules"])),
-        "gate_lines": (("\n".join(f"- 第 {n} 行（{'、'.join(rs)}）" for n, rs in gl) or NO_RTL_LINE)
-                       if isinstance(gl, list) else _s(gl)),
+        "gate_lines": ((_fenced("\n".join(f"第 {n} 行（{'、'.join(rs)}）：{t}" for n, rs, t in gl)) if gl
+                        else NO_RTL_LINE) if isinstance(gl, list) else _s(gl)),
     }
 
 
@@ -464,8 +496,15 @@ def render(r1_code, case=None, sealed=None, templates=None, repo=None):
     if state not in TEMPLATE_OF:
         raise FeedbackError(f"FEEDBACK FAIL: {r1_code}: round-1 state {state!r} has no feedback template")
     v = mechanical_view(r1_code, 1, case=case, repo=repo)
+    if state == "delivery_fail" and v["delivery_check"] == NA:
+        raise FeedbackError(f"FEEDBACK FAIL: {r1_code}: state delivery_fail, but neither parsed.json (status "
+                            f"delivery_fail) nor call.json (truncation) shows a delivery failure")
+    if state == "gate_reject" and v["gate_rules"] == NA:
+        raise FeedbackError(f"FEEDBACK FAIL: {r1_code}: state gate_reject, but there is no gate.json with passed "
+                            f"false")
     name = TEMPLATE_OF[state]
-    body = _fill(_text(os.path.join(templates, f"{name}.md")), _values(v), f"{name}.md")
+    template = _text(os.path.join(templates, f"{name}.md"))
+    body = _fill(template, _values(v), f"{name}.md")
     endings = load_endings(templates)
     if state in ("unavailable", "delivery_fail", "gate_reject"):
         key = "not_evaluated"
@@ -481,9 +520,16 @@ def render(r1_code, case=None, sealed=None, templates=None, repo=None):
         if not prereg.committed_unchanged(p):
             raise FeedbackError(f"FEEDBACK FAIL: the round-1 prompt {p} is missing, untracked or differs from HEAD")
         data += ("\n" + endings["r1_prompt_header"] + "\n\n").encode("utf-8") + rp.read_bytes(p)
-    if b"\r" in data.replace(b"\r\n", b"") or b"\r\n" in data:
+    if b"\r" in data:                                 # logs are normalized; templates and prompts are LF files
         raise FeedbackError(f"FEEDBACK FAIL: {r1_code}: the feedback would not be LF-only text")
-    rp.write_new_or_same(os.path.join(revise, "prompts", "r2", f"{r1_code}_feedback.md"), data)
+    out = os.path.join(revise, "prompts", "r2")
+    if "{log_summary}" in template and v["log_summary"] != NA:
+        summary = (v["log_summary"] + "\n").encode("utf-8")
+        name_txt = f"{r1_code}_log_summary.txt"
+        rp.write_new_or_same(os.path.join(out, name_txt), summary)
+        rp.write_new_or_same(os.path.join(out, f"{r1_code}_log_summary.sha256"),
+                             f"{rp.sha256_bytes(summary)}  {name_txt}\n".encode("ascii"))
+    rp.write_new_or_same(os.path.join(out, f"{r1_code}_feedback.md"), data)
     return data
 
 

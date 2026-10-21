@@ -159,14 +159,17 @@ class Base(unittest.TestCase):
               {"final": final, "calls": [{"categories": list(c), "delivery": "retry", "retry_allowed": True,
                                           "global_stop": False} for c in calls]})
 
-    def parsed(self, code, status="delivery_fail", reason="no_declared_L", trigger_lines=()):
+    def parsed(self, code, status="delivery_fail", reason="no_declared_L", trigger_lines=(), trigger_texts=None):
+        texts = [f"answer line {n}" for n in trigger_lines] if trigger_texts is None else list(trigger_texts)
         wjson(os.path.join(self.revise, "outputs", "r1", f"{code}.parsed.json"),
               {"status": status, "reason": reason, "lines": [3, 9], "trigger_lines": list(trigger_lines),
-               "declared_L": None, "prediction_L_mismatch": False})
+               "trigger_texts": texts, "declared_L": None, "prediction_L_mismatch": False})
 
-    def gate(self, code, hits):
+    def gate(self, code, hits, passed=False):
+        """hits: (rule, line, kind) or (rule, line, kind, text); default text 'rtl line <n>'."""
         wjson(os.path.join(self.revise, "results", "r1", code, "gate.json"),
-              {"passed": False, "hits": [{"rule": r, "line": ln, "kind": k} for r, ln, k in hits],
+              {"passed": passed, "hits": [{"rule": h[0], "line": h[1], "kind": h[2],
+                                           "text": h[3] if len(h) > 3 else f"rtl line {h[1]}"} for h in hits],
                "yosys_problem": None})
 
     def render(self, code):
@@ -219,6 +222,13 @@ class TestLogSummary(Base):
         self.assertEqual(feedback.log_summary(d, repo="/mnt/x").split("\n"),
                          [feedback.TAIL_HEADER, "<日志未生成：stdout.txt>", "<日志未生成：stderr.txt>"])
 
+    def test_bare_cr_becomes_line_break(self):
+        text = "a\r\nprogress 10%\rprogress 100%\nend\n"
+        d = self.attempt("cand_aaaa", location="outside_steps", files={"stdout.txt": text, "stderr.txt": "e\r"})
+        s = feedback.log_summary(d, repo="/mnt/x")
+        self.assertNotIn("\r", s)
+        self.assertEqual(s.split("\n"), [feedback.TAIL_HEADER, "a", "progress 10%", "progress 100%", "end", "e"])
+
     def test_path_normalization_order(self):
         repo = "/mnt/d/study/ai_native_design"
         run = f"{repo}/tasks/CASE-01/runs/20261101-000000-x"
@@ -246,12 +256,13 @@ class TestRender(Base):
             self.status(code, state)
         elif state == "delivery_fail":
             self.call(code, "parse")
-            self.parsed(code, reason="conflicting_declared_L", trigger_lines=[7, 4])
+            self.parsed(code, reason="conflicting_declared_L", trigger_lines=[7, 4],
+                        trigger_texts=["DECLARED_L = 2", "DECLARED_L = 1"])
             self.status(code, state)
         elif state == "gate_reject":
             self.call(code, "parse")
             self.parsed(code, status="ok", reason=None)
-            self.gate(code, [("G6", 12, "extra")])
+            self.gate(code, [("G6", 12, "extra", "  always @(negedge clk) begin")])
             self.status(code, state)
         elif state == "infra_fail":
             self.attempt(code, location="env_snapshot", steps=_steps("env_snapshot", ("env_snapshot.log",)))
@@ -321,14 +332,14 @@ class TestRender(Base):
         self.write_state(c1, "delivery_fail")
         t = self.render(c1)
         self.assertIn("conflicting_declared_L", t)
-        self.assertIn("第 4 行、第 7 行", t)
+        self.assertIn("```text\n第 4 行：DECLARED_L = 1\n第 7 行：DECLARED_L = 2\n```", t)
         for word in ("rtl_sim", "GRADE", "G6"):
             self.assertNotIn(word, t)
         # gate_reject: rule id, rule text from gate_rules.md, RTL line
         self.write_state(c2, "gate_reject")
         t = self.render(c2)
         self.assertIn("G6：时序 always 块的事件控制恰好是 `@(posedge clk)`", t)
-        self.assertIn("第 12 行（G6）", t)
+        self.assertIn("```text\n第 12 行（G6）：  always @(negedge clk) begin\n```", t)
         self.assertNotIn("rtl_sim", t)
         self.assertNotIn("附加提交格式限制", t)
 
@@ -411,6 +422,46 @@ class TestRender(Base):
         self.assertIn("6 个 std 点的全局最小 slack（ns）：not_run", t.replace("：\n\nnot_run", "：not_run"))
         self.assertIn("syntax error", t)
 
+    def test_state_without_evidence_refused(self):
+        c0, c1 = self.c1[0], self.c1[1]
+        self.call(c0, "parse")
+        self.parsed(c0, status="ok", reason=None)               # parsed ok, no truncation: no delivery failure
+        self.status(c0, "delivery_fail")
+        with self.assertRaisesRegex(feedback.FeedbackError, "delivery_fail"):
+            self.render(c0)
+        self.call(c1, "parse")
+        self.parsed(c1, status="ok", reason=None)
+        self.status(c1, "gate_reject")
+        with self.assertRaisesRegex(feedback.FeedbackError, "gate_reject"):  # no gate.json
+            self.render(c1)
+        self.gate(c1, [], passed=True)
+        with self.assertRaisesRegex(feedback.FeedbackError, "gate_reject"):  # gate passed
+            self.render(c1)
+        self.assertFalse(os.path.exists(os.path.join(self.revise, "prompts", "r2")))
+
+    def test_parsed_trigger_texts_must_parallel_lines(self):
+        code = self.c
+        self.call(code, "parse")
+        self.parsed(code, reason="conflicting_declared_L", trigger_lines=[3, 5], trigger_texts=["only one"])
+        with self.assertRaises(feedback.FeedbackError):
+            feedback.mechanical_view(code, 1, case=self.case)
+
+    def test_log_summary_saved_with_sha256(self):
+        c0, c1 = self.c1[0], self.c1[1]
+        self.write_state(c0, "grade_fail")
+        t = self.render(c0)
+        out = os.path.join(self.revise, "prompts", "r2")
+        with open(os.path.join(out, f"{c0}_log_summary.txt"), "rb") as f:
+            summary = f.read()
+        self.assertEqual(summary.decode("utf-8"), feedback.TAIL_HEADER + "\nerror x\n")
+        self.assertIn(summary.decode("utf-8").rstrip("\n"), t)
+        with open(os.path.join(out, f"{c0}_log_summary.sha256"), "rb") as f:
+            self.assertEqual(f.read().decode("ascii"), f"{rp.sha256_bytes(summary)}  {c0}_log_summary.txt\n")
+        self.write_state(c1, "eligible_gain")                 # no log summary in the feedback: no files
+        self.render(c1)
+        self.assertFalse(os.path.exists(os.path.join(out, f"{c1}_log_summary.txt")))
+        self.assertFalse(os.path.exists(os.path.join(out, f"{c1}_log_summary.sha256")))
+
     def test_truncated_delivery_fail_without_parsed(self):
         code = self.c
         self.call(code, "delivery_fail", calls=[("输出上限", "退出码非 0")])
@@ -428,8 +479,8 @@ class TestRender(Base):
         self.parsed(code, reason="no_submission_with_code", trigger_lines=[40, 3, 25, 12, 7, 99, 1, 18, 33, 5, 60, 2])
         self.status(code, "delivery_fail")
         t = self.render(code)
-        want = "、".join(f"第 {n} 行" for n in (1, 2, 3, 5, 7, 12, 18, 25, 33, 40))
-        self.assertIn(f"：{want}\n", t)
+        want = "\n".join(f"第 {n} 行：answer line {n}" for n in (1, 2, 3, 5, 7, 12, 18, 25, 33, 40))
+        self.assertIn(f"```text\n{want}\n```", t)
         self.assertNotIn("第 60 行", t)
         self.assertNotIn("第 99 行", t)
         code2 = self.c1[1]
@@ -447,11 +498,18 @@ class TestRender(Base):
         self.gate(code, hits)
         self.status(code, "gate_reject")
         t = self.render(code)
-        lines = re.findall(r"^- 第 (\d+) 行（([^）]*)）$", t, re.M)
-        self.assertEqual([int(n) for n, _ in lines], [2, 3, 5, 8, 11, 14, 19, 26, 31, 44])
-        self.assertEqual(dict(lines)["8"], "G6、G7")
+        lines = re.findall(r"^第 (\d+) 行（([^）]*)）：rtl line (\d+)$", t, re.M)
+        self.assertEqual([int(n) for n, _, _ in lines], [2, 3, 5, 8, 11, 14, 19, 26, 31, 44])
+        self.assertEqual([n for n, _, _ in lines], [m for _, _, m in lines])
+        self.assertEqual({n: r for n, r, _ in lines}["8"], "G6、G7")
         rules = re.findall(r"^- (G\d|unrecognized)：", t, re.M)
         self.assertEqual(rules, ["G2", "G6", "G7"])
+        # a hit without text, or two texts for one line, is refused
+        for bad in ([("G6", 4, "extra", None)], [("G6", 4, "extra", "a"), ("G7", 4, "extra", "b")]):
+            self.gate(code, bad)
+            with self.assertRaises(feedback.FeedbackError):
+                feedback.mechanical_view(code, 1, case=self.case)
+        self.gate(code, hits)
         # gate_rules.md missing: a clear error
         os.remove(os.path.join(self.revise, "rules", "gate_rules.md"))
         with self.assertRaisesRegex(feedback.FeedbackError, "gate_rules.md"):

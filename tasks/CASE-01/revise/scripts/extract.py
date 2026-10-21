@@ -49,6 +49,9 @@ class Parsed:
     # trigger_lines: 1-based lines that explain a delivery_fail: conflicting_declared_L -> the DECLARED_L lines;
     # no_submission_with_code -> the NO_SUBMISSION lines; unclosed_block -> [opening fence]; others and ok -> [].
     trigger_lines: List[int] = field(default_factory=list)
+    # trigger_texts: parallel to trigger_lines (same order and length): each answer line verbatim, without its line
+    # ending (one LF, then one CR) -- the round-2 feedback quotes them (protocol 11; it never reads the answer).
+    trigger_texts: List[str] = field(default_factory=list)
 
 
 @dataclass
@@ -151,7 +154,8 @@ def parse_answer(text: str, rnd: int) -> Parsed:
     def result(status, reason=None, trigger=(), **kw):
         return Parsed(status=status, reason=reason, lines=lines, declared_L=decl, unrun_blocks=unrun,
                       predictions=predictions, prediction_table_problem=problem, failure_conditions=fcs,
-                      prediction_L_mismatch=_L_mismatch(predictions, decl), trigger_lines=list(trigger), **kw)
+                      prediction_L_mismatch=_L_mismatch(predictions, decl), trigger_lines=list(trigger),
+                      trigger_texts=[_content(raw_lines[n - 1]) for n in trigger], **kw)
 
     if no_submission:
         if first is None:
