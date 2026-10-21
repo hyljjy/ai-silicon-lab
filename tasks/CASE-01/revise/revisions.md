@@ -41,11 +41,20 @@
 - **计划条文替换**：Task 7"判据行"字段清单在 `prediction_id` 之后加 `extract_index`；`round.preflight` 的 evaluate 核验从"每个有预测或失败条件的编号都有判据行"改为"判据与抽取行一一对应"。
 - **影响范围**：`judge.py`、`round.py`、`coverage.py`（只改文档）及测试。第 2 轮 `same_as` 行先按 `extract_index` 绑定本轮抽取行，再解析到第 1 轮 X（RV 之前的 R16 不变）。
 
-## RV-05（预留）
+## RV-05 输出上限报错证据的句式和位置（规程 §6.2；计划 Task 2）
 
-Task 2 上限证据的范围，见文末"待定"。
-
-**位置更正（2026-10-21）**：计划 Task 2 Step 1 写的"作者从阶段 A **封存的**原始冒烟记录中核对"有误。阶段 A 冒烟原始记录不在封存目录 `D:\study\diag_sandbox\sealed\`，而在 `D:\study\diag_sandbox\smoke-<时间>\`（见 `tasks/CASE-01/diag/smoke/summary.md`、`diag/scripts/run_round.py:406`）。上限探针记录是通过那次（2026-10-12 09:08）目录中的 `claude-cap64.*`、`kimi-cap64.*`、`deepseek-cap64.*`。计划条文替换为："作者从 `D:\study\diag_sandbox\smoke-<时间>\` 中 2026-10-12 09:08 那次冒烟的 `*-cap64.jsonl`、`*-cap64.err` 核对上限报错的英文原文……"；操作者仍不打开这些原始记录。
+- **发现**：计划 Task 2 Step 1 要求作者核对阶段 A 原始冒烟记录中上限报错的英文原文；Codex `CASE01_BC2_codex.md` §2.2 指出 `classify.py` 在任何事件的任何字符串字段里找 `output token maximum`，正常答复引用这句话就会被判交付失败、失去重试。
+- **位置更正**：计划写的"封存的原始冒烟记录"有误。阶段 A 冒烟原始记录在 `D:\study\diag_sandbox\smoke-<时间>\`（见 `tasks/CASE-01/diag/smoke/summary.md`、`diag/scripts/run_round.py:406`），不在封存目录 `sealed\`。计划 Task 2 Step 1 条文以此为准。
+- **作者核对结果**（2026-10-21，作者在本机运行只打印命中位置的脚本，操作者未打开原始记录）：2026-10-12 09:08 那次冒烟的 `claude-cap64.jsonl` 第 16、17 行，`deepseek-cap64.jsonl` 第 175、176 行，`kimi-cap64.jsonl` 第 116、117 行，三家相同：倒数第二个事件 `type=assistant` 的 `$.message.content[0].text` 与最后一个事件 `type=result` 的 `$.result`，原文以 `API Error: Claude's response exceeded the 64 output token maximum. To configure this behavior, set the CLAUDE_CODE_MAX_OUTPUT_TOKENS` 开头；大小写一致地包含 `output token maximum`；三家的 `*-cap64.err` 均不含该短语；三家记录中均没有 `max_tokens`。
+- **作者决定**（2026-10-21）：核对后收窄（AskUserQuestion 选项"等我核对后收窄"）。
+- **修订后的规则**（规程 §6.2 已改，v0.5）：
+  1. 继续在全部可读事件中收集上限证据，不因记录不完整提前返回；
+  2. 证据一：任一事件的 `stop_reason == "max_tokens"`（含 `message.stop_reason`），照规程保留；
+  3. 证据二：`type == "result"` 事件的 `result` 字段，或 `type == "assistant"` 事件 `message.content[i].text` 字段，**以** `API Error: Claude's response exceeded the <一个或多个数字> output token maximum.` **开头**（区分大小写，按上面原句的固定前缀匹配）；
+  4. 其他位置、正文中间出现的同一短语都不算上限证据；坏行（`_unparsed`）中的文字也不算（阶段 A 解析器只保留前 200 字符，无法确认归属）；
+  5. 多轮本身不是上限证据（照旧）。
+- **计划条文替换**：Task 2 `classify` 的"任一事件的任何字符串字段中出现 `CAP_HIT`"改为上面第 3 条；`CAP_HIT` 常量改为固定前缀的正则。
+- **影响范围**：`classify.py`、`test_classify.py`、`fake_claude_b.py`（假 CLI 的上限场景须产生上面的事件形态），以及可能引用 `CAP_HIT` 的 `run_revise.py` 测试。
 
 ## RV-06 `translate_off` 类综合注释（规程 §7.2；计划 Task 4）
 
@@ -78,4 +87,4 @@ Task 2 上限证据的范围，见文末"待定"。
 
 ## 待定
 
-- **Task 2 上限证据的范围**：作者 2026-10-21 决定先按 `CASE01_BC2_codex.md` §2.2 的步骤核对阶段 A 三家 `cap64` 原始记录，再按核实到的事件类型、字段路径和句式收窄 `classify.py` 的文本证据，届时另立 RV-05。
+- （无。Task 2 已核对并立 RV-05。）
