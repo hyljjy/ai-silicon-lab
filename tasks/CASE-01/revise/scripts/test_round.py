@@ -1,8 +1,9 @@
 """Tests for round (WSL-side per-round entry point and unified preflight; CASE-01 stage B Task 11; protocol v0.4
 section 3 steps 8-12, sections 8 and 16). WSL only (run per module, never with discover). Everything is written in a
 temporary git repository under tasks/CASE-01/runs/ (never /tmp, never the real revise/outputs, results, stops or
-predictions; no tags). The gate is a stub (the real gate, Task 4, is pending); grade.py is never run: every attempt
-runs fixtures/fake_grade.py, which limits itself to 10 s and 64 KB."""
+predictions; no tags). The gate is a stub, except in RealGate, which runs the real gate (Task 4, Yosys of the WSL
+distro; its work directory is redirected into the temporary directory); grade.py is never run: every attempt runs
+fixtures/fake_grade.py, which limits itself to 10 s and 64 KB."""
 import contextlib
 import io
 import json
@@ -21,6 +22,8 @@ import stops
 
 if os.name != "nt":
     import coverage
+    import feedback
+    import gate
     import judge
     import round as rnd_mod
 
@@ -692,6 +695,77 @@ class FinalizeClose(Base):
         self.assertEqual(sorted(names), sorted(MODELS))
         for name in names + ["claude", "opus", "deepseek", "zz-model"]:
             self.assertNotIn(name.lower(), text.lower())
+
+
+class RealGate(Base):
+    """The real gate (Task 4) wired into round.py: ingest writes gate.json through round's default gate
+    (_default_gate -> gate.gate), the evaluate preflight re-runs it and byte-compares, a rejected candidate is never
+    graded and finalizes to gate_reject, and feedback reads its gate.json with the real gate_rules.md."""
+
+    def setUp(self):
+        super().setUp()
+        self.kw["gate"] = None                        # round's default: import gate; gate.gate(rtl, L)
+        p = mock.patch.object(gate, "DEFAULT_WORK", os.path.join(self.tmp.name, "gatework"))
+        p.start()
+        self.addCleanup(p.stop)
+
+    def answer_with(self, rtl):
+        fence = ANSWER.index("```verilog\n") + len("```verilog\n")
+        end = ANSWER.index("```\n", fence)
+        return ANSWER[:fence] + rtl.replace("module dot4sat (", "module dot4sat ( // {code}\n", 1) + ANSWER[end:]
+
+    def baseline_rtl(self):
+        return rp.read_bytes(os.path.join(rp.CASE, "rtl", "dot4sat.v")).decode("utf-8")
+
+    def test_real_gate_ingest_and_evaluate_preflight(self):
+        with mock.patch(f"{__name__}.ANSWER", self.answer_with(self.baseline_rtl())):
+            self.setup_round(1)
+        self.phase_c(1)
+        for c in self.codes[1]:
+            doc = load(os.path.join(self.cdir(1, c), "gate.json"))
+            self.assertEqual(doc, {"passed": True, "hits": [], "yosys_problem": None})
+        self.assertEqual(rnd_mod.preflight(1, "evaluate", self.ctx()), [])
+        rc, out = self.run_sub("evaluate", 1)
+        self.assertEqual(rc, 0, out)
+        for c in self.codes[1]:
+            self.assertTrue(os.path.isfile(os.path.join(self.cdir(1, c), "attempt1", "attempt.json")))
+        runs = os.listdir(os.path.join(self.tmp.name, "gatework"))
+        # one new directory per gate run: ingest, the explicit preflight above, evaluate's own preflight
+        self.assertEqual(len(runs), 3 * len(self.codes[1]))
+
+    def test_real_gate_rejection_path(self):
+        rtl = self.baseline_rtl().replace("    localparam signed [33:0] SMAX", "    parameter P = 1;\n"
+                                          "    localparam signed [33:0] SMAX", 1)
+        with mock.patch(f"{__name__}.ANSWER", self.answer_with(rtl)):
+            self.setup_round(1)
+        self.phase_c(1)
+        a = sorted(self.codes[1])[0]
+        doc = load(os.path.join(self.cdir(1, a), "gate.json"))
+        self.assertFalse(doc["passed"])
+        self.assertEqual([(h["rule"], h["kind"], h["text"]) for h in doc["hits"]],
+                         [("G4", "extra", "    parameter P = 1;")])
+        self.assertEqual(rnd_mod.preflight(1, "evaluate", self.ctx()), [])
+        rc, out = self.run_sub("evaluate", 1)
+        self.assertEqual(rc, 0, out)
+        self.assertEqual(self.attempts_of(1), [])
+        rc, out = self.run_sub("finalize", 1)
+        self.assertEqual(rc, 0, out)
+        for c in self.codes[1]:
+            self.assertEqual(load(os.path.join(self.cdir(1, c), "status.json"))["state"], "gate_reject")
+        view = feedback.mechanical_view(a, 1, case=self.case, rules=os.path.join(rp.RULES, "gate_rules.md"))
+        self.assertEqual([r for r, _ in view["gate_rules"]], ["G4"])
+        self.assertEqual(view["gate_lines"][0][1:], (["G4"], "    parameter P = 1;"))
+
+    def test_real_gate_changed_gate_json_is_refused(self):
+        with mock.patch(f"{__name__}.ANSWER", self.answer_with(self.baseline_rtl())):
+            self.setup_round(1)
+        self.phase_c(1)
+        a = sorted(self.codes[1])[0]
+        p = os.path.join(self.cdir(1, a), "gate.json")
+        touch(p, rp.read_bytes(p).replace(b'"hits": []', b'"hits": [ ]'))
+        self.commit("edit gate.json")
+        probs = rnd_mod.preflight(1, "evaluate", self.ctx())
+        self.assertIn(f"GATE FAIL {a}: gate.json differs from a re-run of the gate", probs)
 
 
 if __name__ == "__main__":
