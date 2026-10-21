@@ -891,6 +891,22 @@ class TestBatchD(Base):
             return res
         return mock.patch.object(limits, "run_limited", fake)
 
+    def patch_result(self, kind, first_n=1, raise_exc=None, **changes):
+        """run_limited of `kind`: the first first_n runs get the result fields `changes` (or raise raise_exc() after
+        the real run)."""
+        real = limits.run_limited
+        self.kinds = []
+
+        def fake(argv, k, *a, **kw):
+            self.kinds.append(k)
+            res = real(argv, k, *a, **kw)
+            if k == kind and self.kinds.count(k) <= first_n:
+                if raise_exc:
+                    raise raise_exc()
+                return dataclasses.replace(res, **changes)
+            return res
+        return mock.patch.object(limits, "run_limited", fake)
+
     def assert_no_model_names(self, rec):
         text = json.dumps(rec, ensure_ascii=False).lower()
         for word in ("claude", "kimi", "deepseek", "opus", "k3[", "v4-pro"):
@@ -1071,7 +1087,9 @@ class TestBatchD(Base):
         want_sys = rp.sha256(os.path.join(self.revise, "prompts", "smoke_system.md"))
         for r in s["rows"]:
             self.assertTrue(r["prompt_ok"])
-            self.assertEqual((r["system_sha"], r["expected_system_sha"]), (want_sys, want_sys))
+            # --no-tags: no independent source for the system prompt, so no system check is claimed
+            self.assertEqual((r["system_sha"], r["expected_system_sha"]), (want_sys, None))
+            self.assertEqual((r["system_check"], r["system_ok"]), (run_revise.SYSTEM_NO_TAG, None))
             self.assertEqual(r["stdin_sha"], r["expected_stdin_sha"])
 
     def test_canary_words_come_from_prompt_sources(self):
@@ -1116,13 +1134,103 @@ class TestBatchD(Base):
             (s,) = self.summaries()
             self.assertTrue(all(r["prompt_ok"] for r in s["rows"]))
             want_sys = rp.sha256(os.path.join(prompts, "system.md"))
-            self.assertTrue(all(r["expected_system_sha"] == want_sys for r in s["rows"]))
+            self.assertTrue(all(r["system_sha"] == want_sys for r in s["rows"]))
             # a stale rehearsal prompt of one model is refused before any launch
             f = os.path.join(self.smoke_dir(), "rehearsal_kimi.md")
             write(f, rp.read_bytes(f) + b"\n")
             self.assertEqual(self.run_main("--smoke", "rehearsal"), 1, self.out)
             self.assertIn("SMOKE PROMPT FAIL", self.out)
             self.assertEqual(len(self.calls()), 3)
+
+    # ---- fix round 1
+    def test_output_error_is_record_problem_not_over_limit(self):
+        self.setup_round()
+        with self.patch_result("model", output_error="stdout write failed: disk error"):
+            self.assertEqual(self.run_main("--round", "1"), 0, self.out)
+        meta = load(self.raw("claude", "call1.meta.json"))
+        self.assertEqual((meta["over_limit"], meta["interrupted"]), (False, True))
+        self.assertEqual(meta["incomplete"], run_revise.NOTE_SUPERVISION)
+        self.assertEqual(meta["output_error"], "stdout write failed: disk error")
+        self.assertNotIn("超限，输出不完整", [d for _, d in meta["flags"]])
+        self.assertIn("运行中断", [d for _, d in meta["flags"]])
+        e = self.entry("claude")
+        self.assertTrue(e["calls"][0]["interrupted"])
+        self.assertEqual((e["state"], e["consumed"], e["final"]), ("final", 2, "parse"))   # the retry was granted
+        self.assertIsNone(load(self.raw("claude", "call2.meta.json"))["incomplete"])
+
+    def test_timeout_is_labelled_over_limit(self):
+        self.setup_round()
+        with self.patch_result("model", timed_out=True):
+            self.assertEqual(self.run_main("--round", "1"), 0, self.out)
+        self.assertEqual(load(self.raw("claude", "call1.meta.json"))["incomplete"], run_revise.NOTE_OVER)
+
+    def test_supervision_timeout_is_labelled_over_limit(self):
+        self.setup_round()
+        exc = lambda: limits.SupervisionError("test", pid=1, timed_out=True, cause_type="OSError")  # noqa: E731
+        with self.patch_result("model", raise_exc=exc):
+            self.assertEqual(self.run_main("--round", "1"), 0, self.out)
+        meta = load(self.raw("claude", "call1.meta.json"))
+        self.assertEqual((meta["interrupted"], meta["incomplete"]), (True, run_revise.NOTE_OVER))
+        self.assertEqual(self.stop_records(), [])
+
+    def test_smoke_refused_after_round1_complete(self):
+        self.canary_file()
+        write(os.path.join(self.revise, "outputs", "r1", "round_complete.json"), "{}\n")
+        self.assertEqual(self.run_main("--smoke", "canary"), 1)
+        self.assertIn("round_complete.json", self.out)
+        self.assertEqual(self.calls(), [])
+
+    def test_smoke_system_prompt_checked_against_tag(self):
+        TestModes.prereg_repo(self)
+        self.canary_file()
+        self.set_plan({n: ["prompt_echo"] for n, _ in MODELS})
+        self.assertEqual(self.run_main("--smoke", "canary", no_tags=False), 0, self.out)
+        (s,) = self.summaries()
+        want = rp.sha256(os.path.join(self.revise, "prompts", "smoke_system.md"))
+        for r in s["rows"]:
+            self.assertEqual((r["system_check"], r["system_ok"], r["expected_system_sha"]),
+                             ("tag revise-prereg-smoke", True, want))
+        # the tag holds other system bytes than the ones sent: refused before any launch
+        real = prereg.blob_at
+
+        def other(rev, path):
+            if sys._getframe(1).f_code.co_name == "smoke_expected":
+                return b"other system prompt\n"
+            return real(rev, path)
+        with mock.patch.object(prereg, "blob_at", other):
+            self.assertEqual(self.run_main("--smoke", "canary", no_tags=False), 1, self.out)
+        self.assertIn("SMOKE PROMPT FAIL", self.out)
+        self.assertIn(f"system sha256 {want} != expected {sha(b'other system prompt' + bytes([10]))}", self.out)
+        self.assertEqual(len(self.calls()), 3)
+
+    def test_preflight_launch_failure_stops(self):
+        self.setup_round()
+        with self.patch_result("preflight", raise_exc=lambda: limits.IsolationFail("no job object")):
+            self.assertEqual(self.run_main("--round", "1"), 3, self.out)
+        self.assertEqual(self.kinds, ["preflight"])
+        self.assertEqual(self.calls(), [])
+        (rec,) = self.stop_records()
+        self.assertEqual(rec["reason"], run_revise.REASON_ISOLATION)
+        self.assertIn(f"commit revise/stops/r1/{rec['stop_id']}.json now", self.out)
+
+    def test_cleared_smoke_stop_lets_runs_proceed(self):
+        self.setup_round()
+        self.canary_file()
+        self.set_plan({n: ["prompt_echo"] for n, _ in MODELS})
+        with self.flag_cleanup("model"):
+            self.assertEqual(self.run_main("--smoke", "canary"), 3, self.out)
+        (rec,) = self.stop_records()
+        self.clear_stop(rec)
+        self.assertEqual(self.run_main("--smoke", "canary"), 0, self.out)
+        self.assertIn("SMOKE canary OK", self.out)
+        self.set_plan({})
+        self.assertEqual(self.run_main("--round", "1"), 0, self.out)
+        self.assertTrue(all(e["state"] == "final" for e in self.attempts()["codes"].values()))
+
+    def test_shadowing_guard_covers_build_package(self):
+        here = os.path.normcase(HERE)
+        for mod in (build_prompt, build_prompt.bp):
+            self.assertEqual(os.path.normcase(os.path.dirname(os.path.abspath(mod.__file__))), here)
 
 
 if __name__ == "__main__":

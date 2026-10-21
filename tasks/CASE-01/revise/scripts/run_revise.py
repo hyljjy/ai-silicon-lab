@@ -10,7 +10,8 @@ up to 3 x 2 x 30 minutes, so start it in the background with its output in a log
 --no-tags (skips the pre-registration tag check; refused once any revise-prereg* tag exists).
 
 Exit codes: 0 done; 1 refused (PREREG / PREFLIGHT / DISK / STOPPED / LOCKED / MAPPING / PROMPT / ATTEMPTS ...;
-nothing was called and no attempt was used); 2 usage; 3 a global stop was raised (prompt hash mismatch, KILL FAIL,
+in round modes nothing was called and no attempt was used) or a smoke run that failed (an ordinary per-model smoke
+failure, or a disk shortage found before a later smoke call: earlier smoke calls may then have run); 2 usage; 3 a global stop was raised (prompt hash mismatch, KILL FAIL,
 old call not confirmed gone, ISOLATION FAIL, disk short before a formal call); 4 the public-answer
 redaction hit inside the first verilog block.
 
@@ -64,8 +65,10 @@ import revpaths as rp
 import stops
 
 sys.path.insert(0, rp.DIAG_SCRIPTS)
-if os.path.dirname(os.path.abspath(build_prompt.__file__)) != os.path.dirname(os.path.abspath(__file__)):
-    raise ImportError("run_revise needs revise/scripts/build_prompt.py, not the stage A build_prompt.py")
+_HERE = os.path.normcase(os.path.dirname(os.path.abspath(__file__)))
+for _mod in (build_prompt, build_prompt.bp):
+    if os.path.normcase(os.path.dirname(os.path.abspath(_mod.__file__))) != _HERE:
+        raise ImportError(f"run_revise needs revise/scripts/{os.path.basename(_mod.__file__)}, not the stage A one")
 import privacy_check  # noqa: E402  (read-only reuse of stage A: account e-mail and user-directory pattern)
 
 CLI_PATH = r"D:\study\diag_sandbox\bin\claude-2.1.296.exe"
@@ -87,6 +90,7 @@ REASON_PRIVATE = "公开答复脱敏时在第一个 verilog 代码块内有命�
 REASON_RESUME = "续跑时无法确认旧调用已退出"
 REASON_KILL = "KILL FAIL：调用结束后仍有存活进程或无法确认"
 REASON_ISOLATION = "ISOLATION FAIL：无法建立进程归属，调用未启动"
+SYSTEM_NO_TAG = "sent from tier-1 file (no tag)"
 REASON_DISK = "DISK FAIL：模型调用前磁盘可用空间不足（规程 16）"
 NOTE_OVER = "超限，输出不完整"
 NOTE_SUPERVISION = "监督失败，输出不完整"
@@ -240,7 +244,8 @@ def _fresh_workdir(ctx, sub):
 
 def parse_originals(data):
     """({settings file name: sha256}, problems) of revise/models/originals.sha256 ("<sha256>  <path>" lines).
-    Strict (Codex BC1-10, BC2 2.4): an empty list, a malformed line or a repeated file name is a problem."""
+    Strict (Codex BC1-10, BC2 2.4): an empty list, a malformed line or a repeated file name is a problem; a model of
+    run_order without an entry is reported by originals_problems. Extra entries (files no model uses) are accepted."""
     probs, out = [], {}
     try:
         text = data.decode("utf-8")
@@ -304,7 +309,8 @@ def _stop_now(ctx, rnd, reason, details):
 
 def preflight(ctx, models, stop_rnd, stop_details=None):
     """Problems of the preflight (no attempt is used). A preflight command whose processes were not cleaned up (or
-    whose cleanup cannot be confirmed) writes a round-stop_rnd stop at once and raises Stopped."""
+    whose cleanup cannot be confirmed: REASON_KILL) or that could not be launched under a job (IsolationFail or a
+    launch OSError: REASON_ISOLATION) writes a round-stop_rnd stop at once and raises Stopped."""
     probs = []
     try:
         ctx.email()                                   # the redaction needs it; resolve it before any attempt
@@ -335,8 +341,9 @@ def preflight(ctx, models, stop_rnd, stop_details=None):
             probs.append(f"PREFLIGHT FAIL: {cmd} failed after it had started ({e.cause_type})")
             return None
         except (OSError, limits.IsolationFail) as e:
-            probs.append(f"PREFLIGHT FAIL: {cmd} could not run ({e.__class__.__name__})")
-            return None
+            # a launch failure may leave a suspended process outside any job: stop as for a model call
+            _stop_now(ctx, stop_rnd, REASON_ISOLATION,
+                      dict(stop_details or {}, phase="preflight", command=cmd, cause=e.__class__.__name__))
         if res.killed_pids_alive or res.cleanup_unconfirmed:
             _stop_now(ctx, stop_rnd, REASON_KILL,
                       dict(stop_details or {}, phase="preflight", command=cmd, cause=None,
@@ -455,11 +462,17 @@ def one_call(ctx, entry, system, stdin, prompt_ok, raw_dir, n, expect, tokens, w
                                  stdout_path=base + ".jsonl", stderr_path=base + ".err",
                                  proc_path=base + ".proc.json")
         rc, timed_out = res.rc, res.timed_out
-        over = bool(res.stdout_over or res.stderr_over or res.output_error)
+        over = bool(res.stdout_over or res.stderr_over)               # an output limit, not a failed write
+        limit_hit = bool(timed_out or over)
         kill = bool(res.killed_pids_alive or res.cleanup_unconfirmed)
+        if res.output_error:
+            # writing stdout/stderr failed and run_limited stopped the run: a record problem, not an over-limit;
+            # classify gets it as an interrupted call (record incomplete), meta keeps the write error
+            interrupted = True
+            meta.update(interrupted=True, output_error=str(res.output_error))
         meta.update(kill={"alive": res.killed_pids_alive, "unconfirmed": res.cleanup_unconfirmed},
                     captured={"stdout": res.stdout_bytes, "stderr": res.stderr_bytes},
-                    incomplete=NOTE_OVER if res.incomplete else None)
+                    incomplete=NOTE_OVER if limit_hit else (NOTE_SUPERVISION if res.output_error else None))
     except limits.SupervisionError as e:
         # the CLI had started: not a launch problem; the call counts as interrupted, the cleanup result decides KILL
         rc, timed_out, over, interrupted = None, e.timed_out, bool(e.stdout_over or e.stderr_over), True
@@ -467,7 +480,7 @@ def one_call(ctx, entry, system, stdin, prompt_ok, raw_dir, n, expect, tokens, w
         meta.update(supervision_error=f"{e.cause_type}: {e.__cause__}", interrupted=True,
                     kill={"alive": e.killed_pids_alive, "unconfirmed": e.cleanup_unconfirmed},
                     captured={"stdout": e.stdout_bytes, "stderr": e.stderr_bytes},
-                    incomplete=NOTE_OVER if over else NOTE_SUPERVISION)
+                    incomplete=NOTE_OVER if (e.timed_out or over) else NOTE_SUPERVISION)
     except (OSError, limits.IsolationFail) as e:
         rc, timed_out, over = None, False, False
         launch = f"{e.__class__.__name__}: {e}"
@@ -810,18 +823,30 @@ def commit_codes(ctx, rnd, dry_run):
         return EXIT_OK
 
 
-def smoke_expected(ctx, kind, entry):
-    """(system bytes, stdin bytes) of a smoke call rebuilt from the frozen sources with build_prompt.py's smoke
-    builders (Codex BC1-11): probe = smoke_system.md + cap_probe_user.md; canary = smoke_system.md +
-    smoke_user.md; rehearsal = system.md + the rehearsal prompt built from round1_template.md, the package and the
-    model's stage A answer."""
+def smoke_expected(ctx, kind, entry, sys_path):
+    """(expected system bytes or None, how the system prompt was checked, expected stdin bytes) of a smoke call
+    (Codex BC1-11). stdin is rebuilt from the frozen sources with build_prompt.py's smoke builders: probe =
+    cap_probe_user.md, canary = smoke_user.md, rehearsal = the rehearsal prompt built from round1_template.md, the
+    package and the model's stage A answer. The system prompt (smoke_system.md; rehearsal: system.md) has no builder:
+    its expected bytes are the bytes in tag revise-prereg-smoke; with --no-tags (tests only) there is no independent
+    source, so no system check is claimed (expected None, SYSTEM_NO_TAG)."""
     templates = os.path.join(ctx.revise, "prompts")
+    if ctx.no_tags:
+        want_sys, how = None, SYSTEM_NO_TAG
+    else:
+        tag = prereg.TAGS["smoke"]
+        want_sys = prereg.blob_at(f"refs/tags/{tag}", sys_path)
+        if want_sys is None:
+            raise Refused(f"SMOKE PROMPT FAIL: {_rel(ctx, sys_path)} is not in tag {tag}; nothing was called")
+        how = f"tag {tag}"
     if kind == "rehearsal":
-        system = rp.read_bytes(os.path.join(templates, "system.md"))
-        return system, build_prompt.rehearsal_bytes(entry["name"], package=os.path.join(ctx.revise, "package"),
-                                                    templates=templates)
-    system, user = build_prompt.canary_bytes(templates)
-    return system, (user if kind == "canary" else build_prompt.cap_probe_bytes(templates))
+        stdin = build_prompt.rehearsal_bytes(entry["name"], package=os.path.join(ctx.revise, "package"),
+                                             templates=templates)
+    elif kind == "canary":
+        stdin = build_prompt.canary_bytes(templates)[1]
+    else:
+        stdin = build_prompt.cap_probe_bytes(templates)
+    return want_sys, how, stdin
 
 
 def smoke_canaries(ctx):
@@ -840,7 +865,12 @@ def run_smoke(ctx, kind):
     """Smoke calls (protocol 6.3). An ordinary failure of one model's call stays with that model; a process
     ownership or cleanup failure (ISOLATION FAIL, KILL FAIL, a supervision failure whose cleanup failed) writes a
     persistent stop at once (round SMOKE_STOP_ROUND, side call, details["smoke"] = kind, no model name) and nothing
-    else is launched; that stop blocks later smoke runs and every formal run (check_stops)."""
+    else is launched; that stop blocks later smoke runs and every formal run (check_stops). Refused once round
+    SMOKE_STOP_ROUND is complete (outputs/r1/round_complete.json exists)."""
+    done = os.path.join(out_dir(ctx, SMOKE_STOP_ROUND), "round_complete.json")
+    if os.path.exists(done):
+        raise Refused(f"REFUSED: smoke runs write their stops into round {SMOKE_STOP_ROUND}, which is closed "
+                      f"({_rel(ctx, done)} exists); no smoke run after round {SMOKE_STOP_ROUND} is complete")
     check_stops(ctx, SMOKE_STOP_ROUND)
     check_tags(ctx, "smoke")
     check_reused()
@@ -864,14 +894,15 @@ def run_smoke(ctx, kind):
     for m in models:
         system, stdin = rp.read_bytes(sys_path), rp.read_bytes(os.path.join(prompts, user_of(m)))
         try:
-            want_sys, want_stdin = smoke_expected(ctx, kind, m)
+            want_sys, how, want_stdin = smoke_expected(ctx, kind, m, sys_path)
         except (build_prompt.PromptError, OSError, rp.RevpathsError) as err:
             raise Refused(f"SMOKE PROMPT FAIL: the expected prompt bytes cannot be rebuilt: {err}") from None
-        sys_ok, stdin_ok = system == want_sys, stdin == want_stdin
+        sys_ok = None if want_sys is None else system == want_sys      # None: not independently checked
+        stdin_ok = stdin == want_stdin
         chk = {"name": m["name"], "system_sha": rp.sha256_bytes(system), "expected_system_sha":
-               rp.sha256_bytes(want_sys), "stdin_sha": rp.sha256_bytes(stdin),
-               "expected_stdin_sha": rp.sha256_bytes(want_stdin), "system_ok": sys_ok, "stdin_ok": stdin_ok,
-               "prompt_ok": sys_ok and stdin_ok}
+               None if want_sys is None else rp.sha256_bytes(want_sys), "system_check": how,
+               "stdin_sha": rp.sha256_bytes(stdin), "expected_stdin_sha": rp.sha256_bytes(want_stdin),
+               "system_ok": sys_ok, "stdin_ok": stdin_ok, "prompt_ok": sys_ok is not False and stdin_ok}
         inputs.append((system, stdin))
         checks.append(chk)
         if not chk["prompt_ok"]:
@@ -881,7 +912,7 @@ def run_smoke(ctx, kind):
                                                              "rows": checks}))
         raise Refused([f"SMOKE PROMPT FAIL: {c['name']}: "
                        + "; ".join(f"{what} sha256 {c[what + '_sha']} != expected {c['expected_' + what + '_sha']}"
-                                   for what in ("system", "stdin") if not c[what + "_ok"]) for c in bad]
+                                   for what in ("system", "stdin") if c[what + "_ok"] is False) for c in bad]
                       + [f"SMOKE PROMPT FAIL: nothing was called -> {_rel(ctx, rec_dir)}"])
     check_preflight(ctx, models, SMOKE_STOP_ROUND, {"smoke": kind, "stamp": stamp})
     tokens = CAP_PROBE_TOKENS if kind == "probe" else MAX_OUTPUT_TOKENS
