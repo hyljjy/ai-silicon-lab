@@ -16,6 +16,7 @@ if os.name != "nt":
     import feedback
     import gate
     import round as rnd_mod
+    import stops as sstops
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 FIX = os.path.join(HERE, "fixtures", "gate")
@@ -505,6 +506,70 @@ class GateTest(unittest.TestCase):
         self.assertTrue(out.startswith("GATE ERROR: stage 1 (read_verilog): could not start"), out)
         self.assertNotIn("GATE FAIL", out)
         self.assertFalse(os.path.exists(out_json))
+
+    def temp_revise(self):
+        """A temporary git repository with tasks/CASE-01/revise (stop records never go to the real revise/stops)."""
+        import subprocess
+        repo = os.path.join(self.work, "repo")
+        os.makedirs(repo)
+        for args in (["init", "-q", "."], ["config", "user.name", "test"],
+                     ["config", "user.email", "test@example.invalid"]):
+            subprocess.run(["git", *args], cwd=repo, check=True, stdout=subprocess.DEVNULL, stdin=subprocess.DEVNULL)
+        revise = os.path.join(repo, "tasks", "CASE-01", "revise")
+        os.makedirs(revise)
+        return revise
+
+    def cli(self, args, revise):
+        import contextlib
+        import io
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out):
+            rc = gate.main(args + ["--work-dir", self.work], revise=revise)
+        return rc, out.getvalue()
+
+    def test_cli_kill_fail_writes_stop(self):
+        # Codex BC3-03: the standalone gate (smoke rehearsal, plan Task 13 Step 2) writes a persistent KILL FAIL stop
+        def real_stops():
+            d = os.path.join(rp.REVISE, "stops")
+            return sorted(os.path.join(a, n) for a, _, ns in os.walk(d) for n in ns) if os.path.isdir(d) else None
+        before = real_stops()
+        revise = self.temp_revise()
+        out_json = os.path.join(self.work, "never.json")
+        for r, extra in ((1, []), (2, ["--stop-round", "2"])):
+            with self.subTest(round=r):
+                with mock.patch.object(gate.limits, "run_limited",
+                                       side_effect=self.fake_stages(limited(rc=-9, alive=[4242]), limited())):
+                    rc, out = self.cli([BASELINE, "1", "--json", out_json] + extra, revise)
+                self.assertEqual(rc, 2, out)
+                self.assertTrue(out.startswith("KILL FAIL: stage 1"), out)
+                recs = sstops.open_stops(r, revise=revise)
+                self.assertEqual(len(recs), 1)
+                rec = recs[0]
+                self.assertEqual((rec["rnd"], rec["side"], rec["reason"], rec["code"]), (r, "eval", "KILL FAIL", None))
+                self.assertEqual(rec["details"]["source"], "gate-cli")
+                self.assertIn(f"STOP {rec['stop_id']}: KILL FAIL — commit revise/stops/r{r}/{rec['stop_id']}.json now",
+                              out)
+                self.assertFalse(os.path.exists(out_json))
+                # the open stop refuses the next run before anything is started
+                spy = mock.MagicMock(side_effect=AssertionError("nothing may run"))
+                with mock.patch.object(gate.limits, "run_limited", spy):
+                    rc, out = self.cli([BASELINE, "1"] + extra, revise)
+                self.assertEqual(rc, 2, out)
+                self.assertTrue(out.startswith(f"GATE ERROR: refused: round {r} has open stop(s) {rec['stop_id']}"),
+                                out)
+                spy.assert_not_called()
+        self.assertEqual(real_stops(), before)              # the real revise/stops was never touched
+
+    def test_cli_other_infra_fault_no_stop(self):
+        revise = self.temp_revise()
+        with mock.patch.object(gate.limits, "run_limited",
+                               side_effect=self.fake_stages(limits.IsolationFail("ISOLATION FAIL: x"), limited())):
+            rc, out = self.cli([BASELINE, "1"], revise)
+        self.assertEqual(rc, 2, out)
+        self.assertTrue(out.startswith("GATE ERROR: stage 1"), out)
+        self.assertNotIn("STOP ", out)
+        self.assertEqual(sstops.open_stops(1, revise=revise), [])
+        self.assertFalse(os.path.exists(os.path.join(revise, "stops")))
 
     def test_unreadable_json_is_unrecognized(self):
         for what, text in {"missing": None, "empty": "", "not json": "{nope", "no modules": "{}",

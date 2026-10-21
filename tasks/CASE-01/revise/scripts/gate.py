@@ -40,7 +40,12 @@ CLI (WSL): python3 -B revise/scripts/gate.py <rtl> <L> [--json <out>] [--work-di
   Extensions beyond the plan's CLI (for the revisions record): --work-dir <dir> (where the per-run evidence
   directories go; default tasks/CASE-01/runs/gate/); a "YOSYS PROBLEM: <text>" line after the GATE FAIL lines when
   yosys_problem is set; exit 2 with "KILL FAIL: ..." (cleanup failed / unconfirmed) or "GATE ERROR: ..." (other
-  infrastructure fault, unreadable RTL file, bad arguments) and no --json output. Python standard library only."""
+  infrastructure fault, unreadable RTL file, bad arguments) and no --json output.
+  --stop-round <r> (default 1; Codex BC3-03): standalone use is the smoke rehearsal gate run of plan Task 13 Step 2,
+  so the CLI is tied to the stop mechanism of that round: it refuses (exit 2, "GATE ERROR: refused: ...") while
+  stops.open_stops(r) is not empty, and on KILL FAIL it writes stops.raise_stop(r, "eval", "KILL FAIL",
+  details={"source": "gate-cli", ...}) and prints "STOP <id>: KILL FAIL — commit revise/stops/r<r>/<id>.json now"
+  before exiting 2 (other infrastructure faults: exit 2 without a stop). Python standard library only."""
 import argparse
 import builtins
 import datetime
@@ -677,18 +682,43 @@ def doc_bytes(res):
     return (json.dumps(to_doc(res), indent=1, ensure_ascii=False) + "\n").encode("utf-8")
 
 
-def main(argv=None):
+def main(argv=None, revise=None):
+    """CLI. revise: the revise directory for the stop records (tests use a temporary one; default revise/)."""
+    import stops                                      # only the CLI writes stops (round.py does it for its own runs)
     ap = argparse.ArgumentParser(description="CASE-01 stage B contract gate G1-G8 (WSL)")
     ap.add_argument("rtl")
     ap.add_argument("L")
     ap.add_argument("--json", dest="json_out")
     ap.add_argument("--work-dir")
+    ap.add_argument("--stop-round", type=int, default=1,
+                    help="round whose stop records this run checks and writes (default 1: the smoke rehearsal, "
+                         "plan Task 13 Step 2)")
     a = ap.parse_args(argv)
+    r = a.stop_round
+    try:
+        open_ = stops.open_stops(r, revise=revise)
+    except (stops.StopsError, OSError, ValueError) as e:
+        print(f"GATE ERROR: open stops of round {r} cannot be determined ({e.__class__.__name__}: {e})", flush=True)
+        return 2
+    if open_:
+        print(f"GATE ERROR: refused: round {r} has open stop(s) {', '.join(s['stop_id'] for s in open_)}; "
+              f"nothing was run", flush=True)
+        return 2
     try:
         L = int(a.L) if re.fullmatch(r"[+-]?[0-9]+", a.L) else a.L
         res = gate(a.rtl, L, a.work_dir)
     except GateInfraError as e:
         print(f"{'KILL FAIL' if e.kill_fail else 'GATE ERROR'}: {e}", flush=True)
+        if e.kill_fail:                               # Codex BC3-03: a persistent stop, like round.py's gate path
+            try:
+                sid = stops.raise_stop(r, "eval", "KILL FAIL", code=None,
+                                       details={"source": "gate-cli", "rtl": a.rtl, "message": str(e),
+                                                "evidence": e.evidence}, revise=revise)
+            except (stops.StopsError, OSError) as se:
+                print(f"STOP NOT WRITTEN: {se.__class__.__name__}: {se}; stop everything and tell the author",
+                      flush=True)
+                return 2
+            print(f"STOP {sid}: KILL FAIL — commit revise/stops/r{r}/{sid}.json now", flush=True)
         return 2
     except (OSError, GateError) as e:
         print(f"GATE ERROR: {e.__class__.__name__}: {e}", flush=True)

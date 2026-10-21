@@ -551,16 +551,18 @@ class TestLifecycle(Base):
         self.assertNotIn("timed_out", rec)
         if POSIX:
             # the target runs; the record written before Popen holds the run token that every process of the run
-            # carries in its environment: a fresh process finds it although no pid was recorded
+            # carries in its environment: a fresh process finds it although no pid was recorded. Without the root
+            # identity the launch window (a child between fork and exec, no token yet) cannot be ruled out, so the
+            # record is never confirmed (Codex BC3-01), but cleanup still stops every token carrier
             self.wait(lambda: os.path.exists(marker))
             self.assertRegex(rec["token"], r"^[0-9a-f]{32}$")
-            self.assertEqual(limits.still_alive(rec), ([pid], False))
+            self.assertEqual(limits.still_alive(rec), ([pid], True))
             res = limits.cleanup(rec, "fast")
             self.assertEqual(res.killed_pids_alive, [])
-            self.assertFalse(res.cleanup_unconfirmed)
+            self.assertTrue(res.cleanup_unconfirmed)
             self.assertEqual(res.signals_sent[0], f"SIGTERM {pid}")   # gentle stop of the top token carrier first
             self.assertFalse(alive(pid))
-            self.assertEqual(limits.still_alive(rec), ([], False))
+            self.assertEqual(limits.still_alive(rec), ([], True))
         else:
             # created suspended, outside any job: it never ran, but nothing in the record identifies it
             time.sleep(0.5)
@@ -658,7 +660,9 @@ class TestRecordChecks(unittest.TestCase):
             deadline = time.monotonic() + 5
             while limits._start_time(p.pid) is None and time.monotonic() < deadline:
                 time.sleep(0.02)
-            rec = dict(marks, phase="launching", isolation="subreaper")
+            gone = self.gone()                           # a root identity that no longer runs
+            rec = dict(marks, phase="running", isolation="subreaper", root_pid=gone, root_start="1",
+                       registry=[[gone, "1"]])
             self.assertEqual(limits.still_alive(rec), ([p.pid], False))
             # another boot: nothing of that run can still exist
             self.assertEqual(limits.still_alive(dict(rec, boot_id="not-this-boot")), ([], False))
@@ -680,6 +684,91 @@ class TestRecordChecks(unittest.TestCase):
         finally:
             p.kill()
             p.wait(10)
+
+    @unittest.skipUnless(POSIX, "the run token is the Linux ownership marker")
+    def test_rootless_launching_record_unconfirmed(self):
+        # Codex BC3-01: a Linux "launching" record (no root identity) is unconfirmed even when no process carries
+        # its token: a child between fork and exec does not carry it yet
+        rec = dict(limits._launch_marks(), phase="launching", isolation="subreaper", started_at="x")
+        self.assertEqual(limits.still_alive(rec), ([], True))
+        res = limits.cleanup(rec, "test")
+        self.assertEqual(res.killed_pids_alive, [])
+        self.assertTrue(res.cleanup_unconfirmed)
+        # with a (gone) root identity the same token proves that nothing of the run is left
+        gone = self.gone()
+        ran = dict(rec, phase="running", root_pid=gone, root_start="1", registry=[[gone, "1"]])
+        self.assertEqual(limits.still_alive(ran), ([], False))
+
+    @unittest.skipUnless(POSIX, "the run token is the Linux ownership marker")
+    def test_stable_scan_rescans_after_vanished_process(self):
+        # Codex BC3-02: the listing holds P; P forks Q (not listed) and exits before its environment is read. The
+        # pass saw P vanish, so it is repeated from a fresh listing, which holds Q
+        token = "ab" * 16
+        base = os.getpid() + 1000000                     # fake pids, never real ones
+        P, Q = base + 1, base + 2
+        env_q = b"\0".join([b"PATH=/bin", (limits.TOKEN_VAR + "=" + token).encode("ascii"), b""])
+        tables, gone_lists, listings = [], [], []
+
+        def listing():
+            i = len(listings)
+            listings.append(i)
+            return tables[i], (gone_lists[i] if i < len(gone_lists) else set())
+
+        def read_environ(pid):
+            if pid == P:
+                raise ProcessLookupError(3, "No such process")
+            return env_q
+
+        def scan(start_time=lambda pid: "510" if pid == Q else None):
+            listings.clear()
+            return limits._stable_token_scan(token, "400", None, listing=listing, read_environ=read_environ,
+                                             start_time=start_time)
+
+        tables[:] = [{P: ("S", 1, "500")}, {Q: ("S", 1, "510")}]
+        found, unreadable, _, stable = scan()
+        self.assertEqual((found, unreadable, stable, len(listings)), ({Q: "510"}, [], True, 2))
+        # a pid listed by /proc that vanished before its stat could be read counts the same way
+        tables[:] = [{}, {Q: ("S", 1, "510")}]
+        gone_lists[:] = [{base + 9}]
+        found, _, _, stable = scan()
+        self.assertEqual((found, stable, len(listings)), ({Q: "510"}, True, 2))
+        gone_lists[:] = []
+        # a carrier that exits after its environment was read (start time gone) also forces a rescan
+        tables[:] = [{Q: ("S", 1, "510")}, {Q: ("S", 1, "510")}]
+        seq = iter([None, "510"])
+        found, _, _, stable = scan(start_time=lambda pid: next(seq))
+        self.assertEqual((found, stable, len(listings)), ({Q: "510"}, True, 2))
+        # a zombie started since the launch: accepted once a second listing shows the same zombie
+        tables[:] = [{P: ("Z", 1, "505")}, {P: ("Z", 1, "505")}]
+        found, _, _, stable = scan()
+        self.assertEqual((found, stable, len(listings)), ({}, True, 2))
+
+    @unittest.skipUnless(POSIX, "the run token is the Linux ownership marker")
+    def test_stable_scan_persistent_churn_unconfirmed(self):
+        # every pass sees a listed process vanish: no stable snapshot within SCAN_PASSES passes -> unconfirmed
+        token = "cd" * 16
+        base = os.getpid() + 2000000
+        n = []
+
+        def listing():
+            n.append(1)
+            return {base + len(n): ("S", 1, "600")}, set()
+
+        def read_environ(pid):
+            raise FileNotFoundError(2, "No such file or directory")
+        found, unreadable, _, stable = limits._stable_token_scan(token, "400", None, listing=listing,
+                                                                 read_environ=read_environ, start_time=lambda p: None)
+        self.assertEqual((found, unreadable, stable, len(n)), ({}, [], False, limits.SCAN_PASSES))
+        # still_alive and cleanup on a record with a gone root identity report it unconfirmed
+        gone = self.gone()
+        rec = dict(limits._launch_marks(), phase="running", isolation="subreaper", root_pid=gone, root_start="1",
+                   registry=[[gone, "1"]], launch_ticks=0)
+        with mock.patch.object(limits, "_table_scan", listing), \
+                mock.patch.object(limits, "_read_environ", read_environ):
+            self.assertEqual(limits.still_alive(rec), ([], True))
+            self.assertTrue(limits.cleanup(rec, "test").cleanup_unconfirmed)
+        self.assertEqual(limits.still_alive(dict(rec, launch_ticks=limits._launch_marks()["launch_ticks"])),
+                         ([], False))
 
     @unittest.skipUnless(POSIX, "the run token is the Linux ownership marker")
     def test_unreadable_counts_only_after_wrapper_gone(self):

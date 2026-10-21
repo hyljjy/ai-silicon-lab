@@ -1172,6 +1172,10 @@ class TestBatchD(Base):
             self.assertTrue(all(r["prompt_ok"] for r in s["rows"]))
             want_sys = rp.sha256(os.path.join(prompts, "system.md"))
             self.assertTrue(all(r["system_sha"] == want_sys for r in s["rows"]))
+            # Codex BC3-S1: the summary claims call / extraction / byte comparison only; the gate is a WSL step
+            self.assertEqual(s["gate"], "not run (WSL step)")
+            self.assertRegex(self.out, r"SMOKE rehearsal CALL/EXTRACT (OK|FAIL) \(gate not run here\) -> ")
+            self.assertNotIn("SMOKE rehearsal OK", self.out)
             # a stale rehearsal prompt of one model is refused before any launch
             f = os.path.join(self.smoke_dir(), "rehearsal_kimi.md")
             write(f, rp.read_bytes(f) + b"\n")

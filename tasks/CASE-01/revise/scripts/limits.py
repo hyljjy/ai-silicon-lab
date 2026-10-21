@@ -29,8 +29,16 @@ Ownership (primary):
     gpg-agent, sudo ... started by the user meanwhile in the same cgroup). The unreadable pids are reported
     (Limited.unreadable, still_alive(details=...)) so the author knows what to clear. boot_id: in another boot nothing
     of the run exists.
-    Residual limits: (1) a child frozen between fork and exec does not carry the token yet; Popen returns only after
-    exec succeeded, and the window only matters if the wrapper dies inside it AND the child stays frozen. (2) A
+    Launch window (Codex BC3-01): a child between fork and exec does not carry the token yet (Popen returns only
+    after exec succeeded). A record without the root identity (phase "launching": the wrapper died before the
+    "running" save) therefore never counts as confirmed: still_alive / cleanup report it unconfirmed (cleanup still
+    stops every token carrier it finds) and recovery stops, whatever the token scan finds.
+    Stable snapshot (Codex BC3-02): a token scan that sees a listed process vanish during the pass (its stat or
+    environment can no longer be read, a token carrier exits after its environment was read, a new zombie) is
+    repeated from a fresh /proc listing, since a process forked by it before it exited is listed only by then; when
+    SCAN_PASSES passes in a row see such a disappearance, the result is unconfirmed (still_alive, cleanup, verify).
+    Residual limits: (1) conservative, not unsafe: on a busy system unrelated processes started since the launch that
+    exit during every pass make the result unconfirmed (a stop the author clears), never a false confirmation. (2) A
     migration mediated by PID 1 or by root (e.g. "systemd-run --user --scope", which asks the user manager to move
     the process into user@<uid>.service) can carry a descendant out of the launch cgroup; if it is then also unreadable
     it is not counted. The graded flow (grade.py and its tools) does neither.
@@ -86,6 +94,7 @@ READ_CHUNK = 65536
 CLEANUP_SLACK = 10                                    # cleanup total <= term_wait + kill_wait + 10 s
 PIPE_EOF_WAIT = 2.0                                   # after cleanup, both pipes must reach EOF within this time
 TOKEN_VAR = "CASE01_LIMITS_RUN_TOKEN"                 # Linux: environment variable carrying the run token
+SCAN_PASSES = 5                                       # Linux: token scan passes until one sees no process vanish
 
 
 class IsolationFail(RuntimeError):
@@ -391,15 +400,22 @@ else:
             return None
         return st[2]
 
-    def _table():
-        """{pid: (state, ppid, starttime)} for every process; raises OSError when /proc cannot be read."""
-        out = {}
+    def _table_scan():
+        """({pid: (state, ppid, starttime)} for every process, {pids listed in /proc that vanished before their stat
+        could be read}); raises OSError when /proc cannot be read."""
+        out, vanished = {}, set()
         for name in os.listdir("/proc"):
             if name.isdigit():
                 st = _stat(int(name))
                 if st is not None:
                     out[int(name)] = st
-        return out
+                else:
+                    vanished.add(int(name))
+        return out, vanished
+
+    def _table():
+        """{pid: (state, ppid, starttime)} for every process; raises OSError when /proc cannot be read."""
+        return _table_scan()[0]
 
     def _kill_pid(pid):
         try:
@@ -445,29 +461,66 @@ else:
             return False
         return cg != launch_cg and not cg.startswith(launch_cg.rstrip("/") + "/")
 
-    def _token_scan(token, since, table, launch_cg=None):
+    def _token_scan(token, since, table, launch_cg=None, read_environ=None, start_time=None):
         """({pid: start} of the running processes whose environment holds TOKEN_VAR=token, [pids of this user whose
-        environment could not be read]) among the processes of `table` started at or after `since` clock ticks. An
-        unreadable process outside the launch cgroup subtree (launch_cg) is not counted (module docstring)."""
+        environment could not be read], {pids that exited during the pass}) among the processes of `table` started at
+        or after `since` clock ticks. An unreadable process outside the launch cgroup subtree (launch_cg) is not
+        counted (module docstring). "Exited during the pass" (Codex BC3-02): the environment read failed with
+        ENOENT/ESRCH, or a token carrier no longer runs with its listed start time after its environment was read; a
+        process it forked before exiting may be missing from `table`. A zombie started since `since` is reported too
+        (it may have forked before exiting, after the listing); _stable_token_scan accepts it once a later pass lists
+        the same zombie again. read_environ / start_time: injectable readers (tests); default the /proc readers."""
+        read_environ = read_environ or _read_environ
+        start_time = start_time or _start_time
         needle = f"{TOKEN_VAR}={token}".encode("ascii")
         me, uid = os.getpid(), os.getuid()
-        found, unreadable = {}, []
+        found, unreadable, vanished = {}, [], set()
         for pid, (state, _, start) in table.items():
-            if pid == me or state in ("Z", "X", "x"):
+            if pid == me:
                 continue
             if since is not None and int(start) < int(since):
                 continue
+            if state in ("Z", "X", "x"):
+                vanished.add(pid)
+                continue
             try:
-                data = _read_environ(pid)
+                data = read_environ(pid)
             except (FileNotFoundError, ProcessLookupError):
+                vanished.add(pid)
                 continue
             except OSError:
                 if _same_user(pid, uid) and not _outside(_cgroup(pid), launch_cg):
                     unreadable.append(pid)
                 continue
-            if needle in data.split(b"\0") and _start_time(pid) == start:
-                found[pid] = start
-        return found, unreadable
+            if needle in data.split(b"\0"):
+                if start_time(pid) == start:
+                    found[pid] = start
+                else:
+                    vanished.add(pid)
+        return found, unreadable, vanished
+
+    def _stable_token_scan(token, since, launch_cg=None, listing=None, read_environ=None, start_time=None,
+                           passes=None):
+        """Token scan over a stable process snapshot (Codex BC3-02): (found, unreadable, table, stable). A pass in
+        which a listed process vanished (its stat or environment could not be read any more: ENOENT/ESRCH), a token
+        carrier exited after its environment was read, or a zombie appeared that the previous pass had not listed,
+        is repeated from a fresh listing: a process forked by the vanished one before it exited is listed by then.
+        stable is False when no pass out of `passes` (default SCAN_PASSES) was free of such disappearances; the
+        caller must then count the result as unconfirmed. listing / read_environ / start_time: injectable readers
+        (tests); listing returns (table, vanished pids) like _table_scan."""
+        listing = listing or _table_scan
+        passes = SCAN_PASSES if passes is None else passes
+        zombies_before = set()
+        found, unreadable, table = {}, [], {}
+        for _ in range(passes):
+            table, gone = listing()
+            found, unreadable, vanished = _token_scan(token, since, table, launch_cg, read_environ, start_time)
+            zombies = {(pid, table[pid][2]) for pid in vanished if pid in table and table[pid][0] in ("Z", "X", "x")}
+            churn = set(gone) | {pid for pid in vanished if pid not in table or table[pid][0] not in ("Z", "X", "x")}
+            if not churn and zombies <= zombies_before:
+                return found, unreadable, table, True
+            zombies_before = zombies
+        return found, unreadable, table, False
 
     def _boot_id():
         try:
@@ -621,7 +674,8 @@ class _Run:
                     if self.popen is not None or pid in self.registry:
                         seeds.add(pid)
         if self.token:                                 # every process carrying the run token is ours
-            found, _ = _token_scan(self.token, self.since, table, self.cgroup)
+            # registration only (single pass): the verdict comes from verify(), which uses a stable snapshot
+            found = _token_scan(self.token, self.since, table, self.cgroup)[0]
             seeds.update(found)
         children = collections.defaultdict(list)
         for pid, (_, ppid, _) in table.items():
@@ -732,9 +786,11 @@ class _Run:
             alive += [p for p in jpids if p not in alive] or [self.root_pid]
         if self.token:                                 # Linux: unregistered processes carrying the run token
             try:
-                found, unreadable = _token_scan(self.token, self.since, _table(), self.cgroup)
+                found, unreadable, _, stable = _stable_token_scan(self.token, self.since, self.cgroup)
             except OSError:
-                found, unreadable = {}, []
+                found, unreadable, stable = {}, [], True
+                self.unconfirmed = True
+            if not stable:                             # the process set kept changing during the scan (BC3-02)
                 self.unconfirmed = True
             alive += [p for p in found if p not in alive]
             if unreadable and self.popen is None:      # only once the wrapper (and its subreaper role) is gone
@@ -1147,6 +1203,11 @@ def _record_view(rec):
             problem = True
         if rec.get("isolation") == "subreaper" and not _ended_normally(rec):
             problem = True
+    elif root is None:
+        # Codex BC3-01: a Linux record without the root identity ("launching": the wrapper died around Popen). The
+        # child may still be between fork and exec, with the wrapper's environment and no run token yet; a token
+        # scan that finds nothing cannot prove that the launch window is empty
+        problem = True
     return root, entries, token, problem
 
 
@@ -1154,7 +1215,8 @@ def still_alive(proc_record, details=None):
     """(alive pids, unconfirmed) for a lifecycle record: the root and every registry entry, same pid AND same start
     time; on Linux also every process carrying the record's run token. The second value is True when the process
     table could not be read for some entry, an environment of this user could not be read, or the record cannot prove
-    anything (no root identity and no token; a Linux record without token of a run that did not end normally).
+    anything (no root identity; a Linux record without token of a run that did not end normally), or (Linux) the
+    token scan saw no stable process snapshot within SCAN_PASSES passes.
     details: an optional dict that receives "unreadable" (pids whose environment could not be read)."""
     if proc_record.get("phase") == "not_started":
         return [], False
@@ -1176,10 +1238,10 @@ def still_alive(proc_record, details=None):
             unconfirmed = True
         else:
             try:
-                found, unreadable = _token_scan(token, proc_record.get("launch_ticks"), _table(),
-                                                proc_record.get("cgroup"))
+                found, unreadable, _, stable = _stable_token_scan(token, proc_record.get("launch_ticks"),
+                                                                  proc_record.get("cgroup"))
                 alive += [p for p in found if p not in alive]
-                unconfirmed = unconfirmed or bool(unreadable)
+                unconfirmed = unconfirmed or bool(unreadable) or not stable
                 if details is not None:
                     details["unreadable"] = list(unreadable)
             except OSError:
@@ -1191,11 +1253,12 @@ def _gentle_top_carriers(run, token, proc_record, wait):
     """No root identity (a "launching" record): SIGTERM the top-level token carriers (whose parent does not carry the
     token; normally the root), recorded before sending, then wait like the gentle stage of run_limited."""
     try:
-        table = _table()
-        found, _ = _token_scan(token, proc_record.get("launch_ticks"), table, proc_record.get("cgroup"))
+        found, _, table, stable = _stable_token_scan(token, proc_record.get("launch_ticks"), proc_record.get("cgroup"))
     except OSError:
         run.unconfirmed = True
         return
+    if not stable:
+        run.unconfirmed = True
     tops = sorted(p for p in found if table[p][1] not in found)
     sent = False
     for pid in tops:

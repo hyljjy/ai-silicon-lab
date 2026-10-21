@@ -81,6 +81,7 @@ CAP_PROBE_TOKENS = "64"
 CANARY_RE = re.compile(r"暗号是：([^。\s]+)。")   # the canary words of smoke_system.md / smoke_user.md
 SMOKE_STOP_ROUND = 1      # smoke stops are written as round-1 call-side stops (details["smoke"] = kind)
 SMOKE_KINDS = ("probe", "canary", "rehearsal")
+REHEARSAL_GATE = "not run (WSL step)"                # rehearsal summary: the gate is plan Task 13 Step 2 (gate.py)
 HIDDEN = "<已隐去>"
 WORKDIR_RE = re.compile(r"rv-[0-9a-f]{12}")
 STATES = ("pending", "running1", "await_retry", "running2", "final")
@@ -928,6 +929,9 @@ def run_smoke(ctx, kind):
     check_preflight(ctx, models, SMOKE_STOP_ROUND, {"smoke": kind, "stamp": stamp})
     tokens = CAP_PROBE_TOKENS if kind == "probe" else MAX_OUTPUT_TOKENS
     summary, all_ok, exit_code = [], True, None
+    # Codex BC3-S1: the rehearsal here checks call, extraction and the candidate byte comparison only; the gate of
+    # plan Task 13 Step 2 is a separate WSL step (gate.py) whose result is recorded on its own
+    head = {"gate": REHEARSAL_GATE} if kind == "rehearsal" else {}
     for i, (m, (system, stdin), chk) in enumerate(zip(models, inputs, checks)):
         disk = rp.disk_problems(free_bytes=ctx.free_bytes)           # before every call (Codex BC1-09)
         if disk:
@@ -956,7 +960,8 @@ def run_smoke(ctx, kind):
             row["ok"] = False
             summary.append(row)
             all_ok = False
-            _write(os.path.join(rec_dir, "summary.json"), _dump({"kind": kind, "time": _now(), "rows": summary}))
+            _write(os.path.join(rec_dir, "summary.json"), _dump({"kind": kind, "time": _now(), **head,
+                                                                 "rows": summary}))
             exit_code = _raise(ctx, SMOKE_STOP_ROUND, None,
                                [(REASON_ISOLATION if launch else REASON_KILL,
                                  {"smoke": kind, "stamp": stamp, "run_order_index": i,
@@ -985,8 +990,12 @@ def run_smoke(ctx, kind):
         summary.append(row)
         print(f"{m['name']}: {kind} ok={ok} delivery={verdict.delivery} categories={'、'.join(cats) or '无'}",
               flush=True)
-    _write(os.path.join(rec_dir, "summary.json"), _dump({"kind": kind, "time": _now(), "rows": summary}))
-    print(f"SMOKE {kind} {'OK' if all_ok else 'FAIL'} -> {_rel(ctx, rec_dir)}", flush=True)
+    _write(os.path.join(rec_dir, "summary.json"), _dump({"kind": kind, "time": _now(), **head, "rows": summary}))
+    if kind == "rehearsal":
+        print(f"SMOKE rehearsal CALL/EXTRACT {'OK' if all_ok else 'FAIL'} (gate not run here) -> "
+              f"{_rel(ctx, rec_dir)}", flush=True)
+    else:
+        print(f"SMOKE {kind} {'OK' if all_ok else 'FAIL'} -> {_rel(ctx, rec_dir)}", flush=True)
     if exit_code is not None:
         return exit_code
     return EXIT_OK if all_ok else EXIT_REFUSED

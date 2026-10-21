@@ -483,8 +483,7 @@ class TestAttempts(Base):
 
     def test_retry_refused_when_recovery_raises_stop(self):
         # Codex BC1-07: disk fine at entry, the recovery of attempt 1 finds low disk (a stop); --retry must not go on
-        self.craft_crash("", proc_fields={"root_pid": None, "root_start": None, "registry": None,
-                                          "phase": "launching"})
+        self.craft_crash("", proc_fields={"phase": "running"})
         calls = []
 
         def free(vol):
@@ -501,8 +500,7 @@ class TestAttempts(Base):
 
     def test_retry_refused_when_disk_low_after_recovery(self):
         # the recovery itself raised no stop, but the disk is low before the next started.json
-        self.craft_crash("", proc_fields={"root_pid": None, "root_start": None, "registry": None,
-                                          "phase": "launching"})
+        self.craft_crash("", proc_fields={"phase": "running"})
         calls = []
 
         def free(vol):
@@ -689,15 +687,20 @@ class TestRecovery(Base):
             self.recover()
         self.assertFalse(os.path.exists(os.path.join(adir, "attempt.json")))
 
-    def test_recovery_launching_record_is_wrapper_interrupted(self):
-        # the wrapper died after the record written before Popen: the token proves that no process of it is left
-        self.craft_crash("", proc_fields={"root_pid": None, "root_start": None, "registry": None,
-                                          "phase": "launching"})
-        self.recover()
-        rec = load(os.path.join(self.adir(1), "attempt.json"))
-        self.assertIn("wrapper_interrupted", rec["attribution_evidence"])
-        self.assertEqual(rec["attribution"], "external")
-        self.assertEqual(self.stop_records(), [])
+    def test_recovery_launching_record_stops(self):
+        # Codex BC3-01: the wrapper died after the record written before Popen. A child between fork and exec does
+        # not carry the run token yet, so finding no token carrier proves nothing: recovery stops, no retry
+        adir = self.craft_crash("", proc_fields={"root_pid": None, "root_start": None, "registry": None,
+                                                 "phase": "launching"})
+        self.assertEqual(limits.still_alive(load(os.path.join(adir, "proc.json"))), ([], True))
+        with self.assertRaises(run_grade.RunGradeError):
+            self.recover()
+        self.assertFalse(os.path.exists(os.path.join(adir, "attempt.json")))
+        self.assertIn("恢复时无法确认旧进程已退出", [s["reason"] for s in self.stop_records()])
+        with self.assertRaises(run_grade.RunGradeError) as cm:
+            self.run_attempt("success", retry=True)
+        self.assertIn("REFUSED", str(cm.exception))
+        self.assertFalse(os.path.exists(self.adir(2)))
 
     def test_recovery_not_started_record_is_launch_error(self):
         self.craft_crash("", proc_fields={"root_pid": None, "root_start": None, "registry": None,
