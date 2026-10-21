@@ -45,6 +45,8 @@
 
 Task 2 上限证据的范围，见文末"待定"。
 
+**位置更正（2026-10-21）**：计划 Task 2 Step 1 写的"作者从阶段 A **封存的**原始冒烟记录中核对"有误。阶段 A 冒烟原始记录不在封存目录 `D:\study\diag_sandbox\sealed\`，而在 `D:\study\diag_sandbox\smoke-<时间>\`（见 `tasks/CASE-01/diag/smoke/summary.md`、`diag/scripts/run_round.py:406`）。上限探针记录是通过那次（2026-10-12 09:08）目录中的 `claude-cap64.*`、`kimi-cap64.*`、`deepseek-cap64.*`。计划条文替换为："作者从 `D:\study\diag_sandbox\smoke-<时间>\` 中 2026-10-12 09:08 那次冒烟的 `*-cap64.jsonl`、`*-cap64.err` 核对上限报错的英文原文……"；操作者仍不打开这些原始记录。
+
 ## RV-06 `translate_off` 类综合注释（规程 §7.2；计划 Task 4）
 
 - **发现**：Task 4 审查（2026-10-21）用探针复现：非 ANSI 模块头写 `, dbg`、把 `output dbg;` 包在 `// synopsys translate_off … translate_on` 里，`gate.py` 给出 `GATE PASS`——Yosys 只看到 7 个端口，仿真器看到 8 个；G1"不多不少"被绕过。分词器按规程把综合控制注释当注释丢弃，Yosys 却遵守它。其余规则（G2、G4–G7）不受影响，因为分词器仍看得到其间的代码。
