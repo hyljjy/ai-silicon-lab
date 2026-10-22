@@ -1,0 +1,9 @@
+# package file	source	source sha256
+constraints.md	tasks/CASE-01/revise/package_src/constraints.md	75f5ee195984c3f52a9dfd2132fcc804d6d15d04f5a1beb1bd87deb3b3fc900e
+contract_excerpt.md	tasks/CASE-01/spec.md at commit 90777e716c7fb06ee679995692723a7f99548500 (sections 1, 2, 3.1)	9b8c31e342aa68a773065004be238914f08748681be37a5789b2a716e18c0185
+context.md	tasks/CASE-01/diag/package/context.md	9e62b9b5a030d3f4a63718938cc15d4c3b5af005381416bea0ecc47848c1bc44
+path_report.rpt	tasks/CASE-01/diag/package/path_report.rpt	043e50bf6638284a043aec4cdf9a23ea999878a369ac58cfef7b613420f38d88
+case01_sdc.tcl	tasks/CASE-01/diag/package/case01_sdc.tcl	b8d1aab60d137dc39dc7cb55b2ec314b952538dfee8f5be627a140dcca09300c
+values.txt	tasks/CASE-01/diag/package/values.txt	f8829e2f20a1faaa3d4c30c1c4624fd61e9c89ffbd70fb44620ed7b1a1720fd0
+slack_summary.tsv	tasks/CASE-01/diag/package/slack_summary.tsv	dc67d9a62cb138d762ebcab4339e43c6355792f27cba0eab2be4fda741c89ddc
+dot4sat.v	tasks/CASE-01/diag/package/dot4sat.v	422ba000b48903558d797510cd4d0189b3fac9f83ba4ce4a1b22eb497194c802
