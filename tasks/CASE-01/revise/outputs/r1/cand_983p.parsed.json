@@ -1,0 +1,167 @@
+{
+ "candidate": {
+  "cfg_path": "config/impl.cand_983p.cfg",
+  "cfg_sha": "04a7f7c975219dd01cee4a23ffedd61a906cbde71e72a48c7c777cccaa353e5a",
+  "rtl_path": "rtl/dot4sat_cand_983p.v",
+  "rtl_sha_lf": "c6a9ace477734ac7ab0dbff1456686b0d5513d8f2b337fdf8e17eb1595f30cfb",
+  "rtl_sha_raw": "c6a9ace477734ac7ab0dbff1456686b0d5513d8f2b337fdf8e17eb1595f30cfb"
+ },
+ "code": "cand_983p",
+ "declared_L": 2,
+ "failure_conditions": [
+  {
+   "fc_id": "F1",
+   "source": "line 33",
+   "text": "6 个 std corner 中最差 setup slack < 0，即正式成功标准未满足（`constraints.md:24`）。"
+  },
+  {
+   "fc_id": "F2",
+   "source": "line 34",
+   "text": "RTL 仿真或门级功能仿真任一失败（valid 对齐、复位边界、饱和数值任一不符），function 判为 fail（`constraints.md:75`）。"
+  },
+  {
+   "fc_id": "F3",
+   "source": "line 35",
+   "text": "综合后面积超过 56729.408 µm²（`constraints.md:19`）。"
+  },
+  {
+   "fc_id": "F4",
+   "source": "line 36",
+   "text": "因违反 G1–G8 中任一条（端口集合、单模块、无 parameter/宏、事件控制形式、clk 用法、DECLARED_L 范围）被拒绝评估（`constraints.md:31-40`）。"
+  },
+  {
+   "fc_id": "F5",
+   "source": "line 37",
+   "text": "最差 setup slack 改善量明显小于 P1 的下端（例如仍低于 −1 ns），说明\"输入寄存即可收敛\"的一阶估计被推翻（`阶段A答复.md:119-122`）。"
+  }
+ ],
+ "hashes": {
+  "answer_sha_raw": "53f5c000e9eeb253e81cd2ef54708ccbb65bd8bf68b4535344818ffd52444263",
+  "public_sha": "53f5c000e9eeb253e81cd2ef54708ccbb65bd8bf68b4535344818ffd52444263",
+  "stderr_sha": "978d283e55cc57fb34140061c34383ac1e39d423fc9b06ecad7afcdcdf65349f",
+  "stdin_sha": "e90e689d35405c054d6be73bf05f3303c7d10e7d22b20301c396c9478e31b4a3",
+  "stdout_sha": "d8be6b745771c3ec6d3a59b3a619e86981ef322963228e79256ac568297c9cbb",
+  "system_sha": "48bc294693f802fbfb1183abe2e6f4babcf82506b63fd0519d109ea254628f85"
+ },
+ "lines": [
+  43,
+  99
+ ],
+ "prediction_L_mismatch": false,
+ "prediction_table_problem": null,
+ "predictions": [
+  {
+   "action": "插入输入寄存器，算术链不再承担 0.2T 输入延迟，L=2",
+   "basis": "阶段A答复.md:61-69；阶段A答复.md:496-500",
+   "category": "global",
+   "check": "setup",
+   "corner": "all",
+   "direction": "改善",
+   "high": "1.4",
+   "id": "P1",
+   "low": "0",
+   "metric": "slack",
+   "point": "1.07",
+   "unit": "ns",
+   "value_kind": "absolute"
+  },
+  {
+   "action": "同上，`ss_100C_1v60` 下内部路径余量更大",
+   "basis": "slack_summary.tsv:27-29；path_report.rpt:11",
+   "category": "global",
+   "check": "setup",
+   "corner": "ss_100C_1v60",
+   "direction": "改善",
+   "high": "4.9",
+   "id": "P2",
+   "low": "0",
+   "metric": "slack",
+   "point": "4.57",
+   "unit": "ns",
+   "value_kind": "absolute"
+  },
+  {
+   "action": "新增输入寄存器后 reg2reg 路径成为最差类别（基线无此类）",
+   "basis": "slack_summary.tsv:9；阶段A答复.md:191-193",
+   "category": "reg2reg",
+   "check": "setup",
+   "corner": "all",
+   "direction": "未知",
+   "high": "未知",
+   "id": "P3",
+   "low": "未知",
+   "metric": "slack",
+   "point": "未知",
+   "unit": "ns",
+   "value_kind": "absolute"
+  },
+  {
+   "action": "新增约 129 位寄存器（128 数据 + 1 valid）",
+   "basis": "阶段A答复.md:488-489；constraints.md:19-20",
+   "category": "",
+   "check": "",
+   "corner": "",
+   "direction": "退化",
+   "high": "未知",
+   "id": "P4",
+   "low": "未知",
+   "metric": "area",
+   "point": "未知",
+   "unit": "µm²",
+   "value_kind": "delta"
+  },
+  {
+   "action": "新增 reg2reg 短路径，hold 只记录不判定",
+   "basis": "阶段A答复.md:191-193；constraints.md:25",
+   "category": "reg2reg",
+   "check": "hold",
+   "corner": "all",
+   "direction": "未知",
+   "high": "未知",
+   "id": "P5",
+   "low": "未知",
+   "metric": "slack",
+   "point": "未知",
+   "unit": "ns",
+   "value_kind": "absolute"
+  },
+  {
+   "action": "延迟由 1 改为 2",
+   "basis": "constraints.md:14；contract_excerpt.md:26-34",
+   "category": "",
+   "check": "",
+   "corner": "",
+   "direction": "",
+   "high": "",
+   "id": "P6",
+   "low": "",
+   "metric": "L",
+   "point": "2",
+   "unit": "",
+   "value_kind": ""
+  },
+  {
+   "action": "valid 两级管道 + 同步复位清管道，数据路径算术不变",
+   "basis": "contract_excerpt.md:36-47；dot4sat.v:23-35",
+   "category": "",
+   "check": "",
+   "corner": "",
+   "direction": "",
+   "high": "",
+   "id": "P7",
+   "low": "",
+   "metric": "function",
+   "point": "pass",
+   "unit": "",
+   "value_kind": ""
+  }
+ ],
+ "reason": null,
+ "rnd": 1,
+ "rtl_sha_lf": "c6a9ace477734ac7ab0dbff1456686b0d5513d8f2b337fdf8e17eb1595f30cfb",
+ "rtl_sha_raw": "c6a9ace477734ac7ab0dbff1456686b0d5513d8f2b337fdf8e17eb1595f30cfb",
+ "status": "ok",
+ "trigger_lines": [],
+ "trigger_texts": [],
+ "unrun_blocks": []
+}

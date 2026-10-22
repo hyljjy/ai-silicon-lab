@@ -1,0 +1,50 @@
+{
+ "codes": {
+  "cand_983p": {
+   "calls": [
+    {
+     "categories": [],
+     "delivery": "parse",
+     "global_stop": false,
+     "interrupted": false,
+     "n": 1,
+     "retry_allowed": false
+    }
+   ],
+   "consumed": 1,
+   "final": "parse",
+   "state": "final"
+  },
+  "cand_9pbi": {
+   "calls": [
+    {
+     "categories": [],
+     "delivery": "parse",
+     "global_stop": false,
+     "interrupted": false,
+     "n": 1,
+     "retry_allowed": false
+    }
+   ],
+   "consumed": 1,
+   "final": "parse",
+   "state": "final"
+  },
+  "cand_wpml": {
+   "calls": [
+    {
+     "categories": [],
+     "delivery": "parse",
+     "global_stop": false,
+     "interrupted": false,
+     "n": 1,
+     "retry_allowed": false
+    }
+   ],
+   "consumed": 1,
+   "final": "parse",
+   "state": "final"
+  }
+ },
+ "round": 1
+}

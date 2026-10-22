@@ -1,0 +1,222 @@
+{
+ "candidate": {
+  "cfg_path": "config/impl.cand_9pbi.cfg",
+  "cfg_sha": "2a782a9bb5c426cbe07877e6b988d24d8e664b56c5c7c80588aaa26af738d868",
+  "rtl_path": "rtl/dot4sat_cand_9pbi.v",
+  "rtl_sha_lf": "86530869c62bc6b0b2ad72a00750538535a8ff09fa9666d91bfd2b76e85a4893",
+  "rtl_sha_raw": "86530869c62bc6b0b2ad72a00750538535a8ff09fa9666d91bfd2b76e85a4893"
+ },
+ "code": "cand_9pbi",
+ "declared_L": 3,
+ "failure_conditions": [
+  {
+   "fc_id": "F1",
+   "source": "line 80",
+   "text": "6 个 std 点中最差的 setup slack（WS max 的最小值）< 0。"
+  },
+  {
+   "fc_id": "F2",
+   "source": "line 81",
+   "text": "ss_n40C_1v60 下 reg2reg 类最差 setup slack < 0。这说明单个乘法器或四数相加加饱和一级仍然超过一个周期。"
+  },
+  {
+   "fc_id": "F3",
+   "source": "line 82",
+   "text": "ss_n40C_1v60 下 in2reg 类最差 setup slack 没有高于基线的 −4.1897 ns。"
+  },
+  {
+   "fc_id": "F4",
+   "source": "line 83",
+   "text": "综合面积 > 56729.408 µm²。"
+  },
+  {
+   "fc_id": "F5",
+   "source": "line 84",
+   "text": "RTL 仿真或门级功能仿真任一失败（function = fail）。"
+  },
+  {
+   "fc_id": "F6",
+   "source": "line 85",
+   "text": "评估按 L = 3 比对时，出现 valid 错位、丢失、重复，或者 valid 为 1 时 `out_data` 与参考值不等。"
+  },
+  {
+   "fc_id": "F7",
+   "source": "line 86",
+   "text": "候选因 G1–G8 任一规则被拒，没有进入评估。"
+  }
+ ],
+ "hashes": {
+  "answer_sha_raw": "9dc302ccdb53bd9689a182438afeac0f79ea50131793aba936cde16e33d5def8",
+  "public_sha": "9dc302ccdb53bd9689a182438afeac0f79ea50131793aba936cde16e33d5def8",
+  "stderr_sha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stdin_sha": "524fb1212530005ddd7e71f9fd17a92d4c0d126765ce0d9c4eb5070a3f9c08a8",
+  "stdout_sha": "097f2cf6c394d4aae0878cff0a5687b8a2a8e7f2ac813ea106edbb437ce46258",
+  "system_sha": "48bc294693f802fbfb1183abe2e6f4babcf82506b63fd0519d109ea254628f85"
+ },
+ "lines": [
+  92,
+  163
+ ],
+ "prediction_L_mismatch": false,
+ "prediction_table_problem": null,
+ "predictions": [
+  {
+   "action": "3 级流水（输入寄存、乘积寄存、输出寄存）",
+   "basis": "阶段A答复.md:63",
+   "category": "global",
+   "check": "setup",
+   "corner": "all",
+   "direction": "改善",
+   "high": "21.7",
+   "id": "P1",
+   "low": "0",
+   "metric": "slack",
+   "point": "8",
+   "unit": "ns",
+   "value_kind": "absolute"
+  },
+  {
+   "action": "3 级流水（输入寄存、乘积寄存、输出寄存）",
+   "basis": "slack_summary.tsv:35",
+   "category": "global",
+   "check": "setup",
+   "corner": "all",
+   "direction": "改善",
+   "high": "25.9",
+   "id": "P2",
+   "low": "4.19",
+   "metric": "slack",
+   "point": "12",
+   "unit": "ns",
+   "value_kind": "delta"
+  },
+  {
+   "action": "3 级流水，乘法器和加法饱和变为 reg2reg",
+   "basis": "阶段A答复.md:152",
+   "category": "reg2reg",
+   "check": "setup",
+   "corner": "ss_n40C_1v60",
+   "direction": "未知",
+   "high": "未知",
+   "id": "P3",
+   "low": "0",
+   "metric": "slack",
+   "point": "8",
+   "unit": "ns",
+   "value_kind": "absolute"
+  },
+  {
+   "action": "输入端口只直接驱动输入寄存器",
+   "basis": "path_report.rpt:11",
+   "category": "in2reg",
+   "check": "setup",
+   "corner": "ss_n40C_1v60",
+   "direction": "改善",
+   "high": "22.5",
+   "id": "P4",
+   "low": "20.5",
+   "metric": "slack",
+   "point": "21.8",
+   "unit": "ns",
+   "value_kind": "absolute"
+  },
+  {
+   "action": "输出寄存器结构不变",
+   "basis": "slack_summary.tsv:41",
+   "category": "reg2out",
+   "check": "setup",
+   "corner": "ss_n40C_1v60",
+   "direction": "不变",
+   "high": "21.8",
+   "id": "P5",
+   "low": "21.5",
+   "metric": "slack",
+   "point": "21.69",
+   "unit": "ns",
+   "value_kind": "absolute"
+  },
+  {
+   "action": "新增 128 位输入寄存器、128 位乘积寄存器、2 个 valid 寄存器",
+   "basis": "阶段A答复.md:158",
+   "category": "",
+   "check": "",
+   "corner": "",
+   "direction": "退化",
+   "high": "11345.9",
+   "id": "P6",
+   "low": "4000",
+   "metric": "area",
+   "point": "5200",
+   "unit": "µm²",
+   "value_kind": "delta"
+  },
+  {
+   "action": "新增 258 个触发器",
+   "basis": "constraints.md:19-20",
+   "category": "",
+   "check": "",
+   "corner": "",
+   "direction": "退化",
+   "high": "56729.408",
+   "id": "P7",
+   "low": "49383",
+   "metric": "area",
+   "point": "50600",
+   "unit": "µm²",
+   "value_kind": "absolute"
+  },
+  {
+   "action": "端口直连输入寄存器 D、valid 经复位门",
+   "basis": "slack_summary.tsv:52",
+   "category": "global",
+   "check": "hold",
+   "corner": "all",
+   "direction": "未知",
+   "high": "未知",
+   "id": "P8",
+   "low": "未知",
+   "metric": "slack",
+   "point": "未知",
+   "unit": "ns",
+   "value_kind": "absolute"
+  },
+  {
+   "action": "3 级流水",
+   "basis": "contract_excerpt.md:28",
+   "category": "",
+   "check": "",
+   "corner": "",
+   "direction": "",
+   "high": "",
+   "id": "P9",
+   "low": "",
+   "metric": "L",
+   "point": "3",
+   "unit": "",
+   "value_kind": ""
+  },
+  {
+   "action": "3 级流水，每级 valid 同步复位，34 位精确求和后饱和",
+   "basis": "contract_excerpt.md:38-40",
+   "category": "",
+   "check": "",
+   "corner": "",
+   "direction": "",
+   "high": "",
+   "id": "P10",
+   "low": "",
+   "metric": "function",
+   "point": "pass",
+   "unit": "",
+   "value_kind": ""
+  }
+ ],
+ "reason": null,
+ "rnd": 1,
+ "rtl_sha_lf": "86530869c62bc6b0b2ad72a00750538535a8ff09fa9666d91bfd2b76e85a4893",
+ "rtl_sha_raw": "86530869c62bc6b0b2ad72a00750538535a8ff09fa9666d91bfd2b76e85a4893",
+ "status": "ok",
+ "trigger_lines": [],
+ "trigger_texts": [],
+ "unrun_blocks": []
+}

@@ -1,0 +1,132 @@
+{
+ "candidate": {
+  "cfg_path": "config/impl.cand_wpml.cfg",
+  "cfg_sha": "d1c6b841ffdb56cbfbbd7e14bcb4078720f66201d9879fa266e90d694198f6be",
+  "rtl_path": "rtl/dot4sat_cand_wpml.v",
+  "rtl_sha_lf": "3ebe671e4bcc559b85d996d9fa44743f7e6be8e5a17c556d24ae1d7719e1f5d4",
+  "rtl_sha_raw": "3ebe671e4bcc559b85d996d9fa44743f7e6be8e5a17c556d24ae1d7719e1f5d4"
+ },
+ "code": "cand_wpml",
+ "declared_L": 2,
+ "failure_conditions": [
+  {
+   "fc_id": "F1",
+   "source": "line 26",
+   "text": "任一 std corner 的最差 setup WS < 0（constraints.md:22-24）。"
+  },
+  {
+   "fc_id": "F2",
+   "source": "line 27",
+   "text": "综合后面积 > 56729.408 µm²（constraints.md:19）。"
+  },
+  {
+   "fc_id": "F3",
+   "source": "line 28",
+   "text": "RTL 仿真或门级功能仿真中，任何观测点 `out_valid`/`out_data` 与 L=2 期望不符（contract_excerpt.md:38-39、53）。"
+  },
+  {
+   "fc_id": "F4",
+   "source": "line 29",
+   "text": "实际延迟不是 2，或因配置校验失败使候选被拒（contract_excerpt.md:58-59；constraints.md:44、46）。"
+  }
+ ],
+ "hashes": {
+  "answer_sha_raw": "9b2eb3eab70902b0fa56caac27a995b04ebc9af5f257b7fe74ce34f6fc4189e9",
+  "public_sha": "9b2eb3eab70902b0fa56caac27a995b04ebc9af5f257b7fe74ce34f6fc4189e9",
+  "stderr_sha": "89b8a99929a9237250d22227935007304ab25ed9ab78b88ba1446230b8243fe3",
+  "stdin_sha": "2510f8ab3b7e0f62cb5066050f401e569914bee9eaa9e2cea497cfb793765609",
+  "stdout_sha": "a4648291230dc84f05e2fa4f0792aec710b2719f72cd3913fd05918f78a5f087",
+  "system_sha": "48bc294693f802fbfb1183abe2e6f4babcf82506b63fd0519d109ea254628f85"
+ },
+ "lines": [
+  35,
+  98
+ ],
+ "prediction_L_mismatch": false,
+ "prediction_table_problem": null,
+ "predictions": [
+  {
+   "action": "在四个 16×16 乘积后插入乘积寄存器，形成 L=2 流水，把求和/饱和移入第二级",
+   "basis": "path_report.rpt:97-100；阶段A答复.md:103-106",
+   "category": "global",
+   "check": "setup",
+   "corner": "all",
+   "direction": "改善",
+   "high": "未知",
+   "id": "P1",
+   "low": "未知",
+   "metric": "slack",
+   "point": "未知",
+   "unit": "ns",
+   "value_kind": "absolute"
+  },
+  {
+   "action": "同一流水线改动对最差输入到寄存器 setup 路径的影响",
+   "basis": "path_report.rpt:1-5、97-100；阶段A答复.md:105-106",
+   "category": "in2reg",
+   "check": "setup",
+   "corner": "ss_n40C_1v60",
+   "direction": "改善",
+   "high": "未知",
+   "id": "P2",
+   "low": "未知",
+   "metric": "slack",
+   "point": "未知",
+   "unit": "ns",
+   "value_kind": "delta"
+  },
+  {
+   "action": "增加 4×32 位乘积寄存器和 1 个 valid 延迟寄存器",
+   "basis": "constraints.md:19-20",
+   "category": "",
+   "check": "",
+   "corner": "",
+   "direction": "退化",
+   "high": "56729.408",
+   "id": "P3",
+   "low": "未知",
+   "metric": "area",
+   "point": "未知",
+   "unit": "µm²",
+   "value_kind": "absolute"
+  },
+  {
+   "action": "采用两级流水实现，L=2",
+   "basis": "阶段A答复.md:105",
+   "category": "",
+   "check": "",
+   "corner": "",
+   "direction": "",
+   "high": "",
+   "id": "P4",
+   "low": "",
+   "metric": "L",
+   "point": "2",
+   "unit": "",
+   "value_kind": ""
+  },
+  {
+   "action": "保持 34 位精确求和与饱和语义不变，且 valid 随数据对齐",
+   "basis": "contract_excerpt.md:38-39、64-67；dot4sat.v:28-35",
+   "category": "",
+   "check": "",
+   "corner": "",
+   "direction": "",
+   "high": "",
+   "id": "P5",
+   "low": "",
+   "metric": "function",
+   "point": "pass",
+   "unit": "",
+   "value_kind": ""
+  }
+ ],
+ "reason": null,
+ "rnd": 1,
+ "rtl_sha_lf": "3ebe671e4bcc559b85d996d9fa44743f7e6be8e5a17c556d24ae1d7719e1f5d4",
+ "rtl_sha_raw": "3ebe671e4bcc559b85d996d9fa44743f7e6be8e5a17c556d24ae1d7719e1f5d4",
+ "status": "ok",
+ "trigger_lines": [],
+ "trigger_texts": [],
+ "unrun_blocks": []
+}
