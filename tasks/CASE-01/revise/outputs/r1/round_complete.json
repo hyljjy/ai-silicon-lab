@@ -1,0 +1,13 @@
+{
+ "round": 1,
+ "time": "2026-10-25T07:54:40-07:00",
+ "states": {
+  "cand_983p": "grade_fail",
+  "cand_9pbi": "grade_fail",
+  "cand_wpml": "grade_fail"
+ },
+ "author_review": {
+  "text": "作者检查点 5（2026-10-25）：作者看过三个候选的 status.json、判定表 r1_judgments.md、操作者写的 9 条说明 r1_notes.jsonl，以及网表诊断计划；作者原话：判定、说明和诊断计划我都看过了，同意。",
+  "recorded_at": "2026-10-25T07:54:40-07:00"
+ }
+}
