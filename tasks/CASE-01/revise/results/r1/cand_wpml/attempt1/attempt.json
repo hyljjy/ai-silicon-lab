@@ -1,0 +1,179 @@
+{
+ "code": "cand_wpml",
+ "rnd": 1,
+ "k": 1,
+ "cmd": [
+  "python3",
+  "-B",
+  "scripts/grade.py",
+  "--impl",
+  "config/impl.cand_wpml.cfg"
+ ],
+ "start": "2026-10-24T21:11:18-07:00",
+ "end": "2026-10-24T21:11:48-07:00",
+ "exit_code": 1,
+ "timed_out": false,
+ "over_limit": false,
+ "signals_sent": [],
+ "launch_error": null,
+ "supervision_error": null,
+ "run_id": "20261024-211118-cand_wpml-T27.91",
+ "final_line": "GRADE FAIL: GradeError: sta failed (exit 1, see sta/sta.log): | Error: 171 /mnt/d/study/ai_native_design/tasks/CASE-01/runs/20261024-211118-cand_wpml-T27.91/synth/netlist.v line 6108, syntax error",
+ "final_line_missing": false,
+ "failure_location": "sta",
+ "attribution": "no_external_evidence",
+ "attribution_evidence": [],
+ "disk_before": {
+  "time": "2026-10-24T21:11:18-07:00",
+  "min_gib": 20,
+  "free_bytes": {
+   "/": 1019154419712,
+   "/mnt/d": 270703026176
+  },
+  "problems": []
+ },
+ "disk_after": {
+  "time": "2026-10-24T21:11:48-07:00",
+  "min_gib": 20,
+  "free_bytes": {
+   "/": 1019159064576,
+   "/mnt/d": 270695968768
+  },
+  "problems": []
+ },
+ "dependency_after": {
+  "time": "2026-10-24T21:11:48-07:00",
+  "ok": true,
+  "items": [
+   {
+    "name": "iverilog",
+    "path": "/home/eda/tools/oss-cad-suite/bin/iverilog",
+    "exists": true
+   },
+   {
+    "name": "vvp",
+    "path": "/home/eda/tools/oss-cad-suite/bin/vvp",
+    "exists": true
+   },
+   {
+    "name": "yosys",
+    "path": "/home/eda/tools/oss-cad-suite/bin/yosys",
+    "exists": true
+   },
+   {
+    "name": "sta",
+    "path": "/home/eda/tools/opensta/bin/sta",
+    "exists": true
+   },
+   {
+    "name": "python3",
+    "path": "/usr/bin/python3",
+    "exists": true
+   },
+   {
+    "name": "$SKY130_KIT",
+    "path": "/home/eda/pdk/sky130hd_kit",
+    "exists": true
+   },
+   {
+    "name": "$SKY130_KIT/MANIFEST.txt",
+    "path": "/home/eda/pdk/sky130hd_kit/MANIFEST.txt",
+    "exists": true
+   },
+   {
+    "name": "$SKY130_HD/verilog/primitives.v",
+    "path": "/home/eda/pdk/sky130A/libs.ref/sky130_fd_sc_hd/verilog/primitives.v",
+    "exists": true
+   },
+   {
+    "name": "$SKY130_HD/verilog/sky130_fd_sc_hd.v",
+    "path": "/home/eda/pdk/sky130A/libs.ref/sky130_fd_sc_hd/verilog/sky130_fd_sc_hd.v",
+    "exists": true
+   },
+   {
+    "name": "liberty tt_025C_1v80",
+    "path": "/home/eda/pdk/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib",
+    "exists": true
+   },
+   {
+    "name": "liberty tt_100C_1v80",
+    "path": "/home/eda/pdk/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_100C_1v80.lib",
+    "exists": true
+   },
+   {
+    "name": "liberty ss_100C_1v60",
+    "path": "/home/eda/pdk/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__ss_100C_1v60.lib",
+    "exists": true
+   },
+   {
+    "name": "liberty ss_n40C_1v60",
+    "path": "/home/eda/pdk/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__ss_n40C_1v60.lib",
+    "exists": true
+   },
+   {
+    "name": "liberty ff_n40C_1v95",
+    "path": "/home/eda/pdk/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__ff_n40C_1v95.lib",
+    "exists": true
+   },
+   {
+    "name": "liberty ff_100C_1v95",
+    "path": "/home/eda/pdk/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__ff_100C_1v95.lib",
+    "exists": true
+   },
+   {
+    "name": "env/SHA256SUMS",
+    "path": "/mnt/d/study/ai_native_design/env/SHA256SUMS",
+    "exists": true
+   },
+   {
+    "name": "env/tools.sha256",
+    "path": "/mnt/d/study/ai_native_design/env/tools.sha256",
+    "exists": true
+   }
+  ]
+ },
+ "files": [
+  {
+   "path": "stdout.txt",
+   "state": "produced",
+   "reason": null,
+   "sha256": "9c547e44daf38bbee124697fe70c3dffb58d9be5b55bf53022df5972cb9cce4f"
+  },
+  {
+   "path": "stderr.txt",
+   "state": "produced",
+   "reason": null,
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "verdict.json",
+   "state": "produced",
+   "reason": null,
+   "sha256": "ccf85c1bcb404d7a986a6bc6b862a4b51705f5f4388224ec94526d4c88bda61a"
+  },
+  {
+   "path": "steps.json",
+   "state": "produced",
+   "reason": null,
+   "sha256": "450f8638374af09fabb7d5c69946800f64818721efd0cff3042710567259e935"
+  },
+  {
+   "path": "inputs.sha256",
+   "state": "produced",
+   "reason": null,
+   "sha256": "e361f3b2427c4858cc66772a6fcf27f04d5339c6141b649eeee719b3cde84596"
+  },
+  {
+   "path": "sta/sta.log",
+   "state": "produced",
+   "reason": null,
+   "sha256": "4c47887e4b7d96923839fa732c84d15a5caf2f8c47a493bf7853c06760589d05"
+  },
+  {
+   "path": "sta/",
+   "state": "not_run",
+   "reason": "sta_analysis is not pass (verdict.json analysis_valid is not true)",
+   "sha256": null
+  }
+ ]
+}

@@ -1,0 +1,57 @@
+{
+ "functional_pass": true,
+ "analysis_valid": false,
+ "run_id": "20261024-211042-cand_9pbi-T27.91",
+ "phase": "post-F1",
+ "impl": {
+  "name": "cand_9pbi",
+  "top": "dot4sat",
+  "rtl": "rtl/dot4sat_cand_9pbi.v",
+  "L": "3"
+ },
+ "T_ns": 27.91,
+ "C_load_pF": 0.0024,
+ "L_max": 3,
+ "seed": 1,
+ "sceneset": "std",
+ "calib_session": "runs/20261009-080227-calib-20261009-073842-base-T20",
+ "timing_target": {
+  "rule": "setup_ge_0_std",
+  "met": null,
+  "worst_setup_std": null,
+  "note": "not evaluated: no valid analysis"
+ },
+ "area": {
+  "area_um2": 48790.544,
+  "cap_um2": 56729.408,
+  "within_cap": true
+ },
+ "rtl_lint": [],
+ "env_ids": {
+  "env/SHA256SUMS": "5b9923d297888992dd0bc4b35d5cd675d3cd87ae9095e30aa6b8b5a0c44366eb",
+  "env/tools.sha256": "e26b403cf83dc1397ca3daffb42034ce6869ec7a09b3f229b65225b3fd49594d",
+  "$SKY130_KIT/MANIFEST.txt": "0fa8891a1f3c1dcbdb359cf9d5ba0a62f7aad361c786d2961cbd1f8bdbff994c"
+ },
+ "tool_versions": [
+  "Icarus Verilog version 14.0 (devel) (s20260301-508-g2f296d88a-dirty)",
+  "Yosys 0.69+187 (git sha1 2f08661dd, Release, Clang /usr/bin/clang++ 21.1.8)",
+  "OpenSTA 3.1.0",
+  "Python 3.12.3"
+ ],
+ "frozen_checks": [
+  "rtl_sim",
+  "gl_sim"
+ ],
+ "rtl_sim": "checked=2816",
+ "area_um2": 48790.544,
+ "netlist_sha256": "12988caae38fd663137e913170dc0cf0556ddbd9c3249f3d4baef110364de5fc",
+ "netlist_checks": [
+  "gate-level simulation",
+  "STA"
+ ],
+ "gl_sim": "checked=2816",
+ "whitelist_hits": {
+  "3": 1
+ },
+ "error": "GradeError: sta failed (exit 1, see sta/sta.log):\nError: 171 /mnt/d/study/ai_native_design/tasks/CASE-01/runs/20261024-211042-cand_9pbi-T27.91/synth/netlist.v line 6102, syntax error"
+}

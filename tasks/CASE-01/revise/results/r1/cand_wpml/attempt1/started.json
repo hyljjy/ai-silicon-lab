@@ -1,0 +1,113 @@
+{
+ "code": "cand_wpml",
+ "rnd": 1,
+ "k": 1,
+ "cmd": [
+  "python3",
+  "-B",
+  "scripts/grade.py",
+  "--impl",
+  "config/impl.cand_wpml.cfg"
+ ],
+ "start": "2026-10-24T21:11:18-07:00",
+ "disk_before": {
+  "time": "2026-10-24T21:11:18-07:00",
+  "min_gib": 20,
+  "free_bytes": {
+   "/": 1019154419712,
+   "/mnt/d": 270703026176
+  },
+  "problems": []
+ },
+ "dependency_check": {
+  "time": "2026-10-24T21:11:18-07:00",
+  "ok": true,
+  "items": [
+   {
+    "name": "iverilog",
+    "path": "/home/eda/tools/oss-cad-suite/bin/iverilog",
+    "exists": true
+   },
+   {
+    "name": "vvp",
+    "path": "/home/eda/tools/oss-cad-suite/bin/vvp",
+    "exists": true
+   },
+   {
+    "name": "yosys",
+    "path": "/home/eda/tools/oss-cad-suite/bin/yosys",
+    "exists": true
+   },
+   {
+    "name": "sta",
+    "path": "/home/eda/tools/opensta/bin/sta",
+    "exists": true
+   },
+   {
+    "name": "python3",
+    "path": "/usr/bin/python3",
+    "exists": true
+   },
+   {
+    "name": "$SKY130_KIT",
+    "path": "/home/eda/pdk/sky130hd_kit",
+    "exists": true
+   },
+   {
+    "name": "$SKY130_KIT/MANIFEST.txt",
+    "path": "/home/eda/pdk/sky130hd_kit/MANIFEST.txt",
+    "exists": true
+   },
+   {
+    "name": "$SKY130_HD/verilog/primitives.v",
+    "path": "/home/eda/pdk/sky130A/libs.ref/sky130_fd_sc_hd/verilog/primitives.v",
+    "exists": true
+   },
+   {
+    "name": "$SKY130_HD/verilog/sky130_fd_sc_hd.v",
+    "path": "/home/eda/pdk/sky130A/libs.ref/sky130_fd_sc_hd/verilog/sky130_fd_sc_hd.v",
+    "exists": true
+   },
+   {
+    "name": "liberty tt_025C_1v80",
+    "path": "/home/eda/pdk/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib",
+    "exists": true
+   },
+   {
+    "name": "liberty tt_100C_1v80",
+    "path": "/home/eda/pdk/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_100C_1v80.lib",
+    "exists": true
+   },
+   {
+    "name": "liberty ss_100C_1v60",
+    "path": "/home/eda/pdk/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__ss_100C_1v60.lib",
+    "exists": true
+   },
+   {
+    "name": "liberty ss_n40C_1v60",
+    "path": "/home/eda/pdk/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__ss_n40C_1v60.lib",
+    "exists": true
+   },
+   {
+    "name": "liberty ff_n40C_1v95",
+    "path": "/home/eda/pdk/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__ff_n40C_1v95.lib",
+    "exists": true
+   },
+   {
+    "name": "liberty ff_100C_1v95",
+    "path": "/home/eda/pdk/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__ff_100C_1v95.lib",
+    "exists": true
+   },
+   {
+    "name": "env/SHA256SUMS",
+    "path": "/mnt/d/study/ai_native_design/env/SHA256SUMS",
+    "exists": true
+   },
+   {
+    "name": "env/tools.sha256",
+    "path": "/mnt/d/study/ai_native_design/env/tools.sha256",
+    "exists": true
+   }
+  ]
+ }
+}

@@ -1,0 +1,71 @@
+{
+ "code": "cand_wpml",
+ "rnd": 1,
+ "state": "grade_fail",
+ "flags": [],
+ "selected_attempt": 1,
+ "grade_status": "GRADE FAIL",
+ "final_line_missing": false,
+ "rtl_sim": "pass",
+ "gl_sim": "pass",
+ "sta_analysis": "fail",
+ "checked_rtl": "checked=2835",
+ "checked_gl": "checked=2835",
+ "area_um2": "46336.9408",
+ "within_cap": true,
+ "author_veto": false,
+ "declared_L": 2,
+ "cfg_L": 2,
+ "prediction_L_mismatch": false,
+ "numeric_target_met": "not_available",
+ "eligible_target_met": false,
+ "improvement": "not_applicable",
+ "worst_setup_delta": "not_available",
+ "failure_location": "sta",
+ "attribution": "no_external_evidence",
+ "attribution_evidence": [],
+ "inputs": [
+  {
+   "path": "revise/outputs/r1/cand_wpml.call.json",
+   "required": true,
+   "state": "present",
+   "reason": null
+  },
+  {
+   "path": "revise/outputs/r1/cand_wpml.parsed.json",
+   "required": true,
+   "state": "present",
+   "reason": null
+  },
+  {
+   "path": "rtl/dot4sat_cand_wpml.v",
+   "required": true,
+   "state": "present",
+   "reason": null
+  },
+  {
+   "path": "config/impl.cand_wpml.cfg",
+   "required": true,
+   "state": "present",
+   "reason": null
+  },
+  {
+   "path": "revise/results/r1/cand_wpml/gate.json",
+   "required": true,
+   "state": "present",
+   "reason": null
+  },
+  {
+   "path": "revise/review/r1.tsv#cand_wpml",
+   "required": true,
+   "state": "present",
+   "reason": null
+  },
+  {
+   "path": "revise/results/r1/cand_wpml/attempt1/attempt.json",
+   "required": true,
+   "state": "present",
+   "reason": null
+  }
+ ]
+}

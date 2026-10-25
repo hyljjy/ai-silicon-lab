@@ -1,0 +1,9 @@
+{"candidate": "cand_9pbi", "ref": "F1", "note": "六点全局 setup slack 原子均未知：STA 未取得有效结果（sta_analysis=fail：OpenSTA 读综合网表时在 signed 声明处报语法错误，见 notes/decisions.md D-01），所需的 setup slack 字段为 not_applicable，原子取未知；没有任何一点为真，故整式为未知。"}
+{"candidate": "cand_9pbi", "ref": "F2", "note": "ss_n40C_1v60 reg2reg setup slack 原子未知：STA 未取得有效结果（sta_analysis=fail：OpenSTA 读综合网表时在 signed 声明处报语法错误，见 notes/decisions.md D-01），所需的 setup slack 字段为 not_applicable，原子取未知。"}
+{"candidate": "cand_9pbi", "ref": "F3", "note": "ss_n40C_1v60 in2reg setup slack 原子未知：STA 未取得有效结果（sta_analysis=fail：OpenSTA 读综合网表时在 signed 声明处报语法错误，见 notes/decisions.md D-01），所需的 setup slack 字段为 not_applicable，原子取未知。"}
+{"candidate": "cand_9pbi", "ref": "F6", "note": "前提 cfg_L == 3 为真（cfg_L=3），与之相与的不可检验片段（按 L=3 比对时出现的具体 valid/data 不符）恒为未知，故整式为未知。冻结回归 rtl_sim、gl_sim 均为 pass，但按判据不把它当作该片段为假。"}
+{"candidate": "cand_983p", "ref": "F1", "note": "六点全局 setup slack 原子均未知：STA 未取得有效结果（sta_analysis=fail：OpenSTA 读综合网表时在 signed 声明处报语法错误，见 notes/decisions.md D-01），所需的 setup slack 字段为 not_applicable，原子取未知；整式为未知。"}
+{"candidate": "cand_983p", "ref": "F5", "note": "不可检验主条件（改善量明显小于 P1 下端）恒未知；以\"或\"相连的六点 setup slack < −1 ns 原子也未知：STA 未取得有效结果（sta_analysis=fail：OpenSTA 读综合网表时在 signed 声明处报语法错误，见 notes/decisions.md D-01），所需的 setup slack 字段为 not_applicable，原子取未知。整式为未知。"}
+{"candidate": "cand_wpml", "ref": "F1", "note": "六点全局 setup slack 原子均未知：STA 未取得有效结果（sta_analysis=fail：OpenSTA 读综合网表时在 signed 声明处报语法错误，见 notes/decisions.md D-01），所需的 setup slack 字段为 not_applicable，原子取未知；整式为未知。"}
+{"candidate": "cand_wpml", "ref": "F3", "note": "整条为不可检验片段（仿真观测点的 valid/data 与 L=2 期望不符），恒为未知。冻结回归 rtl_sim、gl_sim 均为 pass，但按判据不把它当作该条件为假。"}
+{"candidate": "cand_wpml", "ref": "F4", "note": "cfg_L ≠ 2 为假（cfg_L=2），以\"或\"相连的不可检验片段（因配置校验失败使候选被拒）恒为未知，故整式为未知。"}
