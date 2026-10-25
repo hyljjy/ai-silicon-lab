@@ -1,0 +1,50 @@
+{
+ "codes": {
+  "cand_3yvg": {
+   "calls": [
+    {
+     "categories": [],
+     "delivery": "parse",
+     "global_stop": false,
+     "interrupted": false,
+     "n": 1,
+     "retry_allowed": false
+    }
+   ],
+   "consumed": 1,
+   "final": "parse",
+   "state": "final"
+  },
+  "cand_c1dx": {
+   "calls": [
+    {
+     "categories": [],
+     "delivery": "parse",
+     "global_stop": false,
+     "interrupted": false,
+     "n": 1,
+     "retry_allowed": false
+    }
+   ],
+   "consumed": 1,
+   "final": "parse",
+   "state": "final"
+  },
+  "cand_u2pe": {
+   "calls": [
+    {
+     "categories": [],
+     "delivery": "parse",
+     "global_stop": false,
+     "interrupted": false,
+     "n": 1,
+     "retry_allowed": false
+    }
+   ],
+   "consumed": 1,
+   "final": "parse",
+   "state": "final"
+  }
+ },
+ "round": 2
+}

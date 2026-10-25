@@ -1,0 +1,15 @@
+{
+ "calls": [
+  {
+   "categories": [],
+   "delivery": "parse",
+   "global_stop": false,
+   "interrupted": false,
+   "n": 1,
+   "retry_allowed": false
+  }
+ ],
+ "code": "cand_c1dx",
+ "final": "parse",
+ "rnd": 2
+}

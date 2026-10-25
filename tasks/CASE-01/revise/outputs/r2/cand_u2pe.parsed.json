@@ -1,0 +1,222 @@
+{
+ "candidate": {
+  "cfg_path": "config/impl.cand_u2pe.cfg",
+  "cfg_sha": "9f0bd77a564b1e8854f81dd3b89ed95698d5560e992019fab9df747320b1fc78",
+  "rtl_path": "rtl/dot4sat_cand_u2pe.v",
+  "rtl_sha_lf": "e59559a8465b32243d3b7f5f7bb07d5f9fc1c4b4719be8fbf61eb792b1efae7a",
+  "rtl_sha_raw": "e59559a8465b32243d3b7f5f7bb07d5f9fc1c4b4719be8fbf61eb792b1efae7a"
+ },
+ "code": "cand_u2pe",
+ "declared_L": 3,
+ "failure_conditions": [
+  {
+   "fc_id": "F1",
+   "source": "line 80",
+   "text": "STA 步骤再次报网表 syntax error 或其他读入错误。这说明 `signed` 声明不是根因，或者不是唯一根因。"
+  },
+  {
+   "fc_id": "F2",
+   "source": "line 81",
+   "text": "6 个 std 点中最差的 setup slack < 0。"
+  },
+  {
+   "fc_id": "F3",
+   "source": "line 82",
+   "text": "ss_n40C_1v60 下 reg2reg 类最差 setup slack < 0。"
+  },
+  {
+   "fc_id": "F4",
+   "source": "line 83",
+   "text": "ss_n40C_1v60 下 in2reg 类最差 setup slack ≤ −4.1897 ns。"
+  },
+  {
+   "fc_id": "F5",
+   "source": "line 84",
+   "text": "综合面积 > 56729.408 µm²。"
+  },
+  {
+   "fc_id": "F6",
+   "source": "line 85",
+   "text": "RTL 仿真或门级功能仿真任一失败（function = fail）。"
+  },
+  {
+   "fc_id": "F7",
+   "source": "line 86",
+   "text": "候选因 G1–G8 任一规则被拒，没有进入评估。"
+  }
+ ],
+ "hashes": {
+  "answer_sha_raw": "2e62bee66617fbbb98342150305269993e7277933341afab4b8fcbea12e17a70",
+  "public_sha": "2e62bee66617fbbb98342150305269993e7277933341afab4b8fcbea12e17a70",
+  "stderr_sha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stdin_sha": "41728092fe0cbde2144dec26c6f6d7101a87ca7aaac5685709dbf6ba87f07f8b",
+  "stdout_sha": "141b3c4a24ae6c4ea070383d18de175ba2e956055def78cd09ddd111a1fed899",
+  "system_sha": "48bc294693f802fbfb1183abe2e6f4babcf82506b63fd0519d109ea254628f85"
+ },
+ "lines": [
+  92,
+  159
+ ],
+ "prediction_L_mismatch": false,
+ "prediction_table_problem": null,
+ "predictions": [
+  {
+   "action": "3 级流水，RTL 去掉 signed 声明",
+   "basis": "阶段A答复.md:152",
+   "category": "global",
+   "check": "setup",
+   "corner": "all",
+   "direction": "改善",
+   "high": "21.7",
+   "id": "P1",
+   "low": "0",
+   "metric": "slack",
+   "point": "9",
+   "unit": "ns",
+   "value_kind": "absolute"
+  },
+  {
+   "action": "3 级流水，RTL 去掉 signed 声明",
+   "basis": "slack_summary.tsv:35",
+   "category": "global",
+   "check": "setup",
+   "corner": "all",
+   "direction": "改善",
+   "high": "25.9",
+   "id": "P2",
+   "low": "4.19",
+   "metric": "slack",
+   "point": "13",
+   "unit": "ns",
+   "value_kind": "delta"
+  },
+  {
+   "action": "乘法器、加法饱和变为 reg2reg",
+   "basis": "阶段A答复.md:171",
+   "category": "reg2reg",
+   "check": "setup",
+   "corner": "ss_n40C_1v60",
+   "direction": "未知",
+   "high": "未知",
+   "id": "P3",
+   "low": "0",
+   "metric": "slack",
+   "point": "9",
+   "unit": "ns",
+   "value_kind": "absolute"
+  },
+  {
+   "action": "输入端口直接驱动输入寄存器",
+   "basis": "path_report.rpt:11-12",
+   "category": "in2reg",
+   "check": "setup",
+   "corner": "ss_n40C_1v60",
+   "direction": "改善",
+   "high": "22.5",
+   "id": "P4",
+   "low": "20.5",
+   "metric": "slack",
+   "point": "21.4",
+   "unit": "ns",
+   "value_kind": "absolute"
+  },
+  {
+   "action": "输出寄存器直接驱动端口，结构不变",
+   "basis": "slack_summary.tsv:41",
+   "category": "reg2out",
+   "check": "setup",
+   "corner": "ss_n40C_1v60",
+   "direction": "不变",
+   "high": "21.8",
+   "id": "P5",
+   "low": "21.5",
+   "metric": "slack",
+   "point": "21.69",
+   "unit": "ns",
+   "value_kind": "absolute"
+  },
+  {
+   "action": "新增 258 个触发器，饱和逻辑改写",
+   "basis": "constraints.md:20",
+   "category": "",
+   "check": "",
+   "corner": "",
+   "direction": "退化",
+   "high": "5500",
+   "id": "P6",
+   "low": "2500",
+   "metric": "area",
+   "point": "3400",
+   "unit": "µm²",
+   "value_kind": "delta"
+  },
+  {
+   "action": "新增 258 个触发器，饱和逻辑改写",
+   "basis": "constraints.md:19-20",
+   "category": "",
+   "check": "",
+   "corner": "",
+   "direction": "退化",
+   "high": "50900",
+   "id": "P7",
+   "low": "47900",
+   "metric": "area",
+   "point": "48800",
+   "unit": "µm²",
+   "value_kind": "absolute"
+  },
+  {
+   "action": "端口直连寄存器 D，valid 链",
+   "basis": "slack_summary.tsv:52",
+   "category": "global",
+   "check": "hold",
+   "corner": "all",
+   "direction": "未知",
+   "high": "未知",
+   "id": "P8",
+   "low": "未知",
+   "metric": "slack",
+   "point": "未知",
+   "unit": "ns",
+   "value_kind": "absolute"
+  },
+  {
+   "action": "3 级流水",
+   "basis": "contract_excerpt.md:28",
+   "category": "",
+   "check": "",
+   "corner": "",
+   "direction": "",
+   "high": "",
+   "id": "P9",
+   "low": "",
+   "metric": "L",
+   "point": "3",
+   "unit": "",
+   "value_kind": ""
+  },
+  {
+   "action": "每级 valid 同步复位，34 位精确求和，按位饱和",
+   "basis": "contract_excerpt.md:38-40",
+   "category": "",
+   "check": "",
+   "corner": "",
+   "direction": "",
+   "high": "",
+   "id": "P10",
+   "low": "",
+   "metric": "function",
+   "point": "pass",
+   "unit": "",
+   "value_kind": ""
+  }
+ ],
+ "reason": null,
+ "rnd": 2,
+ "rtl_sha_lf": "e59559a8465b32243d3b7f5f7bb07d5f9fc1c4b4719be8fbf61eb792b1efae7a",
+ "rtl_sha_raw": "e59559a8465b32243d3b7f5f7bb07d5f9fc1c4b4719be8fbf61eb792b1efae7a",
+ "status": "ok",
+ "trigger_lines": [],
+ "trigger_texts": [],
+ "unrun_blocks": []
+}

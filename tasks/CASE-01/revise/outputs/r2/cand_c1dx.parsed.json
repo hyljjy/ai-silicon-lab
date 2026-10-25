@@ -1,0 +1,167 @@
+{
+ "candidate": {
+  "cfg_path": "config/impl.cand_c1dx.cfg",
+  "cfg_sha": "0deec4cf13846015ad60e5f40dcc3b942f423222c07b14b5e55a2753332f13c4",
+  "rtl_path": "rtl/dot4sat_cand_c1dx.v",
+  "rtl_sha_lf": "b846306d05ac9773bf572bd5facda085f08b741a091d3378cd27ba07a14a0eef",
+  "rtl_sha_raw": "b846306d05ac9773bf572bd5facda085f08b741a091d3378cd27ba07a14a0eef"
+ },
+ "code": "cand_c1dx",
+ "declared_L": 2,
+ "failure_conditions": [
+  {
+   "fc_id": "F1",
+   "source": "line 30",
+   "text": "任一 std corner 的全局最差 setup slack < 0（constraints.md:22-24）。"
+  },
+  {
+   "fc_id": "F2",
+   "source": "line 31",
+   "text": "综合后的网表在 STA 读取时再次出现语法错误，导致无法得到有效时序结果。"
+  },
+  {
+   "fc_id": "F3",
+   "source": "line 32",
+   "text": "综合后面积 > 56729.408 µm²（constraints.md:19）。"
+  },
+  {
+   "fc_id": "F4",
+   "source": "line 33",
+   "text": "RTL 仿真或门级功能仿真中，任何观测点 `out_valid`/`out_data` 与 L=2 期望不符（contract_excerpt.md:38-39、53）。"
+  },
+  {
+   "fc_id": "F5",
+   "source": "line 34",
+   "text": "实际延迟不是 2，或因配置校验失败使候选被拒（contract_excerpt.md:58-59）。"
+  }
+ ],
+ "hashes": {
+  "answer_sha_raw": "b7e698d82538528f3a2a45eb5646ac8adaa64668734767765345b262824aae4b",
+  "public_sha": "b7e698d82538528f3a2a45eb5646ac8adaa64668734767765345b262824aae4b",
+  "stderr_sha": "89b8a99929a9237250d22227935007304ab25ed9ab78b88ba1446230b8243fe3",
+  "stdin_sha": "09d65715c907fe4d427a06e18ed7ade06be1575b02438100bc87b3107f61d77d",
+  "stdout_sha": "50d026af83b5745e53968f4539803dd2da70d04545408cc8cb43daa5f096a9b2",
+  "system_sha": "48bc294693f802fbfb1183abe2e6f4babcf82506b63fd0519d109ea254628f85"
+ },
+ "lines": [
+  40,
+  96
+ ],
+ "prediction_L_mismatch": false,
+ "prediction_table_problem": null,
+ "predictions": [
+  {
+   "action": "输入先寄存为 a_q/b_q，乘法/求和/饱和整体移入第二拍 reg2reg",
+   "basis": "path_report.rpt:11、87-100",
+   "category": "global",
+   "check": "setup",
+   "corner": "all",
+   "direction": "改善",
+   "high": "未知",
+   "id": "P1",
+   "low": "未知",
+   "metric": "slack",
+   "point": "未知",
+   "unit": "ns",
+   "value_kind": "absolute"
+  },
+  {
+   "action": "同一改动使 in2reg 路径缩短为输入到 129 位寄存器 D 端",
+   "basis": "path_report.rpt:87-100；slack_summary.tsv:35-38",
+   "category": "in2reg",
+   "check": "setup",
+   "corner": "ss_n40C_1v60",
+   "direction": "改善",
+   "high": "未知",
+   "id": "P2",
+   "low": "未知",
+   "metric": "slack",
+   "point": "未知",
+   "unit": "ns",
+   "value_kind": "delta"
+  },
+  {
+   "action": "新出现的 a_q/b_q→out_data 的 reg2reg setup 路径",
+   "basis": "path_report.rpt:90-100；阶段A答复.md:5",
+   "category": "reg2reg",
+   "check": "setup",
+   "corner": "ss_n40C_1v60",
+   "direction": "未知",
+   "high": "未知",
+   "id": "P3",
+   "low": "未知",
+   "metric": "slack",
+   "point": "未知",
+   "unit": "ns",
+   "value_kind": "absolute"
+  },
+  {
+   "action": "新增 64+64 位输入寄存器和 1 位 valid 延迟寄存器",
+   "basis": "constraints.md:19-20",
+   "category": "",
+   "check": "",
+   "corner": "",
+   "direction": "退化",
+   "high": "56729.408",
+   "id": "P4",
+   "low": "未知",
+   "metric": "area",
+   "point": "未知",
+   "unit": "µm²",
+   "value_kind": "absolute"
+  },
+  {
+   "action": "实现为 L=2 两级流水",
+   "basis": "contract_excerpt.md:28-35",
+   "category": "",
+   "check": "",
+   "corner": "",
+   "direction": "",
+   "high": "",
+   "id": "P5",
+   "low": "",
+   "metric": "L",
+   "point": "2",
+   "unit": "",
+   "value_kind": ""
+  },
+  {
+   "action": "保持 34 位精确求和与饱和语义不变，valid 按 L=2 对齐",
+   "basis": "contract_excerpt.md:38-39、64-67；dot4sat.v:28-35",
+   "category": "",
+   "check": "",
+   "corner": "",
+   "direction": "",
+   "high": "",
+   "id": "P6",
+   "low": "",
+   "metric": "function",
+   "point": "pass",
+   "unit": "",
+   "value_kind": ""
+  },
+  {
+   "action": "新增内部寄存器后 hold 检查的变化",
+   "basis": "constraints.md:24-25",
+   "category": "global",
+   "check": "hold",
+   "corner": "all",
+   "direction": "未知",
+   "high": "未知",
+   "id": "P7",
+   "low": "未知",
+   "metric": "slack",
+   "point": "未知",
+   "unit": "ns",
+   "value_kind": "absolute"
+  }
+ ],
+ "reason": null,
+ "rnd": 2,
+ "rtl_sha_lf": "b846306d05ac9773bf572bd5facda085f08b741a091d3378cd27ba07a14a0eef",
+ "rtl_sha_raw": "b846306d05ac9773bf572bd5facda085f08b741a091d3378cd27ba07a14a0eef",
+ "status": "ok",
+ "trigger_lines": [],
+ "trigger_texts": [],
+ "unrun_blocks": []
+}

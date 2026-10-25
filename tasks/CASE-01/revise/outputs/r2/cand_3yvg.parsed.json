@@ -1,0 +1,172 @@
+{
+ "candidate": {
+  "cfg_path": "config/impl.cand_3yvg.cfg",
+  "cfg_sha": "3daf2226c1a686d1ff534a57cd0e52ce8d074023a0d15503a181dfdf6f3fd092",
+  "rtl_path": "rtl/dot4sat_cand_3yvg.v",
+  "rtl_sha_lf": "0e537769dd7f830663852cb850199be9a27cadf58593e9a063208042033cd5fc",
+  "rtl_sha_raw": "0e537769dd7f830663852cb850199be9a27cadf58593e9a063208042033cd5fc"
+ },
+ "code": "cand_3yvg",
+ "declared_L": 2,
+ "failure_conditions": [
+  {
+   "fc_id": "F1",
+   "source": "line 36",
+   "text": "STA 步骤再次因 `synth/netlist.v` 语法错误失败，无有效 slack 结果（说明问题与 RTL 语义无关，且材料不足以定位；第 1 轮评估结果）。"
+  },
+  {
+   "fc_id": "F2",
+   "source": "line 37",
+   "text": "6 个 std corner 中最差 setup slack < 0，正式成功标准未满足（`constraints.md:24`）。"
+  },
+  {
+   "fc_id": "F3",
+   "source": "line 38",
+   "text": "RTL 仿真或门级功能仿真任一失败，function 判 fail（`constraints.md:75`），特别是 A1 饱和边界或 L=2 valid 对齐出错。"
+  },
+  {
+   "fc_id": "F4",
+   "source": "line 39",
+   "text": "综合后面积超过 56729.408 µm²（`constraints.md:19`）。"
+  },
+  {
+   "fc_id": "F5",
+   "source": "line 40",
+   "text": "因违反 G1–G8 任一条被拒绝评估（`constraints.md:31-40`）。"
+  },
+  {
+   "fc_id": "F6",
+   "source": "line 41",
+   "text": "最差 setup slack 低于约 +0.5 ns，说明\"输入寄存 + A1 可收敛\"的估计被推翻，应改走 L=3 方案（`阶段A答复.md:539-586`）。"
+  }
+ ],
+ "hashes": {
+  "answer_sha_raw": "ce62750a6471e551655caa1cf9f905db96af590fbe84e0dc847895f41b41108d",
+  "public_sha": "ce62750a6471e551655caa1cf9f905db96af590fbe84e0dc847895f41b41108d",
+  "stderr_sha": "978d283e55cc57fb34140061c34383ac1e39d423fc9b06ecad7afcdcdf65349f",
+  "stdin_sha": "ebc85c08531ca2657b4b462456be5712f1423d327cfa007ff096502e57fb543b",
+  "stdout_sha": "6a09025bf8584d8ab897c5a7ad29141681afbc6f6f73099191a4ecc4b705a375",
+  "system_sha": "48bc294693f802fbfb1183abe2e6f4babcf82506b63fd0519d109ea254628f85"
+ },
+ "lines": [
+  47,
+  106
+ ],
+ "prediction_L_mismatch": false,
+ "prediction_table_problem": null,
+ "predictions": [
+  {
+   "action": "输入寄存器 + 高三位饱和标志，算术链不再承担 0.2T 输入延迟且比较链缩短",
+   "basis": "阶段A答复.md:61-69；阶段A答复.md:496-500；path_report.rpt:69-78",
+   "category": "global",
+   "check": "setup",
+   "corner": "all",
+   "direction": "改善",
+   "high": "未知",
+   "id": "P1",
+   "low": "0",
+   "metric": "slack",
+   "point": "1.5",
+   "unit": "ns",
+   "value_kind": "absolute"
+  },
+  {
+   "action": "同上，`ss_100C_1v60` 基线违例仅 −0.687 ns，去除 5.582 ns 输入延迟后余量更大",
+   "basis": "slack_summary.tsv:27-29；path_report.rpt:11",
+   "category": "global",
+   "check": "setup",
+   "corner": "ss_100C_1v60",
+   "direction": "改善",
+   "high": "未知",
+   "id": "P2",
+   "low": "0",
+   "metric": "slack",
+   "point": "5.0",
+   "unit": "ns",
+   "value_kind": "absolute"
+  },
+  {
+   "action": "新增寄存器使 reg2reg 类别出现（基线为 NONE），最差路径将落在此类",
+   "basis": "slack_summary.tsv:9；阶段A答复.md:191-193",
+   "category": "reg2reg",
+   "check": "setup",
+   "corner": "all",
+   "direction": "未知",
+   "high": "未知",
+   "id": "P3",
+   "low": "未知",
+   "metric": "slack",
+   "point": "未知",
+   "unit": "ns",
+   "value_kind": "absolute"
+  },
+  {
+   "action": "新增约 129 位寄存器，A1 略减比较逻辑；第 1 轮同架构实测 47983.52 µm²",
+   "basis": "constraints.md:19-20；第 1 轮评估结果面积 47983.520000",
+   "category": "",
+   "check": "",
+   "corner": "",
+   "direction": "退化",
+   "high": "2600",
+   "id": "P4",
+   "low": "2000",
+   "metric": "area",
+   "point": "2400",
+   "unit": "µm²",
+   "value_kind": "delta"
+  },
+  {
+   "action": "新增 in2reg 直达寄存器与 FF→FF valid 短路径；hold 只记录不判定",
+   "basis": "阶段A答复.md:191-193；constraints.md:25",
+   "category": "global",
+   "check": "hold",
+   "corner": "all",
+   "direction": "未知",
+   "high": "未知",
+   "id": "P5",
+   "low": "未知",
+   "metric": "slack",
+   "point": "未知",
+   "unit": "ns",
+   "value_kind": "absolute"
+  },
+  {
+   "action": "延迟由 1 改为 2",
+   "basis": "constraints.md:14；contract_excerpt.md:26-34",
+   "category": "",
+   "check": "",
+   "corner": "",
+   "direction": "",
+   "high": "",
+   "id": "P6",
+   "low": "",
+   "metric": "L",
+   "point": "2",
+   "unit": "",
+   "value_kind": ""
+  },
+  {
+   "action": "valid 两级管道与复位语义同第 1 轮（已 pass），A1 与基线饱和严格等价",
+   "basis": "contract_excerpt.md:36-47；阶段A答复.md:422-433",
+   "category": "",
+   "check": "",
+   "corner": "",
+   "direction": "",
+   "high": "",
+   "id": "P7",
+   "low": "",
+   "metric": "function",
+   "point": "pass",
+   "unit": "",
+   "value_kind": ""
+  }
+ ],
+ "reason": null,
+ "rnd": 2,
+ "rtl_sha_lf": "0e537769dd7f830663852cb850199be9a27cadf58593e9a063208042033cd5fc",
+ "rtl_sha_raw": "0e537769dd7f830663852cb850199be9a27cadf58593e9a063208042033cd5fc",
+ "status": "ok",
+ "trigger_lines": [],
+ "trigger_texts": [],
+ "unrun_blocks": []
+}
