@@ -1,0 +1,5 @@
+日志检查发现的问题：
+sta error: Error: 171 <RUN>/synth/netlist.v line 6102, syntax error
+
+日志末尾摘要（最多 40 个物理行）：
+Error: 171 <RUN>/synth/netlist.v line 6102, syntax error
