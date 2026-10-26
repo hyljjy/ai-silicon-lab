@@ -1,0 +1,13 @@
+{
+ "round": 2,
+ "time": "2026-10-26T07:11:53-07:00",
+ "states": {
+  "cand_3yvg": "grade_fail",
+  "cand_c1dx": "grade_fail",
+  "cand_u2pe": "eligible_gain"
+ },
+ "author_review": {
+  "text": "作者检查点（第 2 轮，2026-10-26）：作者看过三个候选的 status.json、判定表 r2_judgments.md、跨轮覆盖结果 r2_coverage_result.json，以及操作者写、按 Codex FN2 复核修订后的 8 条说明 r2_notes.jsonl；作者原话：第 2 轮状态、判定、覆盖结果和 8 条说明我看过，同意。运行 round.py close 2 关闭第 2 轮。",
+  "recorded_at": "2026-10-26T07:11:53-07:00"
+ }
+}
