@@ -1,0 +1,21 @@
+{
+ "round": 2,
+ "salt": "d9b105b7fd1b4070931ca899ad9e1c8b",
+ "entries": [
+  {
+   "model": "claude",
+   "code": "cand_u2pe",
+   "prev_code": "cand_9pbi"
+  },
+  {
+   "model": "kimi",
+   "code": "cand_3yvg",
+   "prev_code": "cand_983p"
+  },
+  {
+   "model": "deepseek",
+   "code": "cand_c1dx",
+   "prev_code": "cand_wpml"
+  }
+ ]
+}
