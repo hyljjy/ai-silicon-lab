@@ -1,0 +1,2 @@
+RUN_ID=20261026-055554-cand_c1dx-T27.91
+GRADE FAIL: GradeError: sta failed (exit 1, see sta/sta.log): | Error: 171 /mnt/d/study/ai_native_design/tasks/CASE-01/runs/20261026-055554-cand_c1dx-T27.91/synth/netlist.v line 6052, syntax error

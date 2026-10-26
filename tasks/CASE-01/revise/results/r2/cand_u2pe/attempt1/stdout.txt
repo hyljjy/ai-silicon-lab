@@ -1,0 +1,2 @@
+RUN_ID=20261026-055628-cand_u2pe-T27.91
+GRADE OK: 20261026-055628-cand_u2pe-T27.91 functional_pass analysis_valid worst_setup={'slack': 6.104896316823909, 'corner': 'ss_n40C_1v60', 'category': 'reg2reg'} worst_hold={'slack': 0.02309412101919809, 'corner': 'ff_n40C_1v95'} area=48666.6752 timing_target=setup_ge_0_std:met area_cap=56729.408:within

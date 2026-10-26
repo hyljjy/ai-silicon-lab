@@ -1,0 +1,30 @@
+Startpoint: in_valid (input port clocked by clk)
+Endpoint: _12337_ (rising edge-triggered flip-flop clocked by clk)
+Path Group: clk
+Path Type: max
+Corner: ss_100C_1v60
+
+Fanout       Cap      Slew     Delay      Time   Description
+-------------------------------------------------------------------------------------
+                    0.0000    0.0000    0.0000   clock clk (rise edge)
+                              0.0000    0.0000   clock network delay (ideal)
+                              5.5820    5.5820 v input external delay
+     1    0.0014    0.0371    0.0117    5.5937 v in_valid (in)
+                    0.0371    0.0000    5.5937 v _06550_/B_N (sky130_fd_sc_hd__nor2b_1)
+     1    0.0016    0.0552    0.2320    5.8257 v _06550_/Y (sky130_fd_sc_hd__nor2b_1)
+                    0.0552    0.0000    5.8257 v _12337_/D (sky130_fd_sc_hd__dfxtp_1)
+                                        5.8257   data arrival time
+
+                    0.0000   27.9100   27.9100   clock clk (rise edge)
+                              0.0000   27.9100   clock network delay (ideal)
+                              0.0000   27.9100   clock reconvergence pessimism
+                                       27.9100 ^ _12337_/CLK (sky130_fd_sc_hd__dfxtp_1)
+                             -0.2817   27.6283   library setup time
+                                       27.6283   data required time
+-------------------------------------------------------------------------------------
+                                       27.6283   data required time
+                                       -5.8257   data arrival time
+-------------------------------------------------------------------------------------
+                                       21.8026   slack (MET)
+
+

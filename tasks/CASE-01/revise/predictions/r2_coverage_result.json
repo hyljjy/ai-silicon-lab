@@ -1,0 +1,245 @@
+{
+ "predictions": {
+  "counts": {
+   "预测改对": 2,
+   "预测改错": 1,
+   "无变化或不可比": 18
+  },
+  "records": [
+   {
+    "r1_ref": "cand_9pbi.P1",
+    "r2_ref": "cand_u2pe.P1",
+    "candidate_r1": "cand_9pbi",
+    "candidate_r2": "cand_u2pe",
+    "action": "modify",
+    "r1_judgment": "无结果",
+    "r2_judgment": "支持",
+    "outcome": "无变化或不可比"
+   },
+   {
+    "r1_ref": "cand_9pbi.P2",
+    "r2_ref": "cand_u2pe.P2",
+    "candidate_r1": "cand_9pbi",
+    "candidate_r2": "cand_u2pe",
+    "action": "modify",
+    "r1_judgment": "无结果",
+    "r2_judgment": "支持",
+    "outcome": "无变化或不可比"
+   },
+   {
+    "r1_ref": "cand_9pbi.P3",
+    "r2_ref": "cand_u2pe.P3",
+    "candidate_r1": "cand_9pbi",
+    "candidate_r2": "cand_u2pe",
+    "action": "modify",
+    "r1_judgment": "无结果",
+    "r2_judgment": "支持",
+    "outcome": "无变化或不可比"
+   },
+   {
+    "r1_ref": "cand_9pbi.P4",
+    "r2_ref": "cand_u2pe.P4",
+    "candidate_r1": "cand_9pbi",
+    "candidate_r2": "cand_u2pe",
+    "action": "modify",
+    "r1_judgment": "无结果",
+    "r2_judgment": "支持",
+    "outcome": "无变化或不可比"
+   },
+   {
+    "r1_ref": "cand_9pbi.P5",
+    "r2_ref": "cand_u2pe.P5",
+    "candidate_r1": "cand_9pbi",
+    "candidate_r2": "cand_u2pe",
+    "action": "keep",
+    "r1_judgment": "无结果",
+    "r2_judgment": "支持",
+    "outcome": "无变化或不可比"
+   },
+   {
+    "r1_ref": "cand_9pbi.P6",
+    "r2_ref": "cand_u2pe.P6",
+    "candidate_r1": "cand_9pbi",
+    "candidate_r2": "cand_u2pe",
+    "action": "modify",
+    "r1_judgment": "反对",
+    "r2_judgment": "支持",
+    "outcome": "预测改对"
+   },
+   {
+    "r1_ref": "cand_9pbi.P7",
+    "r2_ref": "cand_u2pe.P7",
+    "candidate_r1": "cand_9pbi",
+    "candidate_r2": "cand_u2pe",
+    "action": "modify",
+    "r1_judgment": "反对",
+    "r2_judgment": "支持",
+    "outcome": "预测改对"
+   },
+   {
+    "r1_ref": "cand_9pbi.P8",
+    "r2_ref": "cand_u2pe.P8",
+    "candidate_r1": "cand_9pbi",
+    "candidate_r2": "cand_u2pe",
+    "action": "keep",
+    "r1_judgment": "无结果",
+    "r2_judgment": "未判定",
+    "outcome": "无变化或不可比"
+   },
+   {
+    "r1_ref": "cand_9pbi.P9",
+    "r2_ref": "cand_u2pe.P9",
+    "candidate_r1": "cand_9pbi",
+    "candidate_r2": "cand_u2pe",
+    "action": "keep",
+    "r1_judgment": "支持",
+    "r2_judgment": "支持",
+    "outcome": "无变化或不可比"
+   },
+   {
+    "r1_ref": "cand_9pbi.P10",
+    "r2_ref": "cand_u2pe.P10",
+    "candidate_r1": "cand_9pbi",
+    "candidate_r2": "cand_u2pe",
+    "action": "keep",
+    "r1_judgment": "支持",
+    "r2_judgment": "支持",
+    "outcome": "无变化或不可比"
+   },
+   {
+    "r1_ref": "cand_983p.P1",
+    "r2_ref": "cand_3yvg.P1",
+    "candidate_r1": "cand_983p",
+    "candidate_r2": "cand_3yvg",
+    "action": "modify",
+    "r1_judgment": "无结果",
+    "r2_judgment": "无结果",
+    "outcome": "无变化或不可比"
+   },
+   {
+    "r1_ref": "cand_983p.P2",
+    "r2_ref": "cand_3yvg.P2",
+    "candidate_r1": "cand_983p",
+    "candidate_r2": "cand_3yvg",
+    "action": "modify",
+    "r1_judgment": "无结果",
+    "r2_judgment": "无结果",
+    "outcome": "无变化或不可比"
+   },
+   {
+    "r1_ref": "cand_983p.P3",
+    "r2_ref": "cand_3yvg.P3",
+    "candidate_r1": "cand_983p",
+    "candidate_r2": "cand_3yvg",
+    "action": "keep",
+    "r1_judgment": "无结果",
+    "r2_judgment": "无结果",
+    "outcome": "无变化或不可比"
+   },
+   {
+    "r1_ref": "cand_983p.P4",
+    "r2_ref": "cand_3yvg.P4",
+    "candidate_r1": "cand_983p",
+    "candidate_r2": "cand_3yvg",
+    "action": "modify",
+    "r1_judgment": "支持",
+    "r2_judgment": "反对",
+    "outcome": "预测改错"
+   },
+   {
+    "r1_ref": "cand_983p.P6",
+    "r2_ref": "cand_3yvg.P6",
+    "candidate_r1": "cand_983p",
+    "candidate_r2": "cand_3yvg",
+    "action": "keep",
+    "r1_judgment": "支持",
+    "r2_judgment": "支持",
+    "outcome": "无变化或不可比"
+   },
+   {
+    "r1_ref": "cand_983p.P7",
+    "r2_ref": "cand_3yvg.P7",
+    "candidate_r1": "cand_983p",
+    "candidate_r2": "cand_3yvg",
+    "action": "keep",
+    "r1_judgment": "支持",
+    "r2_judgment": "支持",
+    "outcome": "无变化或不可比"
+   },
+   {
+    "r1_ref": "cand_wpml.P1",
+    "r2_ref": "cand_c1dx.P1",
+    "candidate_r1": "cand_wpml",
+    "candidate_r2": "cand_c1dx",
+    "action": "keep",
+    "r1_judgment": "无结果",
+    "r2_judgment": "无结果",
+    "outcome": "无变化或不可比"
+   },
+   {
+    "r1_ref": "cand_wpml.P2",
+    "r2_ref": "cand_c1dx.P2",
+    "candidate_r1": "cand_wpml",
+    "candidate_r2": "cand_c1dx",
+    "action": "keep",
+    "r1_judgment": "无结果",
+    "r2_judgment": "无结果",
+    "outcome": "无变化或不可比"
+   },
+   {
+    "r1_ref": "cand_wpml.P3",
+    "r2_ref": "cand_c1dx.P4",
+    "candidate_r1": "cand_wpml",
+    "candidate_r2": "cand_c1dx",
+    "action": "keep",
+    "r1_judgment": "支持",
+    "r2_judgment": "支持",
+    "outcome": "无变化或不可比"
+   },
+   {
+    "r1_ref": "cand_wpml.P4",
+    "r2_ref": "cand_c1dx.P5",
+    "candidate_r1": "cand_wpml",
+    "candidate_r2": "cand_c1dx",
+    "action": "keep",
+    "r1_judgment": "支持",
+    "r2_judgment": "支持",
+    "outcome": "无变化或不可比"
+   },
+   {
+    "r1_ref": "cand_wpml.P5",
+    "r2_ref": "cand_c1dx.P6",
+    "candidate_r1": "cand_wpml",
+    "candidate_r2": "cand_c1dx",
+    "action": "keep",
+    "r1_judgment": "支持",
+    "r2_judgment": "支持",
+    "outcome": "无变化或不可比"
+   }
+  ]
+ },
+ "failure_conditions": {
+  "counts": {
+   "消失": 0,
+   "仍在": 0,
+   "indeterminate": 0
+  },
+  "records": []
+ },
+ "actions": {
+  "prediction": {
+   "keep": 12,
+   "modify": 9,
+   "withdraw": 0,
+   "new": 3,
+   "not_mentioned": 1
+  },
+  "failure_condition": {
+   "keep": 12,
+   "modify": 3,
+   "withdraw": 0,
+   "new": 3,
+   "not_mentioned": 1
+  }
+ }
+}

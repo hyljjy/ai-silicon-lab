@@ -1,0 +1,8 @@
+{"candidate": "cand_u2pe", "ref": "cand_u2pe.P8", "note": "方向、范围下限、上限和点估计在原文中全部写为“未知”，没有可判定的内容，故整行未判定。实测六点全局最差 hold slack 为 +0.023094 ns（ff_n40C_1v95），相对 F1 基线变化 −0.036019 ns，照原样列出，不作支持/反对结论。"}
+{"candidate": "cand_3yvg", "ref": "F1", "note": "前提 sta_analysis is fail 为真（STA 未取得有效结果（sta_analysis=fail：OpenSTA 读综合网表时在第一个 wire signed 声明处报语法错误，见 notes/decisions.md D-01））；与之相与的不可检验片段（STA 失败的具体原因是 synth/netlist.v 语法错误）按判据恒为未知，故整式为未知。sta.log 中的报错确为网表语法错误，但按冻结判据不把日志内容当作该片段为真。"}
+{"candidate": "cand_3yvg", "ref": "F2", "note": "六点全局 setup slack 原子均未知：STA 未取得有效结果（sta_analysis=fail：OpenSTA 读综合网表时在第一个 wire signed 声明处报语法错误，见 notes/decisions.md D-01），所需的 setup slack 字段为 not_applicable，原子取未知；没有任何一点为真，故整式为未知。"}
+{"candidate": "cand_3yvg", "ref": "F6", "note": "整条为不可检验片段（“低于约 +0.5 ns”的“约”没有边界，CR2 与作者检查点 7 确认），恒为未知。按作者检查点 7 的补充，原文与第 2 轮实测并排列出：原文“最差 setup slack 低于约 +0.5 ns”；第 2 轮实测六点全局最差 setup slack：无值——STA 未取得有效结果（sta_analysis=fail：OpenSTA 读综合网表时在第一个 wire signed 声明处报语法错误，见 notes/decisions.md D-01）。不由评估器作做对/做错结论。"}
+{"candidate": "cand_c1dx", "ref": "F1", "note": "六点全局 setup slack 原子均未知：STA 未取得有效结果（sta_analysis=fail：OpenSTA 读综合网表时在第一个 wire signed 声明处报语法错误，见 notes/decisions.md D-01），所需的 setup slack 字段为 not_applicable，原子取未知；没有任何一点为真，故整式为未知。"}
+{"candidate": "cand_c1dx", "ref": "F2", "note": "前提 sta_analysis is fail 为真（STA 未取得有效结果（sta_analysis=fail：OpenSTA 读综合网表时在第一个 wire signed 声明处报语法错误，见 notes/decisions.md D-01））；与之相与的不可检验片段（STA 读取时的语法错误）按判据恒为未知，故整式为未知。sta.log 中的报错确为网表语法错误，但按冻结判据不把日志内容当作该片段为真。"}
+{"candidate": "cand_c1dx", "ref": "F4", "note": "整条为不可检验片段（仿真观测点的 out_valid/out_data 与 L=2 期望不符），恒为未知。冻结回归 rtl_sim、gl_sim 均为 pass，但按判据不把它当作该条件为假。"}
+{"candidate": "cand_c1dx", "ref": "F5", "note": "cfg_L ≠ 2 为假（cfg_L=2），以“或”相连的不可检验片段（因配置校验失败使候选被拒）恒为未知，故整式为未知。"}

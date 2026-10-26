@@ -1,0 +1,184 @@
+[
+ {
+  "step": "env_snapshot",
+  "argv": [
+   "bash",
+   "/mnt/d/study/ai_native_design/env/snapshot.sh",
+   "check"
+  ],
+  "returncode": 0,
+  "timed_out": false,
+  "timeout_s": 600,
+  "seconds": 1.272,
+  "logs": [
+   "env_snapshot.log"
+  ],
+  "log_problems": []
+ },
+ {
+  "step": "versions",
+  "argv": [
+   "bash",
+   "-c",
+   "set -e -o pipefail; v=$(iverilog -V 2>&1); printf \"%s\\n\" \"${v%%$'\\n'*}\"; yosys -V; s=$(sta -version); echo \"OpenSTA $s\"; \"$1\" --version",
+   "versions",
+   "/usr/bin/python3"
+  ],
+  "returncode": 0,
+  "timed_out": false,
+  "timeout_s": 120,
+  "seconds": 0.119,
+  "logs": [
+   "versions.log"
+  ],
+  "log_problems": []
+ },
+ {
+  "step": "gen_vectors",
+  "argv": [
+   "/usr/bin/python3",
+   "-B",
+   "/mnt/d/study/ai_native_design/tasks/CASE-01/runs/20261026-055520-cand_3yvg-T27.91/inputs/ref/gen_vectors.py",
+   "--L",
+   "2",
+   "--lmax",
+   "3",
+   "--seed",
+   "1",
+   "--out",
+   "vectors"
+  ],
+  "returncode": 0,
+  "timed_out": false,
+  "timeout_s": 600,
+  "seconds": 0.268,
+  "logs": [
+   "vectors/gen.log"
+  ],
+  "log_problems": []
+ },
+ {
+  "step": "rtl_compile",
+  "argv": [
+   "iverilog",
+   "-g2012",
+   "-o",
+   "rtl_sim/sim.vvp",
+   "/mnt/d/study/ai_native_design/tasks/CASE-01/runs/20261026-055520-cand_3yvg-T27.91/inputs/tb/tb_dot4sat.v",
+   "/mnt/d/study/ai_native_design/tasks/CASE-01/runs/20261026-055520-cand_3yvg-T27.91/inputs/rtl/dot4sat_cand_3yvg.v"
+  ],
+  "returncode": 0,
+  "timed_out": false,
+  "timeout_s": 600,
+  "seconds": 0.068,
+  "logs": [
+   "rtl_sim/compile.log"
+  ],
+  "log_problems": []
+ },
+ {
+  "step": "rtl_sim",
+  "argv": [
+   "vvp",
+   "-n",
+   "rtl_sim/sim.vvp",
+   "+VEC=/mnt/d/study/ai_native_design/tasks/CASE-01/runs/20261026-055520-cand_3yvg-T27.91/vectors/vectors.txt",
+   "+NVEC=3439",
+   "+L=2",
+   "+LMAX=3",
+   "+EXP=2835"
+  ],
+  "returncode": 0,
+  "timed_out": false,
+  "timeout_s": 1800,
+  "seconds": 3.782,
+  "logs": [
+   "rtl_sim/sim.log"
+  ],
+  "log_problems": []
+ },
+ {
+  "step": "synth",
+  "argv": [
+   "yosys",
+   "-q",
+   "-c",
+   "/mnt/d/study/ai_native_design/tasks/CASE-01/runs/20261026-055520-cand_3yvg-T27.91/inputs/scripts/synth_case01.tcl",
+   "-l",
+   "/mnt/d/study/ai_native_design/tasks/CASE-01/runs/20261026-055520-cand_3yvg-T27.91/synth/yosys.log"
+  ],
+  "returncode": 0,
+  "timed_out": false,
+  "timeout_s": 3600,
+  "seconds": 2.933,
+  "logs": [
+   "synth/yosys.stdout",
+   "synth/yosys.log"
+  ],
+  "log_problems": []
+ },
+ {
+  "step": "gl_compile",
+  "argv": [
+   "iverilog",
+   "-g2012",
+   "-DFUNCTIONAL",
+   "-DUNIT_DELAY=#1",
+   "-o",
+   "gl_sim/sim.vvp",
+   "/mnt/d/study/ai_native_design/tasks/CASE-01/runs/20261026-055520-cand_3yvg-T27.91/inputs/tb/tb_dot4sat.v",
+   "/mnt/d/study/ai_native_design/tasks/CASE-01/runs/20261026-055520-cand_3yvg-T27.91/synth/netlist.v",
+   "/home/eda/pdk/sky130A/libs.ref/sky130_fd_sc_hd/verilog/primitives.v",
+   "/home/eda/pdk/sky130A/libs.ref/sky130_fd_sc_hd/verilog/sky130_fd_sc_hd.v"
+  ],
+  "returncode": 0,
+  "timed_out": false,
+  "timeout_s": 600,
+  "seconds": 1.981,
+  "logs": [
+   "gl_sim/compile.log"
+  ],
+  "log_problems": []
+ },
+ {
+  "step": "gl_sim",
+  "argv": [
+   "vvp",
+   "-n",
+   "gl_sim/sim.vvp",
+   "+VEC=/mnt/d/study/ai_native_design/tasks/CASE-01/runs/20261026-055520-cand_3yvg-T27.91/vectors/vectors.txt",
+   "+NVEC=3439",
+   "+L=2",
+   "+LMAX=3",
+   "+EXP=2835"
+  ],
+  "returncode": 0,
+  "timed_out": false,
+  "timeout_s": 3600,
+  "seconds": 16.604,
+  "logs": [
+   "gl_sim/sim.log"
+  ],
+  "log_problems": []
+ },
+ {
+  "step": "sta",
+  "argv": [
+   "sta",
+   "-no_init",
+   "-no_splash",
+   "-exit",
+   "/mnt/d/study/ai_native_design/tasks/CASE-01/runs/20261026-055520-cand_3yvg-T27.91/inputs/scripts/sta_run.tcl"
+  ],
+  "returncode": 1,
+  "timed_out": false,
+  "timeout_s": 3600,
+  "seconds": 2.377,
+  "logs": [
+   "sta/sta.log"
+  ],
+  "log_problems": [
+   "sta error: Error: 171 /mnt/d/study/ai_native_design/tasks/CASE-01/runs/20261026-055520-cand_3yvg-T27.91/synth/netlist.v line 6054, syntax error"
+  ]
+ }
+]

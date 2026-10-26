@@ -1,0 +1,71 @@
+{
+ "code": "cand_u2pe",
+ "rnd": 2,
+ "state": "eligible_gain",
+ "flags": [],
+ "selected_attempt": 1,
+ "grade_status": "GRADE OK",
+ "final_line_missing": false,
+ "rtl_sim": "pass",
+ "gl_sim": "pass",
+ "sta_analysis": "pass",
+ "checked_rtl": "checked=2816",
+ "checked_gl": "checked=2816",
+ "area_um2": "48666.6752",
+ "within_cap": true,
+ "author_veto": false,
+ "declared_L": 3,
+ "cfg_L": 3,
+ "prediction_L_mismatch": false,
+ "numeric_target_met": true,
+ "eligible_target_met": true,
+ "improvement": true,
+ "worst_setup_delta": "10.294622334867920",
+ "failure_location": "none",
+ "attribution": "no_external_evidence",
+ "attribution_evidence": [],
+ "inputs": [
+  {
+   "path": "revise/outputs/r2/cand_u2pe.call.json",
+   "required": true,
+   "state": "present",
+   "reason": null
+  },
+  {
+   "path": "revise/outputs/r2/cand_u2pe.parsed.json",
+   "required": true,
+   "state": "present",
+   "reason": null
+  },
+  {
+   "path": "rtl/dot4sat_cand_u2pe.v",
+   "required": true,
+   "state": "present",
+   "reason": null
+  },
+  {
+   "path": "config/impl.cand_u2pe.cfg",
+   "required": true,
+   "state": "present",
+   "reason": null
+  },
+  {
+   "path": "revise/results/r2/cand_u2pe/gate.json",
+   "required": true,
+   "state": "present",
+   "reason": null
+  },
+  {
+   "path": "revise/review/r2.tsv#cand_u2pe",
+   "required": true,
+   "state": "present",
+   "reason": null
+  },
+  {
+   "path": "revise/results/r2/cand_u2pe/attempt1/attempt.json",
+   "required": true,
+   "state": "present",
+   "reason": null
+  }
+ ]
+}
