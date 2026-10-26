@@ -63,3 +63,9 @@
 3. 唯一转换规则和停止规则（第 4 节）。
 4. 诊断内容：门级回归 + 冻结 STA + 有效性检查，基线对照不一致即全部停止（第 5 节）。
 5. 报告口径（第 7 节）。
+
+## 9. 执行前补充（作者 2026-10-26 确认，诊断运行之前）
+
+脚本 `revise/diag_netlist/diag_netlist.py` 经子代理只读审查后发现：第 1、2 轮五个失败候选的正式运行在 `sta` 处失败，`steps.json` 中没有 `check_sta` 这一步，无法"原样重放"。处理：对这些对象，按冻结 `grade.py` 的写法构造 `check_sta` 命令（`[python, -B, inputs/scripts/check_sta.py, <诊断 sta 目录>, repr(T_ns), repr(C_load_pF), sceneset]`，取值来自该次运行的 `verdict.json`），在 `result.json` 中标为 `derived`。这是第 5 节"原样重放"之外的一处派生，报告时写明。作者原话："脚本和审查结论我看过，同意对失败候选按 grade.py 的写法补出 check_sta 并标为 derived。提交脚本后运行诊断。"
+
+其余实现要点（不改变第 3–7 节）：每次运行先复核基线结果；基础设施报错、中断或基线核对异常都写 STOP 并交作者；运行前核对冻结输入的 `inputs.sha256`、原网表与 `verdict.json` 的 `netlist_sha256`、门级模型哈希；脚本须已提交且未修改才允许运行。
