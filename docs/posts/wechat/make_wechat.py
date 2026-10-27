@@ -1,12 +1,12 @@
-"""Turn docs/posts/article1_public.md into an HTML page for pasting into the WeChat Official Account editor.
+"""Turn docs/posts/article<N>_public.md into an HTML page for pasting into the WeChat Official Account editor.
 
-  python -I docs/posts/wechat/make_wechat.py            (from the repository root)
+  python -I docs/posts/wechat/make_wechat.py [N]        (from the repository root; N defaults to 1)
 
 The WeChat editor keeps inline styles and drops style sheets, so every element carries its own style. It does not
 upload local images, so each image becomes a plain orange marker line naming the PNG; put the cursor there, insert the image, delete the line. The page has a
 "copy" button that copies only the article body; the title, the summary and the instructions stay outside it.
-Only the Markdown used in the article is supported: one H1, H2, paragraphs, "- " lists, "> " quotes, images, **bold**,
-`code` and bare URLs.
+Only the Markdown used in the articles is supported: one H1, H2, paragraphs, "- " lists, "> " quotes, images, simple
+"|" tables (first row is the header, second row the separator), **bold**, `code` and bare URLs.
 """
 import html
 import os
@@ -14,9 +14,10 @@ import re
 import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-SRC = os.path.join(ROOT, "docs", "posts", "article1_public.md")
-OUT = os.path.join(ROOT, "docs", "posts", "wechat", "article1_wechat.html")
-FIGS = "docs/posts/figs/article1"
+N = sys.argv[1] if len(sys.argv) > 1 else "1"
+SRC = os.path.join(ROOT, "docs", "posts", f"article{N}_public.md")
+OUT = os.path.join(ROOT, "docs", "posts", "wechat", f"article{N}_wechat.html")
+FIGS = f"docs/posts/figs/article{N}"
 
 INK, INK2, ACCENT, SOFT = "#222222", "#555555", "#2a78d6", "#f5f6f8"
 S_P = f"margin:0 0 18px 0;font-size:16px;line-height:1.8;letter-spacing:0.5px;color:{INK};text-align:justify;"
@@ -28,6 +29,10 @@ S_QUOTE = (f"margin:0 0 20px 0;padding:12px 16px;background:{SOFT};border-left:3
            f"font-size:14px;line-height:1.75;color:{INK2};")
 S_CODE = "font-family:Menlo,Consolas,monospace;font-size:14px;background:#eef0f3;padding:1px 4px;border-radius:3px;"
 S_FIG = "margin:0 0 18px 0;font-size:15px;line-height:1.8;color:#d4541f;font-weight:bold;"
+S_TABLE = "width:100%;margin:0 0 20px 0;border-collapse:collapse;font-size:13px;line-height:1.6;"
+S_TH = (f"padding:6px 3px;border:1px solid #d9dce1;background:{SOFT};color:{INK};font-weight:bold;text-align:center;"
+        "white-space:nowrap;")
+S_TD = f"padding:6px 3px;border:1px solid #d9dce1;color:{INK};text-align:center;white-space:nowrap;"
 
 
 def inline(text):
@@ -67,6 +72,15 @@ def convert(md):
                 items.append(lines[i][2:].strip()); i += 1
             body.append(f'<ul style="{S_UL}">' + "".join(f'<li style="{S_LI}">{inline(x)}</li>' for x in items) + "</ul>")
             continue
+        elif line.startswith("|"):
+            flush(); rows = []
+            while i < len(lines) and lines[i].startswith("|"):
+                rows.append([c.strip() for c in lines[i].strip().strip("|").split("|")]); i += 1
+            head, rest = rows[0], [r for r in rows[1:] if not all(re.fullmatch(r":?-+:?", c) for c in r)]
+            body.append(f'<table style="{S_TABLE}"><tr>' + "".join(f'<th style="{S_TH}">{inline(c)}</th>' for c in head)
+                        + "</tr>" + "".join("<tr>" + "".join(f'<td style="{S_TD}">{inline(c)}</td>' for c in r) + "</tr>"
+                                            for r in rest) + "</table>")
+            continue
         elif line.startswith(">"):
             flush(); block, cur = [], []
             while i < len(lines) and lines[i].startswith(">"):
@@ -97,7 +111,7 @@ def page(title, body, figs):
     fig_rows = "".join(f"<li>图 {n}：<code style='overflow-wrap:anywhere;word-break:break-all;'>{FIGS}/{html.escape(name)}</code>（{html.escape(alt)}）</li>" for n, alt, name in figs)
     return f"""<!doctype html>
 <html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>公众号排版 · 文章 1</title></head>
+<title>公众号排版 · 文章 {N}</title></head>
 <body style="margin:0;background:#eceef1;font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif;">
 <div style="max-width:720px;margin:0 auto;padding:16px;box-sizing:border-box;overflow-wrap:anywhere;">
 <div style="background:#fffbe6;border:1px solid #f0d58a;border-radius:8px;padding:14px 18px;margin-bottom:16px;font-size:14px;line-height:1.7;color:#5c4a00;">
