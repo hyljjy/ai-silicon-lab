@@ -422,3 +422,41 @@ cornerFig("fig9_hold.svg", "六个角的最小 hold slack", "理想时钟、综�
   b += T(36, y + 70, "蓝色一份本来就没有 signed，和正式结果相同", { size: 22, fill: C.blue });
   write("fig12_diag.svg", svg(y + 96, b));
 }
+
+// 图 13：附录 B，最差 setup 路径落在哪一级（诊断运行 tasks/CASE-01/runs/revise-diag-netlist/*/sta/cat_ss_n40C_1v60_{in2reg,reg2reg}_max.rpt；
+// 端点名对照各对象 netlist.v 的 .Q 连线；不是正式结果）
+{
+  const rows = [
+    ["DeepSeek 第 1 轮", ["乘法", "R", "求和 + 饱和", "R"], 0, "最慢：输入 → 乘积寄存器", 5.004687],
+    ["DeepSeek 第 2 轮", ["R", "乘法 + 求和 + 饱和", "R"], 1, "最慢：三段运算在同一拍", 1.557034],
+    ["Claude 第 1 轮", ["R", "乘法", "R", "求和 + 饱和", "R"], 1, "最慢：乘法这一级", 8.708432],
+    ["Claude 第 2 轮", ["R", "乘法", "R", "求和 + 饱和", "R"], 3, "最慢：求和饱和这一级", 6.104896],
+  ];
+  let b = title("最慢的一段落在哪里", "事后诊断，不是正式结果；ss，1.60 V，−40 °C");
+  b += T(36, 134, "理想时钟、综合后、只计引脚电容；橙框是最差 setup 路径所在段", { size: 22, fill: C.ink2 });
+  b += T(36, 164, "右侧数字：诊断的全局最差 setup slack", { size: 22, fill: C.ink2 });
+  let y = 200;
+  const rw = 24, gap = 16, x0 = 36, x1 = 684;
+  rows.forEach(([name, els, hl, note, v]) => {
+    b += T(36, y + 30, name, { size: 28, bold: true });
+    const nReg = els.filter(e => e === "R").length, nBox = els.length - nReg;
+    const boxW = (x1 - x0 - nReg * rw - (els.length - 1) * gap) / nBox;
+    let x = x0;
+    const by = y + 48, bh = 62;
+    els.forEach((e, i) => {
+      if (e === "R") { b += REG(x, by, bh, rw); x += rw; }
+      else {
+        const on = i === hl;
+        b += R(x, by, boxW, bh, { fill: on ? C.orangeSoft : C.graySoft, stroke: on ? C.orange : "none", sw: 3 });
+        b += T(x + boxW / 2, by + 41, e, { size: 24, anchor: "middle", bold: on });
+        x += boxW;
+      }
+      if (i < els.length - 1) { b += L(x + 1, by + bh / 2, x + gap - 1, by + bh / 2, { stroke: C.line }); x += gap; }
+    });
+    b += T(36, by + bh + 38, note, { size: 24, fill: C.ink2 });
+    b += T(684, by + bh + 38, sgn(v) + " ns", { size: 26, bold: true, anchor: "end", fill: C.orange });
+    y += 186;
+  });
+  b += T(36, y + 6, "DeepSeek 第 1 轮的第一段还要先扣 5.58 ns 外部输入延迟", { size: 22, fill: C.ink2 });
+  write("fig13_stage.svg", svg(y + 34, b));
+}
