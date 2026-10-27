@@ -8,7 +8,6 @@
 
 - 时间：2026-10-26 07:53–07:56（WSL），两轮均已关闭（`round_complete.json` 已提交）之后；对应表未打开。
 - 运行目录：`tasks/CASE-01/runs/revise-diag-netlist/`（不进 git）；备份 `D:\study\eda_archive\case01\revise\diag_netlist\`（逐字节一致，SHA256SUMS 488 行）。
-evise\diag_netlist\`（逐字节一致，SHA256SUMS 488 行）。
 - 运行记录：脚本已提交且未修改（git HEAD f3cbd9e）；返回码 0；无 STOP；无遗留进程。
 - 纳入对象：F1 归档基线 + 第 1 轮 3 个 + 第 2 轮 3 个正式尝试（全部完成综合）；无未纳入对象。每个对象只运行一次。
 
