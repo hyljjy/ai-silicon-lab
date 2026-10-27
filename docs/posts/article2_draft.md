@@ -4,7 +4,9 @@
 >
 > 让 Claude Opus 5.5、Kimi K3、DeepSeek V4 Pro 各改两轮 RTL，用事先冻结的回归和 OpenSTA 复验
 
-> 草稿。起草者是本项目负责跑实验的 Claude（`claude-opus-5-5`，下称"操作者"），**和被测的 Claude 是同一个模型**。作者修改定稿；发不发、什么时候发，由作者决定。
+> 完整版。起草者是本项目负责跑实验的 Claude（`claude-opus-5-5`，下称"操作者"），**和被测的 Claude 是同一个模型**；作者修改定稿。
+>
+> 项目仓库：https://github.com/hyljjy/ai-silicon-lab。公众号版：`docs/posts/article2_public.md`；复现说明：仓库根目录 `REPRODUCE_stageB.md`。
 >
 > 本文所有 slack 都出自同一个分析模型：**理想时钟、综合后网表、互连只计引脚电容**，每个数字旁边都注明是哪个角。hold 一律指"理想时钟、综合后模型下的最小 hold slack"。每个数字的出处见文末"数字出处"。
 
