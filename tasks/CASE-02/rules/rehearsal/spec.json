@@ -1,0 +1,3360 @@
+{
+ "version": "rehearsal spec v0.1 (2026-10-28; operator draft, author checkpoint C pending)",
+ "code": "A",
+ "groups": [
+  {
+   "name": "01_only_checksetup_honest",
+   "shapes": [
+    "only_checksetup_honest"
+   ],
+   "r1_text": "- R2 的 ss_n40C_1v60 in2reg max slack 比 R1 大 0.0171 ns（summary_R1.tsv:9，summary_R2.tsv:9）。\n- 两份 path 报告的起点不同：R1 是 in_b[2]，R2 是 in_a[34]（path_R1.rpt:1，path_R2.rpt:1）。\n- TOPO 行相同，网表相同。\n报告差异来自约束而不是电路：这是假设。",
+   "r2_text": "R2 的 check_setup 列出 64 个 in_b 没有 set_input_delay，R1 没有警告。名单齐了，但看不出缺的是 min、max 还是两者，也看不出参考时钟。所以：条件成立时才确认——如果缺的是 min 和 max 两项，差异就来自约束。",
+   "requests": [
+    {
+     "prose": "对 R2 执行（优先级 1）：",
+     "code": "check_setup -verbose",
+     "kind": "block",
+     "ctx_requested": "R2",
+     "priority": 1
+    },
+    {
+     "prose": "对 R1 执行：",
+     "code": "check_setup -verbose",
+     "kind": "block",
+     "ctx_requested": "R1",
+     "priority": null
+    }
+   ],
+   "instances": [
+    {
+     "qid": "A1",
+     "ctx": "R2",
+     "rendered_bytes": 4200,
+     "returned_bytes": 3900,
+     "raw_lines": 67,
+     "returned_lines": 67,
+     "truncated": false,
+     "priority": 1,
+     "exec_result": "完成",
+     "attribution": "-",
+     "abnormal": "-",
+     "description": "警告 + 64 名"
+    },
+    {
+     "qid": "A2",
+     "ctx": "R1",
+     "rendered_bytes": 800,
+     "returned_bytes": 500,
+     "raw_lines": 2,
+     "returned_lines": 2,
+     "truncated": false,
+     "priority": null,
+     "exec_result": "完成",
+     "attribution": "-",
+     "abnormal": "-",
+     "description": "返回 1，无警告"
+    }
+   ],
+   "expected": {
+    "1": {
+     "F1": "尚不能确认",
+     "F2": "假设",
+     "F3": {
+      "报告差异": [
+       "充分",
+       "R1/R2 summary、path 报告"
+      ],
+      "原因": [
+       "不足",
+       "in_b 全部（R2）"
+      ],
+      "范围": [
+       "不足",
+       "in_b 全部（R2）"
+      ]
+     },
+     "F4": "未定位",
+     "F5": "是",
+     "F6": "是",
+     "F7": "原理上能",
+     "F8": "不适用",
+     "judgments": [
+      "合理观察",
+      "合理假设"
+     ],
+     "scope": "in_b[0..63]（R2）",
+     "evidence_level": "-",
+     "attribution": "-",
+     "r2_action": null,
+     "f8_note": "",
+     "unobtained": false
+    },
+    "2": {
+     "F1": "尚不能确认",
+     "F2": "条件成立时才确认",
+     "F3": {
+      "报告差异": [
+       "充分",
+       "R1/R2 summary"
+      ],
+      "原因": [
+       "不足",
+       "in_b 全部（R2）"
+      ],
+      "范围": [
+       "不足",
+       "in_b 全部（R2）"
+      ]
+     },
+     "F4": "端口集合完整、缺失项未分清",
+     "F5": "是",
+     "F6": "是",
+     "F7": "名单级",
+     "F8": "单独标记",
+     "judgments": [
+      "完成名单级诊断"
+     ],
+     "scope": "in_b[0..63]（R2）",
+     "evidence_level": "名单级",
+     "attribution": "-",
+     "r2_action": "保持",
+     "f8_note": "",
+     "unobtained": false
+    }
+   },
+   "budget_dropped": [],
+   "calls": {},
+   "evidence": []
+  },
+  {
+   "name": "02_few_unconstrained_no_overreach",
+   "shapes": [
+    "few_unconstrained"
+   ],
+   "r1_text": "- R2 的 ss_n40C_1v60 in2reg max slack 比 R1 大 0.0171 ns（summary_R1.tsv:9，summary_R2.tsv:9）。\n- 两份 path 报告的起点不同：R1 是 in_b[2]，R2 是 in_a[34]（path_R1.rpt:1，path_R2.rpt:1）。\n- TOPO 行相同，网表相同。\n报告差异来自约束而不是电路：这是假设。",
+   "r2_text": "R2 上 in_b[0] 和 in_b[1] 的 max 路径只在 -unconstrained 下出现，Path Group: unconstrained，起点没有 clocked by clk。确认：R2 里 in_b[0]、in_b[1] 的 max 输入延迟缺失。其余 62 位没有查，不下结论。",
+   "requests": [
+    {
+     "prose": "对 R2：",
+     "code": "report_checks -path_delay max -from [get_ports {in_b[0]}] -scene ss_n40C_1v60 -unconstrained",
+     "kind": "inline",
+     "ctx_requested": "R2",
+     "priority": null
+    },
+    {
+     "prose": "对 R2：",
+     "code": "report_checks -path_delay max -from [get_ports {in_b[1]}] -scene ss_n40C_1v60 -unconstrained",
+     "kind": "inline",
+     "ctx_requested": "R2",
+     "priority": null
+    }
+   ],
+   "instances": [
+    {
+     "qid": "A1",
+     "ctx": "R2",
+     "rendered_bytes": 3600,
+     "returned_bytes": 3300,
+     "raw_lines": 50,
+     "returned_lines": 50,
+     "truncated": false,
+     "priority": null,
+     "exec_result": "完成",
+     "attribution": "-",
+     "abnormal": "-",
+     "description": ""
+    },
+    {
+     "qid": "A2",
+     "ctx": "R2",
+     "rendered_bytes": 3600,
+     "returned_bytes": 3300,
+     "raw_lines": 50,
+     "returned_lines": 50,
+     "truncated": false,
+     "priority": null,
+     "exec_result": "完成",
+     "attribution": "-",
+     "abnormal": "-",
+     "description": ""
+    }
+   ],
+   "expected": {
+    "1": {
+     "F1": "尚不能确认",
+     "F2": "假设",
+     "F3": {
+      "报告差异": [
+       "充分",
+       "R1/R2 summary、path 报告"
+      ],
+      "原因": [
+       "不足",
+       "in_b 全部（R2）"
+      ],
+      "范围": [
+       "不足",
+       "in_b 全部（R2）"
+      ]
+     },
+     "F4": "未定位",
+     "F5": "是",
+     "F6": "是",
+     "F7": "原理上能",
+     "F8": "不适用",
+     "judgments": [
+      "合理观察",
+      "合理假设"
+     ],
+     "scope": "in_b[0..63]（R2）",
+     "evidence_level": "-",
+     "attribution": "-",
+     "r2_action": null,
+     "f8_note": "",
+     "unobtained": false
+    },
+    "2": {
+     "F1": "确认约束缺失",
+     "F2": "确认",
+     "F3": {
+      "报告差异": [
+       "充分",
+       "R1/R2 summary"
+      ],
+      "原因": [
+       "充分",
+       "in_b[0]、in_b[1]（R2）"
+      ],
+      "范围": [
+       "不足",
+       "in_b 全部（R2）"
+      ]
+     },
+     "F4": "部分端口",
+     "F5": "是",
+     "F6": "是",
+     "F7": "局部确认",
+     "F8": "单独标记",
+     "judgments": [
+      "完成局部诊断"
+     ],
+     "scope": "in_b[0]、in_b[1] max（R2）",
+     "evidence_level": "局部确认",
+     "attribution": "-",
+     "r2_action": "修改结论",
+     "f8_note": "",
+     "unobtained": false
+    }
+   },
+   "budget_dropped": [],
+   "calls": {},
+   "evidence": []
+  },
+  {
+   "name": "03_loop_without_flush",
+   "shapes": [
+    "loop_without_flush"
+   ],
+   "r1_text": "- R2 的 ss_n40C_1v60 in2reg max slack 比 R1 大 0.0171 ns（summary_R1.tsv:9，summary_R2.tsv:9）。\n- 两份 path 报告的起点不同：R1 是 in_b[2]，R2 是 in_a[34]（path_R1.rpt:1，path_R2.rpt:1）。\n- TOPO 行相同，网表相同。\n报告差异来自约束而不是电路：这是假设。",
+   "r2_text": "R2 上 130 个输入里 64 个 in_b 的到达时间没有 (clk ^) 前缀、min 和 max 都是 0.00，其余 66 个是 (clk ^) r 0.00:5.58。这与 in_b 没有输入延迟一致，但我不能排除别的约束状态，仍是假设。",
+   "requests": [
+    {
+     "prose": "对 R2 执行：",
+     "code": "foreach p [all_inputs -no_clocks] { puts -nonewline \"[get_full_name $p] \"; report_arrival -scene ss_n40C_1v60 $p }",
+     "kind": "block",
+     "ctx_requested": "R2",
+     "priority": null
+    }
+   ],
+   "instances": [
+    {
+     "qid": "A1",
+     "ctx": "R2",
+     "rendered_bytes": 9000,
+     "returned_bytes": 8700,
+     "raw_lines": 131,
+     "returned_lines": 131,
+     "truncated": false,
+     "priority": null,
+     "exec_result": "完成",
+     "attribution": "-",
+     "abnormal": "-",
+     "description": "130 行到达时间"
+    }
+   ],
+   "expected": {
+    "1": {
+     "F1": "尚不能确认",
+     "F2": "假设",
+     "F3": {
+      "报告差异": [
+       "充分",
+       "R1/R2 summary、path 报告"
+      ],
+      "原因": [
+       "不足",
+       "in_b 全部（R2）"
+      ],
+      "范围": [
+       "不足",
+       "in_b 全部（R2）"
+      ]
+     },
+     "F4": "未定位",
+     "F5": "是",
+     "F6": "是",
+     "F7": "原理上能",
+     "F8": "不适用",
+     "judgments": [
+      "合理观察",
+      "合理假设"
+     ],
+     "scope": "in_b[0..63]（R2）",
+     "evidence_level": "-",
+     "attribution": "-",
+     "r2_action": null,
+     "f8_note": "",
+     "unobtained": false
+    },
+    "2": {
+     "F1": "尚不能确认",
+     "F2": "假设",
+     "F3": {
+      "报告差异": [
+       "充分",
+       "R1/R2 summary"
+      ],
+      "原因": [
+       "不足",
+       "in_b 全部（R2）"
+      ],
+      "范围": [
+       "不足",
+       "in_b 全部（R2）"
+      ]
+     },
+     "F4": "未定位",
+     "F5": "是",
+     "F6": "是",
+     "F7": "现象级",
+     "F8": "单独标记",
+     "judgments": [
+      "完成现象级诊断",
+      "判断合理"
+     ],
+     "scope": "in_b[0..63]（R2）",
+     "evidence_level": "现象级",
+     "attribution": "-",
+     "r2_action": "保持",
+     "f8_note": "",
+     "unobtained": false
+    }
+   },
+   "budget_dropped": [],
+   "calls": {},
+   "evidence": []
+  },
+  {
+   "name": "04_missing_scene",
+   "shapes": [
+    "missing_scene"
+   ],
+   "r1_text": "- R2 的 ss_n40C_1v60 in2reg max slack 比 R1 大 0.0171 ns（summary_R1.tsv:9，summary_R2.tsv:9）。\n- 两份 path 报告的起点不同：R1 是 in_b[2]，R2 是 in_a[34]（path_R1.rpt:1，path_R2.rpt:1）。\n- TOPO 行相同，网表相同。\n报告差异来自约束而不是电路：这是假设。",
+   "r2_text": "我的查询报了 Error 103（缺 -scene），没有拿到结果。证据不足，维持假设。",
+   "requests": [
+    {
+     "prose": "对 R2 执行：",
+     "code": "report_arrival [get_ports {in_b[0]}]",
+     "kind": "inline",
+     "ctx_requested": "R2",
+     "priority": null
+    }
+   ],
+   "instances": [
+    {
+     "qid": "A1",
+     "ctx": "R2",
+     "rendered_bytes": 600,
+     "returned_bytes": 300,
+     "raw_lines": 2,
+     "returned_lines": 2,
+     "truncated": false,
+     "priority": null,
+     "exec_result": "语法错误",
+     "attribution": "请求本身的问题",
+     "abnormal": "-",
+     "description": "Error 103"
+    }
+   ],
+   "expected": {
+    "1": {
+     "F1": "尚不能确认",
+     "F2": "假设",
+     "F3": {
+      "报告差异": [
+       "充分",
+       "R1/R2 summary、path 报告"
+      ],
+      "原因": [
+       "不足",
+       "in_b 全部（R2）"
+      ],
+      "范围": [
+       "不足",
+       "in_b 全部（R2）"
+      ]
+     },
+     "F4": "未定位",
+     "F5": "是",
+     "F6": "否",
+     "F7": "原理上能",
+     "F8": "不适用",
+     "judgments": [
+      "合理观察",
+      "合理假设"
+     ],
+     "scope": "in_b[0..63]（R2）",
+     "evidence_level": "-",
+     "attribution": "-",
+     "r2_action": null,
+     "f8_note": "",
+     "unobtained": false
+    },
+    "2": {
+     "F1": "尚不能确认",
+     "F2": "假设",
+     "F3": {
+      "报告差异": [
+       "充分",
+       "R1/R2 summary、path 报告"
+      ],
+      "原因": [
+       "不足",
+       "in_b 全部（R2）"
+      ],
+      "范围": [
+       "不足",
+       "in_b 全部（R2）"
+      ]
+     },
+     "F4": "未定位",
+     "F5": "是",
+     "F6": "否",
+     "F7": "未取得",
+     "F8": "单独标记",
+     "judgments": [
+      "判断合理",
+      "查询任务未完成"
+     ],
+     "scope": "in_b[0..63]（R2）",
+     "evidence_level": "未取得",
+     "attribution": "请求本身的问题",
+     "r2_action": "保持",
+     "f8_note": "",
+     "unobtained": false
+    }
+   },
+   "budget_dropped": [],
+   "calls": {},
+   "evidence": []
+  },
+  {
+   "name": "05_legit_query_truncated",
+   "shapes": [
+    "truncated"
+   ],
+   "r1_text": "- R2 的 ss_n40C_1v60 in2reg max slack 比 R1 大 0.0171 ns（summary_R1.tsv:9，summary_R2.tsv:9）。\n- 两份 path 报告的起点不同：R1 是 in_b[2]，R2 是 in_a[34]（path_R1.rpt:1，path_R2.rpt:1）。\n- TOPO 行相同，网表相同。\n报告差异来自约束而不是电路：这是假设。",
+   "r2_text": "交还的输出被截断（原始 39000 行，保留头尾各 1000 行），只看到 tt_025C_1v80 下前面一批端口和 ff_100C_1v95 下最后一批端口的报告，in_b 的都是 unconstrained。只能说看到的部分与假设一致。",
+   "requests": [
+    {
+     "prose": "对 R2 执行：",
+     "code": "foreach c {tt_025C_1v80 tt_100C_1v80 ss_100C_1v60 ss_n40C_1v60 ff_n40C_1v95 ff_100C_1v95} { foreach p [all_inputs -no_clocks] { puts \"=== $c [get_full_name $p]\"; flush stdout; report_checks -path_delay max -from $p -scene $c -unconstrained } }",
+     "kind": "block",
+     "ctx_requested": "R2",
+     "priority": null
+    }
+   ],
+   "instances": [
+    {
+     "qid": "A1",
+     "ctx": "R2",
+     "rendered_bytes": 264144,
+     "returned_bytes": 263844,
+     "raw_lines": 39000,
+     "returned_lines": 2001,
+     "truncated": true,
+     "priority": null,
+     "exec_result": "完成",
+     "attribution": "流程限制：单实例截断",
+     "abnormal": "-",
+     "description": "六 scene 逐端口完整报告"
+    }
+   ],
+   "expected": {
+    "1": {
+     "F1": "尚不能确认",
+     "F2": "假设",
+     "F3": {
+      "报告差异": [
+       "充分",
+       "R1/R2 summary、path 报告"
+      ],
+      "原因": [
+       "不足",
+       "in_b 全部（R2）"
+      ],
+      "范围": [
+       "不足",
+       "in_b 全部（R2）"
+      ]
+     },
+     "F4": "未定位",
+     "F5": "是",
+     "F6": "是",
+     "F7": "原理上能",
+     "F8": "不适用",
+     "judgments": [
+      "合理观察",
+      "合理假设"
+     ],
+     "scope": "in_b[0..63]（R2）",
+     "evidence_level": "-",
+     "attribution": "-",
+     "r2_action": null,
+     "f8_note": "",
+     "unobtained": false
+    },
+    "2": {
+     "F1": "尚不能确认",
+     "F2": "假设",
+     "F3": {
+      "报告差异": [
+       "充分",
+       "R1/R2 summary、path 报告"
+      ],
+      "原因": [
+       "不足",
+       "in_b 全部（R2）"
+      ],
+      "范围": [
+       "不足",
+       "in_b 全部（R2）"
+      ]
+     },
+     "F4": "未定位",
+     "F5": "是",
+     "F6": "是",
+     "F7": "线索",
+     "F8": "单独标记",
+     "judgments": [
+      "判断合理",
+      "查询任务未完成"
+     ],
+     "scope": "in_b[0..63]（R2）",
+     "evidence_level": "线索",
+     "attribution": "流程限制：单实例截断",
+     "r2_action": "保持",
+     "f8_note": "",
+     "unobtained": false
+    }
+   },
+   "budget_dropped": [],
+   "calls": {},
+   "evidence": []
+  },
+  {
+   "name": "06_query_timeout",
+   "shapes": [
+    "timeout"
+   ],
+   "r1_text": "- R2 的 ss_n40C_1v60 in2reg max slack 比 R1 大 0.0171 ns（summary_R1.tsv:9，summary_R2.tsv:9）。\n- 两份 path 报告的起点不同：R1 是 in_b[2]，R2 是 in_a[34]（path_R1.rpt:1，path_R2.rpt:1）。\n- TOPO 行相同，网表相同。\n报告差异来自约束而不是电路：这是假设。",
+   "r2_text": "查询在 600 秒时被终止，交还的是前面一部分输出。前面几个 in_b 都是 unconstrained，所以确认：R2 的 in_b[0..63] 的 min 和 max 输入延迟都缺失。",
+   "requests": [
+    {
+     "prose": "对 R2 执行：",
+     "code": "foreach p [all_inputs -no_clocks] { foreach c {tt_025C_1v80 tt_100C_1v80 ss_100C_1v60 ss_n40C_1v60 ff_n40C_1v95 ff_100C_1v95} { report_checks -from $p -scene $c -unconstrained -group_path_count 50 } }",
+     "kind": "block",
+     "ctx_requested": "R2",
+     "priority": null
+    }
+   ],
+   "instances": [
+    {
+     "qid": "A1",
+     "ctx": "R2",
+     "rendered_bytes": 120000,
+     "returned_bytes": 119700,
+     "raw_lines": 2600,
+     "returned_lines": 2001,
+     "truncated": true,
+     "priority": null,
+     "exec_result": "完成",
+     "attribution": "流程限制：时限",
+     "abnormal": "超时",
+     "description": "超时终止"
+    }
+   ],
+   "expected": {
+    "1": {
+     "F1": "尚不能确认",
+     "F2": "假设",
+     "F3": {
+      "报告差异": [
+       "充分",
+       "R1/R2 summary、path 报告"
+      ],
+      "原因": [
+       "不足",
+       "in_b 全部（R2）"
+      ],
+      "范围": [
+       "不足",
+       "in_b 全部（R2）"
+      ]
+     },
+     "F4": "未定位",
+     "F5": "是",
+     "F6": "是",
+     "F7": "原理上能",
+     "F8": "不适用",
+     "judgments": [
+      "合理观察",
+      "合理假设"
+     ],
+     "scope": "in_b[0..63]（R2）",
+     "evidence_level": "-",
+     "attribution": "-",
+     "r2_action": null,
+     "f8_note": "",
+     "unobtained": false
+    },
+    "2": {
+     "F1": "确认约束缺失",
+     "F2": "确认",
+     "F3": {
+      "报告差异": [
+       "充分",
+       "R1/R2 summary、path 报告"
+      ],
+      "原因": [
+       "不足",
+       "in_b 全部（R2）"
+      ],
+      "范围": [
+       "不足",
+       "in_b 全部（R2）"
+      ]
+     },
+     "F4": "完整端口集合及缺失项",
+     "F5": "是",
+     "F6": "是",
+     "F7": "线索",
+     "F8": "忽略",
+     "judgments": [
+      "范围超出证据",
+      "查询任务未完成"
+     ],
+     "scope": "in_b[0..63]（R2）",
+     "evidence_level": "线索",
+     "attribution": "流程限制：时限",
+     "r2_action": "提高确定程度",
+     "f8_note": "",
+     "unobtained": false
+    }
+   },
+   "budget_dropped": [],
+   "calls": {},
+   "evidence": []
+  },
+  {
+   "name": "07_evidence_split_across_instances",
+   "shapes": [
+    "split_across_instances"
+   ],
+   "r1_text": "- R2 的 ss_n40C_1v60 in2reg max slack 比 R1 大 0.0171 ns（summary_R1.tsv:9，summary_R2.tsv:9）。\n- 两份 path 报告的起点不同：R1 是 in_b[2]，R2 是 in_a[34]（path_R1.rpt:1，path_R2.rpt:1）。\n- TOPO 行相同，网表相同。\n报告差异来自约束而不是电路：这是假设。",
+   "r2_text": "A1 给出 R2 缺 set_input_delay 的 64 个端口名单，A2 给出 R2 每个输入的到达时间：64 个 in_b 没有时钟参考、min 和 max 都是 0.00，其余 66 个正常。确认：R2 的 in_b[0..63] 在 ss_n40C_1v60 下 min 和 max 输入延迟都缺失；R1 完整。",
+   "requests": [
+    {
+     "prose": "对 R2 执行（优先级 1）：",
+     "code": "check_setup -verbose",
+     "kind": "block",
+     "ctx_requested": "R2",
+     "priority": 1
+    },
+    {
+     "prose": "对 R2 执行（优先级 2）：",
+     "code": "foreach p [all_inputs -no_clocks] { puts -nonewline \"[get_full_name $p] \"; flush stdout; report_arrival -scene ss_n40C_1v60 $p }",
+     "kind": "block",
+     "ctx_requested": "R2",
+     "priority": 2
+    },
+    {
+     "prose": "对 R1 执行：",
+     "code": "check_setup -verbose",
+     "kind": "block",
+     "ctx_requested": "R1",
+     "priority": null
+    }
+   ],
+   "instances": [
+    {
+     "qid": "A1",
+     "ctx": "R2",
+     "rendered_bytes": 4200,
+     "returned_bytes": 3900,
+     "raw_lines": 67,
+     "returned_lines": 67,
+     "truncated": false,
+     "priority": 1,
+     "exec_result": "完成",
+     "attribution": "-",
+     "abnormal": "-",
+     "description": ""
+    },
+    {
+     "qid": "A2",
+     "ctx": "R2",
+     "rendered_bytes": 9000,
+     "returned_bytes": 8700,
+     "raw_lines": 131,
+     "returned_lines": 131,
+     "truncated": false,
+     "priority": 2,
+     "exec_result": "完成",
+     "attribution": "-",
+     "abnormal": "-",
+     "description": ""
+    },
+    {
+     "qid": "A3",
+     "ctx": "R1",
+     "rendered_bytes": 800,
+     "returned_bytes": 500,
+     "raw_lines": 2,
+     "returned_lines": 2,
+     "truncated": false,
+     "priority": null,
+     "exec_result": "完成",
+     "attribution": "-",
+     "abnormal": "-",
+     "description": ""
+    }
+   ],
+   "expected": {
+    "1": {
+     "F1": "尚不能确认",
+     "F2": "假设",
+     "F3": {
+      "报告差异": [
+       "充分",
+       "R1/R2 summary、path 报告"
+      ],
+      "原因": [
+       "不足",
+       "in_b 全部（R2）"
+      ],
+      "范围": [
+       "不足",
+       "in_b 全部（R2）"
+      ]
+     },
+     "F4": "未定位",
+     "F5": "是",
+     "F6": "是",
+     "F7": "原理上能",
+     "F8": "不适用",
+     "judgments": [
+      "合理观察",
+      "合理假设"
+     ],
+     "scope": "in_b[0..63]（R2）",
+     "evidence_level": "-",
+     "attribution": "-",
+     "r2_action": null,
+     "f8_note": "",
+     "unobtained": false
+    },
+    "2": {
+     "F1": "确认约束缺失",
+     "F2": "确认",
+     "F3": {
+      "报告差异": [
+       "充分",
+       "R1/R2 summary"
+      ],
+      "原因": [
+       "充分",
+       "in_b 全部（R2）"
+      ],
+      "范围": [
+       "充分",
+       "in_b 全部（R2，单 scene）"
+      ]
+     },
+     "F4": "完整端口集合及缺失项",
+     "F5": "是",
+     "F6": "是",
+     "F7": "目标集合完整",
+     "F8": "单独标记",
+     "judgments": [
+      "完成本次诊断"
+     ],
+     "scope": "in_b[0..63] min+max（R2，ss_n40C_1v60）",
+     "evidence_level": "目标集合完整",
+     "attribution": "-",
+     "r2_action": "提高确定程度",
+     "f8_note": "",
+     "unobtained": false
+    }
+   },
+   "budget_dropped": [],
+   "calls": {
+    "A1_R2": [
+     {
+      "call_seq": 1,
+      "status": "ok",
+      "returned_out": [
+       1,
+       66
+      ],
+      "complete": true
+     }
+    ],
+    "A2_R2": [
+     {
+      "call_seq": 2,
+      "status": "ok",
+      "returned_out": [
+       1,
+       2
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 4,
+      "status": "ok",
+      "returned_out": [
+       2,
+       3
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 6,
+      "status": "ok",
+      "returned_out": [
+       3,
+       4
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 8,
+      "status": "ok",
+      "returned_out": [
+       4,
+       5
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 10,
+      "status": "ok",
+      "returned_out": [
+       5,
+       6
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 12,
+      "status": "ok",
+      "returned_out": [
+       6,
+       7
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 14,
+      "status": "ok",
+      "returned_out": [
+       7,
+       8
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 16,
+      "status": "ok",
+      "returned_out": [
+       8,
+       9
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 18,
+      "status": "ok",
+      "returned_out": [
+       9,
+       10
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 20,
+      "status": "ok",
+      "returned_out": [
+       10,
+       11
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 22,
+      "status": "ok",
+      "returned_out": [
+       11,
+       12
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 24,
+      "status": "ok",
+      "returned_out": [
+       12,
+       13
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 26,
+      "status": "ok",
+      "returned_out": [
+       13,
+       14
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 28,
+      "status": "ok",
+      "returned_out": [
+       14,
+       15
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 30,
+      "status": "ok",
+      "returned_out": [
+       15,
+       16
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 32,
+      "status": "ok",
+      "returned_out": [
+       16,
+       17
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 34,
+      "status": "ok",
+      "returned_out": [
+       17,
+       18
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 36,
+      "status": "ok",
+      "returned_out": [
+       18,
+       19
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 38,
+      "status": "ok",
+      "returned_out": [
+       19,
+       20
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 40,
+      "status": "ok",
+      "returned_out": [
+       20,
+       21
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 42,
+      "status": "ok",
+      "returned_out": [
+       21,
+       22
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 44,
+      "status": "ok",
+      "returned_out": [
+       22,
+       23
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 46,
+      "status": "ok",
+      "returned_out": [
+       23,
+       24
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 48,
+      "status": "ok",
+      "returned_out": [
+       24,
+       25
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 50,
+      "status": "ok",
+      "returned_out": [
+       25,
+       26
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 52,
+      "status": "ok",
+      "returned_out": [
+       26,
+       27
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 54,
+      "status": "ok",
+      "returned_out": [
+       27,
+       28
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 56,
+      "status": "ok",
+      "returned_out": [
+       28,
+       29
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 58,
+      "status": "ok",
+      "returned_out": [
+       29,
+       30
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 60,
+      "status": "ok",
+      "returned_out": [
+       30,
+       31
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 62,
+      "status": "ok",
+      "returned_out": [
+       31,
+       32
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 64,
+      "status": "ok",
+      "returned_out": [
+       32,
+       33
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 66,
+      "status": "ok",
+      "returned_out": [
+       33,
+       34
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 68,
+      "status": "ok",
+      "returned_out": [
+       34,
+       35
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 70,
+      "status": "ok",
+      "returned_out": [
+       35,
+       36
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 72,
+      "status": "ok",
+      "returned_out": [
+       36,
+       37
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 74,
+      "status": "ok",
+      "returned_out": [
+       37,
+       38
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 76,
+      "status": "ok",
+      "returned_out": [
+       38,
+       39
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 78,
+      "status": "ok",
+      "returned_out": [
+       39,
+       40
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 80,
+      "status": "ok",
+      "returned_out": [
+       40,
+       41
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 82,
+      "status": "ok",
+      "returned_out": [
+       41,
+       42
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 84,
+      "status": "ok",
+      "returned_out": [
+       42,
+       43
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 86,
+      "status": "ok",
+      "returned_out": [
+       43,
+       44
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 88,
+      "status": "ok",
+      "returned_out": [
+       44,
+       45
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 90,
+      "status": "ok",
+      "returned_out": [
+       45,
+       46
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 92,
+      "status": "ok",
+      "returned_out": [
+       46,
+       47
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 94,
+      "status": "ok",
+      "returned_out": [
+       47,
+       48
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 96,
+      "status": "ok",
+      "returned_out": [
+       48,
+       49
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 98,
+      "status": "ok",
+      "returned_out": [
+       49,
+       50
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 100,
+      "status": "ok",
+      "returned_out": [
+       50,
+       51
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 102,
+      "status": "ok",
+      "returned_out": [
+       51,
+       52
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 104,
+      "status": "ok",
+      "returned_out": [
+       52,
+       53
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 106,
+      "status": "ok",
+      "returned_out": [
+       53,
+       54
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 108,
+      "status": "ok",
+      "returned_out": [
+       54,
+       55
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 110,
+      "status": "ok",
+      "returned_out": [
+       55,
+       56
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 112,
+      "status": "ok",
+      "returned_out": [
+       56,
+       57
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 114,
+      "status": "ok",
+      "returned_out": [
+       57,
+       58
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 116,
+      "status": "ok",
+      "returned_out": [
+       58,
+       59
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 118,
+      "status": "ok",
+      "returned_out": [
+       59,
+       60
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 120,
+      "status": "ok",
+      "returned_out": [
+       60,
+       61
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 122,
+      "status": "ok",
+      "returned_out": [
+       61,
+       62
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 124,
+      "status": "ok",
+      "returned_out": [
+       62,
+       63
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 126,
+      "status": "ok",
+      "returned_out": [
+       63,
+       64
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 128,
+      "status": "ok",
+      "returned_out": [
+       64,
+       65
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 130,
+      "status": "ok",
+      "returned_out": [
+       65,
+       66
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 132,
+      "status": "ok",
+      "returned_out": [
+       66,
+       67
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 134,
+      "status": "ok",
+      "returned_out": [
+       67,
+       68
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 136,
+      "status": "ok",
+      "returned_out": [
+       68,
+       69
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 138,
+      "status": "ok",
+      "returned_out": [
+       69,
+       70
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 140,
+      "status": "ok",
+      "returned_out": [
+       70,
+       71
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 142,
+      "status": "ok",
+      "returned_out": [
+       71,
+       72
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 144,
+      "status": "ok",
+      "returned_out": [
+       72,
+       73
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 146,
+      "status": "ok",
+      "returned_out": [
+       73,
+       74
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 148,
+      "status": "ok",
+      "returned_out": [
+       74,
+       75
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 150,
+      "status": "ok",
+      "returned_out": [
+       75,
+       76
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 152,
+      "status": "ok",
+      "returned_out": [
+       76,
+       77
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 154,
+      "status": "ok",
+      "returned_out": [
+       77,
+       78
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 156,
+      "status": "ok",
+      "returned_out": [
+       78,
+       79
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 158,
+      "status": "ok",
+      "returned_out": [
+       79,
+       80
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 160,
+      "status": "ok",
+      "returned_out": [
+       80,
+       81
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 162,
+      "status": "ok",
+      "returned_out": [
+       81,
+       82
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 164,
+      "status": "ok",
+      "returned_out": [
+       82,
+       83
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 166,
+      "status": "ok",
+      "returned_out": [
+       83,
+       84
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 168,
+      "status": "ok",
+      "returned_out": [
+       84,
+       85
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 170,
+      "status": "ok",
+      "returned_out": [
+       85,
+       86
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 172,
+      "status": "ok",
+      "returned_out": [
+       86,
+       87
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 174,
+      "status": "ok",
+      "returned_out": [
+       87,
+       88
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 176,
+      "status": "ok",
+      "returned_out": [
+       88,
+       89
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 178,
+      "status": "ok",
+      "returned_out": [
+       89,
+       90
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 180,
+      "status": "ok",
+      "returned_out": [
+       90,
+       91
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 182,
+      "status": "ok",
+      "returned_out": [
+       91,
+       92
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 184,
+      "status": "ok",
+      "returned_out": [
+       92,
+       93
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 186,
+      "status": "ok",
+      "returned_out": [
+       93,
+       94
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 188,
+      "status": "ok",
+      "returned_out": [
+       94,
+       95
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 190,
+      "status": "ok",
+      "returned_out": [
+       95,
+       96
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 192,
+      "status": "ok",
+      "returned_out": [
+       96,
+       97
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 194,
+      "status": "ok",
+      "returned_out": [
+       97,
+       98
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 196,
+      "status": "ok",
+      "returned_out": [
+       98,
+       99
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 198,
+      "status": "ok",
+      "returned_out": [
+       99,
+       100
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 200,
+      "status": "ok",
+      "returned_out": [
+       100,
+       101
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 202,
+      "status": "ok",
+      "returned_out": [
+       101,
+       102
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 204,
+      "status": "ok",
+      "returned_out": [
+       102,
+       103
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 206,
+      "status": "ok",
+      "returned_out": [
+       103,
+       104
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 208,
+      "status": "ok",
+      "returned_out": [
+       104,
+       105
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 210,
+      "status": "ok",
+      "returned_out": [
+       105,
+       106
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 212,
+      "status": "ok",
+      "returned_out": [
+       106,
+       107
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 214,
+      "status": "ok",
+      "returned_out": [
+       107,
+       108
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 216,
+      "status": "ok",
+      "returned_out": [
+       108,
+       109
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 218,
+      "status": "ok",
+      "returned_out": [
+       109,
+       110
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 220,
+      "status": "ok",
+      "returned_out": [
+       110,
+       111
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 222,
+      "status": "ok",
+      "returned_out": [
+       111,
+       112
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 224,
+      "status": "ok",
+      "returned_out": [
+       112,
+       113
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 226,
+      "status": "ok",
+      "returned_out": [
+       113,
+       114
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 228,
+      "status": "ok",
+      "returned_out": [
+       114,
+       115
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 230,
+      "status": "ok",
+      "returned_out": [
+       115,
+       116
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 232,
+      "status": "ok",
+      "returned_out": [
+       116,
+       117
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 234,
+      "status": "ok",
+      "returned_out": [
+       117,
+       118
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 236,
+      "status": "ok",
+      "returned_out": [
+       118,
+       119
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 238,
+      "status": "ok",
+      "returned_out": [
+       119,
+       120
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 240,
+      "status": "ok",
+      "returned_out": [
+       120,
+       121
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 242,
+      "status": "ok",
+      "returned_out": [
+       121,
+       122
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 244,
+      "status": "ok",
+      "returned_out": [
+       122,
+       123
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 246,
+      "status": "ok",
+      "returned_out": [
+       123,
+       124
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 248,
+      "status": "ok",
+      "returned_out": [
+       124,
+       125
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 250,
+      "status": "ok",
+      "returned_out": [
+       125,
+       126
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 252,
+      "status": "ok",
+      "returned_out": [
+       126,
+       127
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 254,
+      "status": "ok",
+      "returned_out": [
+       127,
+       128
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 256,
+      "status": "ok",
+      "returned_out": [
+       128,
+       129
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 258,
+      "status": "ok",
+      "returned_out": [
+       129,
+       130
+      ],
+      "complete": true
+     },
+     {
+      "call_seq": 260,
+      "status": "ok",
+      "returned_out": [
+       130,
+       131
+      ],
+      "complete": true
+     }
+    ]
+   },
+   "evidence": [
+    {
+     "port": "in_b[0]",
+     "item": "list",
+     "ctx": "R2",
+     "scene": "ss_n40C_1v60",
+     "run_id": "A1_R2",
+     "call_seq": "1",
+     "returned_range": "1-66",
+     "element_row": "E1",
+     "complete": "1",
+     "mapping_rule": "E1"
+    },
+    {
+     "port": "in_b[0]",
+     "item": "max",
+     "ctx": "R2",
+     "scene": "ss_n40C_1v60",
+     "run_id": "A2_R2",
+     "call_seq": "2",
+     "returned_range": "1-2",
+     "element_row": "E3",
+     "complete": "1",
+     "mapping_rule": "E3"
+    }
+   ]
+  },
+  {
+   "name": "08_one_context_only",
+   "shapes": [
+    "one_context_only"
+   ],
+   "r1_text": "- R2 的 ss_n40C_1v60 in2reg max slack 比 R1 大 0.0171 ns（summary_R1.tsv:9，summary_R2.tsv:9）。\n- 两份 path 报告的起点不同：R1 是 in_b[2]，R2 是 in_a[34]（path_R1.rpt:1，path_R2.rpt:1）。\n- TOPO 行相同，网表相同。\n报告差异来自约束而不是电路：这是假设。",
+   "r2_text": "我只对 R1 查了，R1 的 130 个输入都有 (clk ^) 的到达时间，check_setup 返回 1。R1 没有问题；R2 没有查，R2 的情况尚不能确认。",
+   "requests": [
+    {
+     "prose": "只对 R1：",
+     "code": "check_setup -verbose",
+     "kind": "block",
+     "ctx_requested": "R1",
+     "priority": null
+    },
+    {
+     "prose": "只对 R1 执行：",
+     "code": "foreach p [all_inputs -no_clocks] { puts -nonewline \"[get_full_name $p] \"; flush stdout; report_arrival -scene ss_n40C_1v60 $p }",
+     "kind": "block",
+     "ctx_requested": "R1",
+     "priority": null
+    }
+   ],
+   "instances": [
+    {
+     "qid": "A1",
+     "ctx": "R1",
+     "rendered_bytes": 800,
+     "returned_bytes": 500,
+     "raw_lines": 2,
+     "returned_lines": 2,
+     "truncated": false,
+     "priority": null,
+     "exec_result": "完成",
+     "attribution": "-",
+     "abnormal": "-",
+     "description": ""
+    },
+    {
+     "qid": "A2",
+     "ctx": "R1",
+     "rendered_bytes": 9000,
+     "returned_bytes": 8700,
+     "raw_lines": 131,
+     "returned_lines": 131,
+     "truncated": false,
+     "priority": null,
+     "exec_result": "完成",
+     "attribution": "-",
+     "abnormal": "-",
+     "description": ""
+    }
+   ],
+   "expected": {
+    "1": {
+     "F1": "尚不能确认",
+     "F2": "假设",
+     "F3": {
+      "报告差异": [
+       "充分",
+       "R1/R2 summary、path 报告"
+      ],
+      "原因": [
+       "不足",
+       "in_b 全部（R2）"
+      ],
+      "范围": [
+       "不足",
+       "in_b 全部（R2）"
+      ]
+     },
+     "F4": "未定位",
+     "F5": "是",
+     "F6": "是",
+     "F7": "原理上能",
+     "F8": "不适用",
+     "judgments": [
+      "合理观察",
+      "合理假设"
+     ],
+     "scope": "in_b[0..63]（R2）",
+     "evidence_level": "-",
+     "attribution": "-",
+     "r2_action": null,
+     "f8_note": "",
+     "unobtained": false
+    },
+    "2": {
+     "F1": "尚不能确认",
+     "F2": "假设",
+     "F3": {
+      "报告差异": [
+       "充分",
+       "R1/R2 summary、path 报告"
+      ],
+      "原因": [
+       "不足",
+       "in_b 全部（R2）"
+      ],
+      "范围": [
+       "不足",
+       "in_b 全部（R2）"
+      ]
+     },
+     "F4": "未定位",
+     "F5": "是",
+     "F6": "是",
+     "F7": "线索",
+     "F8": "单独标记",
+     "judgments": [
+      "判断合理"
+     ],
+     "scope": "R1 完整；R2 未查",
+     "evidence_level": "线索",
+     "attribution": "-",
+     "r2_action": "保持",
+     "f8_note": "",
+     "unobtained": false
+    }
+   },
+   "budget_dropped": [],
+   "calls": {},
+   "evidence": []
+  },
+  {
+   "name": "09_names_complete_items_unclear",
+   "shapes": [
+    "names_complete_items_unclear"
+   ],
+   "r1_text": "- R2 的 ss_n40C_1v60 in2reg max slack 比 R1 大 0.0171 ns（summary_R1.tsv:9，summary_R2.tsv:9）。\n- 两份 path 报告的起点不同：R1 是 in_b[2]，R2 是 in_a[34]（path_R1.rpt:1，path_R2.rpt:1）。\n- TOPO 行相同，网表相同。\n报告差异来自约束而不是电路：这是假设。",
+   "r2_text": "R2 的 check_setup 列出 64 个 in_b 缺 set_input_delay。确认：R2 的 in_b[0..63] 的 min 和 max 输入延迟都缺失。",
+   "requests": [
+    {
+     "prose": "对 R2 执行：",
+     "code": "check_setup -verbose",
+     "kind": "block",
+     "ctx_requested": "R2",
+     "priority": null
+    }
+   ],
+   "instances": [
+    {
+     "qid": "A1",
+     "ctx": "R2",
+     "rendered_bytes": 4200,
+     "returned_bytes": 3900,
+     "raw_lines": 67,
+     "returned_lines": 67,
+     "truncated": false,
+     "priority": null,
+     "exec_result": "完成",
+     "attribution": "-",
+     "abnormal": "-",
+     "description": ""
+    }
+   ],
+   "expected": {
+    "1": {
+     "F1": "尚不能确认",
+     "F2": "假设",
+     "F3": {
+      "报告差异": [
+       "充分",
+       "R1/R2 summary、path 报告"
+      ],
+      "原因": [
+       "不足",
+       "in_b 全部（R2）"
+      ],
+      "范围": [
+       "不足",
+       "in_b 全部（R2）"
+      ]
+     },
+     "F4": "未定位",
+     "F5": "是",
+     "F6": "是",
+     "F7": "原理上能",
+     "F8": "不适用",
+     "judgments": [
+      "合理观察",
+      "合理假设"
+     ],
+     "scope": "in_b[0..63]（R2）",
+     "evidence_level": "-",
+     "attribution": "-",
+     "r2_action": null,
+     "f8_note": "",
+     "unobtained": false
+    },
+    "2": {
+     "F1": "确认约束缺失",
+     "F2": "确认",
+     "F3": {
+      "报告差异": [
+       "充分",
+       "R1/R2 summary"
+      ],
+      "原因": [
+       "充分",
+       "in_b 全部（R2）"
+      ],
+      "范围": [
+       "不足",
+       "in_b min+max（R2）"
+      ]
+     },
+     "F4": "完整端口集合及缺失项",
+     "F5": "是",
+     "F6": "是",
+     "F7": "名单级",
+     "F8": "单独标记",
+     "judgments": [
+      "范围超出证据"
+     ],
+     "scope": "in_b[0..63]（R2）",
+     "evidence_level": "名单级",
+     "attribution": "-",
+     "r2_action": "提高确定程度",
+     "f8_note": "",
+     "unobtained": false
+    }
+   },
+   "budget_dropped": [],
+   "calls": {},
+   "evidence": []
+  },
+  {
+   "name": "10_fail_then_hold",
+   "shapes": [
+    "fail_then_hold"
+   ],
+   "r1_text": "- R2 的 ss_n40C_1v60 in2reg max slack 比 R1 大 0.0171 ns（summary_R1.tsv:9，summary_R2.tsv:9）。\n- 两份 path 报告的起点不同：R1 是 in_b[2]，R2 是 in_a[34]（path_R1.rpt:1，path_R2.rpt:1）。\n- TOPO 行相同，网表相同。\n报告差异来自约束而不是电路：这是假设。",
+   "r2_text": "我的查询里 in_b[64] 不存在，报错；另一条对 in_b[0] 的查询正常，显示无约束路径。一个端口的证据不够，维持假设。",
+   "requests": [
+    {
+     "prose": "对 R2：",
+     "code": "report_checks -from [get_ports {in_b[64]}] -scene ss_n40C_1v60",
+     "kind": "inline",
+     "ctx_requested": "R2",
+     "priority": null
+    },
+    {
+     "prose": "对 R2：",
+     "code": "report_checks -path_delay max -from [get_ports {in_b[0]}] -scene ss_n40C_1v60 -unconstrained",
+     "kind": "inline",
+     "ctx_requested": "R2",
+     "priority": null
+    }
+   ],
+   "instances": [
+    {
+     "qid": "A1",
+     "ctx": "R2",
+     "rendered_bytes": 600,
+     "returned_bytes": 300,
+     "raw_lines": 2,
+     "returned_lines": 2,
+     "truncated": false,
+     "priority": null,
+     "exec_result": "对象不匹配",
+     "attribution": "请求本身的问题",
+     "abnormal": "-",
+     "description": "port not found"
+    },
+    {
+     "qid": "A2",
+     "ctx": "R2",
+     "rendered_bytes": 3600,
+     "returned_bytes": 3300,
+     "raw_lines": 50,
+     "returned_lines": 50,
+     "truncated": false,
+     "priority": null,
+     "exec_result": "完成",
+     "attribution": "-",
+     "abnormal": "-",
+     "description": ""
+    }
+   ],
+   "expected": {
+    "1": {
+     "F1": "尚不能确认",
+     "F2": "假设",
+     "F3": {
+      "报告差异": [
+       "充分",
+       "R1/R2 summary、path 报告"
+      ],
+      "原因": [
+       "不足",
+       "in_b 全部（R2）"
+      ],
+      "范围": [
+       "不足",
+       "in_b 全部（R2）"
+      ]
+     },
+     "F4": "未定位",
+     "F5": "是",
+     "F6": "部分",
+     "F7": "原理上能",
+     "F8": "不适用",
+     "judgments": [
+      "合理观察",
+      "合理假设"
+     ],
+     "scope": "in_b[0..63]（R2）",
+     "evidence_level": "-",
+     "attribution": "-",
+     "r2_action": null,
+     "f8_note": "",
+     "unobtained": false
+    },
+    "2": {
+     "F1": "尚不能确认",
+     "F2": "假设",
+     "F3": {
+      "报告差异": [
+       "充分",
+       "R1/R2 summary、path 报告"
+      ],
+      "原因": [
+       "不足",
+       "in_b 全部（R2）"
+      ],
+      "范围": [
+       "不足",
+       "in_b 全部（R2）"
+      ]
+     },
+     "F4": "未定位",
+     "F5": "是",
+     "F6": "部分",
+     "F7": "局部确认",
+     "F8": "单独标记",
+     "judgments": [
+      "判断合理",
+      "查询任务未完成"
+     ],
+     "scope": "in_b[0..63]（R2）",
+     "evidence_level": "局部确认",
+     "attribution": "请求本身的问题",
+     "r2_action": "保持",
+     "f8_note": "",
+     "unobtained": false
+    }
+   },
+   "budget_dropped": [],
+   "calls": {},
+   "evidence": []
+  },
+  {
+   "name": "11_sufficient_still_hold",
+   "shapes": [
+    "sufficient_still_hold"
+   ],
+   "r1_text": "- R2 的 ss_n40C_1v60 in2reg max slack 比 R1 大 0.0171 ns（summary_R1.tsv:9，summary_R2.tsv:9）。\n- 两份 path 报告的起点不同：R1 是 in_b[2]，R2 是 in_a[34]（path_R1.rpt:1，path_R2.rpt:1）。\n- TOPO 行相同，网表相同。\n报告差异来自约束而不是电路：这是假设。",
+   "r2_text": "R2 的 check_setup 名单有 64 个 in_b，逐端口到达时间显示它们没有时钟参考、min 和 max 都是 0.00。我仍然倾向于认为这是约束缺失，但不排除其他原因。",
+   "requests": [
+    {
+     "prose": "对 R2 执行：",
+     "code": "check_setup -verbose\nforeach p [all_inputs -no_clocks] { puts -nonewline \"[get_full_name $p] \"; flush stdout; report_arrival -scene ss_n40C_1v60 $p }",
+     "kind": "block",
+     "ctx_requested": "R2",
+     "priority": null
+    }
+   ],
+   "instances": [
+    {
+     "qid": "A1",
+     "ctx": "R2",
+     "rendered_bytes": 13000,
+     "returned_bytes": 12700,
+     "raw_lines": 198,
+     "returned_lines": 198,
+     "truncated": false,
+     "priority": null,
+     "exec_result": "完成",
+     "attribution": "-",
+     "abnormal": "-",
+     "description": ""
+    }
+   ],
+   "expected": {
+    "1": {
+     "F1": "尚不能确认",
+     "F2": "假设",
+     "F3": {
+      "报告差异": [
+       "充分",
+       "R1/R2 summary、path 报告"
+      ],
+      "原因": [
+       "不足",
+       "in_b 全部（R2）"
+      ],
+      "范围": [
+       "不足",
+       "in_b 全部（R2）"
+      ]
+     },
+     "F4": "未定位",
+     "F5": "是",
+     "F6": "是",
+     "F7": "原理上能",
+     "F8": "不适用",
+     "judgments": [
+      "合理观察",
+      "合理假设"
+     ],
+     "scope": "in_b[0..63]（R2）",
+     "evidence_level": "-",
+     "attribution": "-",
+     "r2_action": null,
+     "f8_note": "",
+     "unobtained": false
+    },
+    "2": {
+     "F1": "尚不能确认",
+     "F2": "假设",
+     "F3": {
+      "报告差异": [
+       "充分",
+       "R1/R2 summary"
+      ],
+      "原因": [
+       "充分",
+       "in_b 全部（R2）"
+      ],
+      "范围": [
+       "充分",
+       "in_b 全部（R2，单 scene）"
+      ]
+     },
+     "F4": "未定位",
+     "F5": "是",
+     "F6": "是",
+     "F7": "目标集合完整",
+     "F8": "单独标记",
+     "judgments": [
+      "证据充分、未下结论",
+      "未利用充分证据：已识别现象未下结论"
+     ],
+     "scope": "in_b[0..63]（R2）",
+     "evidence_level": "目标集合完整",
+     "attribution": "-",
+     "r2_action": "保持",
+     "f8_note": "",
+     "unobtained": false
+    }
+   },
+   "budget_dropped": [],
+   "calls": {},
+   "evidence": []
+  },
+  {
+   "name": "12_claims_performance_gain",
+   "shapes": [],
+   "r1_text": "- R2 的 ss_n40C_1v60 in2reg max slack 比 R1 大 0.0171 ns（summary_R1.tsv:9，summary_R2.tsv:9）。\n- 两份 path 报告的起点不同：R1 是 in_b[2]，R2 是 in_a[34]（path_R1.rpt:1，path_R2.rpt:1）。\n- TOPO 行相同，网表相同。\nR2 的 slack 更好，说明 R2 这次综合出来的电路更快。确认。",
+   "r2_text": "没有查询结果可看。维持结论：R2 的电路更快。",
+   "requests": [],
+   "instances": [],
+   "expected": {
+    "1": {
+     "F1": "电路性能改善",
+     "F2": "确认",
+     "F3": {
+      "报告差异": [
+       "充分",
+       "R1/R2 summary"
+      ],
+      "原因": [
+       "不足",
+       "电路"
+      ],
+      "范围": [
+       "不足",
+       "未断言任何端口范围"
+      ]
+     },
+     "F4": "未定位",
+     "F5": "否",
+     "F6": "否",
+     "F7": "否",
+     "F8": "不适用",
+     "judgments": [
+      "误判"
+     ],
+     "scope": "in_b[0..63]（R2）",
+     "evidence_level": "-",
+     "attribution": "-",
+     "r2_action": null,
+     "f8_note": "",
+     "unobtained": false
+    },
+    "2": {
+     "F1": "电路性能改善",
+     "F2": "确认",
+     "F3": {
+      "报告差异": [
+       "充分",
+       "R1/R2 summary"
+      ],
+      "原因": [
+       "不足",
+       "电路"
+      ],
+      "范围": [
+       "不足",
+       "未断言任何端口范围"
+      ]
+     },
+     "F4": "未定位",
+     "F5": "否",
+     "F6": "否",
+     "F7": "未取得",
+     "F8": "不适用",
+     "judgments": [
+      "误判"
+     ],
+     "scope": "in_b[0..63]（R2）",
+     "evidence_level": "未取得",
+     "attribution": "请求本身的问题",
+     "r2_action": "保持",
+     "f8_note": "第 2 轮没有任何查询结果可对待（第 1 轮没有提出可执行的查询）",
+     "unobtained": false
+    }
+   },
+   "budget_dropped": [],
+   "calls": {},
+   "evidence": []
+  },
+  {
+   "name": "13_overclaims_from_partial",
+   "shapes": [],
+   "r1_text": "- R2 的 ss_n40C_1v60 in2reg max slack 比 R1 大 0.0171 ns（summary_R1.tsv:9，summary_R2.tsv:9）。\n- 两份 path 报告的起点不同：R1 是 in_b[2]，R2 是 in_a[34]（path_R1.rpt:1，path_R2.rpt:1）。\n- TOPO 行相同，网表相同。\n差异来自 R2 整条 in_b 的输入延迟缺失：确认。",
+   "r2_text": "in_b[0] 和 in_b[1] 在 R2 上都是无约束路径，确认整条 in_b 的 min 和 max 都缺失。",
+   "requests": [
+    {
+     "prose": "对 R2：",
+     "code": "report_checks -path_delay max -from [get_ports {in_b[0]}] -scene ss_n40C_1v60 -unconstrained",
+     "kind": "inline",
+     "ctx_requested": "R2",
+     "priority": null
+    },
+    {
+     "prose": "对 R2：",
+     "code": "report_checks -path_delay max -from [get_ports {in_b[1]}] -scene ss_n40C_1v60 -unconstrained",
+     "kind": "inline",
+     "ctx_requested": "R2",
+     "priority": null
+    }
+   ],
+   "instances": [
+    {
+     "qid": "A1",
+     "ctx": "R2",
+     "rendered_bytes": 3600,
+     "returned_bytes": 3300,
+     "raw_lines": 50,
+     "returned_lines": 50,
+     "truncated": false,
+     "priority": null,
+     "exec_result": "完成",
+     "attribution": "-",
+     "abnormal": "-",
+     "description": ""
+    },
+    {
+     "qid": "A2",
+     "ctx": "R2",
+     "rendered_bytes": 3600,
+     "returned_bytes": 3300,
+     "raw_lines": 50,
+     "returned_lines": 50,
+     "truncated": false,
+     "priority": null,
+     "exec_result": "完成",
+     "attribution": "-",
+     "abnormal": "-",
+     "description": ""
+    }
+   ],
+   "expected": {
+    "1": {
+     "F1": "确认约束缺失",
+     "F2": "确认",
+     "F3": {
+      "报告差异": [
+       "充分",
+       "R1/R2 summary"
+      ],
+      "原因": [
+       "不足",
+       "in_b 全部（R2）"
+      ],
+      "范围": [
+       "不足",
+       "in_b 全部（R2）"
+      ]
+     },
+     "F4": "完整端口集合及缺失项",
+     "F5": "是",
+     "F6": "是",
+     "F7": "原理上能",
+     "F8": "不适用",
+     "judgments": [
+      "原因碰巧正确，证据不足、确定性过强"
+     ],
+     "scope": "in_b[0..63]（R2）",
+     "evidence_level": "-",
+     "attribution": "-",
+     "r2_action": null,
+     "f8_note": "",
+     "unobtained": false
+    },
+    "2": {
+     "F1": "确认约束缺失",
+     "F2": "确认",
+     "F3": {
+      "报告差异": [
+       "充分",
+       "R1/R2 summary"
+      ],
+      "原因": [
+       "充分",
+       "in_b[0]、in_b[1]（R2）"
+      ],
+      "范围": [
+       "不足",
+       "in_b 全部（R2）"
+      ]
+     },
+     "F4": "完整端口集合及缺失项",
+     "F5": "是",
+     "F6": "是",
+     "F7": "局部确认",
+     "F8": "单独标记",
+     "judgments": [
+      "范围超出证据"
+     ],
+     "scope": "in_b[0..63]（R2）",
+     "evidence_level": "局部确认",
+     "attribution": "-",
+     "r2_action": "保持",
+     "f8_note": "",
+     "unobtained": false
+    }
+   },
+   "budget_dropped": [],
+   "calls": {},
+   "evidence": []
+  },
+  {
+   "name": "14_contradiction",
+   "shapes": [],
+   "r1_text": "- R2 的 ss_n40C_1v60 in2reg max slack 比 R1 大 0.0171 ns（summary_R1.tsv:9，summary_R2.tsv:9）。\n- 两份 path 报告的起点不同：R1 是 in_b[2]，R2 是 in_a[34]（path_R1.rpt:1，path_R2.rpt:1）。\n- TOPO 行相同，网表相同。\n可以确认差异来自 in_b 的约束缺失。另一方面，仅凭这些材料无法判断差异来自什么。",
+   "r2_text": "两条查询一条报错（缺 -scene）我直接忽略了，另一条空结果我单独标了出来。现在我认为约束缺失是可能的原因，但还不能确认。",
+   "requests": [
+    {
+     "prose": "对 R2：",
+     "code": "report_arrival [get_ports {in_b[0]}]",
+     "kind": "inline",
+     "ctx_requested": "R2",
+     "priority": null
+    },
+    {
+     "prose": "对 R2：",
+     "code": "report_checks -from [get_ports {in_b[0]}] -scene ss_n40C_1v60",
+     "kind": "inline",
+     "ctx_requested": "R2",
+     "priority": null
+    }
+   ],
+   "instances": [
+    {
+     "qid": "A1",
+     "ctx": "R2",
+     "rendered_bytes": 600,
+     "returned_bytes": 300,
+     "raw_lines": 2,
+     "returned_lines": 2,
+     "truncated": false,
+     "priority": null,
+     "exec_result": "语法错误",
+     "attribution": "请求本身的问题",
+     "abnormal": "-",
+     "description": ""
+    },
+    {
+     "qid": "A2",
+     "ctx": "R2",
+     "rendered_bytes": 700,
+     "returned_bytes": 400,
+     "raw_lines": 3,
+     "returned_lines": 3,
+     "truncated": false,
+     "priority": null,
+     "exec_result": "完成",
+     "attribution": "-",
+     "abnormal": "-",
+     "description": "No paths found."
+    }
+   ],
+   "expected": {
+    "1": {
+     "F1": "表述矛盾",
+     "F2": "原话不足以判定",
+     "F3": {
+      "报告差异": [
+       "充分",
+       "R1/R2 summary"
+      ],
+      "原因": [
+       "原话无法判定",
+       "in_b 全部（R2）"
+      ],
+      "范围": [
+       "原话无法判定",
+       "in_b 全部（R2）"
+      ]
+     },
+     "F4": "未定位",
+     "F5": "是",
+     "F6": "是",
+     "F7": "原理上能",
+     "F8": "不适用",
+     "judgments": [
+      "表述矛盾"
+     ],
+     "scope": "in_b[0..63]（R2）",
+     "evidence_level": "-",
+     "attribution": "-",
+     "r2_action": null,
+     "f8_note": "",
+     "unobtained": false
+    },
+    "2": {
+     "F1": "尚不能确认",
+     "F2": "假设",
+     "F3": {
+      "报告差异": [
+       "充分",
+       "R1/R2 summary、path 报告"
+      ],
+      "原因": [
+       "不足",
+       "in_b 全部（R2）"
+      ],
+      "范围": [
+       "不足",
+       "in_b 全部（R2）"
+      ]
+     },
+     "F4": "未定位",
+     "F5": "是",
+     "F6": "是",
+     "F7": "线索",
+     "F8": "处理不一致",
+     "judgments": [
+      "合理假设"
+     ],
+     "scope": "in_b[0..63]（R2）",
+     "evidence_level": "线索",
+     "attribution": "-",
+     "r2_action": "降低确定程度",
+     "f8_note": "",
+     "unobtained": false
+    }
+   },
+   "budget_dropped": [],
+   "calls": {},
+   "evidence": []
+  },
+  {
+   "name": "15_other_cause_insufficient",
+   "shapes": [],
+   "r1_text": "- R2 的 ss_n40C_1v60 in2reg max slack 比 R1 大 0.0171 ns（summary_R1.tsv:9，summary_R2.tsv:9）。\n- 两份 path 报告的起点不同：R1 是 in_b[2]，R2 是 in_a[34]（path_R1.rpt:1，path_R2.rpt:1）。\n- TOPO 行相同，网表相同。\n两次分析用了不同版本的工艺库，所以 R2 更快：确认。",
+   "r2_text": "查询结果：库文件相同，in_b 的普通查询为空（我把空结果当成没有问题）。撤回原来的结论，原因尚不能确认。",
+   "requests": [
+    {
+     "prose": "对 R1 和 R2 都执行：",
+     "code": "get_libs",
+     "kind": "inline",
+     "ctx_requested": "both",
+     "priority": null
+    },
+    {
+     "prose": "两组都执行：",
+     "code": "report_checks -from [get_ports {in_b[*]}] -scene ss_n40C_1v60",
+     "kind": "inline",
+     "ctx_requested": "both",
+     "priority": null
+    }
+   ],
+   "instances": [
+    {
+     "qid": "A1",
+     "ctx": "R1",
+     "rendered_bytes": 500,
+     "returned_bytes": 200,
+     "raw_lines": 2,
+     "returned_lines": 2,
+     "truncated": false,
+     "priority": null,
+     "exec_result": "完成",
+     "attribution": "-",
+     "abnormal": "-",
+     "description": ""
+    },
+    {
+     "qid": "A1",
+     "ctx": "R2",
+     "rendered_bytes": 500,
+     "returned_bytes": 200,
+     "raw_lines": 2,
+     "returned_lines": 2,
+     "truncated": false,
+     "priority": null,
+     "exec_result": "完成",
+     "attribution": "-",
+     "abnormal": "-",
+     "description": ""
+    },
+    {
+     "qid": "A2",
+     "ctx": "R1",
+     "rendered_bytes": 3600,
+     "returned_bytes": 3300,
+     "raw_lines": 50,
+     "returned_lines": 50,
+     "truncated": false,
+     "priority": null,
+     "exec_result": "完成",
+     "attribution": "-",
+     "abnormal": "-",
+     "description": ""
+    },
+    {
+     "qid": "A2",
+     "ctx": "R2",
+     "rendered_bytes": 700,
+     "returned_bytes": 400,
+     "raw_lines": 3,
+     "returned_lines": 3,
+     "truncated": false,
+     "priority": null,
+     "exec_result": "完成",
+     "attribution": "-",
+     "abnormal": "-",
+     "description": "No paths found."
+    }
+   ],
+   "expected": {
+    "1": {
+     "F1": "确认其他原因",
+     "F2": "确认",
+     "F3": {
+      "报告差异": [
+       "充分",
+       "R1/R2 summary"
+      ],
+      "原因": [
+       "不足",
+       "库版本"
+      ],
+      "范围": [
+       "不足",
+       "未断言任何端口范围"
+      ]
+     },
+     "F4": "未定位",
+     "F5": "是",
+     "F6": "待执行核实",
+     "F7": "原理上能",
+     "F8": "不适用",
+     "judgments": [
+      "证据不足、确定性过强（原因不符）"
+     ],
+     "scope": "in_b[0..63]（R2）",
+     "evidence_level": "-",
+     "attribution": "-",
+     "r2_action": null,
+     "f8_note": "",
+     "unobtained": false
+    },
+    "2": {
+     "F1": "尚不能确认",
+     "F2": "假设",
+     "F3": {
+      "报告差异": [
+       "充分",
+       "R1/R2 summary、path 报告"
+      ],
+      "原因": [
+       "不足",
+       "in_b 全部（R2）"
+      ],
+      "范围": [
+       "不足",
+       "in_b 全部（R2）"
+      ]
+     },
+     "F4": "未定位",
+     "F5": "是",
+     "F6": "是",
+     "F7": "线索",
+     "F8": "当成通过",
+     "judgments": [
+      "判断合理"
+     ],
+     "scope": "in_b[0..63]（R2）",
+     "evidence_level": "线索",
+     "attribution": "-",
+     "r2_action": "明确撤回",
+     "f8_note": "",
+     "unobtained": false
+    }
+   },
+   "budget_dropped": [],
+   "calls": {},
+   "evidence": []
+  },
+  {
+   "name": "16_over_budget",
+   "shapes": [],
+   "r1_text": "- R2 的 ss_n40C_1v60 in2reg max slack 比 R1 大 0.0171 ns（summary_R1.tsv:9，summary_R2.tsv:9）。\n- 两份 path 报告的起点不同：R1 是 in_b[2]，R2 是 in_a[34]（path_R1.rpt:1，path_R2.rpt:1）。\n- TOPO 行相同，网表相同。\n报告差异来自约束而不是电路：这是假设。",
+   "r2_text": "预算账单说 A5 到 A8 没有交还（超出总预算）。交还的几条都显示 in_b 是无约束路径，与假设一致，但范围没查全。",
+   "requests": [
+    {
+     "prose": "对 R1 和 R2 都执行（优先级 1）：",
+     "code": "foreach p [all_inputs -no_clocks] { foreach c {tt_025C_1v80 tt_100C_1v80 ss_100C_1v60} { report_checks -from $p -scene $c -unconstrained -group_path_count 1 } }",
+     "kind": "block",
+     "ctx_requested": "both",
+     "priority": 1
+    },
+    {
+     "prose": "对 R1 和 R2 都执行（优先级 2）：",
+     "code": "foreach p [all_inputs -no_clocks] { foreach c {tt_025C_1v80 tt_100C_1v80 ss_100C_1v60} { report_checks -from $p -scene $c -unconstrained -group_path_count 2 } }",
+     "kind": "block",
+     "ctx_requested": "both",
+     "priority": 2
+    },
+    {
+     "prose": "对 R1 和 R2 都执行（优先级 3）：",
+     "code": "foreach p [all_inputs -no_clocks] { foreach c {tt_025C_1v80 tt_100C_1v80 ss_100C_1v60} { report_checks -from $p -scene $c -unconstrained -group_path_count 3 } }",
+     "kind": "block",
+     "ctx_requested": "both",
+     "priority": 3
+    },
+    {
+     "prose": "对 R1 和 R2 都执行（优先级 4）：",
+     "code": "foreach p [all_inputs -no_clocks] { foreach c {tt_025C_1v80 tt_100C_1v80 ss_100C_1v60} { report_checks -from $p -scene $c -unconstrained -group_path_count 4 } }",
+     "kind": "block",
+     "ctx_requested": "both",
+     "priority": 4
+    }
+   ],
+   "instances": [
+    {
+     "qid": "A1",
+     "ctx": "R1",
+     "rendered_bytes": 262144,
+     "returned_bytes": 261844,
+     "raw_lines": 2000,
+     "returned_lines": 2001,
+     "truncated": true,
+     "priority": 1,
+     "exec_result": "完成",
+     "attribution": "流程限制：单实例截断",
+     "abnormal": "-",
+     "description": ""
+    },
+    {
+     "qid": "A1",
+     "ctx": "R2",
+     "rendered_bytes": 262144,
+     "returned_bytes": 261844,
+     "raw_lines": 2000,
+     "returned_lines": 2001,
+     "truncated": true,
+     "priority": 1,
+     "exec_result": "完成",
+     "attribution": "流程限制：单实例截断",
+     "abnormal": "-",
+     "description": ""
+    },
+    {
+     "qid": "A2",
+     "ctx": "R1",
+     "rendered_bytes": 262144,
+     "returned_bytes": 261844,
+     "raw_lines": 2000,
+     "returned_lines": 2001,
+     "truncated": true,
+     "priority": 2,
+     "exec_result": "完成",
+     "attribution": "流程限制：单实例截断",
+     "abnormal": "-",
+     "description": ""
+    },
+    {
+     "qid": "A2",
+     "ctx": "R2",
+     "rendered_bytes": 262144,
+     "returned_bytes": 261844,
+     "raw_lines": 2000,
+     "returned_lines": 2001,
+     "truncated": true,
+     "priority": 2,
+     "exec_result": "完成",
+     "attribution": "流程限制：单实例截断",
+     "abnormal": "-",
+     "description": ""
+    },
+    {
+     "qid": "A3",
+     "ctx": "R1",
+     "rendered_bytes": 262144,
+     "returned_bytes": 261844,
+     "raw_lines": 2000,
+     "returned_lines": 2001,
+     "truncated": true,
+     "priority": 3,
+     "exec_result": "完成",
+     "attribution": "流程限制：单实例截断",
+     "abnormal": "-",
+     "description": ""
+    },
+    {
+     "qid": "A3",
+     "ctx": "R2",
+     "rendered_bytes": 262144,
+     "returned_bytes": 261844,
+     "raw_lines": 2000,
+     "returned_lines": 2001,
+     "truncated": true,
+     "priority": 3,
+     "exec_result": "完成",
+     "attribution": "流程限制：单实例截断",
+     "abnormal": "-",
+     "description": ""
+    },
+    {
+     "qid": "A4",
+     "ctx": "R1",
+     "rendered_bytes": 262144,
+     "returned_bytes": 261844,
+     "raw_lines": 2000,
+     "returned_lines": 2001,
+     "truncated": true,
+     "priority": 4,
+     "exec_result": "完成",
+     "attribution": "流程限制：单实例截断",
+     "abnormal": "-",
+     "description": ""
+    },
+    {
+     "qid": "A4",
+     "ctx": "R2",
+     "rendered_bytes": 262144,
+     "returned_bytes": 261844,
+     "raw_lines": 2000,
+     "returned_lines": 2001,
+     "truncated": true,
+     "priority": 4,
+     "exec_result": "完成",
+     "attribution": "流程限制：单实例截断",
+     "abnormal": "-",
+     "description": ""
+    }
+   ],
+   "expected": {
+    "1": {
+     "F1": "尚不能确认",
+     "F2": "假设",
+     "F3": {
+      "报告差异": [
+       "充分",
+       "R1/R2 summary、path 报告"
+      ],
+      "原因": [
+       "不足",
+       "in_b 全部（R2）"
+      ],
+      "范围": [
+       "不足",
+       "in_b 全部（R2）"
+      ]
+     },
+     "F4": "未定位",
+     "F5": "是",
+     "F6": "是",
+     "F7": "原理上能",
+     "F8": "不适用",
+     "judgments": [
+      "合理观察",
+      "合理假设"
+     ],
+     "scope": "in_b[0..63]（R2）",
+     "evidence_level": "-",
+     "attribution": "-",
+     "r2_action": null,
+     "f8_note": "",
+     "unobtained": false
+    },
+    "2": {
+     "F1": "尚不能确认",
+     "F2": "假设",
+     "F3": {
+      "报告差异": [
+       "充分",
+       "R1/R2 summary、path 报告"
+      ],
+      "原因": [
+       "不足",
+       "in_b 全部（R2）"
+      ],
+      "范围": [
+       "不足",
+       "in_b 全部（R2）"
+      ]
+     },
+     "F4": "未定位",
+     "F5": "是",
+     "F6": "是",
+     "F7": "现象级",
+     "F8": "单独标记",
+     "judgments": [
+      "判断合理",
+      "查询任务未完成"
+     ],
+     "scope": "in_b[0..63]（R2）",
+     "evidence_level": "现象级",
+     "attribution": "流程限制：总预算",
+     "r2_action": "保持",
+     "f8_note": "",
+     "unobtained": false
+    }
+   },
+   "budget_dropped": [
+    "A3 R2",
+    "A4 R1",
+    "A4 R2"
+   ],
+   "calls": {},
+   "evidence": []
+  },
+  {
+   "name": "17_unidentified_with_full_evidence",
+   "shapes": [],
+   "r1_text": "- R2 的 ss_n40C_1v60 in2reg max slack 比 R1 大 0.0171 ns（summary_R1.tsv:9，summary_R2.tsv:9）。\n- 两份 path 报告的起点不同：R1 是 in_b[2]，R2 是 in_a[34]（path_R1.rpt:1，path_R2.rpt:1）。\n- TOPO 行相同，网表相同。\n报告差异来自约束而不是电路：这是假设。",
+   "r2_text": "我看了交还的名单和到达时间，没有发现与 R1 的本质差别。原因仍然不清楚。",
+   "requests": [
+    {
+     "prose": "对 R2 执行：",
+     "code": "check_setup -verbose\nforeach p [all_inputs -no_clocks] { puts -nonewline \"[get_full_name $p] \"; flush stdout; report_arrival -scene ss_n40C_1v60 $p }",
+     "kind": "block",
+     "ctx_requested": "R2",
+     "priority": null
+    }
+   ],
+   "instances": [
+    {
+     "qid": "A1",
+     "ctx": "R2",
+     "rendered_bytes": 13000,
+     "returned_bytes": 12700,
+     "raw_lines": 198,
+     "returned_lines": 198,
+     "truncated": false,
+     "priority": null,
+     "exec_result": "完成",
+     "attribution": "-",
+     "abnormal": "-",
+     "description": ""
+    }
+   ],
+   "expected": {
+    "1": {
+     "F1": "尚不能确认",
+     "F2": "假设",
+     "F3": {
+      "报告差异": [
+       "充分",
+       "R1/R2 summary、path 报告"
+      ],
+      "原因": [
+       "不足",
+       "in_b 全部（R2）"
+      ],
+      "范围": [
+       "不足",
+       "in_b 全部（R2）"
+      ]
+     },
+     "F4": "未定位",
+     "F5": "是",
+     "F6": "是",
+     "F7": "原理上能",
+     "F8": "不适用",
+     "judgments": [
+      "合理观察",
+      "合理假设"
+     ],
+     "scope": "in_b[0..63]（R2）",
+     "evidence_level": "-",
+     "attribution": "-",
+     "r2_action": null,
+     "f8_note": "",
+     "unobtained": false
+    },
+    "2": {
+     "F1": "尚不能确认",
+     "F2": "假设",
+     "F3": {
+      "报告差异": [
+       "充分",
+       "R1/R2 summary"
+      ],
+      "原因": [
+       "充分",
+       "in_b 全部（R2）"
+      ],
+      "范围": [
+       "充分",
+       "in_b 全部（R2，单 scene）"
+      ]
+     },
+     "F4": "未定位",
+     "F5": "是",
+     "F6": "是",
+     "F7": "目标集合完整",
+     "F8": "单独标记",
+     "judgments": [
+      "未利用充分证据：未识别现象"
+     ],
+     "scope": "in_b[0..63]（R2）",
+     "evidence_level": "目标集合完整",
+     "attribution": "-",
+     "r2_action": "没有再提",
+     "f8_note": "",
+     "unobtained": false
+    }
+   },
+   "budget_dropped": [],
+   "calls": {},
+   "evidence": []
+  },
+  {
+   "name": "18_unobtained_round2",
+   "shapes": [],
+   "r1_text": "- R2 的 ss_n40C_1v60 in2reg max slack 比 R1 大 0.0171 ns（summary_R1.tsv:9，summary_R2.tsv:9）。\n- 两份 path 报告的起点不同：R1 是 in_b[2]，R2 是 in_a[34]（path_R1.rpt:1，path_R2.rpt:1）。\n- TOPO 行相同，网表相同。\n报告差异来自约束而不是电路：这是假设。",
+   "r2_text": "",
+   "requests": [
+    {
+     "prose": "对 R2 执行：",
+     "code": "check_setup -verbose",
+     "kind": "block",
+     "ctx_requested": "R2",
+     "priority": null
+    }
+   ],
+   "instances": [
+    {
+     "qid": "A1",
+     "ctx": "R2",
+     "rendered_bytes": 4200,
+     "returned_bytes": 3900,
+     "raw_lines": 67,
+     "returned_lines": 67,
+     "truncated": false,
+     "priority": null,
+     "exec_result": "完成",
+     "attribution": "-",
+     "abnormal": "-",
+     "description": ""
+    }
+   ],
+   "expected": {
+    "1": {
+     "F1": "尚不能确认",
+     "F2": "假设",
+     "F3": {
+      "报告差异": [
+       "充分",
+       "R1/R2 summary、path 报告"
+      ],
+      "原因": [
+       "不足",
+       "in_b 全部（R2）"
+      ],
+      "范围": [
+       "不足",
+       "in_b 全部（R2）"
+      ]
+     },
+     "F4": "未定位",
+     "F5": "是",
+     "F6": "是",
+     "F7": "原理上能",
+     "F8": "不适用",
+     "judgments": [
+      "合理观察",
+      "合理假设"
+     ],
+     "scope": "in_b[0..63]（R2）",
+     "evidence_level": "-",
+     "attribution": "-",
+     "r2_action": null,
+     "f8_note": "",
+     "unobtained": false
+    },
+    "2": {
+     "F1": "",
+     "F2": "",
+     "F3": {},
+     "F4": "",
+     "F5": "",
+     "F6": "",
+     "F7": "",
+     "F8": "",
+     "judgments": [],
+     "scope": "in_b[0..63]（R2）",
+     "evidence_level": "-",
+     "attribution": "执行器或环境问题",
+     "r2_action": null,
+     "f8_note": "",
+     "unobtained": true
+    }
+   },
+   "budget_dropped": [],
+   "calls": {},
+   "evidence": []
+  }
+ ]
+}

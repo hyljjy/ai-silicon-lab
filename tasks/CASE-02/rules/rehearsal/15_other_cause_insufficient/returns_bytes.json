@@ -1,0 +1,58 @@
+[
+ {
+  "qid": "A1",
+  "ctx": "R1",
+  "rendered_bytes": 500,
+  "returned_bytes": 200,
+  "raw_lines": 2,
+  "returned_lines": 2,
+  "truncated": false,
+  "priority": null,
+  "exec_result": "完成",
+  "attribution": "-",
+  "abnormal": "-",
+  "description": ""
+ },
+ {
+  "qid": "A1",
+  "ctx": "R2",
+  "rendered_bytes": 500,
+  "returned_bytes": 200,
+  "raw_lines": 2,
+  "returned_lines": 2,
+  "truncated": false,
+  "priority": null,
+  "exec_result": "完成",
+  "attribution": "-",
+  "abnormal": "-",
+  "description": ""
+ },
+ {
+  "qid": "A2",
+  "ctx": "R1",
+  "rendered_bytes": 3600,
+  "returned_bytes": 3300,
+  "raw_lines": 50,
+  "returned_lines": 50,
+  "truncated": false,
+  "priority": null,
+  "exec_result": "完成",
+  "attribution": "-",
+  "abnormal": "-",
+  "description": ""
+ },
+ {
+  "qid": "A2",
+  "ctx": "R2",
+  "rendered_bytes": 700,
+  "returned_bytes": 400,
+  "raw_lines": 3,
+  "returned_lines": 3,
+  "truncated": false,
+  "priority": null,
+  "exec_result": "完成",
+  "attribution": "-",
+  "abnormal": "-",
+  "description": "No paths found."
+ }
+]

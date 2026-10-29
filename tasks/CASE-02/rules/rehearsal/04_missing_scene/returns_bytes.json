@@ -1,0 +1,16 @@
+[
+ {
+  "qid": "A1",
+  "ctx": "R2",
+  "rendered_bytes": 600,
+  "returned_bytes": 300,
+  "raw_lines": 2,
+  "returned_lines": 2,
+  "truncated": false,
+  "priority": null,
+  "exec_result": "语法错误",
+  "attribution": "请求本身的问题",
+  "abnormal": "-",
+  "description": "Error 103"
+ }
+]

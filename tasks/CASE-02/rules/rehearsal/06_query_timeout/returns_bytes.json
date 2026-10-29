@@ -1,0 +1,16 @@
+[
+ {
+  "qid": "A1",
+  "ctx": "R2",
+  "rendered_bytes": 120000,
+  "returned_bytes": 119700,
+  "raw_lines": 2600,
+  "returned_lines": 2001,
+  "truncated": true,
+  "priority": null,
+  "exec_result": "完成",
+  "attribution": "流程限制：时限",
+  "abnormal": "超时",
+  "description": "超时终止"
+ }
+]
