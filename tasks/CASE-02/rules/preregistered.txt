@@ -25,6 +25,14 @@ tasks/CASE-02/prompts/budget_probe_blank.md
 tasks/CASE-02/prompts/budget_probe_prose.md
 tasks/CASE-02/prompts/budget_probe_report.md
 tasks/CASE-02/prevalidation
+# Lines starting with "dep " are read-only dependencies outside the tier-1 paths (CASE-01 files and env/snapshot.sh
+# the executor imports, reads or runs); run_round.py verifies each against the hash registered in rules/copied_from.tsv.
+dep tasks/CASE-01/scripts/logcheck.py
+dep tasks/CASE-01/diag/scripts/void_check.py
+dep tasks/CASE-01/diag/scripts/privacy_check.py
+dep tasks/CASE-01/config/warn_whitelist.txt
+dep tasks/CASE-01/sdc/case01_sdc.tcl
+dep env/snapshot.sh
 round tasks/CASE-02/queries/formal
 round tasks/CASE-02/package
 round tasks/CASE-02/prompts/round1_user.md

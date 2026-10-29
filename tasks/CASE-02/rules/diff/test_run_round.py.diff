@@ -1,0 +1,572 @@
+--- tasks/CASE-01/diag/scripts/test_run_round.py	2026-10-12 23:56:15.531169200 -0700
++++ tasks/CASE-02/scripts/test_run_round.py	2026-10-29 01:07:46.790527500 -0700
+@@ -1,5 +1,7 @@
+-"""Unit tests of run_round.py with a fake claude (no model is called). Windows Python, from this directory:
+-  python -B -m unittest test_run_round"""
++"""Unit tests of the CASE-02 run_round.py with a fake claude (no model is called). Windows Python, from
++tasks/CASE-02/scripts:  python -B -m unittest -v test_run_round
++Adapted from tasks/CASE-01/diag/scripts/test_run_round.py; the new tests cover the output monitoring, the probe mode,
++the label check and the CASE-02 tags."""
+ import contextlib
+ import hashlib
+ import io
+@@ -12,10 +14,14 @@
+ import unittest
+ from unittest import mock
+ 
+-import run_round as rr
+-
+ HERE = os.path.dirname(os.path.abspath(__file__))
+-FAKE = os.path.join(HERE, "fake_claude.py")
++sys.path.insert(0, HERE)
++sys.path.insert(1, os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(HERE))), "scripts")
++              if os.path.basename(os.path.dirname(HERE)) == "impl" else HERE)
++import c2paths  # noqa: E402
++import run_round as rr  # noqa: E402
++
++FAKE = os.path.join(HERE, "fake_claude_c2.py")
+ EMAIL = "someone.test@example.org"
+ NAMES = ("claude", "kimi", "deepseek")
+ 
+@@ -31,36 +37,29 @@
+         return hashlib.sha256(f.read()).hexdigest()
+ 
+ 
+-def git_in(repo):
+-    run = lambda *a: subprocess.run(["git", "-C", repo] + list(a), capture_output=True, check=True)
+-    run("init", "-q")
+-    run("config", "user.email", "t@example.org")
+-    run("config", "user.name", "t")
+-    return run
+-
+-
+ class Base(unittest.TestCase):
+     def setUp(self):
+-        self.tmp = tempfile.mkdtemp(prefix="run_round_test_")
++        self.tmp = tempfile.mkdtemp(prefix="c2_run_round_")
+         self.addCleanup(shutil.rmtree, self.tmp, True)
+-        self.diag = os.path.join(self.tmp, "diag")
++        self.case = os.path.join(self.tmp, "CASE-02")
+         for name in ("run_order.json", "expected.json"):
+-            shutil.copyfile(os.path.join(HERE, "..", "rules", name), os.path.join(self.mkdir("rules"), name))
+-        write(os.path.join(self.diag, "rules", "cli.sha256"), f"{sha(FAKE)}  claude-2.1.296.exe\n")
+-        write(os.path.join(self.diag, "prompts", "system.md"), "系统提示\n")
+-        write(os.path.join(self.diag, "prompts", "round1_user.md"), "第 1 轮题目\n")
+-        write(os.path.join(self.diag, "prompts", "smoke_system.md"), "系统暗号是：青松-0427。\n")
+-        write(os.path.join(self.diag, "prompts", "smoke_user.md"), "本题的暗号是：白鹭-1010。\n")
+-        shutil.copyfile(os.path.join(HERE, "..", "prompts", "cap_probe_user.md"),      # the real probe prompt
+-                        os.path.join(self.diag, "prompts", "cap_probe_user.md"))
++            shutil.copyfile(os.path.join(c2paths.RULES, name), os.path.join(self.mkdir("rules"), name))
++        write(os.path.join(self.case, "rules", "cli.sha256"), f"{sha(FAKE)}  claude-2.1.296.exe\n")
++        write(os.path.join(self.case, "rules", "label_words.txt"), "correct\nmissing\nrestored\nmutation\n")
++        write(os.path.join(self.case, "prompts", "system.md"), "系统提示\n")
++        write(os.path.join(self.case, "prompts", "round1_user.md"), "第 1 轮题目\n")
++        write(os.path.join(self.case, "prompts", "smoke_system.md"), "系统暗号是：青松-0427。\n")
++        write(os.path.join(self.case, "prompts", "smoke_user.md"), "本题的暗号是：白鹭-1010。\n")
++        shutil.copyfile(os.path.join(c2paths.PROMPTS, "cap_probe_user.md"), os.path.join(self.case, "prompts", "cap_probe_user.md"))
++        for n in ("blank", "prose", "report"):
++            write(os.path.join(self.case, "prompts", f"budget_probe_{n}.md"), "x" * {"blank": 100, "prose": 8000, "report": 8000}[n] + "\n")
+         self.mkdir("outputs")
+         self.profile = os.path.join(self.tmp, "profile")
+         sums = []
+         for n in NAMES:
+             write(os.path.join(self.profile, ".diag-models", f"{n}.json"), '{"env": {}}\n')
+-            sums.append(f"{sha(os.path.join(self.profile, '.diag-models', f'{n}.json'))}  "
+-                        f"%USERPROFILE%/.diag-models/{n}.json\n")
+-        write(os.path.join(self.diag, "models", "originals.sha256"), "".join(sums))
++            sums.append(f"{sha(os.path.join(self.profile, '.diag-models', f'{n}.json'))}  %USERPROFILE%/.diag-models/{n}.json\n")
++        write(os.path.join(self.case, "models", "originals.sha256"), "".join(sums))
+         self.sandbox = os.path.join(self.tmp, "sandbox")
+         env = {"CASE01_PRIVACY_EMAIL": EMAIL, "FAKE_EMAIL": EMAIL, "USERPROFILE": self.profile}
+         self.patch = mock.patch.dict(os.environ, dict(env, ANTHROPIC_BASE_URL="http://leak", CLAUDECODE="1"))
+@@ -69,344 +68,204 @@
+         self.scenarios({})
+ 
+     def mkdir(self, rel):
+-        p = os.path.join(self.diag, rel)
++        p = os.path.join(self.case, rel)
+         os.makedirs(p, exist_ok=True)
+         return p
+ 
+     def scenarios(self, mapping):
+         os.environ["FAKE_CLAUDE_SCENARIOS"] = json.dumps(mapping)
+ 
+-    def runner(self):
+-        r = rr.RoundRunner(self.tmp, self.diag, self.sandbox, [sys.executable, FAKE])
++    def runner(self, **limits):
++        r = rr.RoundRunner(self.tmp, self.case, self.sandbox, [sys.executable, FAKE], limits=limits or None)
+         r.round1_bytes = lambda: "第 1 轮题目\n".encode("utf-8")
+         return r
+ 
+     def started(self):
+-        """A runner whose mapping is initialised, as after --init-mapping."""
+         r = self.runner()
+         r.init_mapping()
+         return r
+ 
+     def read(self, *rel):
+-        with open(os.path.join(self.diag, *rel), encoding="utf-8") as f:
++        with open(os.path.join(self.case, *rel), encoding="utf-8") as f:
+             return f.read()
+ 
+-    def mapping(self):
+-        with open(os.path.join(self.sandbox, "sealed", "mapping.json"), encoding="utf-8") as f:
+-            return json.load(f)["codes"]
+-
+-    def code_of(self, name):
+-        return next(c for c, n in self.mapping().items() if n == name)
+-
+-
+-class TestHelpers(unittest.TestCase):
+-    def test_clean_env(self):
+-        env = rr.clean_env({"PATH": "p", "ANTHROPIC_BASE_URL": "x", "CLAUDE_CODE_SIMPLE": "1", "ClaudeCode": "1",
+-                            "anthropic_api_key": "k"})
+-        self.assertEqual(env, {"PATH": "p", "CLAUDE_CODE_MAX_OUTPUT_TOKENS": "32000", "DISABLE_AUTOUPDATER": "1"})
+-
+-    def test_redact(self):
+-        text, n = rr.redact("mail " + EMAIL.upper() + " path C:" + "\\" + "Users" + "\\" + "bob\\x"
+-                            + r" cwd D:\study\diag_sandbox\run-0a1b2c3d", EMAIL)
+-        self.assertEqual(n, 3)
+-        self.assertNotIn(EMAIL.upper(), text)
+-        self.assertNotIn("run-0a1b2c3d", text)
+-        self.assertEqual(text.count(rr.HIDDEN), 3)
+-
+-
+-class TestPrereg(unittest.TestCase):
+-    def setUp(self):
+-        self.repo = tempfile.mkdtemp(prefix="prereg_test_")
+-        self.addCleanup(shutil.rmtree, self.repo, True)
+-        self.git = git_in(self.repo)
+-        write(os.path.join(self.repo, "a.txt"), "a\n")
+-        write(os.path.join(self.repo, "d", "b.txt"), "b\n")
+-        write(os.path.join(self.repo, "list.txt"), "# pre-registered\na.txt\nround d\n")
+-        self.git("add", "-A")
+-        self.git("commit", "-q", "-m", "x")
+-        self.list = os.path.join(self.repo, "list.txt")
+-
+-    def test_tiers(self):
+-        self.assertEqual(rr.prereg_paths(self.list, "smoke"), {"smoke": ["a.txt"], "round": []})
+-        self.assertEqual(rr.prereg_paths(self.list, "round"), {"smoke": ["a.txt"], "round": ["d"]})
+-
+-    def test_tracked_and_unchanged(self):
+-        self.assertEqual(rr.prereg_problems(self.repo, self.list, "round", use_tags=False), [])
+-        write(os.path.join(self.repo, "a.txt"), "changed\n")
+-        self.assertEqual(rr.prereg_problems(self.repo, self.list, "smoke", use_tags=False),
+-                         ["differs from HEAD: a.txt"])
+-        self.git("checkout", "--", "a.txt")
+-        write(os.path.join(self.repo, "d", "new.txt"), "n\n")
+-        self.assertEqual(rr.prereg_problems(self.repo, self.list, "round", use_tags=False),
+-                         ["untracked files under: d"])
+-        write(self.list, "a.txt\nnew.txt\n")
+-        self.assertIn("not tracked: new.txt", rr.tracked_problems(self.repo, ["new.txt"]))
+-
+-    def test_tags(self):
+-        self.assertEqual(rr.prereg_problems(self.repo, self.list, "smoke"), ["tag diag-prereg does not exist"])
+-        self.git("tag", "diag-prereg")
+-        self.git("tag", "diag-prereg-round")
+-        self.assertEqual(rr.prereg_problems(self.repo, self.list, "round"), [])
+-        write(os.path.join(self.repo, "a.txt"), "changed and committed\n")
+-        self.git("commit", "-q", "-am", "edit after pre-registration")
+-        self.assertEqual(rr.prereg_problems(self.repo, self.list, "smoke"),
+-                         ["changed since tag diag-prereg: a.txt"])
+-
+ 
+-class TestMapping(Base):
+-    def test_round1_needs_mapping(self):
+-        with self.assertRaises(SystemExit):
+-            self.runner().run_round(1)
+-
+-    def test_init_mapping_and_commitment(self):
+-        r = self.runner()
+-        commitment = r.init_mapping()
+-        with open(r.mapping_path(), "rb") as f:
+-            raw = f.read()
+-        mapping = json.loads(raw)
+-        self.assertEqual(len(mapping["salt"]), 64)
+-        self.assertEqual(sorted(mapping["codes"]), list(rr.CODES))
+-        self.assertEqual(sorted(mapping["codes"].values()), sorted(NAMES))
+-        self.assertEqual(commitment, rr.sha256(raw))
+-        self.assertEqual(self.read("outputs", "mapping.sha256"), f"{commitment}  sealed/mapping.json\n")
+-        with self.assertRaises(SystemExit):
+-            r.init_mapping()
+-
+-    def test_tampered_mapping_refused(self):
++class TestConstants(unittest.TestCase):
++    def test_tags_case02(self):
++        self.assertEqual(rr.TAGS, {"smoke": "case02-prereg", "round": "case02-prereg-round"})
++
++    def test_sealed_dir_name(self):
++        r = rr.RoundRunner("/r", "/c", "/sb", ["x"])
++        self.assertTrue(r.sealed.replace("\\", "/").endswith("/sb/sealed-case02"))
++
++    def test_default_limits_from_contract(self):
++        r = rr.RoundRunner("/r", "/c", "/sb", ["x"])
++        self.assertEqual((r.limits["process_seconds"], r.limits["stdout_bytes"], r.limits["stderr_bytes"]),
++                         (1800, 52428800, 1048576))
++
++
++class TestLimits(Base):
++    def test_stdout_limit_terminates_and_records(self):
++        self.scenarios({"k3[1M]": "bigout"})
+         r = self.started()
+-        with open(r.mapping_path(), "a", encoding="utf-8") as f:
+-            f.write(" ")
+-        with self.assertRaises(SystemExit):
+-            r.run_round(1)
+-
++        r.limits["stdout_bytes"] = 200000
++        r.limits["poll_seconds"] = 0.2
++        lines = r.run_round(1)
++        with open(os.path.join(self.sandbox, "sealed-case02", "round1", "kimi-1.proc.json"), encoding="utf-8") as f:
++            proc = json.load(f)
++        self.assertEqual(proc["limit_hit"], "stdout_bytes")
++        self.assertTrue(proc["terminated"])
++        self.assertTrue(any("作废" in l for l in lines))
+ 
+-class TestRound(Base):
+-    def test_round1_all_valid(self):
+-        self.scenarios({"k3[1M]": "email", "deepseek-v4-pro[1M]": "workdir"})
+-        lines = self.started().run_round(1)
+-        self.assertEqual(len(lines), 3)
+-        self.assertTrue(all("通过" in l for l in lines))
+-        answers = {c: self.read("outputs", "round1", f"{c}.md") for c in rr.CODES}
+-        self.assertTrue(all("leaked=[]" in a for a in answers.values()), "inherited variables reached claude")
+-        self.assertFalse(any(EMAIL in a or "run-" in a for a in answers.values()))
+-        self.assertIn(rr.HIDDEN, answers[self.code_of("kimi")])
+-        self.assertIn(rr.HIDDEN, answers[self.code_of("deepseek")])
+-        with open(os.path.join(self.sandbox, "sealed", "round1", "kimi-1.meta.json"), encoding="utf-8") as f:
+-            meta = json.load(f)
+-        self.assertEqual(meta["hidden_in_answer"], 1)
+-        self.assertEqual(os.listdir(meta["workdir"]), [])
+-
+-    def test_repository_side_never_names_a_model(self):
+-        self.scenarios({"deepseek-v4-pro[1M]": "truncated"})
+-        self.started().run_round(1)
+-        text = "".join(self.read("outputs", "round1", n) for n in os.listdir(os.path.join(self.diag, "outputs",
+-                                                                                         "round1")))
+-        text += self.read("outputs", "mapping.sha256")
+-        for word in NAMES + ("k3", "opus", "deepseek"):
+-            self.assertNotIn(word, text.lower())
+-
+-    def test_void_then_one_rerun(self):
+-        self.scenarios({"deepseek-v4-pro[1M]": "truncated"})
+-        lines = self.started().run_round(1)
+-        void = [l for l in lines if "作废" in l]
+-        self.assertEqual(len(void), 1)
+-        self.assertIn("运行未正常结束", void[0])
+-        self.assertIn("可补跑 1 次", void[0])
+-        code = void[0][2]
+-        self.assertFalse(os.path.exists(os.path.join(self.diag, "outputs", "round1", f"{code}.md")))
+-        self.scenarios({})
+-        lines = self.runner().rerun(1, code)       # a rerun is a new invocation: fresh environment snapshot
+-        self.assertIn(f"- {code}：通过（第 2 次尝试）", lines)
+-        self.assertTrue(os.path.exists(os.path.join(self.diag, "outputs", "round1", f"{code}.md")))
+-        with self.assertRaises(SystemExit):
+-            self.runner().rerun(1, code)
++    def test_stderr_limit(self):
++        self.scenarios({"deepseek-v4-pro[1M]": "bigerr"})
++        r = self.started()
++        r.limits["stderr_bytes"] = 50000
++        r.limits["poll_seconds"] = 0.2
++        r.run_round(1)
++        with open(os.path.join(self.sandbox, "sealed-case02", "round1", "deepseek-1.proc.json"), encoding="utf-8") as f:
++            proc = json.load(f)
++        self.assertEqual(proc["limit_hit"], "stderr_bytes")
+ 
+-    def test_rerun_of_valid_code_refused(self):
++    def test_timeout_two_stage_kill(self):
++        self.scenarios({"claude-opus-5-5": "hang"})
+         r = self.started()
++        r.limits["process_seconds"] = 2
++        r.limits["poll_seconds"] = 0.2
++        r.limits["soft_kill_wait_seconds"] = 1
++        r.limits["hard_kill_wait_seconds"] = 1
+         r.run_round(1)
+-        with self.assertRaises(SystemExit):
+-            r.rerun(1, "A")
++        with open(os.path.join(self.sandbox, "sealed-case02", "round1", "claude-1.proc.json"), encoding="utf-8") as f:
++            proc = json.load(f)
++        self.assertEqual(proc["limit_hit"], "process_seconds")
++        self.assertIn(proc["kill_stage"], ("soft", "hard"))
++        with open(os.path.join(self.sandbox, "sealed-case02", "round1", "claude-1.meta.json"), encoding="utf-8") as f:
++            self.assertEqual(json.load(f)["exit"], "timeout")
+ 
+-    def test_round1_twice_refused(self):
++    def test_normal_run_records_sizes(self):
+         r = self.started()
+         r.run_round(1)
+-        with self.assertRaises(SystemExit):
+-            r.run_round(1)
++        with open(os.path.join(self.sandbox, "sealed-case02", "round1", "claude-1.proc.json"), encoding="utf-8") as f:
++            proc = json.load(f)
++        self.assertIsNone(proc["limit_hit"])
++        self.assertGreater(proc["stdout_bytes"], 0)
+ 
+-    def test_missing_memory_path_voids(self):
+-        self.scenarios({"claude-opus-5-5": "nomemory"})
+-        lines = self.started().run_round(1)
+-        self.assertEqual([l for l in lines if "作废" in l],
+-                         [f"- {self.code_of('claude')}：作废（原因类别：记录不完整），可补跑 1 次"])
+ 
+-    def test_prompt_mismatch_voids(self):
+-        write(os.path.join(self.diag, "prompts", "round1_user.md"), "被改过的题目\n")
++class TestRound(Base):
++    def test_round1_all_valid_and_repository_side_neutral(self):
++        self.scenarios({"k3[1M]": "email"})
+         lines = self.started().run_round(1)
+-        self.assertTrue(all("题目字节不符" in l for l in lines))
+-
+-    def test_workdirs_created_together(self):
+-        dirs = self.runner().make_workdirs(3)
+-        self.assertEqual(len(set(dirs)), 3)
+-        self.assertTrue(all(os.path.isdir(d) and not os.listdir(d) for d in dirs))
+-
++        self.assertEqual(len(lines), 3)
++        self.assertTrue(all("通过" in l for l in lines))
++        for c in rr.CODES:
++            a = self.read("outputs", "round1", f"{c}.md")
++            self.assertIn("leaked=[]", a)
++            self.assertNotIn(EMAIL, a)
++        status = self.read("outputs", "round1", "status.md")
++        for n in NAMES:
++            self.assertNotIn(n, status)
+ 
+-class TestResume(Base):
+-    def interrupted_round(self):
+-        """Round 1 that dies while the second model in run order is running."""
++    def test_refuses_operator_label_in_prompt(self):
+         r = self.started()
+-        real, calls = r.attempt, []
+-
+-        def attempt(*a, **k):
+-            calls.append(1)
+-            if len(calls) == 2:
+-                raise KeyboardInterrupt("operator tool timed out")
+-            return real(*a, **k)
+-        r.attempt = attempt
+-        with self.assertRaises(KeyboardInterrupt):
+-            r.run_round(1)
+-        return r
+-
+-    def test_interrupt_then_resume_then_rerun(self):
+-        r = self.interrupted_round()
+-        attempts = r.load_attempts(1)
+-        self.assertEqual([(a["model"], a["state"]) for a in attempts], [("claude", "done"), ("kimi", "started")])
+-        self.assertFalse(os.path.exists(os.path.join(self.diag, "outputs", "round1")))     # nothing written yet
++        write(os.path.join(self.case, "prompts", "round1_user.md"), "第 1 轮题目\n### 文件 summary_missing.tsv\n")
++        r.round1_bytes = lambda: "第 1 轮题目\n### 文件 summary_missing.tsv\n".encode("utf-8")
+         with self.assertRaises(SystemExit):
+-            self.runner().rerun(1, self.code_of("kimi"))                                   # resume first
+-        lines = self.runner().resume(1)
+-        kimi = self.code_of("kimi")
+-        self.assertIn(f"- {kimi}：作废（原因类别：运行中断），可补跑 1 次", lines)
+-        self.assertEqual(sum("通过（第 1 次尝试）" in l for l in lines), 2)
+-        attempts = self.runner().load_attempts(1)
+-        self.assertEqual([(a["model"], a["attempt"]) for a in attempts], [("claude", 1), ("kimi", 1), ("deepseek", 1)])
+-        lines = self.runner().rerun(1, kimi)
+-        self.assertIn(f"- {kimi}：通过（第 2 次尝试）", lines)
+-        self.assertEqual(sorted(os.listdir(os.path.join(self.diag, "outputs", "round1"))),
+-                         ["A.md", "B.md", "C.md", "status.md"])
++            r.run_round(1)
++        self.assertFalse(os.path.exists(os.path.join(self.sandbox, "sealed-case02", "round1", "attempts.json")))
+ 
+-    def test_resume_is_idempotent_after_a_finished_round(self):
++    def test_model_prose_in_prompt_allowed(self):
+         r = self.started()
+-        r.run_round(1)
+-        before = self.read("outputs", "round1", "A.md")
+-        self.runner().resume(1)
+-        self.assertEqual(self.read("outputs", "round1", "A.md"), before)
+-        self.assertEqual(len(self.runner().load_attempts(1)), 3)
+-
+-    def test_resume_before_start_refused(self):
+-        with self.assertRaises(SystemExit):
+-            self.started().resume(1)
++        text = "第 1 轮题目\n<<<第 1 轮回答开始>>>\nI think constraints are missing\n<<<第 1 轮回答结束>>>\n"
++        write(os.path.join(self.case, "prompts", "round1_user.md"), text)
++        r.round1_bytes = lambda: text.encode("utf-8")
++        lines = r.run_round(1)
++        self.assertEqual(len(lines), 3)
+ 
+ 
+-class TestRound2(Base):
+-    def test_round2_needs_committed_inputs_and_skips_unfinished_codes(self):
+-        self.scenarios({"deepseek-v4-pro[1M]": "truncated"})
+-        self.started().run_round(1)
+-        done = sorted(n[0] for n in os.listdir(os.path.join(self.diag, "outputs", "round1")) if n[1:] == ".md")
+-        self.assertEqual(len(done), 2)                       # the void code has no answer
+-        write(os.path.join(self.diag, "round2", "translation.tsv"), "code\n")
+-        for c in done:
+-            write(os.path.join(self.diag, "prompts", "round2", f"{c}.md"), f"round2 {c}\n")
+-            write(os.path.join(self.diag, "round2", f"{c}_results.md"), "r\n")
+-        git = git_in(self.tmp)
+-        r = self.runner()
+-        r.round2_bytes = lambda c: f"round2 {c}\n".encode()
+-        with self.assertRaises(SystemExit):                  # not committed yet
+-            r.run_round(2)
+-        git("add", "-A")
+-        git("commit", "-q", "-m", "round2 inputs")
+-        write(os.path.join(self.diag, "round2", "q", "A9.tcl"), "report_units\n")
+-        with self.assertRaises(SystemExit):                  # an uncommitted query file
+-            r.run_round(2)
+-        os.remove(os.path.join(self.diag, "round2", "q", "A9.tcl"))
+-        self.scenarios({})
++class TestProbe(Base):
++    def test_probe_mode_saves_usage_only(self):
+         r = self.runner()
+-        r.round2_bytes = lambda c: f"round2 {c}\n".encode()
+-        lines = r.run_round(2)
+-        self.assertEqual(len(lines), 2)
+-        self.assertTrue(all("通过" in l for l in lines))
+-
+-
+-class TestPreflight(Base):
+-    def test_ok(self):
+-        self.assertEqual(self.runner().preflight(), [])
+-
+-    def test_each_problem(self):
+-        os.environ.update(FAKE_CLAUDE_VERSION="2.1.300", FAKE_LOGGED_IN="0")
+-        write(os.path.join(self.profile, ".diag-models", "kimi.json"), '{"env": {"X": "changed"}}\n')
+-        write(os.path.join(self.diag, "rules", "cli.sha256"), "0" * 64 + "  claude-2.1.296.exe\n")
+-        problems = self.runner().preflight()
+-        self.assertEqual(problems, ["CLI file sha256 differs from rules/cli.sha256", "CLI version is not 2.1.296",
+-                                    "settings file of kimi differs from models/originals.sha256",
+-                                    "auth status is not logged in"])
+-        self.assertFalse(any(EMAIL in p for p in problems))
++        out = io.StringIO()
++        with contextlib.redirect_stdout(out):
++            rc = r.probe()
++        self.assertEqual(rc, 0, out.getvalue())
++        probe_dir = next(d for d in os.listdir(self.sandbox) if d.startswith("smoke-case02-budget"))
++        files = os.listdir(os.path.join(self.sandbox, probe_dir))
++        self.assertIn("usage.json", files)
++        self.assertFalse(any(f.endswith(".answer.md") for f in files))
++        with open(os.path.join(self.sandbox, probe_dir, "usage.json"), encoding="utf-8") as f:
++            usage = json.load(f)
++        self.assertEqual(set(usage), set(NAMES))
++        self.assertEqual(set(usage["claude"]), {"blank", "prose", "report"})
++        self.assertIn("input_tokens", usage["claude"]["prose"])
++        self.assertIn("prompt_bytes", usage["claude"]["prose"])
++        self.assertIn("PROBE OK", out.getvalue())
+ 
+ 
+ class TestSmoke(Base):
+     def smoke(self):
+-        with contextlib.redirect_stdout(io.StringIO()) as out:
++        out = io.StringIO()
++        with contextlib.redirect_stdout(out):
+             rc = self.runner().smoke()
+         return rc, out.getvalue()
+ 
+     def test_smoke_ok(self):
+         rc, out = self.smoke()
+         self.assertEqual(rc, 0, out)
+-        # the reported field is Claude Code's per-model value, not the cap (diagnosed 2026-10-12)
+-        self.assertIn("claude: valid=True canaries=True per_turn_effort_active=True maxOutputTokens=128000", out)
+-        self.assertIn("kimi: valid=True canaries=True per_turn_effort_active=False maxOutputTokens=32000", out)
+-        for name in NAMES:                       # the 64-token cap probe must cut every model off
++        for name in NAMES:
+             self.assertIn(f"{name}: cap_probe capped=True", out)
+ 
+-    def test_smoke_detects_a_model_that_ignores_the_cap(self):
+-        self.scenarios({"deepseek-v4-pro[1M]": "nocap"})
+-        rc, out = self.smoke()
+-        self.assertEqual(rc, 1)
+-        self.assertIn("deepseek: cap_probe capped=False", out)
+-        self.assertIn("SMOKE FAIL", out)
+ 
+-    def test_smoke_detects_prompt_not_read_from_stdin(self):
+-        self.scenarios({"k3[1M]": "nostdin"})
+-        rc, out = self.smoke()
+-        self.assertEqual(rc, 1)
+-        self.assertIn("kimi: valid=True canaries=False", out)
++class TestR6Prereg(unittest.TestCase):
++    """CASE02_R6 M10: read-only dependencies outside the tier-1 paths ("dep <path>" lines of preregistered.txt) are
++    verified before a run against the hash registered in rules/copied_from.tsv."""
++
++    def test_dep_lines_verified_by_hash(self):
++        tmp = tempfile.mkdtemp(prefix="c2_dep_")
++        self.addCleanup(shutil.rmtree, tmp, True)
++        dep = os.path.join(tmp, "tasks", "CASE-01", "scripts", "logcheck.py")
++        write(dep, "print(1)\n")
++        copied = os.path.join(tmp, "copied_from.tsv")
++        write(copied, "case02_path\tcase01_path\tcase01_sha256\tdiff_file\tnote\n"
++              f"scripts/(import) logcheck\ttasks/CASE-01/scripts/logcheck.py\t{sha(dep)}\t-\tread-only import\n")
++        lst = os.path.join(tmp, "preregistered.txt")
++        write(lst, "tasks/CASE-02/rules\ndep tasks/CASE-01/scripts/logcheck.py\n")
++        self.assertEqual(rr.prereg_paths(lst, "round")["smoke"], ["tasks/CASE-02/rules"])
++        self.assertEqual(rr.dep_problems(tmp, lst, copied), [])
++        write(dep, "print(2)\n")
++        probs = rr.dep_problems(tmp, lst, copied)
++        self.assertTrue(any("logcheck.py" in p for p in probs), probs)
++        write(lst, "dep tasks/CASE-01/scripts/other.py\n")
++        self.assertTrue(any("not registered" in p for p in rr.dep_problems(tmp, lst, copied)))
+ 
+ 
+-class TestMainProcess(Base):
+-    """main() in a child process whose stdout is a pipe and without PYTHONIOENCODING: Chinese must print as UTF-8."""
++if __name__ == "__main__":
++    unittest.main()
+ 
+-    def run_main(self, *args, tag=None):
+-        write(os.path.join(self.diag, "rules", "preregistered.txt"), "diag/rules/run_order.json\n")
+-        git = git_in(self.tmp)
+-        git("add", "-A")
+-        git("commit", "-q", "-m", "prereg")
+-        if tag:
+-            git("tag", tag)
+-        env ={k: v for k, v in os.environ.items() if k not in ("PYTHONIOENCODING", "PYTHONUTF8")}
+-        proc = subprocess.run([sys.executable, "-B", os.path.join(HERE, "run_round.py"), "--repo-root", self.tmp,
+-                               "--diag-dir", self.diag, "--sandbox-root", self.sandbox, "--no-tags",
+-                               "--claude-cmd", json.dumps([sys.executable, FAKE])] + list(args),
+-                              env=env, capture_output=True)
+-        return proc.returncode, proc.stdout.decode("utf-8"), proc.stderr.decode("utf-8", "replace")
+-
+-    def test_no_tags_refused_once_a_tag_exists(self):
+-        rc, out, err = self.run_main("--smoke", tag="diag-prereg")
+-        self.assertEqual(rc, 1, err)
+-        self.assertIn("--no-tags is for tests only", out)
+-        self.assertFalse(os.path.exists(self.sandbox))
+-
+-    def test_smoke_failure_prints_chinese_category(self):
+-        self.scenarios({"deepseek-v4-pro[1M]": "truncated"})
+-        rc, out, err = self.run_main("--smoke")
+-        self.assertEqual(rc, 1, err)
+-        self.assertIn("运行未正常结束", out)
+-        self.assertIn("SMOKE FAIL", out)
+-
+-    def test_preflight_failure_uses_no_attempt(self):
+-        os.environ["FAKE_LOGGED_IN"] = "0"
+-        rc, out, err = self.run_main("--smoke")
+-        self.assertEqual(rc, 1, err)
+-        self.assertIn("PREFLIGHT auth status is not logged in", out)
+-        self.assertFalse(os.path.exists(self.sandbox) and any(n.startswith("smoke-") for n in os.listdir(self.sandbox)))
+ 
++class TestR6Shell(Base):
++    """CASE02_R6 M12: size limits are checked after a normal exit too; the hard stage kills the whole tree; waits recorded."""
+ 
+-if __name__ == "__main__":
+-    unittest.main()
++    def test_burst_then_exit_is_still_output_limit(self):
++        self.scenarios({"k3[1M]": "burstexit"})
++        r = self.started()
++        r.limits["stdout_bytes"] = 100000
++        r.limits["poll_seconds"] = 5          # longer than the burst, so only the post-exit check can see it
++        r.run_round(1)
++        with open(os.path.join(self.sandbox, "sealed-case02", "round1", "kimi-1.proc.json"), encoding="utf-8") as f:
++            proc = json.load(f)
++        self.assertEqual(proc["limit_hit"], "stdout_bytes")
++        self.assertIn("waits", proc)
++
++    def test_child_of_child_killed_on_timeout(self):
++        self.scenarios({"claude-opus-5-5": "hangtree"})
++        r = self.started()
++        r.limits["process_seconds"] = 2
++        r.limits["poll_seconds"] = 0.2
++        r.limits["soft_kill_wait_seconds"] = 1
++        r.limits["hard_kill_wait_seconds"] = 2
++        r.run_round(1)
++        with open(os.path.join(self.sandbox, "sealed-case02", "round1", "claude-1.proc.json"), encoding="utf-8") as f:
++            proc = json.load(f)
++        self.assertEqual(proc["limit_hit"], "process_seconds")
++        self.assertTrue(proc["tree_clean"], proc)

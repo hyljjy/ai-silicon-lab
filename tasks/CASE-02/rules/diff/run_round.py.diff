@@ -1,5 +1,5 @@
 --- tasks/CASE-01/diag/scripts/run_round.py	2026-10-12 23:56:15.524035200 -0700
-+++ tasks/CASE-02/scripts/run_round.py	2026-10-28 22:51:32.200601700 -0700
++++ tasks/CASE-02/scripts/run_round.py	2026-10-29 05:07:54.037002400 -0700
 @@ -1,34 +1,21 @@
 -"""Run one round of model diagnoses through the thin Claude Code shell (protocol v0.5 sections 5 and 6).
 +"""Run one round of model diagnoses through the thin Claude Code shell (protocol v0.3 sections 6.1, 6.3). Copied and
@@ -107,16 +107,56 @@
      tiers = {"smoke": [], "round": []}
      with open(list_path, encoding="utf-8") as f:
          for line in f:
-@@ -98,8 +90,6 @@
+@@ -90,6 +82,8 @@
+                 continue
+             if line.startswith("round "):
+                 tiers["round"].append(line[len("round "):].strip())
++            elif line.startswith("dep "):
++                continue                                   # read-only dependencies: verified by hash (dep_problems)
+             else:
+                 tiers["smoke"].append(line)
+     if mode == "smoke":
+@@ -97,9 +91,37 @@
+     return tiers
  
  
++def dep_paths(list_path):
++    with open(list_path, encoding="utf-8") as f:
++        return [l.strip()[len("dep "):].strip() for l in f if l.strip().startswith("dep ")]
++
++
++def dep_problems(repo, list_path, copied_from_path):
++    """Every 'dep <path>' line of preregistered.txt (a file outside the tier-1 paths that the executor imports or
++    reads, kept read-only in CASE-01) must hash to the value registered for it in rules/copied_from.tsv (R6 M10)."""
++    registered = {}
++    with open(copied_from_path, encoding="utf-8") as f:
++        rows = [l.rstrip("\n").split("\t") for l in f if l.strip()]
++    for row in rows[1:]:
++        if len(row) >= 3:
++            registered[row[1]] = row[2]
++    problems = []
++    for p in dep_paths(list_path):
++        if p not in registered:
++            problems.append(f"dependency not registered in copied_from.tsv: {p}")
++            continue
++        full = os.path.join(repo, p)
++        if not os.path.isfile(full):
++            problems.append(f"dependency missing: {p}")
++            continue
++        with open(full, "rb") as f:
++            h = hashlib.sha256(f.read()).hexdigest()
++        if h != registered[p]:
++            problems.append(f"dependency changed since registration: {p} ({h[:12]}… vs {registered[p][:12]}…)")
++    return problems
++
++
  def tracked_problems(repo, paths, tag=None):
 -    """A path (file or directory) must be tracked, equal to HEAD, have no untracked files under it, and, when a tag
 -    is given, be unchanged between that tag and HEAD."""
      problems = []
      if tag and git(repo, "rev-parse", "-q", "--verify", f"refs/tags/{tag}").returncode != 0:
          return [f"tag {tag} does not exist"]
-@@ -123,23 +113,106 @@
+@@ -123,23 +145,163 @@
      return problems
  
  
@@ -130,13 +170,52 @@
 +    return limits
 +
 +
-+def _kill(proc, hard):
++def _descendants(pid):
++    """All descendant pids of `pid` (Windows: Win32_Process via PowerShell; POSIX: pgrep -P), for the tree check."""
++    found, todo = [], [pid]
++    while todo:
++        p = todo.pop()
++        try:
++            if os.name == "nt":
++                out = subprocess.run(["powershell", "-NoProfile", "-Command",
++                                      f"Get-CimInstance Win32_Process -Filter 'ParentProcessId={p}' | Select-Object -ExpandProperty ProcessId"],
++                                     capture_output=True, text=True, timeout=30).stdout
++            else:
++                out = subprocess.run(["pgrep", "-P", str(p)], capture_output=True, text=True, timeout=30).stdout
++        except (OSError, subprocess.SubprocessError):
++            out = ""
++        for tok in out.split():
++            if tok.isdigit() and int(tok) not in found:
++                found.append(int(tok))
++                todo.append(int(tok))
++    return found
++
++
++def _alive(pid):
++    try:
++        if os.name == "nt":
++            out = subprocess.run(["tasklist", "/FI", f"PID eq {pid}", "/NH"], capture_output=True, text=True, timeout=30).stdout
++            return str(pid) in out.split()
++        os.kill(pid, 0)
++        return True
++    except (OSError, subprocess.SubprocessError):
++        return False
++
++
++def _kill(proc, hard, pids=()):
 +    try:
 +        if hard:
 +            if os.name == "nt":
 +                subprocess.run(["taskkill", "/F", "/T", "/PID", str(proc.pid)], capture_output=True, timeout=30)
++                for p in pids:
++                    subprocess.run(["taskkill", "/F", "/PID", str(p)], capture_output=True, timeout=30)
 +            else:
 +                proc.kill()
++                for p in pids:
++                    try:
++                        os.kill(p, 9)
++                    except OSError:
++                        pass
 +        else:
 +            proc.terminate()
 +    except (OSError, subprocess.SubprocessError):
@@ -145,14 +224,15 @@
 +
 +def run_limited_win(argv, stdin_bytes, stdout_path, stderr_path, limits, cwd, env):
 +    """Run a model call with a wall-clock limit and stdout / stderr size limits, polled every poll_seconds; on a
-+    limit: soft termination, wait, then hard kill, wait (R5 M6). Returns (exit_code, proc_record): exit_code is the
-+    process's code, or "timeout" / "output_limit" when a limit stopped it."""
++    limit: soft termination, wait, then hard kill of the whole tree, wait (R5 M6, R6 M12). The size limits are
++    checked once more after a normal exit (a burst shorter than one poll interval). Returns (exit_code, record):
++    exit_code is the process's code, or "timeout" / "output_limit" when a limit was hit."""
 +    with open(stdout_path, "wb") as out, open(stderr_path, "wb") as err:
 +        proc = subprocess.Popen(argv, cwd=cwd, env=env, stdin=subprocess.PIPE, stdout=out, stderr=err)
 +        feeder = threading.Thread(target=_feed, args=(proc, stdin_bytes), daemon=True)
 +        feeder.start()
 +        start = time.monotonic()
-+        hit, stage = None, None
++        hit, stage, waits, kids = None, None, {}, []
 +        while True:
 +            try:
 +                proc.wait(timeout=limits["poll_seconds"])
@@ -168,22 +248,39 @@
 +            elif se > limits["stderr_bytes"]:
 +                hit = "stderr_bytes"
 +            if hit:
++                kids = _descendants(proc.pid)
++                t0 = time.monotonic()
 +                _kill(proc, hard=False)
 +                stage = "soft"
 +                try:
 +                    proc.wait(timeout=limits["soft_kill_wait_seconds"])
 +                except subprocess.TimeoutExpired:
-+                    _kill(proc, hard=True)
++                    pass
++                waits["soft_wait_seconds"] = round(time.monotonic() - t0, 3)
++                if proc.poll() is None or any(_alive(k) for k in kids):
++                    t1 = time.monotonic()
++                    _kill(proc, hard=True, pids=kids)
 +                    stage = "hard"
 +                    try:
 +                        proc.wait(timeout=limits["hard_kill_wait_seconds"])
 +                    except subprocess.TimeoutExpired:
 +                        raise RuntimeError(f"pid {proc.pid} survived the kill; stop it by hand")
++                    waits["hard_wait_seconds"] = round(time.monotonic() - t1, 3)
 +                break
 +        elapsed = time.monotonic() - start
-+    record = {"limit_hit": hit, "terminated": hit is not None, "kill_stage": stage, "returncode": proc.returncode,
-+              "elapsed_seconds": round(elapsed, 3), "stdout_bytes": os.path.getsize(stdout_path),
-+              "stderr_bytes": os.path.getsize(stderr_path), "limits": dict(limits)}
++    so, se = os.path.getsize(stdout_path), os.path.getsize(stderr_path)
++    if hit is None:                                   # post-exit check (R6 M12)
++        if so > limits["stdout_bytes"]:
++            hit = "stdout_bytes"
++        elif se > limits["stderr_bytes"]:
++            hit = "stderr_bytes"
++    deadline = time.monotonic() + 2
++    while kids and any(_alive(k) for k in kids) and time.monotonic() < deadline:
++        time.sleep(0.2)
++    tree_clean = not any(_alive(k) for k in kids)
++    record = {"limit_hit": hit, "terminated": stage is not None, "kill_stage": stage, "returncode": proc.returncode,
++              "elapsed_seconds": round(elapsed, 3), "stdout_bytes": so, "stderr_bytes": se, "limits": dict(limits),
++              "waits": waits, "descendants_seen": kids, "tree_clean": tree_clean}
 +    if hit == "process_seconds":
 +        return "timeout", record
 +    if hit:
@@ -231,7 +328,7 @@
              want = f.read().split()[0]
          with open(cli_file, "rb") as f:
              if sha256(f.read()) != want:
-@@ -148,9 +221,8 @@
+@@ -148,9 +310,8 @@
          version = run("--version").stdout.decode("utf-8", "replace").split()
          if not version or version[0] != CLI_VERSION:
              problems.append(f"CLI version is not {CLI_VERSION}")
@@ -243,7 +340,7 @@
          for m in self.models:
              path = os.path.expandvars(m["settings"])
              name = path.replace("\\", "/").rsplit("/", 1)[-1]
-@@ -171,7 +243,6 @@
+@@ -171,7 +332,6 @@
  
      # ---- one attempt -------------------------------------------------------------------------------------------
      def make_workdirs(self, n):
@@ -251,7 +348,7 @@
          dirs = []
          while len(dirs) < n:
              d = os.path.join(self.sandbox_root, "run-" + secrets.token_hex(4))
-@@ -189,20 +260,10 @@
+@@ -189,20 +349,10 @@
                                    "--output-format", "stream-json", "--verbose"]
          out_path, err_path = (os.path.join(sealed_dir, f"{label}.{x}") for x in ("jsonl", "err"))
          start = datetime.datetime.now().isoformat(timespec="seconds")
@@ -275,7 +372,7 @@
          with open(out_path, encoding="utf-8", errors="replace") as f:
              events = vc.parse_stream(f.read())
          init = next((e for e in events if e.get("type") == "system" and e.get("subtype") == "init"), {})
-@@ -212,8 +273,7 @@
+@@ -212,8 +362,7 @@
          answer, hidden = redact(vc.answer_text(events), self.email)
          result = next((e for e in events if e.get("type") == "result"), {})
          usage = (result.get("modelUsage") or {}).get(self.expect[entry["name"]]["init_model"], {})
@@ -285,7 +382,7 @@
                  "argv": argv[:len(self.claude_cmd)] + ["-p", "--model", entry["model"], "--tools", "", "--system-prompt",
                          f"<system prompt sha256={sha256(system_bytes)}>", "--settings", entry["settings"],
                          "--setting-sources", "project", "--strict-mcp-config", "--no-session-persistence",
-@@ -223,7 +283,8 @@
+@@ -223,7 +372,8 @@
                  "per_turn_effort_active": init.get("per_turn_effort_active"),
                  "max_output_tokens": usage.get("maxOutputTokens"), "hidden_in_answer": hidden,
                  "api_retries": sum(e.get("subtype") == "api_retry" for e in events),
@@ -295,7 +392,7 @@
          with open(os.path.join(sealed_dir, f"{label}.meta.json"), "w", encoding="utf-8", newline="\n") as f:
              json.dump(meta, f, ensure_ascii=False, indent=1)
          with open(os.path.join(sealed_dir, f"{label}.answer.md"), "w", encoding="utf-8", newline="\n") as f:
-@@ -235,13 +296,13 @@
+@@ -235,13 +385,13 @@
          return os.path.join(self.sealed, "mapping.json")
  
      def commitment_path(self):
@@ -311,7 +408,7 @@
              j = secrets.randbelow(i + 1)
              names[i], names[j] = names[j], names[i]
          data = (json.dumps({"salt": secrets.token_hex(32), "codes": dict(zip(CODES, names))}, indent=1) + "\n")
-@@ -249,11 +310,10 @@
+@@ -249,11 +399,10 @@
          with open(self.mapping_path(), "x", encoding="utf-8", newline="\n") as f:
              f.write(data)
          commitment = sha256(data.encode("utf-8"))
@@ -324,7 +421,7 @@
          if not os.path.exists(self.mapping_path()) or not os.path.exists(self.commitment_path()):
              raise SystemExit("ROUND FAIL: run --init-mapping and commit outputs/mapping.sha256 first")
          with open(self.mapping_path(), "rb") as f:
-@@ -293,38 +353,35 @@
+@@ -293,38 +442,35 @@
              else:
                  note = "，可补跑 1 次" if len(mine) == 1 else "，已用完补跑，记为未完成"
                  lines.append(f"- {code}：作废（原因类别：{'、'.join(last['categories'])}）{note}")
@@ -370,7 +467,7 @@
  
      def round1_bytes(self):
          import build_prompt
-@@ -337,13 +394,13 @@
+@@ -337,13 +483,13 @@
      def runnable(self, rnd):
          if rnd == 1:
              return set(CODES)
@@ -387,26 +484,35 @@
              needed += [f"{rel}/queries/round2", f"{rel}/queries/round2/SHA256SUMS"]
          problems = tracked_problems(self.repo, needed)
          if problems:
-@@ -351,11 +408,16 @@
+@@ -351,11 +497,25 @@
          return runnable
  
      def run_attempts(self, rnd, attempts, todo):
 -        """todo: [(entry, code, attempt number)] in run order. Each attempt is recorded before and after the call."""
          sealed_dir = os.path.join(self.sealed, f"round{rnd}")
-+        # label check of every prompt BEFORE anything is recorded or called (protocol 6.2)
++        # label check of the exact system and user bytes BEFORE anything is recorded or called (protocol 6.2; R6 M13)
++        reports = []
 +        for entry, code, n in todo:
-+            _, user, _, path = self.prompts(rnd, code)
-+            found = lc.scan_prompt_bytes(user, os.path.relpath(path, self.case))
-+            if found:
-+                raise SystemExit("ROUND FAIL: internal label in an operator-generated part of the prompt: " + "; ".join(found))
++            system, user, _, path = self.prompts(rnd, code)
++            rel = os.path.relpath(path, self.case)
++            if not lc.is_model_visible(rel):
++                raise SystemExit(f"ROUND FAIL: {rel} is not in rules/model_visible.txt")
++            reports.append(lc.scan_report(user.decode("utf-8", "replace"), rel))
++            reports.append(lc.scan_report(system.decode("utf-8", "replace"), "prompts/system.md"))
++        found = [f for r in reports for f in r["findings"]]
          os.makedirs(sealed_dir, exist_ok=True)
++        with open(os.path.join(sealed_dir, "label_check.json"), "a", encoding="utf-8") as f:
++            f.write(json.dumps({"time": datetime.datetime.now().isoformat(timespec="seconds"), "reports": reports},
++                               ensure_ascii=False) + "\n")
++        if found:
++            raise SystemExit("ROUND FAIL: internal label in an operator-generated part of the prompt: " + "; ".join(found))
          for (entry, code, n), workdir in zip(todo, self.make_workdirs(len(todo))):
 -            system, user, ok = self.prompts(rnd, code)
 +            system, user, ok, _ = self.prompts(rnd, code)
              record = {"code": code, "model": entry["name"], "attempt": n, "label": f"{entry['name']}-{n}",
                        "state": "started", "valid": None, "categories": []}
              attempts.append(record)
-@@ -370,8 +432,7 @@
+@@ -370,8 +530,7 @@
          codes = {v: k for k, v in self.load_mapping().items()}
          runnable = self.runnable(rnd)
          attempts = []
@@ -416,7 +522,7 @@
          return self.finish(rnd, attempts)
  
      def resume(self, rnd):
-@@ -380,7 +441,7 @@
+@@ -380,7 +539,7 @@
              raise SystemExit(f"ROUND FAIL: round {rnd} has not started; nothing to resume")
          codes = {v: k for k, v in self.load_mapping().items()}
          for a in attempts:
@@ -425,7 +531,7 @@
                  a.update(state="done", valid=False, categories=[vc.CAT_INTERRUPTED])
          self.save_attempts(rnd, attempts)
          started = {a["code"] for a in attempts}
-@@ -403,11 +464,11 @@
+@@ -403,11 +562,11 @@
          return self.finish(rnd, attempts)
  
      def smoke(self):
@@ -440,7 +546,7 @@
              user = f.read()
          all_ok = True
          for entry, workdir in zip(self.models, self.make_workdirs(len(self.models))):
-@@ -416,14 +477,11 @@
+@@ -416,14 +575,11 @@
                  answer = f.read()
              canaries = all(c in answer for c in SMOKE_CANARIES)
              all_ok &= meta["valid"] and canaries
@@ -457,7 +563,7 @@
              probe = f.read()
          capped_env = dict(self.env, CLAUDE_CODE_MAX_OUTPUT_TOKENS=str(CAP_PROBE_TOKENS))
          for entry, workdir in zip(self.models, self.make_workdirs(len(self.models))):
-@@ -433,11 +491,45 @@
+@@ -433,11 +589,45 @@
                  answer = f.read()
              capped = (meta["num_turns"] or 0) > 1 or CAP_HIT in answer
              all_ok &= capped
@@ -505,7 +611,7 @@
  
  def main(argv=None):
      for stream in (sys.stdout, sys.stderr):
-@@ -447,34 +539,34 @@
+@@ -447,34 +637,36 @@
      g = ap.add_mutually_exclusive_group(required=True)
      g.add_argument("--round", type=int, choices=(1, 2))
      g.add_argument("--smoke", action="store_true")
@@ -541,6 +647,8 @@
 -        return 1
 +    if not args.probe:                       # the budget probe is a calibration before tier 1: no registration check
 +        problems = prereg_problems(repo, os.path.join(case, "rules", "preregistered.txt"), mode, not args.no_tags)
++        if os.path.exists(os.path.join(case, "rules", "copied_from.tsv")):
++            problems += dep_problems(repo, os.path.join(case, "rules", "preregistered.txt"), os.path.join(case, "rules", "copied_from.tsv"))
 +        if problems:
 +            for p in problems:
 +                print(f"PREREG {p}")
@@ -552,7 +660,7 @@
      if args.init_mapping:
          print(f"MAPPING OK: commitment {runner.init_mapping()} -> outputs/mapping.sha256 (commit it before round 1)")
          return 0
-@@ -485,11 +577,13 @@
+@@ -485,11 +677,13 @@
          print("ROUND FAIL: preflight failed; no model was called and no attempt was used")
          return 1
      os.makedirs(runner.sealed, exist_ok=True)

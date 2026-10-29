@@ -18,6 +18,7 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from c2paths import CASE, OUTPUTS, RULES, write_new_or_same  # noqa: E402
 import contract as contract_mod  # noqa: E402
+import scoring  # noqa: E402
 
 PART4 = re.compile(r"四\s*[、.．]\s*(?:检查请求|下一步查询)")
 PART5 = re.compile(r"五\s*[、.．]")
@@ -104,8 +105,19 @@ def _item_prose(lines, start, end):
     return "\n".join(prose)
 
 
-def extract(answer, cmds, max_requests=None):
-    """Part-4 units of one answer: [{qid_n, kind, line, text, ctx_requested, priority, over_limit, fixed_code}]."""
+def outside_window(answer, limit=None):
+    """Number of answer lines after the core window (R6 Q3 ruling): they are kept in the answer file but no check
+    request is taken from them, the same boundary the core scoring uses."""
+    window = scoring.core_window(answer, limit) if limit else scoring.core_window(answer)
+    return max(len(answer.splitlines()) - len(window.splitlines()), 0)
+
+
+def extract(answer, cmds, max_requests=None, window=True):
+    """Part-4 units of one answer: [{qid_n, kind, line, text, ctx_requested, priority, over_limit, fixed_code}].
+    With window (the default, R6 Q3 ruling) only the 120-line core window of the answer is read: a request after it
+    is not executed, so a longer answer cannot buy extra evidence past the line where scoring stops."""
+    if window:
+        answer = scoring.core_window(answer)
     lines = answer.splitlines()
     span = part4(lines)
     if span is None:

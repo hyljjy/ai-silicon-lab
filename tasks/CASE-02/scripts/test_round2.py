@@ -239,6 +239,23 @@ class TestCollect(unittest.TestCase):
             shutil.rmtree(tmp)
 
 
+class TestR6Window(unittest.TestCase):
+    """CASE02_R6 Q3 ruling: check requests are taken only from the 120-line core window of the answer (the same
+    window the core scoring reads); requests after it are recorded as dropped, not executed."""
+
+    def text(self):
+        filler = "\n".join(f"- 观察 {i}" for i in range(2, 118))               # lines 2..117
+        return "一、观察\n" + filler + "\n四、检查请求\n1. `report_units`\n2. `report_units`\n3. `report_units`\n五、其他\n"
+
+    def test_requests_outside_the_window_are_not_extracted(self):
+        units = [u for u in eq.extract(self.text(), CMDS) if u["kind"] != "text"]
+        self.assertEqual(len(units), 2)
+        self.assertEqual(len([u for u in eq.extract(self.text(), CMDS, window=False) if u["kind"] != "text"]), 3)
+
+    def test_dropped_lines_reported(self):
+        self.assertEqual(eq.outside_window(self.text()), 2)
+
+
 if __name__ == "__main__":
     unittest.main()
 

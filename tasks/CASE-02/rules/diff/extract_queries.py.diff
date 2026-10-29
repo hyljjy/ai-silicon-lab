@@ -1,6 +1,6 @@
 --- tasks/CASE-01/diag/scripts/extract_queries.py	2026-10-12 23:56:15.516060200 -0700
-+++ tasks/CASE-02/scripts/extract_queries.py	2026-10-28 22:35:28.835955800 -0700
-@@ -1,44 +1,40 @@
++++ tasks/CASE-02/scripts/extract_queries.py	2026-10-29 05:08:08.308462600 -0700
+@@ -1,44 +1,41 @@
 -"""Extract the round-2 query units from one model's round-1 answer (protocol v0.5 section 8;
 -rules/rewrite_table.md section 1). Deterministic; the author reviews the result before round 2.
 -
@@ -43,6 +43,7 @@
 -from diagpaths import DIAG, OUTPUTS, RULES, write_new_or_same  # noqa: E402
 +from c2paths import CASE, OUTPUTS, RULES, write_new_or_same  # noqa: E402
 +import contract as contract_mod  # noqa: E402
++import scoring  # noqa: E402
  
 -PART4 = re.compile(r"四\s*[、.．]\s*下一步查询")
 +PART4 = re.compile(r"四\s*[、.．]\s*(?:检查请求|下一步查询)")
@@ -64,7 +65,7 @@
  
  
  def commands(rules=RULES):
-@@ -49,8 +45,12 @@
+@@ -49,8 +46,12 @@
      return out
  
  
@@ -78,7 +79,7 @@
      words = text.strip().split()
      if not words:
          return False
-@@ -71,12 +71,47 @@
+@@ -71,12 +72,58 @@
      return "codeblock" if tag in TCL_TAGS or starts_with_command(first, cmds) else "nontcl"
  
  
@@ -117,8 +118,19 @@
 +    return "\n".join(prose)
 +
 +
-+def extract(answer, cmds, max_requests=None):
-+    """Part-4 units of one answer: [{qid_n, kind, line, text, ctx_requested, priority, over_limit, fixed_code}]."""
++def outside_window(answer, limit=None):
++    """Number of answer lines after the core window (R6 Q3 ruling): they are kept in the answer file but no check
++    request is taken from them, the same boundary the core scoring uses."""
++    window = scoring.core_window(answer, limit) if limit else scoring.core_window(answer)
++    return max(len(answer.splitlines()) - len(window.splitlines()), 0)
++
++
++def extract(answer, cmds, max_requests=None, window=True):
++    """Part-4 units of one answer: [{qid_n, kind, line, text, ctx_requested, priority, over_limit, fixed_code}].
++    With window (the default, R6 Q3 ruling) only the 120-line core window of the answer is read: a request after it
++    is not executed, so a longer answer cannot buy extra evidence past the line where scoring stops."""
++    if window:
++        answer = scoring.core_window(answer)
      lines = answer.splitlines()
      span = part4(lines)
      if span is None:
@@ -128,7 +140,7 @@
      units, i = [], span[0]
      while i < span[1]:
          line = lines[i]
-@@ -86,7 +121,10 @@
+@@ -86,7 +133,10 @@
              while j < span[1] and not FENCE.match(lines[j]):
                  body.append(lines[j])
                  j += 1
@@ -140,7 +152,7 @@
              i = j + 1
              continue
          spans = INLINE.findall(line)
-@@ -94,22 +132,49 @@
+@@ -94,22 +144,49 @@
          stripped = LIST.sub("", line, count=1).strip()
          if not starts_with_command(stripped, cmds, basic=False):
              stripped = LABEL.sub("", stripped, count=1)
@@ -196,7 +208,7 @@
          return 2
      code = argv[0]
      with open(os.path.join(OUTPUTS, "round1", f"{code}.md"), encoding="utf-8") as f:
-@@ -119,17 +184,17 @@
+@@ -119,17 +196,17 @@
      except ValueError as e:
          print(f"EXTRACT FAIL: {code}: {e}; the author decides how to proceed")
          return 1

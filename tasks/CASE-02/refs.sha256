@@ -9,3 +9,6 @@ commit  90777e716c7fb06ee679995692723a7f99548500  contract spec.md v1.4
 a121e2f3ca86231964e26b85f804124ea12d1cca4e2f447e9f1157368070b2da  tasks/CASE-02/scripts/sta_run_case02.tcl (= sta_run.tcl with line 24 changed, rules/diff/sta_run_case02.tcl.diff)
 04fcba3ed6078152238db05b40384e7508943b45c177c73caaa71e2a3c03b234  tasks/CASE-02/sdc/case02_missing_inb.tcl
 49ecff732e1399025a72861f1154084485697f906981ba120a410bb27fa0253a  tasks/CASE-02/rules/mutation_lines.txt
+70a7e86c8b0ce23731fbaffbfa981eee03fab9b62a41cf47444348079f61e447  /home/eda/tools/opensta/bin/sta (WSL Ubuntu-24.04; sta -version 3.1.0; tool fingerprint)
+commit  7a034b56de14b485ddf8fd97b420a6f37a91c00d  /home/eda/src/OpenSTA (OpenSTA 3.1.0 source the binary was built from; rules/flush_evidence.md)
+535b02947a186a1859c165ccfc8f29f67fd0e1df44ff58016cbd7e6b66a927f9  /home/eda/src/OpenSTA/util/ReportTcl.cc (output path cited in rules/flush_evidence.md)

@@ -1,4 +1,11 @@
-24c24
-< source [file join $::env(CASE_DIR) sdc case01_sdc.tcl]
----
-> source $::env(SDC_FILE)
+--- tasks/CASE-01/scripts/sta_run.tcl	2026-10-09 16:21:51.406333600 -0700
++++ tasks/CASE-02/scripts/sta_run_case02.tcl	2026-10-28 22:12:38.788722000 -0700
+@@ -21,7 +21,7 @@
+ sky130_define_scenes
+ set T $::env(T_NS)
+ set C_load $::env(CLOAD_PF)
+-source [file join $::env(CASE_DIR) sdc case01_sdc.tcl]
++source $::env(SDC_FILE)
+ 
+ emit MODE [sta::cmd_mode_name]
+ emit SCENES {*}[lmap s [get_scenes *] {get_name $s}]

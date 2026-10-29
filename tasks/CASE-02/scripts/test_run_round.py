@@ -216,6 +216,29 @@ class TestSmoke(Base):
             self.assertIn(f"{name}: cap_probe capped=True", out)
 
 
+class TestR6Prereg(unittest.TestCase):
+    """CASE02_R6 M10: read-only dependencies outside the tier-1 paths ("dep <path>" lines of preregistered.txt) are
+    verified before a run against the hash registered in rules/copied_from.tsv."""
+
+    def test_dep_lines_verified_by_hash(self):
+        tmp = tempfile.mkdtemp(prefix="c2_dep_")
+        self.addCleanup(shutil.rmtree, tmp, True)
+        dep = os.path.join(tmp, "tasks", "CASE-01", "scripts", "logcheck.py")
+        write(dep, "print(1)\n")
+        copied = os.path.join(tmp, "copied_from.tsv")
+        write(copied, "case02_path\tcase01_path\tcase01_sha256\tdiff_file\tnote\n"
+              f"scripts/(import) logcheck\ttasks/CASE-01/scripts/logcheck.py\t{sha(dep)}\t-\tread-only import\n")
+        lst = os.path.join(tmp, "preregistered.txt")
+        write(lst, "tasks/CASE-02/rules\ndep tasks/CASE-01/scripts/logcheck.py\n")
+        self.assertEqual(rr.prereg_paths(lst, "round")["smoke"], ["tasks/CASE-02/rules"])
+        self.assertEqual(rr.dep_problems(tmp, lst, copied), [])
+        write(dep, "print(2)\n")
+        probs = rr.dep_problems(tmp, lst, copied)
+        self.assertTrue(any("logcheck.py" in p for p in probs), probs)
+        write(lst, "dep tasks/CASE-01/scripts/other.py\n")
+        self.assertTrue(any("not registered" in p for p in rr.dep_problems(tmp, lst, copied)))
+
+
 if __name__ == "__main__":
     unittest.main()
 

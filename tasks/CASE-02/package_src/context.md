@@ -49,19 +49,19 @@
 
 每条查询对每一份分析记录各执行一次，称为一个实例：你写明只对 R1 或只对 R2 执行的，有 1 个实例；没写明的，有 2 个实例（R1、R2 各一个，结果分别标注）。每个模型最多 12 条检查请求；第 13 条起不执行。
 
-每个实例交还给你的输出最多 2000 行（含命令回显行），同时最多 256 KiB。超过时保留开头和结尾各一半，中间用一行 `[已截断：省略 N 行；原始 M 行 B 字节；见执行契约]` 代替，省略的行数相对原始输出计。原始输出会完整保存，但不交还。
+每个实例交还给你的输出最多 2000 行（含命令回显行），同时最多 256 KiB（按交还文字的 UTF-8 字节计）。超过时保留开头和结尾各一半，中间用一行 `[已截断：省略 N 行；原始 M 行 B 字节；见执行契约]` 代替，省略的行数相对原始输出计。计数的例外：截断标记那一行和下面说的单行截断后缀不计入上面的行数和字节数（所以被截断的实例交还 2001 行）；单独一行超过 256 KiB 时，这一行先缩短到 128 KiB 并在行尾加 `…[本行截断]` 标记，再按上面的规则处理。原始输出会完整保存，但不交还。
 
-下面这些形态的查询保证不会被截断：
-- check_setup 带端口名单；
-- 单 scene 对全部非时钟输入逐端口 report_arrival 的循环；
-- 单 scene 对全部非时钟输入逐端口 find_timing_paths 计数（max/min，带与不带 -unconstrained）的循环；
-- W01 与 W02 放在同一实例；
-- 六个 scene 的 W02 与 W03 放在同一实例；
-- 默认路径数的一条 report_checks；
-- 单 scene 的 report_check_types -verbose；
-- 六个 scene 的 worst_slack 与 total_negative_slack（max 与 min）；
+下面这些形态的查询（编号 W01–W08）保证不会被截断：
+- W01：check_setup 带端口名单；
+- W02：单 scene 对全部非时钟输入逐端口 report_arrival 的循环；
+- W03：单 scene 对全部非时钟输入逐端口 find_timing_paths 计数（max/min，带与不带 -unconstrained）的循环；
+- W04：W01 与 W02 放在同一实例；
+- W05：六个 scene 的 W02 与 W03 放在同一实例；
+- W06：默认路径数的一条 report_checks；
+- W07：单 scene 的 report_check_types -verbose；
+- W08：六个 scene 的 worst_slack 与 total_negative_slack（max 与 min）；
 
-下面这些形态会超过上限、被截断：
+下面这些形态不保证不被截断（按实测会超出上面的上限）：
 - 逐端口完整 report_checks 报告乘以多端口（单 scene 全部输入约 6500 行，六个 scene 约 39000 行）；
 - -group_path_count 或 -endpoint_path_count 不小于 40 的报告；
 - 跨多个 scene 的完整报告枚举；

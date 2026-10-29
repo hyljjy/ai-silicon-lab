@@ -1,5 +1,5 @@
 --- tasks/CASE-01/diag/scripts/build_prompt.py	2026-10-12 23:56:15.497162400 -0700
-+++ tasks/CASE-02/scripts/build_prompt.py	2026-10-28 22:41:55.829417100 -0700
++++ tasks/CASE-02/scripts/build_prompt.py	2026-10-29 00:41:19.924693800 -0700
 @@ -1,23 +1,23 @@
 -"""Build the exact prompt bytes for both rounds (protocol v0.5 sections 5.3 and 8).
 -
@@ -79,7 +79,7 @@
  def target(kind, code=None):
      return os.path.join(PROMPTS, "round1_user.md") if kind == "round1" else os.path.join(PROMPTS, "round2", f"{code}.md")
  
-@@ -59,17 +66,25 @@
+@@ -59,17 +66,27 @@
      check = "--check" in argv
      args = [a for a in argv if a != "--check"]
      if not args or args[0] not in ("round1", "round2") or (args[0] == "round2" and len(args) != 2):
@@ -94,16 +94,18 @@
 -        print(f"PROMPT {'OK' if same else 'DIFFERS'}: {os.path.relpath(path, DIAG)}")
 +        print(f"PROMPT {'OK' if same else 'DIFFERS'}: {os.path.relpath(path, CASE)}")
          return 0 if same else 1
-     write_new_or_same(path, data)
--    print(f"PROMPT OK: {os.path.relpath(path, DIAG)} ({len(data)} bytes)")
 +    if kind == "round2":
++        import budget
 +        c = contract_mod.load(os.path.join(RULES, "contract.json"))
-+        chk = prompt_budget(data, c.token_bytes_ratio, c.total_budget_tokens)
++        results = read_bytes(os.path.join(CASE, "round2", f"{code}_results.md"))
++        chk = budget.prompt_capacity(len(data), len(results), c)          # two checks, before anything is written
 +        write_new_or_same(os.path.join(CASE, "round2", f"{code}_rendered_check.json"),
 +                          (json.dumps(chk, ensure_ascii=False, indent=1) + "\n").encode("utf-8"))
 +        if not chk["ok"]:
 +            print(f"PROMPT BUDGET FAIL: {chk}")
 +            return 1
+     write_new_or_same(path, data)
+-    print(f"PROMPT OK: {os.path.relpath(path, DIAG)} ({len(data)} bytes)")
 +    print(f"PROMPT OK: {os.path.relpath(path, CASE)} ({len(data)} bytes)")
      return 0
  

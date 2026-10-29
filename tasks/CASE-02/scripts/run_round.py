@@ -82,11 +82,43 @@ def prereg_paths(list_path, mode):
                 continue
             if line.startswith("round "):
                 tiers["round"].append(line[len("round "):].strip())
+            elif line.startswith("dep "):
+                continue                                   # read-only dependencies: verified by hash (dep_problems)
             else:
                 tiers["smoke"].append(line)
     if mode == "smoke":
         tiers["round"] = []
     return tiers
+
+
+def dep_paths(list_path):
+    with open(list_path, encoding="utf-8") as f:
+        return [l.strip()[len("dep "):].strip() for l in f if l.strip().startswith("dep ")]
+
+
+def dep_problems(repo, list_path, copied_from_path):
+    """Every 'dep <path>' line of preregistered.txt (a file outside the tier-1 paths that the executor imports or
+    reads, kept read-only in CASE-01) must hash to the value registered for it in rules/copied_from.tsv (R6 M10)."""
+    registered = {}
+    with open(copied_from_path, encoding="utf-8") as f:
+        rows = [l.rstrip("\n").split("\t") for l in f if l.strip()]
+    for row in rows[1:]:
+        if len(row) >= 3:
+            registered[row[1]] = row[2]
+    problems = []
+    for p in dep_paths(list_path):
+        if p not in registered:
+            problems.append(f"dependency not registered in copied_from.tsv: {p}")
+            continue
+        full = os.path.join(repo, p)
+        if not os.path.isfile(full):
+            problems.append(f"dependency missing: {p}")
+            continue
+        with open(full, "rb") as f:
+            h = hashlib.sha256(f.read()).hexdigest()
+        if h != registered[p]:
+            problems.append(f"dependency changed since registration: {p} ({h[:12]}… vs {registered[p][:12]}…)")
+    return problems
 
 
 def tracked_problems(repo, paths, tag=None):
@@ -626,6 +658,8 @@ def main(argv=None):
         return 1
     if not args.probe:                       # the budget probe is a calibration before tier 1: no registration check
         problems = prereg_problems(repo, os.path.join(case, "rules", "preregistered.txt"), mode, not args.no_tags)
+        if os.path.exists(os.path.join(case, "rules", "copied_from.tsv")):
+            problems += dep_problems(repo, os.path.join(case, "rules", "preregistered.txt"), os.path.join(case, "rules", "copied_from.tsv"))
         if problems:
             for p in problems:
                 print(f"PREREG {p}")

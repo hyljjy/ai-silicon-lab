@@ -1,5 +1,5 @@
 case02_path	case01_path	case01_sha256	diff_file	note
-scripts/c2paths.py	tasks/CASE-01/diag/scripts/diagpaths.py	ef252825bb9c93e1b70b42408dfac7ec79d419d814fd4fd1eca794f4c626140a	-	copied and adapted: CASE found by protocol.md+appendix_A.md, CASE-02 constants, new_run_dir
+scripts/c2paths.py	tasks/CASE-01/diag/scripts/diagpaths.py	ef252825bb9c93e1b70b42408dfac7ec79d419d814fd4fd1eca794f4c626140a	rules/diff/c2paths.py.diff	copied and adapted: CASE found by protocol.md+appendix_A.md, CASE-02 constants, new_run_dir
 scripts/sta_run_case02.tcl	tasks/CASE-01/scripts/sta_run.tcl	6728b0a4ea02ec959460654cf739131f5a4a5c48c789be926922dae93ace9fa8	rules/diff/sta_run_case02.tcl.diff	line 24: SDC from $SDC_FILE
 sdc/case02_missing_inb.tcl	tasks/CASE-02/prevalidation/case02_missing_inb.tcl	04fcba3ed6078152238db05b40384e7508943b45c177c73caaa71e2a3c03b234	-	pre-validation file, not from CASE-01
 rules/allow_query.txt	tasks/CASE-01/diag/rules/allow_query.txt	a2b351510216e1ab0349233e774dd97cc85c571c83ebdf0d20326674a753dd21	-	byte copy; the lists are not changed for CASE-02
@@ -30,3 +30,9 @@ scripts/run_round.py	tasks/CASE-01/diag/scripts/run_round.py	a8d81dc55c73f6e65b4
 scripts/fake_claude_c2.py	tasks/CASE-01/diag/scripts/fake_claude.py	8e3b6942beef2d608076f665671e7a02099c9a943aeb709184768161736ca48b	rules/diff/fake_claude_c2.py.diff	test double: + usage fields, bigout/bigerr/hang scenarios
 scripts/(import) void_check	tasks/CASE-01/diag/scripts/void_check.py	806aeb0ce104d8cee12e92f7e843c9355e45df852b2bc55141e9faa693f86ab2	-	read-only import: parse_stream, answer_text, check_run, categories, CAT_INTERRUPTED (no further dependencies)
 scripts/(import) privacy_check	tasks/CASE-01/diag/scripts/privacy_check.py	d980bac4b74df23210e0cbef0278cdf7d024481a07211bb67b23a67616f83743	-	read-only import: USER_DIR, account_email (reads git config user.email at run time)
+scripts/test_run_round.py	tasks/CASE-01/diag/scripts/test_run_round.py	98f3572a1d3848a44a4cf05a6d8eee5485ca5fc8deeec4cd88cb0201f6d3f80d	rules/diff/test_run_round.py.diff	adapted: CASE-02 paths/tags, output monitoring, probe, label check, R6 shell and dep tests
+scripts/fixtures/records/correct/*	tasks/CASE-01/evidence/F1/archive/20261009-092827-base-T27.91/sta/	-	-	byte copies of 51 F1 archived record files; per-file hashes in scripts/fixtures/records/SOURCES.tsv
+scripts/fixtures/records/missing/*	D:/study/eda_archive/case02/prevalidation/probe_out/q10_flush_missing/env/ (outside git; prevalidation SHA256SUMS)	-	-	byte copies of the pre-validation missing-version records; per-file hashes in scripts/fixtures/records/SOURCES.tsv
+scripts/(read) warn_whitelist	tasks/CASE-01/config/warn_whitelist.txt	35f1ef4b8940b67295cb8c2877658e72aff81658b9dd1bf7f054644beead52f6	-	read-only at run time by run_query.py (logcheck rules)
+scripts/(run) env/snapshot.sh	env/snapshot.sh	5bc483850ff3c37f09c691dea421358dfe9d27909727f8a4a4066eb74ccd636c	-	run read-only by run_query.py (environment snapshot check)
+scripts/(read) case01_sdc	tasks/CASE-01/sdc/case01_sdc.tcl	b8d1aab60d137dc39dc7cb55b2ec314b952538dfee8f5be627a140dcca09300c	-	read-only: the correct-version SDC (also in refs.sha256)
