@@ -12,3 +12,9 @@ scripts/extract_queries.py	tasks/CASE-01/diag/scripts/extract_queries.py	8041bd7
 scripts/build_results.py	tasks/CASE-01/diag/scripts/build_results.py	0c021ac27a73526440015d0eb3cb9ba1078bba802ae228ca980d7754af5e2697	rules/diff/build_results.py.diff	copied and adapted for CASE-02 (ctx, priority, over_limit, budget, attribution)
 scripts/collect_runs.py	tasks/CASE-01/diag/scripts/collect_runs.py	e8ebabf008f875ceca0f95329ef0d5b7ae0c538605496bbe7faaa50b64309a55	rules/diff/collect_runs.py.diff	copied and adapted for CASE-02 (ctx, priority, over_limit, budget, attribution)
 scripts/rewrite_query.py	tasks/CASE-01/diag/scripts/rewrite_query.py	a4835688466996127792d6b57175e2f677e590e7e96cab6e120eb8d177a763f3	rules/diff/rewrite_query.py.diff	copied and adapted for CASE-02 (ctx, priority, over_limit, budget, attribution)
+scripts/build_package.py	tasks/CASE-01/diag/scripts/build_package.py	ce6693b9e68bfcb78fca255951b288e87432f745909a808b8e7b4c5b44bdb34a	rules/diff/build_package.py.diff	copied and adapted (R1/R2 package, frozen context.md, neutral SOURCES.tsv, budget check)
+scripts/build_prompt.py	tasks/CASE-01/diag/scripts/build_prompt.py	0c6e40af978a1351c8e0bf1680810ccf33a83ffd6eec19db47f5e974169efff6	rules/diff/build_prompt.py.diff	copied and adapted (R1/R2 package, frozen context.md, neutral SOURCES.tsv, budget check)
+prompts/system.md	tasks/CASE-01/diag/prompts/system.md	de1fdda35a524778d920c6407b2efd7008053b36bea3ffa451f7efd4f16ff342	-	byte copy
+prompts/smoke_system.md	tasks/CASE-01/diag/prompts/smoke_system.md	a52d9b0344b18973f43150638439db037edd4699b86a6bd07e9b21a7de1ab2e1	-	byte copy
+prompts/smoke_user.md	tasks/CASE-01/diag/prompts/smoke_user.md	256d5e406c27314b39c2712cd2e077b02924c4b188774d114410768b65672509	-	byte copy
+prompts/cap_probe_user.md	tasks/CASE-01/diag/prompts/cap_probe_user.md	0e1eb3ecc59441cbfc970037c61ad60817fc0bea475dce010653b08e3a3924e8	-	byte copy

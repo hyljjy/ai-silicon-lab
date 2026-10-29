@@ -1,0 +1,92 @@
+"""Build the exact prompt bytes for both rounds (protocol v0.3 section 6.3). Copied and adapted from
+tasks/CASE-01/diag/scripts/build_prompt.py (rules/copied_from.tsv).
+  python3 -B scripts/build_prompt.py round1                 -> prompts/round1_user.md
+  python3 -B scripts/build_prompt.py round2 <code>          -> prompts/round2/<code>.md (+ round2/<code>_rendered_check.json)
+  add --check to compare with the existing file instead of writing it.
+Round 1: the template with every package file inserted with line numbers, in a fixed order.
+Round 2: the template with the round-1 prompt, the model's own round-1 answer and its query results (which end with the
+budget statement). One-pass substitution. The whole round-2 prompt is checked against the total budget
+(contract.json) and the check is written next to it."""
+import json
+import math
+import os
+import re
+import sys
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from c2paths import CASE, OUTPUTS, PACKAGE, PROMPTS, RULES, read_bytes, write_new_or_same  # noqa: E402
+import contract as contract_mod  # noqa: E402
+
+ORDER = ("intent.md", "values.txt", "summary_R1.tsv", "summary_R2.tsv", "path_R1.rpt", "path_R2.rpt", "dot4sat.v", "context.md")
+PLACEHOLDER = re.compile(r"\{\{(材料|第1轮题目|第1轮答复|执行结果)\}\}")
+
+
+def numbered(name, data):
+    lines = data.decode("utf-8").splitlines()
+    body = "".join(f"{i:>4}| {line}\n" for i, line in enumerate(lines, 1))
+    return f"=== 文件：{name}（共 {len(lines)} 行）===\n{body}=== 文件结束：{name} ===\n"
+
+
+def fill(template, values):
+    missing = set(PLACEHOLDER.findall(template)) - set(values)
+    if missing:
+        raise SystemExit(f"CASE02 FAIL: no value for placeholder(s) {sorted(missing)}")
+    return PLACEHOLDER.sub(lambda m: values[m.group(1)], template)
+
+
+def round1_bytes(package=PACKAGE):
+    template = read_bytes(os.path.join(PROMPTS, "round1_template.md")).decode("utf-8")
+    material = "\n".join(numbered(n, read_bytes(os.path.join(package, n))) for n in ORDER)
+    return fill(template, {"材料": material.rstrip("\n")}).encode("utf-8")
+
+
+def round2_from_parts(round1, answer, results):
+    template = read_bytes(os.path.join(PROMPTS, "round2_template.md")).decode("utf-8")
+    values = {"第1轮题目": round1.decode("utf-8").rstrip("\n"), "第1轮答复": answer.decode("utf-8").rstrip("\n"),
+              "执行结果": results.decode("utf-8").rstrip("\n")}
+    return fill(template, values).encode("utf-8")
+
+
+def round2_bytes(code):
+    return round2_from_parts(round1_bytes(), read_bytes(os.path.join(OUTPUTS, "round1", f"{code}.md")),
+                             read_bytes(os.path.join(CASE, "round2", f"{code}_results.md")))
+
+
+def prompt_budget(data, ratio, budget_tokens):
+    tokens = math.ceil(len(data) / ratio)
+    return {"rendered_bytes": len(data), "tokens": tokens, "budget_tokens": budget_tokens, "ok": tokens <= budget_tokens}
+
+
+def target(kind, code=None):
+    return os.path.join(PROMPTS, "round1_user.md") if kind == "round1" else os.path.join(PROMPTS, "round2", f"{code}.md")
+
+
+def main(argv=None):
+    argv = sys.argv[1:] if argv is None else argv
+    check = "--check" in argv
+    args = [a for a in argv if a != "--check"]
+    if not args or args[0] not in ("round1", "round2") or (args[0] == "round2" and len(args) != 2):
+        print("usage: build_prompt.py round1 | round2 <code> [--check]")
+        return 2
+    kind, code = args[0], (args[1] if len(args) > 1 else None)
+    data = round1_bytes() if kind == "round1" else round2_bytes(code)
+    path = target(kind, code)
+    if check:
+        same = os.path.exists(path) and read_bytes(path) == data
+        print(f"PROMPT {'OK' if same else 'DIFFERS'}: {os.path.relpath(path, CASE)}")
+        return 0 if same else 1
+    write_new_or_same(path, data)
+    if kind == "round2":
+        c = contract_mod.load(os.path.join(RULES, "contract.json"))
+        chk = prompt_budget(data, c.token_bytes_ratio, c.total_budget_tokens)
+        write_new_or_same(os.path.join(CASE, "round2", f"{code}_rendered_check.json"),
+                          (json.dumps(chk, ensure_ascii=False, indent=1) + "\n").encode("utf-8"))
+        if not chk["ok"]:
+            print(f"PROMPT BUDGET FAIL: {chk}")
+            return 1
+    print(f"PROMPT OK: {os.path.relpath(path, CASE)} ({len(data)} bytes)")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
