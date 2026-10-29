@@ -216,6 +216,20 @@ class TestSmoke(Base):
             self.assertIn(f"{name}: cap_probe capped=True", out)
 
 
+class TestPromptBuilderResolution(unittest.TestCase):
+    """Round-1 incident 2026-10-29: run_round rebuilt the prompt with CASE-01's build_prompt (same module name, its
+    directory inserted first in sys.path for void_check) and voided every attempt as 题目字节不符. The runner must
+    rebuild with the CASE-02 builder whatever the import path order is."""
+
+    def test_round1_bytes_come_from_case02_builder(self):
+        import importlib.util
+        spec = importlib.util.spec_from_file_location("case02_build_prompt", os.path.join(c2paths.SCRIPTS, "build_prompt.py"))
+        bp2 = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(bp2)
+        self.assertEqual(rr.round1_build(), bp2.round1_bytes())
+        self.assertTrue(rr.BUILDER_PATH.replace("\\", "/").endswith("tasks/CASE-02/scripts/build_prompt.py"), rr.BUILDER_PATH)
+
+
 class TestR6Prereg(unittest.TestCase):
     """CASE02_R6 M10: read-only dependencies outside the tier-1 paths ("dep <path>" lines of preregistered.txt) are
     verified before a run against the hash registered in rules/copied_from.tsv."""

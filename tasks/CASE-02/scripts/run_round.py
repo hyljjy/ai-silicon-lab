@@ -39,6 +39,27 @@ sys.path.insert(0, os.path.join(c2paths.CASE01_DIAG, "scripts"))
 import void_check as vc  # noqa: E402  (read-only reuse)
 from privacy_check import USER_DIR, account_email  # noqa: E402  (read-only reuse)
 
+# The prompt builder is loaded from its file, never by name: CASE-01's scripts directory (above, for void_check)
+# also holds a build_prompt.py, and a plain `import build_prompt` picked that one on 2026-10-29 and voided every
+# round-1 attempt as 题目字节不符 (runs/round1_incident_20261029.md).
+BUILDER_PATH = os.path.join(c2paths.SCRIPTS, "build_prompt.py")
+
+
+def _builder():
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("case02_build_prompt", BUILDER_PATH)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+def round1_build():
+    return _builder().round1_bytes()
+
+
+def round2_build(code):
+    return _builder().round2_bytes(code)
+
 CODES = ("A", "B", "C")
 HIDDEN = "<已隐去>"
 SMOKE_CANARIES = ("青松-0427", "白鹭-1010")
@@ -473,12 +494,10 @@ class RoundRunner:
         return system, user, user == expected, path
 
     def round1_bytes(self):
-        import build_prompt
-        return build_prompt.round1_bytes()
+        return round1_build()
 
     def round2_bytes(self, code):
-        import build_prompt
-        return build_prompt.round2_bytes(code)
+        return round2_build(code)
 
     def runnable(self, rnd):
         if rnd == 1:
