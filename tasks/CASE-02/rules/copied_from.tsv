@@ -2,3 +2,6 @@ case02_path	case01_path	case01_sha256	diff_file	note
 scripts/c2paths.py	tasks/CASE-01/diag/scripts/diagpaths.py	ef252825bb9c93e1b70b42408dfac7ec79d419d814fd4fd1eca794f4c626140a	-	copied and adapted: CASE found by protocol.md+appendix_A.md, CASE-02 constants, new_run_dir
 scripts/sta_run_case02.tcl	tasks/CASE-01/scripts/sta_run.tcl	6728b0a4ea02ec959460654cf739131f5a4a5c48c789be926922dae93ace9fa8	rules/diff/sta_run_case02.tcl.diff	line 24: SDC from $SDC_FILE
 sdc/case02_missing_inb.tcl	tasks/CASE-02/prevalidation/case02_missing_inb.tcl	04fcba3ed6078152238db05b40384e7508943b45c177c73caaa71e2a3c03b234	-	pre-validation file, not from CASE-01
+rules/allow_query.txt	tasks/CASE-01/diag/rules/allow_query.txt	a2b351510216e1ab0349233e774dd97cc85c571c83ebdf0d20326674a753dd21	-	byte copy; the lists are not changed for CASE-02
+rules/allow_whatif.txt	tasks/CASE-01/diag/rules/allow_whatif.txt	97fbfbf7ed2a440346868d548a58bdd7795b7af3f2035f32c3c9f5911a70849d	-	byte copy; the lists are not changed for CASE-02
+rules/setup_commands.txt	tasks/CASE-01/diag/rules/setup_commands.txt	0ddde6e8825043dc09096a2bddef79736a85a1b0ec3abe96eaf3b91863b7afff	-	byte copy; the lists are not changed for CASE-02

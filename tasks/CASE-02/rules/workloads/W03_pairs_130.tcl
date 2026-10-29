@@ -1,0 +1,2 @@
+# W03: per-port constrained / unconstrained path counts, max and min, one scene (131 lines)
+foreach p [all_inputs -no_clocks] { puts "PORT [get_full_name $p] max_c=[llength [find_timing_paths -from $p -path_delay max -scenes ss_n40C_1v60]] max_u=[llength [find_timing_paths -from $p -path_delay max -scenes ss_n40C_1v60 -unconstrained]] min_c=[llength [find_timing_paths -from $p -path_delay min -scenes ss_n40C_1v60]] min_u=[llength [find_timing_paths -from $p -path_delay min -scenes ss_n40C_1v60 -unconstrained]]" }
