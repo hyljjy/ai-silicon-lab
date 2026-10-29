@@ -1,0 +1,561 @@
+"""Run one CASE-02 query instance (protocol v0.3 section 6.4). Copied and adapted from
+tasks/CASE-01/diag/scripts/run_query.py (rules/copied_from.tsv, rules/diff/run_query.py.diff).
+Run inside WSL (login shell) from tasks/CASE-02:
+  python3 -B scripts/run_query.py --id <qid> --ctx R1|R2 --query <file.tcl> [--mode auto|query|whatif]
+                                  [--selftest] [--uncommitted-ok]
+Each call is one fresh OpenSTA process in a new directory runs/<ts>-c2-query-<qid>-<ctx>-<rand>/ (never overwritten):
+  1. the executor checks itself against rules/executor.sha256 and refuses to run if anything differs, or if that
+     manifest is not committed / unchanged since the tag case02-prereg (--uncommitted-ok bypasses ONLY this
+     registration-state check: environment, input, record and limit checks always run);
+  2. the context label is resolved to a version through contexts.resolve (sealed assignment; fixed self-test
+     assignment with --selftest); result.json names the version only in self-test mode;
+  3. env/snapshot.sh check, frozen-input hashes (netlist, SDC of the version, driver);
+  4. one `sta -no_init -no_splash -exit scripts/c2_query.tcl` run under the contract's process time limit and
+     50 MiB output limit; the Tcl wrapper records every actual STA call (calls.tsv);
+  5. the rebuilt records are compared with the formal (or self-test) run of the same version
+     (records.compare "query_env_vs_formal"), the env part of the log goes through logcheck;
+  6. the query output is normalized, truncated per the contract, and classified into the five instance fields plus
+     an attribution; calls.jsonl / tops.jsonl / result.json / query_full.txt / query_return.txt are written.
+"""
+import argparse
+import datetime
+import json
+import os
+import re
+import secrets
+import shutil
+import signal
+import subprocess
+import sys
+import time
+import zlib
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, HERE)
+import c2paths  # noqa: E402
+import contract as contract_mod  # noqa: E402
+import contexts  # noqa: E402
+import records  # noqa: E402
+
+sys.path.insert(0, c2paths.CASE01_SCRIPTS)
+import logcheck  # noqa: E402  (read-only reuse of tasks/CASE-01/scripts/logcheck.py)
+
+CASE = c2paths.CASE
+REPO = c2paths.REPO
+RULES = c2paths.RULES
+CONTRACT_PATH = os.path.join(RULES, "contract.json")
+NETLIST_SHA = "1fa89c975162f4f1f9a2f349bed73b4dae5f53ab921883be842cb0a37763a8d1"
+SDC_SHA = {"correct": "b8d1aab60d137dc39dc7cb55b2ec314b952538dfee8f5be627a140dcca09300c",
+           "restored": "b8d1aab60d137dc39dc7cb55b2ec314b952538dfee8f5be627a140dcca09300c",
+           "missing": "04fcba3ed6078152238db05b40384e7508943b45c177c73caaa71e2a3c03b234"}
+DRIVER_SHA = "a121e2f3ca86231964e26b85f804124ea12d1cca4e2f447e9f1157368070b2da"
+T_NS = "27.91"
+CLOAD_PF = "0.0024"
+PREREG_TAG = "case02-prereg"
+ENV_RELATION = "query_env_vs_formal"
+EXECUTOR = ("scripts/run_query.py", "scripts/c2_query.tcl", "scripts/c2paths.py", "scripts/contexts.py",
+            "scripts/contract.py", "scripts/records.py", "scripts/sta_run_case02.tcl", "rules/contract.json",
+            "rules/allow_query.txt", "rules/allow_whatif.txt", "rules/setup_commands.txt", "rules/lib_normalize.txt",
+            "rules/allowed_changes.json", "rules/mutation_lines.txt", "rules/warn_whitelist_missing.txt")
+NOT_RECORDS = {"sta.log", "cmd.txt", "lib_lines_raw.txt"}
+LIMIT_ERRORS = re.compile(r"time limit exceeded|command count limit exceeded", re.I)
+NOT_FOUND = re.compile(r"not found|does not exist|cannot find", re.I)
+
+EXEC_TYPE_PLAIN, EXEC_TYPE_WHATIF = "原上下文", "改变模型的对照"
+RES_DONE, RES_NO_OBJECT, RES_SYNTAX, RES_SKIPPED, RES_NO_CMD, RES_OVER = \
+    "完成", "对象不匹配", "语法错误", "跳过", "未指明可执行命令", "超出预登记上限"
+ABN_NONE, ABN_CRASH, ABN_TIMEOUT, ABN_OUTPUT = "-", "崩溃", "超时", "输出超限"
+ATTR_NONE, ATTR_REQUEST, ATTR_TRUNC, ATTR_TIME, ATTR_OUTPUT, ATTR_WHITELIST, ATTR_BUDGET, ATTR_EXEC, ATTR_UNKNOWN = \
+    ("-", "请求本身的问题", "流程限制：单实例截断", "流程限制：时限", "流程限制：输出上限", "流程限制：白名单拒绝",
+     "流程限制：总预算", "执行器或环境问题", "原因未定")
+
+
+# ---------------------------------------------------------------- executor identity (same pattern as stage A)
+def sha256(path):
+    return c2paths.sha256(path)
+
+
+def executor_hashes(case=CASE):
+    out = {}
+    for rel in EXECUTOR:
+        p = os.path.join(case, rel)
+        out[rel] = sha256(p) if os.path.exists(p) else None
+    extra = sorted(os.listdir(os.path.join(case, "rules", "workloads"))) if os.path.isdir(os.path.join(case, "rules", "workloads")) else []
+    for name in extra:
+        if name.endswith(".tcl"):
+            rel = "rules/workloads/" + name
+            out[rel] = sha256(os.path.join(case, rel))
+    return out
+
+
+def executor_problems(manifest, case=CASE):
+    if not os.path.exists(manifest):
+        return [f"executor manifest {os.path.relpath(manifest, case)} missing"]
+    want = {}
+    with open(manifest) as f:
+        for line in f:
+            if line.strip() and not line.startswith("#"):
+                digest, rel = line.split(None, 1)
+                want[rel.strip()] = digest
+    got = executor_hashes(case)
+    return [f"executor file {rel} differs from {os.path.basename(manifest)}" for rel in got if want.get(rel) != got[rel]] \
+        + [f"manifest lists unknown file {rel}" for rel in want if rel not in got]
+
+
+def git_head(repo=REPO):
+    try:
+        return subprocess.run(["git", "rev-parse", "HEAD"], cwd=repo, capture_output=True, text=True).stdout.strip()
+    except OSError:
+        return None
+
+
+def manifest_committed(manifest, repo=REPO, tag=PREREG_TAG):
+    rel = os.path.relpath(manifest, repo).replace(os.sep, "/")
+    if subprocess.run(["git", "ls-files", "--error-unmatch", rel], cwd=repo, capture_output=True).returncode != 0:
+        return False
+    with open(manifest, "rb") as f:
+        now = f.read()
+    if subprocess.run(["git", "show", f"HEAD:{rel}"], cwd=repo, capture_output=True).stdout != now:
+        return False
+    if subprocess.run(["git", "rev-parse", "-q", "--verify", tag], cwd=repo, capture_output=True).returncode == 0:
+        if subprocess.run(["git", "show", f"{tag}:{rel}"], cwd=repo, capture_output=True).stdout != now:
+            return False
+    return True
+
+
+# ---------------------------------------------------------------- decisions (Python side predicts; the Tcl wrapper decides)
+def strip_comments(text):
+    return "\n".join(l for l in text.splitlines() if not l.lstrip().startswith("#"))
+
+
+def _period_is_T(args, t_ns=T_NS):
+    if "-period" in args:
+        i = args.index("-period")
+        if i + 1 < len(args):
+            try:
+                return float(args[i + 1]) == float(t_ns)
+            except ValueError:
+                return False
+    return False
+
+
+def decide(cmd, args, setup_words, whatif_words, t_ns=T_NS):
+    """run | skip | whatif for one actual call, from its actual arguments (same rule as c2_query.tcl c2_decide)."""
+    if cmd in setup_words:
+        if cmd != "create_clock":
+            return "skip"
+        return "skip" if _period_is_T(list(args), t_ns) else "whatif"
+    if cmd in whatif_words:
+        return "whatif"
+    return "run"
+
+
+def predict_mode(query_text, whatif_words, setup_words, t_ns=T_NS):
+    """'whatif' when the query text calls a model-changing command (create_clock with a literal -period equal to T
+    excepted), else 'query'. A static prediction used to choose QUERY_MODE; the per-call record is authoritative."""
+    text = strip_comments(query_text)
+    for w in whatif_words:
+        pattern = r"(?<![\w:])" + re.escape(w) + r"(?![\w])"
+        if w == "create_clock":
+            for m in re.finditer(pattern + r"([^\n;\]]*)", text):
+                period = re.search(r"-period\s+([0-9.eE+-]+)(?![\w$\[])", m.group(1))
+                try:
+                    same = period is not None and float(period.group(1)) == float(t_ns)
+                except ValueError:
+                    same = False
+                if not same:
+                    return "whatif"
+        elif re.search(pattern, text):
+            return "whatif"
+    return "query"
+
+
+# ---------------------------------------------------------------- log parsing
+def split_log(text, nonce):
+    begin_re = re.compile(r"^=== CASE02-" + re.escape(nonce) + r" QUERY BEGIN \((query|whatif)\) ===$")
+    end_re = re.compile(r"^=== CASE02-" + re.escape(nonce) + r" QUERY END rc=(\d+) ===$")
+    lines = text.splitlines()
+    begin = next((i for i, l in enumerate(lines) if begin_re.match(l)), None)
+    if begin is None:
+        return text, [], None, None
+    end = next((i for i in range(len(lines) - 1, begin, -1) if end_re.match(lines[i])), None)
+    mode = begin_re.match(lines[begin]).group(1)
+    if end is None:
+        return "\n".join(lines[:begin]), lines[begin + 1:], mode, None
+    return "\n".join(lines[:begin]), lines[begin + 1:end], mode, int(end_re.match(lines[end]).group(1))
+
+
+def normalize(lines, nonce):
+    tag = f"CASE02-{nonce}-"
+    return [l.replace(tag, "CASE02-") for l in lines]
+
+
+def query_begin_offset(text, nonce):
+    """Byte offset of the first query line (the line after the BEGIN marker) in the raw log."""
+    m = re.search(r"^=== CASE02-" + re.escape(nonce) + r" QUERY BEGIN \((?:query|whatif)\) ===\n", text, re.M)
+    if not m:
+        return None
+    return len(text[:m.end()].encode("utf-8"))
+
+
+def lines_for_bytes(text, start, end):
+    """Half-open line range [first, last) of the lines touched by the byte range [start, end) of `text`
+    (UTF-8). A partial last line counts; end None means to the end of the text."""
+    data = text.encode("utf-8")
+    if end is None:
+        end = len(data)
+    starts = [0] + [i + 1 for i, b in enumerate(data) if b == 0x0A]
+    if starts[-1] >= len(data) and len(data) and data[-1] == 0x0A:
+        starts = starts[:-1]
+
+    def line_of(off):
+        lo, hi = 0, len(starts) - 1
+        while lo < hi:
+            mid = (lo + hi + 1) // 2
+            if starts[mid] <= off:
+                lo = mid
+            else:
+                hi = mid - 1
+        return lo
+    first = line_of(start)
+    if end <= start:
+        return (first, first)
+    last = line_of(end - 1) + 1
+    return (first, last)
+
+
+def tops_from_lines(query_lines, nonce):
+    """Top-level commands from the CMD echo lines: [{top_seq, first_line, status, out: [start, end)}]."""
+    tag = f"CASE02-{nonce}-"
+    tops = []
+    for i, l in enumerate(query_lines):
+        if l.startswith(tag + "CMD: "):
+            if tops:
+                tops[-1]["out"][1] = i
+            tops.append({"top_seq": len(tops) + 1, "first_line": l[len(tag) + 5:], "status": "ok", "out": [i + 1, None]})
+        elif l.startswith(tag + "ERROR:") and tops:
+            tops[-1]["status"] = "error"
+    if tops:
+        tops[-1]["out"][1] = len(query_lines)
+    return tops
+
+
+def merge_calls(calls_tsv_text, ctx, mode):
+    """calls.tsv (START / END rows written by c2_query.tcl) -> one record per actual STA call."""
+    calls = {}
+    order = []
+    for line in calls_tsv_text.splitlines():
+        if not line.strip():
+            continue
+        f = line.split("\t")
+        if f[0] == "START" and len(f) >= 9:
+            seq = int(f[1])
+            calls[seq] = {"call_seq": seq, "top_seq": int(f[2]), "cmd": f[3], "argv_crc32": f[4], "argv_preview": f[5],
+                          "decision": f[6], "scene": f[7], "status": "unfinished", "error": "",
+                          "raw_bytes": [int(f[8]), None], "raw_out": None, "norm_out": None, "returned_out": None,
+                          "complete": None, "ctx": ctx, "mode": mode}
+            order.append(seq)
+        elif f[0] == "END" and len(f) >= 5:
+            seq = int(f[1])
+            if seq in calls:
+                calls[seq]["status"] = f[2]
+                calls[seq]["error"] = f[3]
+                calls[seq]["raw_bytes"][1] = int(f[4])
+    return [calls[s] for s in order]
+
+
+def attach_line_ranges(calls, raw_text, nonce):
+    """Fill raw_out / norm_out (query-relative line ranges) from the byte positions in the raw log."""
+    base = query_begin_offset(raw_text, nonce)
+    if base is None:
+        return calls
+    for c in calls:
+        s, e = c["raw_bytes"]
+        if s is None:
+            continue
+        fs, ls = lines_for_bytes(raw_text, max(s, base), e if e is not None else None)
+        base_line, _ = lines_for_bytes(raw_text, base, base)
+        c["raw_out"] = [fs - base_line, ls - base_line]
+        c["norm_out"] = list(c["raw_out"])
+    return calls
+
+
+def evidence_ranges(calls, trunc):
+    """For every successful call: its range in the returned output, or None when truncation removed or cut it."""
+    out = []
+    for c in calls:
+        if c.get("status") != "ok" or c.get("norm_out") is None:
+            continue
+        r = contract_mod.map_range(trunc, tuple(c["norm_out"]))
+        out.append({"call_seq": c["call_seq"], "returned_out": list(r) if r else None, "complete": r is not None})
+    return out
+
+
+# ---------------------------------------------------------------- classification (five fields + attribution)
+def classify_instance(calls, status, truncated, env_ok, mode, content_lines):
+    ok_calls = [c["call_seq"] for c in calls if c["status"] == "ok"]
+    skipped = [c["call_seq"] for c in calls if c["status"] == "skipped"]
+    errors = [c for c in calls if c["status"] == "error"]
+    exec_type = EXEC_TYPE_WHATIF if (mode == "whatif" or any(c.get("decision") == "whatif" for c in calls)) else EXEC_TYPE_PLAIN
+    if not calls:
+        exec_result = RES_NO_CMD
+    elif errors:
+        exec_result = RES_NO_OBJECT if all(NOT_FOUND.search(c["error"] or "") for c in errors) else RES_SYNTAX
+    elif calls and all(c["status"] == "skipped" for c in calls):
+        exec_result = RES_SKIPPED
+    else:
+        exec_result = RES_DONE
+    if status == "timed_out":
+        abnormal = ABN_TIMEOUT
+    elif status == "output_limit":
+        abnormal = ABN_OUTPUT
+    elif status != "completed":
+        abnormal = ABN_CRASH
+    else:
+        abnormal = ABN_NONE
+    attributions = []
+    if not env_ok:
+        attributions.append(ATTR_EXEC)
+    if abnormal == ABN_TIMEOUT:
+        attributions.append(ATTR_TIME)
+    elif abnormal == ABN_OUTPUT:
+        attributions.append(ATTR_OUTPUT)
+    elif abnormal == ABN_CRASH:
+        attributions.append(ATTR_EXEC)
+    if truncated:
+        attributions.append(ATTR_TRUNC)
+    if errors:
+        attributions.append(ATTR_REQUEST)
+    attributions = list(dict.fromkeys(attributions))
+    return {"exec_type": exec_type, "exec_result": exec_result,
+            "output_attr": {"empty": content_lines == 0 and not calls or (content_lines == 0), "truncated": bool(truncated)},
+            "abnormal": abnormal, "attribution": attributions[0] if attributions else ATTR_NONE,
+            "attributions": attributions, "ok_calls": ok_calls, "skipped_calls": skipped,
+            "error_calls": [c["call_seq"] for c in errors]}
+
+
+def result_record(base, ctx, version, selftest):
+    r = dict(base)
+    r["ctx"] = ctx
+    r["selftest"] = bool(selftest)
+    if selftest:
+        r["version"] = version
+    else:
+        r.pop("version", None)
+    return r
+
+
+# ---------------------------------------------------------------- process limits (stage A pattern)
+def kill_tree(proc):
+    try:
+        if os.name == "nt":
+            subprocess.run(["taskkill", "/F", "/T", "/PID", str(proc.pid)], stdin=subprocess.DEVNULL,
+                           stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=30)
+        else:
+            os.killpg(proc.pid, signal.SIGKILL)
+    except (OSError, subprocess.SubprocessError):
+        pass
+    if proc.poll() is None:
+        try:
+            proc.kill()
+        except OSError:
+            pass
+
+
+def reap(proc, cause):
+    try:
+        proc.wait(timeout=60)
+    except subprocess.TimeoutExpired:
+        raise RuntimeError(f"pid {proc.pid} survived the kill; stop it by hand") from cause
+
+
+def run_limited(argv, log_path, env, cwd, timeout, max_bytes):
+    """Wall-clock and log-size limits with a kill of the whole process tree. Returns (rc, stop): stop is None,
+    "timed_out" or "output_limit" (rc None when stopped). The size is also checked after a normal exit."""
+    with open(log_path, "w") as f:
+        proc = subprocess.Popen(argv, cwd=cwd, env=env, stdin=subprocess.DEVNULL, stdout=f,
+                                stderr=subprocess.STDOUT, start_new_session=True)
+        deadline, stop = time.monotonic() + timeout, None
+        try:
+            while True:
+                try:
+                    rc = proc.wait(timeout=1)
+                    if max_bytes and os.path.getsize(log_path) > max_bytes:
+                        return rc, "output_limit"
+                    return rc, None
+                except subprocess.TimeoutExpired:
+                    if time.monotonic() >= deadline:
+                        stop = "timed_out"
+                    elif max_bytes and os.path.getsize(log_path) > max_bytes:
+                        stop = "output_limit"
+                    if stop:
+                        raise
+        except BaseException as e:
+            kill_tree(proc)
+            reap(proc, e)
+            if isinstance(e, subprocess.TimeoutExpired):
+                return None, stop
+            raise
+
+
+# ---------------------------------------------------------------- main
+def formal_dir(version, selftest):
+    return os.path.join(c2paths.QUERIES, "selftest" if selftest else "formal", version)
+
+
+def write_text(path, lines_or_text):
+    with open(path, "w", encoding="utf-8", newline="\n") as f:
+        f.write(lines_or_text if isinstance(lines_or_text, str) else "\n".join(lines_or_text) + "\n")
+
+
+def main(argv=None):
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--id")
+    ap.add_argument("--ctx", choices=contexts.CTXS)
+    ap.add_argument("--query")
+    ap.add_argument("--mode", choices=("auto", "query", "whatif"), default="auto")
+    ap.add_argument("--selftest", action="store_true", help="use the fixed self-test assignment and queries/selftest/")
+    ap.add_argument("--uncommitted-ok", action="store_true",
+                    help="bypass only the registration-state check of rules/executor.sha256 (recorded)")
+    ap.add_argument("--write-manifest", action="store_true", help="write rules/executor.sha256 (pre-registration only)")
+    args = ap.parse_args(argv)
+    if args.write_manifest:
+        text = "# sha256 of the CASE-02 query executor (protocol v0.3 section 8)\n" + "".join(
+            f"{h}  {rel}\n" for rel, h in executor_hashes().items() if h)
+        c2paths.write_new_or_same(os.path.join(RULES, "executor.sha256"), text.encode())
+        print("MANIFEST OK: rules/executor.sha256")
+        return 0
+    if not args.id or not args.query or not args.ctx:
+        ap.error("--id, --ctx and --query are required")
+    if not re.fullmatch(r"[A-Za-z0-9_.-]+", args.id):
+        print(f"CASE02 FAIL: bad id {args.id!r}")
+        return 1
+    c = contract_mod.load(CONTRACT_PATH)
+    manifest = os.path.join(RULES, "executor.sha256")
+    bad = executor_problems(manifest)
+    committed = manifest_committed(manifest) if os.path.exists(manifest) else False
+    if bad and not args.uncommitted_ok:
+        for p in bad:
+            print(f"  {p}")
+        print("CASE02 FAIL: the executor is not the pre-registered one; nothing was run")
+        return 1
+    if not committed and not args.uncommitted_ok:
+        print("CASE02 FAIL: rules/executor.sha256 is not committed, or changed since HEAD or the tag; nothing was run")
+        return 1
+    try:
+        version = contexts.resolve(args.ctx, selftest=args.selftest)
+    except contexts.AssignError as e:
+        print(f"CASE02 FAIL: {e}")
+        return 1
+    fdir = formal_dir(version, args.selftest)
+    if not os.path.isdir(fdir):
+        print(f"CASE02 FAIL: no {'self-test' if args.selftest else 'formal'} run for this context ({os.path.relpath(fdir, CASE)})")
+        return 1
+    with open(args.query, encoding="utf-8") as f:
+        query_text = f.read()
+    whatif_words = _words(os.path.join(RULES, "allow_whatif.txt"))
+    setup_words = _words(os.path.join(RULES, "setup_commands.txt"))
+    mode = predict_mode(query_text, whatif_words, setup_words) if args.mode == "auto" else args.mode
+
+    root = c2paths.new_run_dir("query", f"{args.id}-{args.ctx}")
+    env_dir = os.path.join(root, "env")
+    os.makedirs(env_dir)
+    shutil.copyfile(args.query, os.path.join(root, "query.tcl"))
+    sdc = os.path.join(CASE, "sdc", "case02_missing_inb.tcl") if version == "missing" else \
+        os.path.join(c2paths.CASE01, "sdc", "case01_sdc.tcl")
+    driver = os.path.join(CASE, "scripts", "sta_run_case02.tcl")
+    netlist = os.path.join(c2paths.F1_ARCHIVE, "synth", "netlist.v")
+    case_dir = os.path.join(c2paths.F1_ARCHIVE, "inputs")
+    nonce = secrets.token_hex(8)
+    sta_log = os.path.join(root, "sta.log")
+    call_log = os.path.join(root, "calls.tsv")
+    result = {"id": args.id, "mode": mode, "query_sha256": sha256(args.query), "netlist_sha256": sha256(netlist),
+              "sdc_sha256": sha256(sdc), "driver_sha256": sha256(driver), "executor": executor_hashes(),
+              "executor_problems": bad, "executor_committed": committed, "uncommitted_ok": args.uncommitted_ok,
+              "head": git_head(), "contract_version": c.version, "env_relation": ENV_RELATION,
+              "formal_dir": os.path.relpath(fdir, CASE)}
+    problems = []
+    rc, _ = run_limited(["bash", os.path.join(REPO, "env", "snapshot.sh"), "check"], os.path.join(root, "snapshot.log"),
+                        os.environ, CASE, 120, 10 * 1024 * 1024)
+    result["snapshot_rc"] = rc
+    if rc != 0:
+        problems.append("env/snapshot.sh check failed")
+    if result["netlist_sha256"] != NETLIST_SHA:
+        problems.append("netlist sha256 differs from F1")
+    if result["sdc_sha256"] != SDC_SHA[version]:
+        problems.append("SDC sha256 differs from the frozen file of this version")
+    if result["driver_sha256"] != DRIVER_SHA:
+        problems.append("driver sta_run_case02.tcl differs from the registered one")
+
+    env = dict(os.environ, TOP="dot4sat", NETLIST=netlist, T_NS=T_NS, CLOAD_PF=CLOAD_PF, SCENESET="std", OUTDIR=env_dir,
+               CASE_DIR=case_dir, SDC_FILE=sdc, DRIVER=driver, QUERY_FILE=os.path.join(root, "query.tcl"),
+               QUERY_MODE=mode, RULES_DIR=RULES, CASE02_NONCE=nonce, CASE02_QUERY_SECONDS=str(c.query_seconds),
+               CASE02_COMMAND_LIMIT=str(c.tcl_command_limit), CALL_LOG=call_log, STA_LOG=sta_log)
+    sta_rc, stop = run_limited(["sta", "-no_init", "-no_splash", "-exit", os.path.join(HERE, "c2_query.tcl")],
+                               sta_log, env, root, c.process_seconds, c.process_max_bytes)
+    with open(sta_log, errors="replace") as f:
+        raw_text = f.read()
+    env_part, query_lines, logged_mode, qrc = split_log(raw_text, nonce)
+    write_text(os.path.join(root, "env_part.log"), env_part)
+    if logged_mode != mode:
+        problems.append("query section never reached (the environment build failed)")
+    rules = logcheck.load_rules(os.path.join(c2paths.CASE01, "config", "warn_whitelist.txt"))
+    if version == "missing":
+        rules = rules + logcheck.load_rules(os.path.join(RULES, "warn_whitelist_missing.txt"))
+    problems += logcheck.scan("sta", os.path.join(root, "env_part.log"), rules)[0]
+    cmp = records.compare(ENV_RELATION, env_dir, fdir, RULES)
+    problems += cmp["problems"]
+    if cmp["lib"].get("raw_lines"):
+        write_text(os.path.join(root, "lib_lines_raw.txt"), cmp["lib"]["raw_lines"])
+    status = stop or ("completed" if sta_rc == 0 and qrc is not None else f"crashed:{sta_rc}")
+
+    shown = normalize(query_lines, nonce)
+    write_text(os.path.join(root, "query_full.txt"), shown)
+    trunc = contract_mod.truncate(shown, c)
+    returned = list(trunc["returned_lines"])
+    if status != "completed":
+        ended = f"被信号 {-sta_rc} 终止" if sta_rc is not None and sta_rc < 0 else f"以退出码 {sta_rc} 结束"
+        why = {"timed_out": "超过时限被终止", "output_limit": "输出超过上限被终止"}.get(stop, ended)
+        returned.append(f"[工具进程{why}，以上为结束前的输出]")
+    write_text(os.path.join(root, "query_return.txt"), returned)
+    calls_text = open(call_log, encoding="utf-8").read() if os.path.exists(call_log) else ""
+    calls = attach_line_ranges(merge_calls(calls_text, args.ctx, mode), raw_text, nonce)
+    ev = {e["call_seq"]: e for e in evidence_ranges(calls, trunc)}
+    for cl in calls:
+        if cl["call_seq"] in ev:
+            cl["returned_out"] = ev[cl["call_seq"]]["returned_out"]
+            cl["complete"] = ev[cl["call_seq"]]["complete"]
+    tops = tops_from_lines(query_lines, nonce)
+    with open(os.path.join(root, "calls.jsonl"), "w", encoding="utf-8", newline="\n") as f:
+        for cl in calls:
+            f.write(json.dumps(cl, ensure_ascii=False) + "\n")
+    with open(os.path.join(root, "tops.jsonl"), "w", encoding="utf-8", newline="\n") as f:
+        for t in tops:
+            f.write(json.dumps(t, ensure_ascii=False) + "\n")
+    content_lines = contract_mod.count([l for l in shown if not l.startswith("CASE02-CMD: ")])
+    cls = classify_instance(calls, status, trunc["truncated"], not problems, mode, content_lines)
+    result.update({"env_relation_ok": not problems, "env_problems": problems, "sta_rc": sta_rc,
+                   "query_status": status, "query_rc": qrc, "raw_lines": trunc["raw_lines"],
+                   "raw_bytes": trunc["raw_bytes"], "returned_lines": len(returned),
+                   "returned_bytes": trunc["returned_bytes"], "omitted_lines": trunc["omitted_lines"],
+                   "cut_by": trunc["cut_by"], "calls": len(calls), "tops": len(tops),
+                   "run_dir": os.path.relpath(root, CASE)})
+    result.update(cls)
+    result = result_record(result, args.ctx, version, args.selftest)
+    with open(os.path.join(root, "result.json"), "w", encoding="utf-8", newline="\n") as f:
+        json.dump(result, f, ensure_ascii=False, indent=1)
+    word = "OK" if not problems else "ENV FAIL"
+    print(f"CASE02 {word}: {args.id} ctx={args.ctx} mode={mode} status={status} result={cls['exec_result']} "
+          f"attribution={cls['attribution']} lines={trunc['raw_lines']}/{len(returned)} calls={len(calls)} -> {result['run_dir']}")
+    for p in problems[:10]:
+        print(f"  {p}")
+    return 0 if not problems else 1
+
+
+def _words(path):
+    with open(path, encoding="utf-8") as f:
+        return [l.strip() for l in f if l.strip() and not l.startswith("#")]
+
+
+if __name__ == "__main__":
+    sys.exit(main())
