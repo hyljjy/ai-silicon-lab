@@ -1,0 +1,11 @@
+# sha256 of the CASE-01 frozen artefacts that CASE-02 refers to (protocol v0.3 section 8). Format: <sha256>  <path>; lines starting with 'commit' name git objects.
+1fa89c975162f4f1f9a2f349bed73b4dae5f53ab921883be842cb0a37763a8d1  tasks/CASE-01/runs/20261009-092827-base-T27.91/synth/netlist.v (F1 netlist; archived copy)
+b8d1aab60d137dc39dc7cb55b2ec314b952538dfee8f5be627a140dcca09300c  tasks/CASE-01/sdc/case01_sdc.tcl
+6728b0a4ea02ec959460654cf739131f5a4a5c48c789be926922dae93ace9fa8  tasks/CASE-01/scripts/sta_run.tcl
+652c1f1f25be0e0996b841ba371fef5bb667d1609eb92c8e4691c9df4a63bf89  tasks/CASE-01/config/f1.cfg
+c4e85ff0401eb803d131bd88ef02ea917cc7d2f324bf3376739437f869e5b981  tasks/CASE-01/evidence/F1/archive/20261009-092827-base-T27.91/sta/expanded.sdc
+run-dir  runs/20261009-092827-base-T27.91
+commit  90777e716c7fb06ee679995692723a7f99548500  contract spec.md v1.4
+a121e2f3ca86231964e26b85f804124ea12d1cca4e2f447e9f1157368070b2da  tasks/CASE-02/scripts/sta_run_case02.tcl (= sta_run.tcl with line 24 changed, rules/diff/sta_run_case02.tcl.diff)
+04fcba3ed6078152238db05b40384e7508943b45c177c73caaa71e2a3c03b234  tasks/CASE-02/sdc/case02_missing_inb.tcl
+49ecff732e1399025a72861f1154084485697f906981ba120a410bb27fa0253a  tasks/CASE-02/rules/mutation_lines.txt

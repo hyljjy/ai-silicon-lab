@@ -1,0 +1,6 @@
+{
+  "_comment": "protocol v0.3 section 5.2: the only records and files allowed to differ between the missing version and the correct version (relation missing_vs_correct); <c> expands to the six scenes",
+  "scenes": ["tt_025C_1v80", "tt_100C_1v80", "ss_100C_1v60", "ss_n40C_1v60", "ff_n40C_1v95", "ff_100C_1v95"],
+  "records": ["WS\t<c>\tmax", "CAT\t<c>\tin2reg\tmax"],
+  "files": ["cat_<c>_in2reg_max.rpt", "path_max_<c>.rpt"]
+}

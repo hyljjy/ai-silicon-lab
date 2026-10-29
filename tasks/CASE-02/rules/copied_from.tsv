@@ -1,0 +1,4 @@
+case02_path	case01_path	case01_sha256	diff_file	note
+scripts/c2paths.py	tasks/CASE-01/diag/scripts/diagpaths.py	ef252825bb9c93e1b70b42408dfac7ec79d419d814fd4fd1eca794f4c626140a	-	copied and adapted: CASE found by protocol.md+appendix_A.md, CASE-02 constants, new_run_dir
+scripts/sta_run_case02.tcl	tasks/CASE-01/scripts/sta_run.tcl	6728b0a4ea02ec959460654cf739131f5a4a5c48c789be926922dae93ace9fa8	rules/diff/sta_run_case02.tcl.diff	line 24: SDC from $SDC_FILE
+sdc/case02_missing_inb.tcl	tasks/CASE-02/prevalidation/case02_missing_inb.tcl	04fcba3ed6078152238db05b40384e7508943b45c177c73caaa71e2a3c03b234	-	pre-validation file, not from CASE-01

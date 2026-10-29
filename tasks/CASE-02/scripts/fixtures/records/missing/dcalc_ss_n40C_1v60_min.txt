@@ -1,0 +1,54 @@
+Library: sky130_fd_sc_hd__tt_025C_1v80
+Cell: sky130_fd_sc_hd__dfxtp_1
+Arc sense: non_unate
+Arc type: Reg Clk to Q
+CLK ^ -> Q ^
+P = 1.00 V = 1.60 T = -40.00
+------- input_net_transition = 0.00
+|       total_output_net_capacitance = 0.00
+|        0.00     0.00
+v      --------------------
+0.01 | 0.63     0.66
+0.03 | 0.63     0.67
+Table value = 0.64
+PVT scale factor = 1.00
+Delay = 0.64
+
+------- input_net_transition = 0.00
+|       total_output_net_capacitance = 0.00
+|        0.00     0.00
+v      --------------------
+0.01 | 0.06     0.11
+0.03 | 0.06     0.11
+Table value = 0.08
+PVT scale factor = 1.00
+Slew = 0.08
+Driver waveform slew = 0.08
+
+.............................................
+
+CLK ^ -> Q v
+P = 1.00 V = 1.60 T = -40.00
+------- input_net_transition = 0.00
+|       total_output_net_capacitance = 0.00
+|        0.00     0.00
+v      --------------------
+0.01 | 0.55     0.57
+0.03 | 0.56     0.58
+Table value = 0.55
+PVT scale factor = 1.00
+Delay = 0.55
+
+------- input_net_transition = 0.00
+|       total_output_net_capacitance = 0.00
+|        0.00     0.00
+v      --------------------
+0.01 | 0.03     0.05
+0.03 | 0.03     0.05
+Table value = 0.04
+PVT scale factor = 1.00
+Slew = 0.04
+Driver waveform slew = 0.04
+
+.............................................
+

@@ -1,0 +1,2 @@
+^(?P<prefix>.+/lib/)(?P<file>sky130_fd_sc_hd__[A-Za-z0-9_]+\.lib)$
+/home/eda/pdk/sky130A/libs.ref/sky130_fd_sc_hd/lib/

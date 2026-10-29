@@ -1,0 +1,1 @@
+sta	^Warning: There are 64 input ports missing set_input_delay\.$	CASE-02 missing version: in_b[0..63] have no set_input_delay by design (protocol 5.6)
