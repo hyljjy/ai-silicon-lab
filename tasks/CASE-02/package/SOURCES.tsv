@@ -1,0 +1,9 @@
+# package file	source	source sha256
+intent.md	intent.md	f6c1d94b4c19e23d71bf6da7f9b0997cd0eadcac4a81a22721dbe04d426df57b
+values.txt	tasks/CASE-01/config/f1.cfg (T_ns, C_load_pF)	652c1f1f25be0e0996b841ba371fef5bb667d1609eb92c8e4691c9df4a63bf89
+summary_R1.tsv	正式运行 R1 的 sta_results.tsv（WS/CAT/TOPO 行）	f7203cdcdf602051ec418bb832b890bdbe27833572cc142781d58a92dc879521
+path_R1.rpt	正式运行 R1 的 cat_ss_n40C_1v60_in2reg_max.rpt	468a9c24d9f038e129aabd8ed4507cfd79c63bf06e785af1c2235a6a719e6787
+summary_R2.tsv	正式运行 R2 的 sta_results.tsv（WS/CAT/TOPO 行）	14f4def3616882bd2149d38e3b7e1ebac2145438fffbe08b578f1b857aabd7ca
+path_R2.rpt	正式运行 R2 的 cat_ss_n40C_1v60_in2reg_max.rpt	043e50bf6638284a043aec4cdf9a23ea999878a369ac58cfef7b613420f38d88
+dot4sat.v	tasks/CASE-01/rtl/dot4sat.v	422ba000b48903558d797510cd4d0189b3fac9f83ba4ce4a1b22eb497194c802
+context.md	package_src/context.md (tier-1 frozen)	4bacdec116765c1af1c53de436eaa4c64f9aabfa74b61640f68bd6aa5fb1a5d5

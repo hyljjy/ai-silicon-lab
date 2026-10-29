@@ -1,0 +1,2 @@
+RET check_setup_verbose_no_input_delay=1
+[rc=0]

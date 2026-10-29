@@ -1,0 +1,27 @@
+Startpoint: _12026_ (rising edge-triggered flip-flop clocked by clk)
+Endpoint: out_data[0] (output port clocked by clk)
+Path Group: clk
+Path Type: min
+Corner: ss_100C_1v60
+
+Fanout       Cap      Slew     Delay      Time   Description
+-------------------------------------------------------------------------------------
+                    0.0000    0.0000    0.0000   clock clk (rise edge)
+                              0.0000    0.0000   clock network delay (ideal)
+                    0.0000    0.0000    0.0000 ^ _12026_/CLK (sky130_fd_sc_hd__dfxtp_1)
+     1    0.0024    0.0469    0.5381    0.5381 v _12026_/Q (sky130_fd_sc_hd__dfxtp_1)
+                    0.0469    0.0000    0.5381 v out_data[0] (out)
+                                        0.5381   data arrival time
+
+                    0.0000    0.0000    0.0000   clock clk (rise edge)
+                              0.0000    0.0000   clock network delay (ideal)
+                              0.0000    0.0000   clock reconvergence pessimism
+                              0.0000    0.0000   output external delay
+                                        0.0000   data required time
+-------------------------------------------------------------------------------------
+                                        0.0000   data required time
+                                       -0.5381   data arrival time
+-------------------------------------------------------------------------------------
+                                        0.5381   slack (MET)
+
+

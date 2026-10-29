@@ -1,0 +1,682 @@
+{
+ "L1": {
+  "ok": true,
+  "count": 64,
+  "bad_direction": [],
+  "missing": [],
+  "foreign": []
+ },
+ "L2": {
+  "ok": true,
+  "problems": []
+ },
+ "L3": {
+  "ok": true,
+  "fanin_startpoints": 130,
+  "targets_not_startpoints": [],
+  "inputs_without_fanout": []
+ },
+ "L4": {
+  "ok": true,
+  "ports": {
+   "in_b[63]": {
+    "max_c": 1,
+    "max_u": 1,
+    "min_c": 1,
+    "min_u": 1,
+    "max_u_end": "_12026_/D",
+    "min_u_end": "_12042_/D",
+    "scene": "ss_n40C_1v60",
+    "state": "受约束路径存在"
+   },
+   "in_b[62]": {
+    "max_c": 1,
+    "max_u": 1,
+    "min_c": 1,
+    "min_u": 1,
+    "max_u_end": "_12026_/D",
+    "min_u_end": "_12057_/D",
+    "scene": "ss_n40C_1v60",
+    "state": "受约束路径存在"
+   },
+   "in_b[61]": {
+    "max_c": 1,
+    "max_u": 1,
+    "min_c": 1,
+    "min_u": 1,
+    "max_u_end": "_12026_/D",
+    "min_u_end": "_12057_/D",
+    "scene": "ss_n40C_1v60",
+    "state": "受约束路径存在"
+   },
+   "in_b[60]": {
+    "max_c": 1,
+    "max_u": 1,
+    "min_c": 1,
+    "min_u": 1,
+    "max_u_end": "_12026_/D",
+    "min_u_end": "_12057_/D",
+    "scene": "ss_n40C_1v60",
+    "state": "受约束路径存在"
+   },
+   "in_b[59]": {
+    "max_c": 1,
+    "max_u": 1,
+    "min_c": 1,
+    "min_u": 1,
+    "max_u_end": "_12026_/D",
+    "min_u_end": "_12044_/D",
+    "scene": "ss_n40C_1v60",
+    "state": "受约束路径存在"
+   },
+   "in_b[58]": {
+    "max_c": 1,
+    "max_u": 1,
+    "min_c": 1,
+    "min_u": 1,
+    "max_u_end": "_12026_/D",
+    "min_u_end": "_12040_/D",
+    "scene": "ss_n40C_1v60",
+    "state": "受约束路径存在"
+   },
+   "in_b[57]": {
+    "max_c": 1,
+    "max_u": 1,
+    "min_c": 1,
+    "min_u": 1,
+    "max_u_end": "_12026_/D",
+    "min_u_end": "_12049_/D",
+    "scene": "ss_n40C_1v60",
+    "state": "受约束路径存在"
+   },
+   "in_b[56]": {
+    "max_c": 1,
+    "max_u": 1,
+    "min_c": 1,
+    "min_u": 1,
+    "max_u_end": "_12026_/D",
+    "min_u_end": "_12049_/D",
+    "scene": "ss_n40C_1v60",
+    "state": "受约束路径存在"
+   },
+   "in_b[55]": {
+    "max_c": 1,
+    "max_u": 1,
+    "min_c": 1,
+    "min_u": 1,
+    "max_u_end": "_12026_/D",
+    "min_u_end": "_12039_/D",
+    "scene": "ss_n40C_1v60",
+    "state": "受约束路径存在"
+   },
+   "in_b[54]": {
+    "max_c": 1,
+    "max_u": 1,
+    "min_c": 1,
+    "min_u": 1,
+    "max_u_end": "_12026_/D",
+    "min_u_end": "_12049_/D",
+    "scene": "ss_n40C_1v60",
+    "state": "受约束路径存在"
+   },
+   "in_b[53]": {
+    "max_c": 1,
+    "max_u": 1,
+    "min_c": 1,
+    "min_u": 1,
+    "max_u_end": "_12026_/D",
+    "min_u_end": "_12038_/D",
+    "scene": "ss_n40C_1v60",
+    "state": "受约束路径存在"
+   },
+   "in_b[52]": {
+    "max_c": 1,
+    "max_u": 1,
+    "min_c": 1,
+    "min_u": 1,
+    "max_u_end": "_12026_/D",
+    "min_u_end": "_12036_/D",
+    "scene": "ss_n40C_1v60",
+    "state": "受约束路径存在"
+   },
+   "in_b[51]": {
+    "max_c": 1,
+    "max_u": 1,
+    "min_c": 1,
+    "min_u": 1,
+    "max_u_end": "_12026_/D",
+    "min_u_end": "_12030_/D",
+    "scene": "ss_n40C_1v60",
+    "state": "受约束路径存在"
+   },
+   "in_b[50]": {
+    "max_c": 1,
+    "max_u": 1,
+    "min_c": 1,
+    "min_u": 1,
+    "max_u_end": "_12026_/D",
+    "min_u_end": "_12028_/D",
+    "scene": "ss_n40C_1v60",
+    "state": "受约束路径存在"
+   },
+   "in_b[49]": {
+    "max_c": 1,
+    "max_u": 1,
+    "min_c": 1,
+    "min_u": 1,
+    "max_u_end": "_12026_/D",
+    "min_u_end": "_12027_/D",
+    "scene": "ss_n40C_1v60",
+    "state": "受约束路径存在"
+   },
+   "in_b[48]": {
+    "max_c": 1,
+    "max_u": 1,
+    "min_c": 1,
+    "min_u": 1,
+    "max_u_end": "_12026_/D",
+    "min_u_end": "_12026_/D",
+    "scene": "ss_n40C_1v60",
+    "state": "受约束路径存在"
+   },
+   "in_b[47]": {
+    "max_c": 1,
+    "max_u": 1,
+    "min_c": 1,
+    "min_u": 1,
+    "max_u_end": "_12026_/D",
+    "min_u_end": "_12043_/D",
+    "scene": "ss_n40C_1v60",
+    "state": "受约束路径存在"
+   },
+   "in_b[46]": {
+    "max_c": 1,
+    "max_u": 1,
+    "min_c": 1,
+    "min_u": 1,
+    "max_u_end": "_12026_/D",
+    "min_u_end": "_12053_/D",
+    "scene": "ss_n40C_1v60",
+    "state": "受约束路径存在"
+   },
+   "in_b[45]": {
+    "max_c": 1,
+    "max_u": 1,
+    "min_c": 1,
+    "min_u": 1,
+    "max_u_end": "_12026_/D",
+    "min_u_end": "_12053_/D",
+    "scene": "ss_n40C_1v60",
+    "state": "受约束路径存在"
+   },
+   "in_b[44]": {
+    "max_c": 1,
+    "max_u": 1,
+    "min_c": 1,
+    "min_u": 1,
+    "max_u_end": "_12026_/D",
+    "min_u_end": "_12053_/D",
+    "scene": "ss_n40C_1v60",
+    "state": "受约束路径存在"
+   },
+   "in_b[43]": {
+    "max_c": 1,
+    "max_u": 1,
+    "min_c": 1,
+    "min_u": 1,
+    "max_u_end": "_12026_/D",
+    "min_u_end": "_12043_/D",
+    "scene": "ss_n40C_1v60",
+    "state": "受约束路径存在"
+   },
+   "in_b[42]": {
+    "max_c": 1,
+    "max_u": 1,
+    "min_c": 1,
+    "min_u": 1,
+    "max_u_end": "_12026_/D",
+    "min_u_end": "_12051_/D",
+    "scene": "ss_n40C_1v60",
+    "state": "受约束路径存在"
+   },
+   "in_b[41]": {
+    "max_c": 1,
+    "max_u": 1,
+    "min_c": 1,
+    "min_u": 1,
+    "max_u_end": "_12026_/D",
+    "min_u_end": "_12043_/D",
+    "scene": "ss_n40C_1v60",
+    "state": "受约束路径存在"
+   },
+   "in_b[40]": {
+    "max_c": 1,
+    "max_u": 1,
+    "min_c": 1,
+    "min_u": 1,
+    "max_u_end": "_12026_/D",
+    "min_u_end": "_12043_/D",
+    "scene": "ss_n40C_1v60",
+    "state": "受约束路径存在"
+   },
+   "in_b[39]": {
+    "max_c": 1,
+    "max_u": 1,
+    "min_c": 1,
+    "min_u": 1,
+    "max_u_end": "_12026_/D",
+    "min_u_end": "_12043_/D",
+    "scene": "ss_n40C_1v60",
+    "state": "受约束路径存在"
+   },
+   "in_b[38]": {
+    "max_c": 1,
+    "max_u": 1,
+    "min_c": 1,
+    "min_u": 1,
+    "max_u_end": "_12026_/D",
+    "min_u_end": "_12038_/D",
+    "scene": "ss_n40C_1v60",
+    "state": "受约束路径存在"
+   },
+   "in_b[37]": {
+    "max_c": 1,
+    "max_u": 1,
+    "min_c": 1,
+    "min_u": 1,
+    "max_u_end": "_12026_/D",
+    "min_u_end": "_12036_/D",
+    "scene": "ss_n40C_1v60",
+    "state": "受约束路径存在"
+   },
+   "in_b[36]": {
+    "max_c": 1,
+    "max_u": 1,
+    "min_c": 1,
+    "min_u": 1,
+    "max_u_end": "_12026_/D",
+    "min_u_end": "_12034_/D",
+    "scene": "ss_n40C_1v60",
+    "state": "受约束路径存在"
+   },
+   "in_b[35]": {
+    "max_c": 1,
+    "max_u": 1,
+    "min_c": 1,
+    "min_u": 1,
+    "max_u_end": "_12026_/D",
+    "min_u_end": "_12030_/D",
+    "scene": "ss_n40C_1v60",
+    "state": "受约束路径存在"
+   },
+   "in_b[34]": {
+    "max_c": 1,
+    "max_u": 1,
+    "min_c": 1,
+    "min_u": 1,
+    "max_u_end": "_12026_/D",
+    "min_u_end": "_12028_/D",
+    "scene": "ss_n40C_1v60",
+    "state": "受约束路径存在"
+   },
+   "in_b[33]": {
+    "max_c": 1,
+    "max_u": 1,
+    "min_c": 1,
+    "min_u": 1,
+    "max_u_end": "_12026_/D",
+    "min_u_end": "_12027_/D",
+    "scene": "ss_n40C_1v60",
+    "state": "受约束路径存在"
+   },
+   "in_b[32]": {
+    "max_c": 1,
+    "max_u": 1,
+    "min_c": 1,
+    "min_u": 1,
+    "max_u_end": "_12026_/D",
+    "min_u_end": "_12026_/D",
+    "scene": "ss_n40C_1v60",
+    "state": "受约束路径存在"
+   },
+   "in_b[31]": {
+    "max_c": 1,
+    "max_u": 1,
+    "min_c": 1,
+    "min_u": 1,
+    "max_u_end": "_12026_/D",
+    "min_u_end": "_12046_/D",
+    "scene": "ss_n40C_1v60",
+    "state": "受约束路径存在"
+   },
+   "in_b[30]": {
+    "max_c": 1,
+    "max_u": 1,
+    "min_c": 1,
+    "min_u": 1,
+    "max_u_end": "_12026_/D",
+    "min_u_end": "_12057_/D",
+    "scene": "ss_n40C_1v60",
+    "state": "受约束路径存在"
+   },
+   "in_b[29]": {
+    "max_c": 1,
+    "max_u": 1,
+    "min_c": 1,
+    "min_u": 1,
+    "max_u_end": "_12026_/D",
+    "min_u_end": "_12051_/D",
+    "scene": "ss_n40C_1v60",
+    "state": "受约束路径存在"
+   },
+   "in_b[28]": {
+    "max_c": 1,
+    "max_u": 1,
+    "min_c": 1,
+    "min_u": 1,
+    "max_u_end": "_12026_/D",
+    "min_u_end": "_12043_/D",
+    "scene": "ss_n40C_1v60",
+    "state": "受约束路径存在"
+   },
+   "in_b[27]": {
+    "max_c": 1,
+    "max_u": 1,
+    "min_c": 1,
+    "min_u": 1,
+    "max_u_end": "_12026_/D",
+    "min_u_end": "_12044_/D",
+    "scene": "ss_n40C_1v60",
+    "state": "受约束路径存在"
+   },
+   "in_b[26]": {
+    "max_c": 1,
+    "max_u": 1,
+    "min_c": 1,
+    "min_u": 1,
+    "max_u_end": "_12026_/D",
+    "min_u_end": "_12043_/D",
+    "scene": "ss_n40C_1v60",
+    "state": "受约束路径存在"
+   },
+   "in_b[25]": {
+    "max_c": 1,
+    "max_u": 1,
+    "min_c": 1,
+    "min_u": 1,
+    "max_u_end": "_12026_/D",
+    "min_u_end": "_12040_/D",
+    "scene": "ss_n40C_1v60",
+    "state": "受约束路径存在"
+   },
+   "in_b[24]": {
+    "max_c": 1,
+    "max_u": 1,
+    "min_c": 1,
+    "min_u": 1,
+    "max_u_end": "_12026_/D",
+    "min_u_end": "_12039_/D",
+    "scene": "ss_n40C_1v60",
+    "state": "受约束路径存在"
+   },
+   "in_b[23]": {
+    "max_c": 1,
+    "max_u": 1,
+    "min_c": 1,
+    "min_u": 1,
+    "max_u_end": "_12026_/D",
+    "min_u_end": "_12038_/D",
+    "scene": "ss_n40C_1v60",
+    "state": "受约束路径存在"
+   },
+   "in_b[22]": {
+    "max_c": 1,
+    "max_u": 1,
+    "min_c": 1,
+    "min_u": 1,
+    "max_u_end": "_12026_/D",
+    "min_u_end": "_12035_/D",
+    "scene": "ss_n40C_1v60",
+    "state": "受约束路径存在"
+   },
+   "in_b[21]": {
+    "max_c": 1,
+    "max_u": 1,
+    "min_c": 1,
+    "min_u": 1,
+    "max_u_end": "_12026_/D",
+    "min_u_end": "_12057_/D",
+    "scene": "ss_n40C_1v60",
+    "state": "受约束路径存在"
+   },
+   "in_b[20]": {
+    "max_c": 1,
+    "max_u": 1,
+    "min_c": 1,
+    "min_u": 1,
+    "max_u_end": "_12026_/D",
+    "min_u_end": "_12034_/D",
+    "scene": "ss_n40C_1v60",
+    "state": "受约束路径存在"
+   },
+   "in_b[19]": {
+    "max_c": 1,
+    "max_u": 1,
+    "min_c": 1,
+    "min_u": 1,
+    "max_u_end": "_12026_/D",
+    "min_u_end": "_12035_/D",
+    "scene": "ss_n40C_1v60",
+    "state": "受约束路径存在"
+   },
+   "in_b[18]": {
+    "max_c": 1,
+    "max_u": 1,
+    "min_c": 1,
+    "min_u": 1,
+    "max_u_end": "_12026_/D",
+    "min_u_end": "_12028_/D",
+    "scene": "ss_n40C_1v60",
+    "state": "受约束路径存在"
+   },
+   "in_b[17]": {
+    "max_c": 1,
+    "max_u": 1,
+    "min_c": 1,
+    "min_u": 1,
+    "max_u_end": "_12026_/D",
+    "min_u_end": "_12027_/D",
+    "scene": "ss_n40C_1v60",
+    "state": "受约束路径存在"
+   },
+   "in_b[16]": {
+    "max_c": 1,
+    "max_u": 1,
+    "min_c": 1,
+    "min_u": 1,
+    "max_u_end": "_12026_/D",
+    "min_u_end": "_12026_/D",
+    "scene": "ss_n40C_1v60",
+    "state": "受约束路径存在"
+   },
+   "in_b[15]": {
+    "max_c": 1,
+    "max_u": 1,
+    "min_c": 1,
+    "min_u": 1,
+    "max_u_end": "_12026_/D",
+    "min_u_end": "_12046_/D",
+    "scene": "ss_n40C_1v60",
+    "state": "受约束路径存在"
+   },
+   "in_b[14]": {
+    "max_c": 1,
+    "max_u": 1,
+    "min_c": 1,
+    "min_u": 1,
+    "max_u_end": "_12026_/D",
+    "min_u_end": "_12057_/D",
+    "scene": "ss_n40C_1v60",
+    "state": "受约束路径存在"
+   },
+   "in_b[13]": {
+    "max_c": 1,
+    "max_u": 1,
+    "min_c": 1,
+    "min_u": 1,
+    "max_u_end": "_12026_/D",
+    "min_u_end": "_12051_/D",
+    "scene": "ss_n40C_1v60",
+    "state": "受约束路径存在"
+   },
+   "in_b[12]": {
+    "max_c": 1,
+    "max_u": 1,
+    "min_c": 1,
+    "min_u": 1,
+    "max_u_end": "_12026_/D",
+    "min_u_end": "_12057_/D",
+    "scene": "ss_n40C_1v60",
+    "state": "受约束路径存在"
+   },
+   "in_b[11]": {
+    "max_c": 1,
+    "max_u": 1,
+    "min_c": 1,
+    "min_u": 1,
+    "max_u_end": "_12026_/D",
+    "min_u_end": "_12040_/D",
+    "scene": "ss_n40C_1v60",
+    "state": "受约束路径存在"
+   },
+   "in_b[10]": {
+    "max_c": 1,
+    "max_u": 1,
+    "min_c": 1,
+    "min_u": 1,
+    "max_u_end": "_12026_/D",
+    "min_u_end": "_12040_/D",
+    "scene": "ss_n40C_1v60",
+    "state": "受约束路径存在"
+   },
+   "in_b[9]": {
+    "max_c": 1,
+    "max_u": 1,
+    "min_c": 1,
+    "min_u": 1,
+    "max_u_end": "_12026_/D",
+    "min_u_end": "_12053_/D",
+    "scene": "ss_n40C_1v60",
+    "state": "受约束路径存在"
+   },
+   "in_b[8]": {
+    "max_c": 1,
+    "max_u": 1,
+    "min_c": 1,
+    "min_u": 1,
+    "max_u_end": "_12026_/D",
+    "min_u_end": "_12053_/D",
+    "scene": "ss_n40C_1v60",
+    "state": "受约束路径存在"
+   },
+   "in_b[7]": {
+    "max_c": 1,
+    "max_u": 1,
+    "min_c": 1,
+    "min_u": 1,
+    "max_u_end": "_12026_/D",
+    "min_u_end": "_12038_/D",
+    "scene": "ss_n40C_1v60",
+    "state": "受约束路径存在"
+   },
+   "in_b[6]": {
+    "max_c": 1,
+    "max_u": 1,
+    "min_c": 1,
+    "min_u": 1,
+    "max_u_end": "_12026_/D",
+    "min_u_end": "_12049_/D",
+    "scene": "ss_n40C_1v60",
+    "state": "受约束路径存在"
+   },
+   "in_b[5]": {
+    "max_c": 1,
+    "max_u": 1,
+    "min_c": 1,
+    "min_u": 1,
+    "max_u_end": "_12026_/D",
+    "min_u_end": "_12049_/D",
+    "scene": "ss_n40C_1v60",
+    "state": "受约束路径存在"
+   },
+   "in_b[4]": {
+    "max_c": 1,
+    "max_u": 1,
+    "min_c": 1,
+    "min_u": 1,
+    "max_u_end": "_12026_/D",
+    "min_u_end": "_12035_/D",
+    "scene": "ss_n40C_1v60",
+    "state": "受约束路径存在"
+   },
+   "in_b[3]": {
+    "max_c": 1,
+    "max_u": 1,
+    "min_c": 1,
+    "min_u": 1,
+    "max_u_end": "_12026_/D",
+    "min_u_end": "_12034_/D",
+    "scene": "ss_n40C_1v60",
+    "state": "受约束路径存在"
+   },
+   "in_b[2]": {
+    "max_c": 1,
+    "max_u": 1,
+    "min_c": 1,
+    "min_u": 1,
+    "max_u_end": "_12026_/D",
+    "min_u_end": "_12030_/D",
+    "scene": "ss_n40C_1v60",
+    "state": "受约束路径存在"
+   },
+   "in_b[1]": {
+    "max_c": 1,
+    "max_u": 1,
+    "min_c": 1,
+    "min_u": 1,
+    "max_u_end": "_12026_/D",
+    "min_u_end": "_12027_/D",
+    "scene": "ss_n40C_1v60",
+    "state": "受约束路径存在"
+   },
+   "in_b[0]": {
+    "max_c": 1,
+    "max_u": 1,
+    "min_c": 1,
+    "min_u": 1,
+    "max_u_end": "_12026_/D",
+    "min_u_end": "_12026_/D",
+    "scene": "ss_n40C_1v60",
+    "state": "受约束路径存在"
+   }
+  },
+  "problems": []
+ },
+ "musts_rc": {
+  "M01": 0,
+  "M02": 0,
+  "M03": 0,
+  "M04": 0,
+  "M05": 0,
+  "M06": 0,
+  "M07": 0,
+  "M08": 0,
+  "M09": 0,
+  "M10": 0,
+  "M11": 0,
+  "M12": 0,
+  "M13": 0
+ },
+ "musts_process_rc": 0,
+ "musts_records_identical": true
+}

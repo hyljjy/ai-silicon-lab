@@ -1,0 +1,13 @@
+FTP tt_025C_1v80 n=1
+  in_b[35] -> _12026_/D slack=INF
+FTP tt_100C_1v80 n=1
+  in_b[35] -> _12026_/D slack=INF
+FTP ss_100C_1v60 n=1
+  in_b[35] -> _12026_/D slack=INF
+FTP ss_n40C_1v60 n=1
+  in_b[2] -> _12026_/D slack=INF
+FTP ff_n40C_1v95 n=1
+  in_b[2] -> _12026_/D slack=INF
+FTP ff_100C_1v95 n=1
+  in_b[2] -> _12026_/D slack=INF
+[rc=0]

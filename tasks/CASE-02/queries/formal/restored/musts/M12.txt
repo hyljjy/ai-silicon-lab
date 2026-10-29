@@ -1,0 +1,261 @@
+FANIN rst
+FANIN in_valid
+FANIN in_a[63]
+FANIN in_a[62]
+FANIN in_a[61]
+FANIN in_a[60]
+FANIN in_a[59]
+FANIN in_a[58]
+FANIN in_a[57]
+FANIN in_a[56]
+FANIN in_a[55]
+FANIN in_a[54]
+FANIN in_a[53]
+FANIN in_a[52]
+FANIN in_a[51]
+FANIN in_a[50]
+FANIN in_a[49]
+FANIN in_a[48]
+FANIN in_a[47]
+FANIN in_a[46]
+FANIN in_a[45]
+FANIN in_a[44]
+FANIN in_a[43]
+FANIN in_a[42]
+FANIN in_a[41]
+FANIN in_a[40]
+FANIN in_a[39]
+FANIN in_a[38]
+FANIN in_a[37]
+FANIN in_a[36]
+FANIN in_a[35]
+FANIN in_a[34]
+FANIN in_a[33]
+FANIN in_a[32]
+FANIN in_a[31]
+FANIN in_a[30]
+FANIN in_a[29]
+FANIN in_a[28]
+FANIN in_a[27]
+FANIN in_a[26]
+FANIN in_a[25]
+FANIN in_a[24]
+FANIN in_a[23]
+FANIN in_a[22]
+FANIN in_a[21]
+FANIN in_a[20]
+FANIN in_a[19]
+FANIN in_a[18]
+FANIN in_a[17]
+FANIN in_a[16]
+FANIN in_a[15]
+FANIN in_a[14]
+FANIN in_a[13]
+FANIN in_a[12]
+FANIN in_a[11]
+FANIN in_a[10]
+FANIN in_a[9]
+FANIN in_a[8]
+FANIN in_a[7]
+FANIN in_a[6]
+FANIN in_a[5]
+FANIN in_a[4]
+FANIN in_a[3]
+FANIN in_a[2]
+FANIN in_a[1]
+FANIN in_a[0]
+FANIN in_b[63]
+FANIN in_b[62]
+FANIN in_b[61]
+FANIN in_b[60]
+FANIN in_b[59]
+FANIN in_b[58]
+FANIN in_b[57]
+FANIN in_b[56]
+FANIN in_b[55]
+FANIN in_b[54]
+FANIN in_b[53]
+FANIN in_b[52]
+FANIN in_b[51]
+FANIN in_b[50]
+FANIN in_b[49]
+FANIN in_b[48]
+FANIN in_b[47]
+FANIN in_b[46]
+FANIN in_b[45]
+FANIN in_b[44]
+FANIN in_b[43]
+FANIN in_b[42]
+FANIN in_b[41]
+FANIN in_b[40]
+FANIN in_b[39]
+FANIN in_b[38]
+FANIN in_b[37]
+FANIN in_b[36]
+FANIN in_b[35]
+FANIN in_b[34]
+FANIN in_b[33]
+FANIN in_b[32]
+FANIN in_b[31]
+FANIN in_b[30]
+FANIN in_b[29]
+FANIN in_b[28]
+FANIN in_b[27]
+FANIN in_b[26]
+FANIN in_b[25]
+FANIN in_b[24]
+FANIN in_b[23]
+FANIN in_b[22]
+FANIN in_b[21]
+FANIN in_b[20]
+FANIN in_b[19]
+FANIN in_b[18]
+FANIN in_b[17]
+FANIN in_b[16]
+FANIN in_b[15]
+FANIN in_b[14]
+FANIN in_b[13]
+FANIN in_b[12]
+FANIN in_b[11]
+FANIN in_b[10]
+FANIN in_b[9]
+FANIN in_b[8]
+FANIN in_b[7]
+FANIN in_b[6]
+FANIN in_b[5]
+FANIN in_b[4]
+FANIN in_b[3]
+FANIN in_b[2]
+FANIN in_b[1]
+FANIN in_b[0]
+FANOUT rst 1
+FANOUT in_valid 1
+FANOUT in_a[63] 32
+FANOUT in_a[62] 32
+FANOUT in_a[61] 32
+FANOUT in_a[60] 32
+FANOUT in_a[59] 32
+FANOUT in_a[58] 32
+FANOUT in_a[57] 32
+FANOUT in_a[56] 32
+FANOUT in_a[55] 32
+FANOUT in_a[54] 32
+FANOUT in_a[53] 32
+FANOUT in_a[52] 32
+FANOUT in_a[51] 32
+FANOUT in_a[50] 32
+FANOUT in_a[49] 32
+FANOUT in_a[48] 32
+FANOUT in_a[47] 32
+FANOUT in_a[46] 32
+FANOUT in_a[45] 32
+FANOUT in_a[44] 32
+FANOUT in_a[43] 32
+FANOUT in_a[42] 32
+FANOUT in_a[41] 32
+FANOUT in_a[40] 32
+FANOUT in_a[39] 32
+FANOUT in_a[38] 32
+FANOUT in_a[37] 32
+FANOUT in_a[36] 32
+FANOUT in_a[35] 32
+FANOUT in_a[34] 32
+FANOUT in_a[33] 32
+FANOUT in_a[32] 32
+FANOUT in_a[31] 32
+FANOUT in_a[30] 32
+FANOUT in_a[29] 32
+FANOUT in_a[28] 32
+FANOUT in_a[27] 32
+FANOUT in_a[26] 32
+FANOUT in_a[25] 32
+FANOUT in_a[24] 32
+FANOUT in_a[23] 32
+FANOUT in_a[22] 32
+FANOUT in_a[21] 32
+FANOUT in_a[20] 32
+FANOUT in_a[19] 32
+FANOUT in_a[18] 32
+FANOUT in_a[17] 32
+FANOUT in_a[16] 32
+FANOUT in_a[15] 32
+FANOUT in_a[14] 32
+FANOUT in_a[13] 32
+FANOUT in_a[12] 32
+FANOUT in_a[11] 32
+FANOUT in_a[10] 32
+FANOUT in_a[9] 32
+FANOUT in_a[8] 32
+FANOUT in_a[7] 32
+FANOUT in_a[6] 32
+FANOUT in_a[5] 32
+FANOUT in_a[4] 32
+FANOUT in_a[3] 32
+FANOUT in_a[2] 32
+FANOUT in_a[1] 32
+FANOUT in_a[0] 32
+FANOUT in_b[63] 32
+FANOUT in_b[62] 32
+FANOUT in_b[61] 32
+FANOUT in_b[60] 32
+FANOUT in_b[59] 32
+FANOUT in_b[58] 32
+FANOUT in_b[57] 32
+FANOUT in_b[56] 32
+FANOUT in_b[55] 32
+FANOUT in_b[54] 32
+FANOUT in_b[53] 32
+FANOUT in_b[52] 32
+FANOUT in_b[51] 32
+FANOUT in_b[50] 32
+FANOUT in_b[49] 32
+FANOUT in_b[48] 32
+FANOUT in_b[47] 32
+FANOUT in_b[46] 32
+FANOUT in_b[45] 32
+FANOUT in_b[44] 32
+FANOUT in_b[43] 32
+FANOUT in_b[42] 32
+FANOUT in_b[41] 32
+FANOUT in_b[40] 32
+FANOUT in_b[39] 32
+FANOUT in_b[38] 32
+FANOUT in_b[37] 32
+FANOUT in_b[36] 32
+FANOUT in_b[35] 32
+FANOUT in_b[34] 32
+FANOUT in_b[33] 32
+FANOUT in_b[32] 32
+FANOUT in_b[31] 32
+FANOUT in_b[30] 32
+FANOUT in_b[29] 32
+FANOUT in_b[28] 32
+FANOUT in_b[27] 32
+FANOUT in_b[26] 32
+FANOUT in_b[25] 32
+FANOUT in_b[24] 32
+FANOUT in_b[23] 32
+FANOUT in_b[22] 32
+FANOUT in_b[21] 32
+FANOUT in_b[20] 32
+FANOUT in_b[19] 32
+FANOUT in_b[18] 32
+FANOUT in_b[17] 32
+FANOUT in_b[16] 32
+FANOUT in_b[15] 32
+FANOUT in_b[14] 32
+FANOUT in_b[13] 32
+FANOUT in_b[12] 32
+FANOUT in_b[11] 32
+FANOUT in_b[10] 32
+FANOUT in_b[9] 32
+FANOUT in_b[8] 32
+FANOUT in_b[7] 32
+FANOUT in_b[6] 32
+FANOUT in_b[5] 32
+FANOUT in_b[4] 32
+FANOUT in_b[3] 32
+FANOUT in_b[2] 32
+FANOUT in_b[1] 32
+FANOUT in_b[0] 32
+[rc=0]

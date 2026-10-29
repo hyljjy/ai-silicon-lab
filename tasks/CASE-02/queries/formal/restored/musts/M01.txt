@@ -1,0 +1,2 @@
+RET check_setup_verbose=1
+[rc=0]

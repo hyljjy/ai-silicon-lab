@@ -1,0 +1,9 @@
+version=missing selftest=False
+argv: sta -no_init -no_splash -exit /mnt/d/study/ai_native_design/tasks/CASE-02/scripts/sta_run_case02.tcl
+SDC_FILE=/mnt/d/study/ai_native_design/tasks/CASE-02/sdc/case02_missing_inb.tcl
+NETLIST=/mnt/d/study/ai_native_design/tasks/CASE-01/evidence/F1/archive/20261009-092827-base-T27.91/synth/netlist.v
+rc=0 stop=None
+head=8d0ba9c2fb471b3910b6975f6c8568b815c4b310
+netlist_sha256=1fa89c975162f4f1f9a2f349bed73b4dae5f53ab921883be842cb0a37763a8d1
+sdc_sha256=04fcba3ed6078152238db05b40384e7508943b45c177c73caaa71e2a3c03b234
+driver_sha256=a121e2f3ca86231964e26b85f804124ea12d1cca4e2f447e9f1157368070b2da

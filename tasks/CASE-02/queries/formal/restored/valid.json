@@ -1,0 +1,31 @@
+{
+ "selftest": false,
+ "version": "restored",
+ "run_valid": true,
+ "mutation_verified": true,
+ "relation": "restored_vs_correct",
+ "problems": [],
+ "allowed_changes_seen": [],
+ "lib": {
+  "normalized_ok": true,
+  "raw_identical": true
+ },
+ "warning_block": {
+  "present": false,
+  "count": null,
+  "names_ok": false
+ },
+ "layers": {
+  "L1_ports": true,
+  "L2_constraints": true,
+  "L3_structure": true,
+  "L4_pairs": true
+ },
+ "log_problems": [],
+ "hashes": {
+  "netlist": "1fa89c975162f4f1f9a2f349bed73b4dae5f53ab921883be842cb0a37763a8d1",
+  "sdc": "b8d1aab60d137dc39dc7cb55b2ec314b952538dfee8f5be627a140dcca09300c",
+  "driver": "a121e2f3ca86231964e26b85f804124ea12d1cca4e2f447e9f1157368070b2da"
+ },
+ "head": "8d0ba9c2fb471b3910b6975f6c8568b815c4b310"
+}

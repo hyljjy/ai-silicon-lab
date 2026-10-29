@@ -1,0 +1,56 @@
+{
+ "selftest": false,
+ "version": "missing",
+ "run_valid": true,
+ "mutation_verified": true,
+ "relation": "missing_vs_correct",
+ "problems": [],
+ "allowed_changes_seen": [
+  "cat_ff_100C_1v95_in2reg_max.rpt",
+  "cat_ff_n40C_1v95_in2reg_max.rpt",
+  "cat_ss_100C_1v60_in2reg_max.rpt",
+  "cat_ss_n40C_1v60_in2reg_max.rpt",
+  "cat_tt_025C_1v80_in2reg_max.rpt",
+  "cat_tt_100C_1v80_in2reg_max.rpt",
+  "path_max_ff_100C_1v95.rpt",
+  "path_max_ff_n40C_1v95.rpt",
+  "path_max_ss_100C_1v60.rpt",
+  "path_max_ss_n40C_1v60.rpt",
+  "path_max_tt_025C_1v80.rpt",
+  "path_max_tt_100C_1v80.rpt",
+  "WS\ttt_025C_1v80\tmax",
+  "CAT\ttt_025C_1v80\tin2reg\tmax",
+  "WS\ttt_100C_1v80\tmax",
+  "CAT\ttt_100C_1v80\tin2reg\tmax",
+  "WS\tss_100C_1v60\tmax",
+  "CAT\tss_100C_1v60\tin2reg\tmax",
+  "WS\tss_n40C_1v60\tmax",
+  "CAT\tss_n40C_1v60\tin2reg\tmax",
+  "WS\tff_n40C_1v95\tmax",
+  "CAT\tff_n40C_1v95\tin2reg\tmax",
+  "WS\tff_100C_1v95\tmax",
+  "CAT\tff_100C_1v95\tin2reg\tmax"
+ ],
+ "lib": {
+  "normalized_ok": true,
+  "raw_identical": true
+ },
+ "warning_block": {
+  "present": true,
+  "count": 64,
+  "names_ok": true
+ },
+ "layers": {
+  "L1_ports": true,
+  "L2_constraints": true,
+  "L3_structure": true,
+  "L4_pairs": true
+ },
+ "log_problems": [],
+ "hashes": {
+  "netlist": "1fa89c975162f4f1f9a2f349bed73b4dae5f53ab921883be842cb0a37763a8d1",
+  "sdc": "04fcba3ed6078152238db05b40384e7508943b45c177c73caaa71e2a3c03b234",
+  "driver": "a121e2f3ca86231964e26b85f804124ea12d1cca4e2f447e9f1157368070b2da"
+ },
+ "head": "8d0ba9c2fb471b3910b6975f6c8568b815c4b310"
+}

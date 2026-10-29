@@ -1,0 +1,7 @@
+TNS tt_025C_1v80 max=0.0 min=0.0
+TNS tt_100C_1v80 max=0.0 min=0.0
+TNS ss_100C_1v60 max=-21.231488279541733 min=0.0
+TNS ss_n40C_1v60 max=-130.4888465326457 min=0.0
+TNS ff_n40C_1v95 max=0.0 min=0.0
+TNS ff_100C_1v95 max=0.0 min=0.0
+[rc=0]

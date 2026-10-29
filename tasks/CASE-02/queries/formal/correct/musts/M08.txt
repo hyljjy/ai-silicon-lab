@@ -1,0 +1,13 @@
+FTP tt_025C_1v80 n=1
+  in_b[35] -> _12026_/D slack=11.185458
+FTP tt_100C_1v80 n=1
+  in_b[35] -> _12026_/D slack=11.317222
+FTP ss_100C_1v60 n=1
+  in_b[35] -> _12026_/D slack=-0.687278
+FTP ss_n40C_1v60 n=1
+  in_b[2] -> _12026_/D slack=-4.189726
+FTP ff_n40C_1v95 n=1
+  in_b[2] -> _12026_/D slack=15.871506
+FTP ff_100C_1v95 n=1
+  in_b[2] -> _12026_/D slack=15.894229
+[rc=0]

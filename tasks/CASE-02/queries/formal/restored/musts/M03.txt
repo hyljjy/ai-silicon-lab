@@ -1,0 +1,2 @@
+RET check_setup_verbose_unconstrained_endpoints=1
+[rc=0]
