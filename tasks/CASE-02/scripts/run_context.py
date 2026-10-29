@@ -141,6 +141,14 @@ def validity(version, snapshot_ok, hashes_ok, log_ok, compare, warning, layers, 
             "warning_block": {k: warning.get(k) for k in ("present", "count", "names_ok")}, "layers": layers}
 
 
+MUST_IDS = [f"M{i:02d}" for i in range(1, 14)]
+
+
+def musts_complete(parts):
+    """All thirteen must-check items present and each sourced without error (R6 M8)."""
+    return all(m in parts and parts[m][1] == 0 for m in MUST_IDS)
+
+
 def split_musts(text, nonce):
     begin = re.compile(r"^=== CASE02-" + re.escape(nonce) + r" MUST (M\d+) BEGIN ===$")
     end = re.compile(r"^=== CASE02-" + re.escape(nonce) + r" MUST (M\d+) END rc=(\d+) ===$")
@@ -232,8 +240,7 @@ def main(argv=None):
     for mid, (text, mrc) in sorted(parts.items()):
         rq.write_text(os.path.join(musts_dir, f"{mid}.txt"), text + f"[rc={mrc}]\n")
     musts_cmp = records.compare("query_env_vs_formal", env2["OUTDIR"], target, c2paths.RULES)
-    musts_ok = musts_cmp["ok"] and rc2 == 0 and stop2 is None and all(mrc == 0 for _, mrc in parts.values()) \
-        and {"M01", "M11", "M12", "M13"} <= set(parts)
+    musts_ok = musts_cmp["ok"] and rc2 == 0 and stop2 is None and musts_complete(parts)
     with open(os.path.join(target, "expanded.sdc"), encoding="utf-8") as f:
         constraints = records.expanded_constraints(f.read())
     with open(os.path.join(musts_dir, "constraints.tsv"), "w", newline="\n") as f:

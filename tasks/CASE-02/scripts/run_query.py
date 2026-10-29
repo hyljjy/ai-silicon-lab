@@ -69,6 +69,7 @@ ATTR_NONE, ATTR_REQUEST, ATTR_TRUNC, ATTR_TIME, ATTR_OUTPUT, ATTR_WHITELIST, ATT
     ("-", "请求本身的问题", "流程限制：单实例截断", "流程限制：时限", "流程限制：输出上限", "流程限制：白名单拒绝",
      "流程限制：总预算", "执行器或环境问题", "原因未定")
 ATTR_CMDLIMIT = "流程限制：Tcl 命令计数上限"
+WHITELIST_ERR = re.compile(r"CASE02: (output redirection is disabled|\S+ changes the analysis model)")
 TIME_LIMIT = re.compile(r"time limit exceeded", re.I)
 CMD_LIMIT = re.compile(r"command count limit exceeded", re.I)
 
@@ -243,8 +244,23 @@ def tops_from_lines(query_lines, nonce):
     return tops
 
 
+def _unescape(s):
+    out, i = [], 0
+    while i < len(s):
+        ch = s[i]
+        if ch == "\\" and i + 1 < len(s):
+            out.append({"t": "\t", "n": "\n", "r": "\r", "\\": "\\"}.get(s[i + 1], s[i + 1]))
+            i += 2
+        else:
+            out.append(ch)
+            i += 1
+    return "".join(out)
+
+
 def merge_calls(calls_tsv_text, ctx, mode):
-    """calls.tsv (START / END rows written by c2_query.tcl) -> one record per actual STA call."""
+    """calls.tsv (START / ARGS / RET / END rows written by c2_query.tcl) -> one record per actual STA call, with the
+    full argument list (sha256 computed here) and the return value summary (R6 M3)."""
+    import hashlib
     calls = {}
     order = []
     for line in calls_tsv_text.splitlines():
@@ -254,10 +270,26 @@ def merge_calls(calls_tsv_text, ctx, mode):
         if f[0] == "START" and len(f) >= 9:
             seq = int(f[1])
             calls[seq] = {"call_seq": seq, "top_seq": int(f[2]), "cmd": f[3], "argv_crc32": f[4], "argv_preview": f[5],
+                          "argv_full": None, "argv_sha256": None, "ret_type": None, "ret_len": None, "ret_preview": None,
                           "decision": f[6], "scene": f[7], "status": "unfinished", "error": "",
                           "raw_bytes": [int(f[8]), None], "raw_out": None, "norm_out": None, "returned_out": None,
                           "complete": None, "ctx": ctx, "mode": mode}
             order.append(seq)
+        elif f[0] == "ARGS" and len(f) >= 2:
+            seq = int(f[1])
+            if seq in calls:
+                argv = [_unescape(x) for x in f[2:]]
+                calls[seq]["argv_full"] = argv
+                calls[seq]["argv_sha256"] = hashlib.sha256("\x1f".join(argv).encode("utf-8")).hexdigest()
+        elif f[0] == "RET" and len(f) >= 5:
+            seq = int(f[1])
+            if seq in calls:
+                calls[seq]["ret_type"] = f[2]
+                try:
+                    calls[seq]["ret_len"] = int(f[3])
+                except ValueError:
+                    calls[seq]["ret_len"] = None
+                calls[seq]["ret_preview"] = _unescape(f[4])
         elif f[0] == "END" and len(f) >= 5:
             seq = int(f[1])
             if seq in calls:
@@ -265,6 +297,22 @@ def merge_calls(calls_tsv_text, ctx, mode):
                 calls[seq]["error"] = f[3]
                 calls[seq]["raw_bytes"][1] = int(f[4])
     return [calls[s] for s in order]
+
+
+def tops_returned(tops, trunc):
+    """Returned range and completeness of every top-level command's output (a query may print evidence through puts
+    after the STA calls returned; such evidence is cited by top_seq, R6 M3)."""
+    out = []
+    for t in tops:
+        r = contract_mod.map_range(trunc, tuple(t["out"])) if t.get("out") and t["out"][1] is not None else None
+        out.append(dict(t, returned_out=list(r) if r else None, complete=r is not None))
+    return out
+
+
+def content_line_count(shown):
+    """Content lines of the normalized output: command echoes, error lines and skip notes are not result payload."""
+    return sum(1 for l in shown if not l.startswith(("CASE02-CMD: ", "CASE02-ERROR:", "CASE02-CODE:")) and l.strip()
+               and not (l.startswith("===") and ("QUERY BEGIN" in l or "QUERY END" in l)))
 
 
 def attach_line_ranges(calls, raw_text, nonce):
@@ -301,17 +349,24 @@ def classify_instance(calls, status, truncated, env_ok, mode, content_lines, top
     ok_calls = [c["call_seq"] for c in calls if c["status"] == "ok"]
     skipped = [c["call_seq"] for c in calls if c["status"] == "skipped"]
     errors = [c for c in calls if c["status"] == "error"]
-    exec_type = EXEC_TYPE_WHATIF if (mode == "whatif" or any(c.get("decision") == "whatif" for c in calls)) else EXEC_TYPE_PLAIN
+    # the execution type follows what actually ran, not the static mode prediction (R6 M7)
+    exec_type = EXEC_TYPE_WHATIF if any(c.get("decision") == "whatif" and c.get("status") == "ok" for c in calls) else EXEC_TYPE_PLAIN
     hit_time = any(TIME_LIMIT.search(e) for e in top_errors)
     hit_cmds = any(CMD_LIMIT.search(e) for e in top_errors)
+    whitelist = [c for c in errors if WHITELIST_ERR.search(c["error"] or "")]
+    other_top = [e for e in top_errors if not TIME_LIMIT.search(e) and not CMD_LIMIT.search(e)
+                 and not e.startswith("remaining commands not run")]
     if hit_time or hit_cmds:
         exec_result = RES_OVER
+    elif other_top and not calls:
+        exec_result = RES_NO_OBJECT if all(NOT_FOUND.search(e) for e in other_top) else RES_SYNTAX
     elif not calls and not tops:
         exec_result = RES_NO_CMD
+    elif errors or other_top:
+        texts = [c["error"] or "" for c in errors] + other_top
+        exec_result = RES_NO_OBJECT if texts and all(NOT_FOUND.search(e) for e in texts) else RES_SYNTAX
     elif not calls:
         exec_result = RES_DONE
-    elif errors:
-        exec_result = RES_NO_OBJECT if all(NOT_FOUND.search(c["error"] or "") for c in errors) else RES_SYNTAX
     elif calls and all(c["status"] == "skipped" for c in calls):
         exec_result = RES_SKIPPED
     else:
@@ -337,7 +392,9 @@ def classify_instance(calls, status, truncated, env_ok, mode, content_lines, top
         attributions.append(ATTR_CMDLIMIT)
     if truncated:
         attributions.append(ATTR_TRUNC)
-    if errors:
+    if whitelist:
+        attributions.append(ATTR_WHITELIST)
+    if [c for c in errors if c not in whitelist] or other_top:
         attributions.append(ATTR_REQUEST)
     attributions = list(dict.fromkeys(attributions))
     return {"exec_type": exec_type, "exec_result": exec_result,
@@ -478,6 +535,16 @@ def main(argv=None):
     if not os.path.isdir(fdir):
         print(f"CASE02 FAIL: no {'self-test' if args.selftest else 'formal'} run for this context ({os.path.relpath(fdir, CASE)})")
         return 1
+    vpath = os.path.join(fdir, "valid.json")
+    try:
+        with open(vpath, encoding="utf-8") as f:
+            vj = json.load(f)
+        base_valid = bool(vj.get("run_valid")) and bool(vj.get("mutation_verified"))
+    except (OSError, ValueError):
+        base_valid = False
+    if not base_valid:                                                     # R6 M8: the baseline itself must be valid
+        print(f"CASE02 FAIL: baseline {os.path.relpath(fdir, CASE)} has no valid.json with run_valid and mutation_verified true")
+        return 1
     with open(args.query, encoding="utf-8") as f:
         query_text = f.read()
     whatif_words = _words(os.path.join(RULES, "allow_whatif.txt"))
@@ -531,6 +598,11 @@ def main(argv=None):
     if version == "missing":
         rules = rules + logcheck.load_rules(os.path.join(RULES, "warn_whitelist_missing.txt"))
     problems += logcheck.scan("sta", os.path.join(root, "env_part.log"), rules)[0]
+    wb = records.warning_block(env_part, os.path.join(RULES, "mutation_lines.txt"))      # second layer (R6 M8)
+    if version == "missing" and not (wb["present"] and wb["names_ok"]):
+        problems.append("check_setup warning block of the rebuilt environment missing or malformed: " + "; ".join(wb["problems"]))
+    if version != "missing" and wb["present"]:
+        problems.append("check_setup warning block present in a context that must not have one")
     cmp = records.compare(ENV_RELATION, env_dir, fdir, RULES)
     problems += cmp["problems"]
     if cmp["lib"].get("raw_lines"):
@@ -553,14 +625,14 @@ def main(argv=None):
         if cl["call_seq"] in ev:
             cl["returned_out"] = ev[cl["call_seq"]]["returned_out"]
             cl["complete"] = ev[cl["call_seq"]]["complete"]
-    tops = tops_from_lines(query_lines, nonce)
+    tops = tops_returned(tops_from_lines(query_lines, nonce), trunc)
     with open(os.path.join(root, "calls.jsonl"), "w", encoding="utf-8", newline="\n") as f:
         for cl in calls:
             f.write(json.dumps(cl, ensure_ascii=False) + "\n")
     with open(os.path.join(root, "tops.jsonl"), "w", encoding="utf-8", newline="\n") as f:
         for t in tops:
             f.write(json.dumps(t, ensure_ascii=False) + "\n")
-    content_lines = contract_mod.count([l for l in shown if not l.startswith("CASE02-CMD: ")])
+    content_lines = content_line_count(shown)
     tag = f"CASE02-{nonce}-"
     top_errors = [l[len(tag) + len("ERROR: "):] for l in query_lines if l.startswith(tag + "ERROR:")]
     cls = classify_instance(calls, status, trunc["truncated"], not problems, mode, content_lines, top_errors, len(tops))

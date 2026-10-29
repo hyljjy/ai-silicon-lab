@@ -45,6 +45,10 @@ proc c2_outpos {} {
 proc c2_oneline {s} {
   return [string map {"\t" " " "\n" " | "} $s]
 }
+proc c2_escape {s} {
+  # reversible escaping for TSV fields (R6 M3: full argv and return values are recorded, not a preview)
+  return [string map {"\\" "\\\\" "\t" "\\t" "\n" "\\n" "\r" "\\r"} $s]
+}
 proc c2_scene_of {args} {
   set i [lsearch -exact $args -scene]
   if {$i < 0} { set i [lsearch -exact $args -scenes] }
@@ -76,6 +80,9 @@ proc c2_call {cmd args} {
   set preview [c2_oneline [string range $argtext 0 79]]
   set crc [format %08x [zlib crc32 [encoding convertto utf-8 $argtext]]]
   puts $::c2_calllog "START\t$seq\t$::c2_top\t$cmd\t$crc\t$preview\t$decision\t[c2_scene_of {*}$args]\t$start"
+  set esc {}
+  foreach a $args { lappend esc [c2_escape $a] }
+  puts $::c2_calllog "ARGS\t$seq\t[join $esc "\t"]"
   flush $::c2_calllog
   if {$decision eq "skip"} {
     puts "$::M-CODE: SETUP_SKIPPED $cmd"
@@ -96,6 +103,12 @@ proc c2_call {cmd args} {
   if {$code} {
     puts $::c2_calllog "END\t$seq\terror\t[c2_oneline $out]\t$end"
   } else {
+    # the return value (OpenSTA object handles or text) is recorded too: a query may print it later through puts,
+    # outside this call's own stdout range (R6 M3)
+    if {[catch {llength $out} n]} { set n -1 }
+    set rtype [expr {$n > 1 || ($n == 1 && [string match "_sta_*" [lindex $out 0]]) ? "list" : ($n == 0 ? "empty" : "string")}]
+    set rlen [expr {$rtype eq "string" ? [string length $out] : $n}]
+    puts $::c2_calllog "RET\t$seq\t$rtype\t$rlen\t[c2_escape [string range $out 0 199]]"
     puts $::c2_calllog "END\t$seq\tok\t\t$end"
   }
   flush $::c2_calllog

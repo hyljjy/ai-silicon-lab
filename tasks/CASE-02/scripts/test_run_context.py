@@ -163,3 +163,13 @@ class TestOutputDir(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestR6Musts(unittest.TestCase):
+    def test_musts_ok_requires_all_thirteen(self):
+        parts = {f"M{i:02d}": ("x\n", 0) for i in range(1, 14)}
+        self.assertTrue(rc.musts_complete(parts))
+        del parts["M05"]
+        self.assertFalse(rc.musts_complete(parts))
+        parts["M05"] = ("x\n", 1)
+        self.assertFalse(rc.musts_complete(parts))

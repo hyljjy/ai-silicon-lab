@@ -264,3 +264,61 @@ class TestResultShape(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestR6Executor(unittest.TestCase):
+    """CASE02_R6 M3 / M7: full argv and return values per call; top-level errors classified; exec_type from decisions."""
+
+    def test_merge_calls_parses_args_and_ret(self):
+        tsv = "\n".join([
+            "START\t1\t1\tfind_timing_paths\tabcd\t-from in_b[0]\trun\tss_n40C_1v60\t100",
+            "ARGS\t1\t-from\t_sta_Port_in_b[0]\t-path_delay\tmax",
+            "RET\t1\tlist\t1\t_sta_PathEnd_0x55",
+            "END\t1\tok\t\t100",
+        ]) + "\n"
+        c = rq.merge_calls(tsv, ctx="R2", mode="query")[0]
+        self.assertEqual(c["argv_full"], ["-from", "_sta_Port_in_b[0]", "-path_delay", "max"])
+        self.assertEqual(len(c["argv_sha256"]), 64)
+        self.assertEqual((c["ret_type"], c["ret_len"]), ("list", 1))
+        self.assertEqual(c["ret_preview"], "_sta_PathEnd_0x55")
+
+    def test_top_level_unknown_command_is_request_problem(self):
+        r = rq.classify_instance([], status="completed", truncated=False, env_ok=True, mode="query", content_lines=0,
+                                 top_errors=['invalid command name "report_timing"'], tops=1)
+        self.assertEqual(r["exec_result"], "语法错误")
+        self.assertEqual(r["attribution"], "请求本身的问题")
+
+    def test_redirection_refused_is_whitelist_limit(self):
+        calls = [{"call_seq": 1, "status": "error", "decision": "run", "error": "CASE02: output redirection is disabled"}]
+        r = rq.classify_instance(calls, status="completed", truncated=False, env_ok=True, mode="query", content_lines=0, tops=1)
+        self.assertEqual(r["attribution"], "流程限制：白名单拒绝")
+
+    def test_model_changing_call_in_query_mode_is_whitelist_limit(self):
+        calls = [{"call_seq": 1, "status": "error", "decision": "whatif",
+                  "error": "CASE02: set_input_delay changes the analysis model; it runs only in a separate comparison instance"}]
+        r = rq.classify_instance(calls, status="completed", truncated=False, env_ok=True, mode="query", content_lines=0, tops=1)
+        self.assertEqual(r["attribution"], "流程限制：白名单拒绝")
+
+    def test_exec_type_follows_actual_decisions_not_mode(self):
+        calls = [{"call_seq": 1, "status": "skipped", "decision": "skip", "error": ""},
+                 {"call_seq": 2, "status": "ok", "decision": "run", "error": ""}]
+        r = rq.classify_instance(calls, status="completed", truncated=False, env_ok=True, mode="whatif", content_lines=3, tops=2)
+        self.assertEqual(r["exec_type"], "原上下文")
+        calls[1]["decision"] = "whatif"
+        r = rq.classify_instance(calls, status="completed", truncated=False, env_ok=True, mode="query", content_lines=3, tops=2)
+        self.assertEqual(r["exec_type"], "改变模型的对照")
+
+    def test_tops_get_returned_ranges(self):
+        lines = [f"line {i}" for i in range(3000)]
+        t = contract.truncate(lines, C)
+        tops = [{"top_seq": 1, "first_line": "a", "status": "ok", "out": [1, 10]},
+                {"top_seq": 2, "first_line": "b", "status": "ok", "out": [990, 1010]}]
+        out = rq.tops_returned(tops, t)
+        self.assertEqual(out[0]["returned_out"], [1, 10])
+        self.assertTrue(out[0]["complete"])
+        self.assertIsNone(out[1]["returned_out"])
+        self.assertFalse(out[1]["complete"])
+
+    def test_content_lines_exclude_notes(self):
+        shown = ["CASE02-CMD: x", "CASE02-ERROR: boom", "CASE02-CODE: SETUP_SKIPPED create_clock", "real output"]
+        self.assertEqual(rq.content_line_count(shown), 1)
