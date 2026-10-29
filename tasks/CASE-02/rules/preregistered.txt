@@ -4,6 +4,7 @@
 # "round " are tier 2 (tag case02-prereg-round, impl_plan Task 14): the formal context runs, the package, the
 # round-1 prompt and the two commitments. Both tiers are listed here once, at tier 1; tier 2 only makes its files
 # ready. The implementation plan itself is not in git: its hash is in rules/impl_plan.sha256.
+tasks/CASE-02/rules/preregistered.txt
 tasks/CASE-02/protocol.md
 tasks/CASE-02/appendix_A.md
 tasks/CASE-02/intent.md
