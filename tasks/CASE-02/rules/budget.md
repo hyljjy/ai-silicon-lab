@@ -50,3 +50,5 @@
 **写入 `rules/contract.json`**：`total_budget_tokens = 790000`、`token_bytes_ratio = 1.91`、`budget_table`（本表）。
 
 **请作者在检查点 A 确认**：(1) 接受 `ctx_min = 1,000,000` 这个文档值（DeepSeek 列归属歧义、兼容层是否原样提供窗口都未实测；对照列说明若实际是 128k 会怎样）；(2) 接受上表各项预留和 790000 这个数。改任何一项，重算后同步改 `contract.json` 并重新生成 `package_src/context.md`（第一档前都可以改，不留痕迹以外的代价）。
+
+**作者检查点 A（2026-10-29）**：作者确认接受 `ctx_min = 1,000,000`（文档值，兼容层未实测，笔记如实写）、上表各项预留和 `total_budget_tokens = 790000`。原话："我都同意"。
