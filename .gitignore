@@ -48,3 +48,7 @@ tasks/CASE-02/prevalidation/rerun/
 
 # CASE-02 implementation plan: kept locally, not published (as for CASE-01; 2026-10-28)
 tasks/CASE-02/impl_plan.md
+
+# CASE-02 self-test runs of the three contexts and the SDD scratch workspace (2026-10-28)
+tasks/CASE-02/queries/selftest/
+.superpowers/
