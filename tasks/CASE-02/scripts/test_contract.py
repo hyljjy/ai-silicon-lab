@@ -173,6 +173,38 @@ class TestWorkloads(unittest.TestCase):
             self.assertLessEqual(w["raw_lines"], c.per_instance_max_lines)
 
 
+class TestR6Render(unittest.TestCase):
+    """CASE02_R6 M11 / S3: the published text states the counting exceptions (marker lines not counted, long single
+    lines cut to 128 KiB), says 不保证 rather than 会超过, defines the workload names it uses; truncate also reports
+    the bytes actually written (markers included)."""
+
+    def setUp(self):
+        with open(CONTRACT, encoding="utf-8") as f:
+            d = json.load(f)
+        d["total_budget_tokens"], d["token_bytes_ratio"] = 120000, 3.0
+        self.c = contract.from_dict(d)
+        self.text = contract.render_context_section(self.c, ALLOW, WHATIF, SETUP)
+
+    def test_counting_exceptions_published(self):
+        self.assertIn("标记", self.text)
+        self.assertIn("不计", self.text)
+        self.assertIn("128 KiB", self.text)
+        self.assertNotIn("会超过上限", self.text)
+        self.assertIn("不保证", self.text)
+
+    def test_workload_names_defined_where_used(self):
+        for w in self.c.guaranteed_workloads:
+            self.assertIn(w["name"] + "：", self.text, w["name"])     # line counts stay out: 198 is an answer hint
+
+    def test_truncate_reports_file_bytes(self):
+        src = [f"line {i} " + "x" * 50 for i in range(6500)]
+        t = contract.truncate(src, self.c)
+        marker = len(t["returned_lines"][t["marker_index"]].encode("utf-8"))
+        self.assertEqual(t["marker_bytes"], marker)
+        self.assertEqual(t["file_bytes"], sum(len(l.encode("utf-8")) + 1 for l in t["returned_lines"]))
+        self.assertGreater(t["file_bytes"], t["returned_bytes"])
+
+
 if __name__ == "__main__":
     unittest.main()
 

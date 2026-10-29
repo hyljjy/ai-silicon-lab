@@ -262,6 +262,34 @@ class TestResultShape(unittest.TestCase):
         self.assertEqual(tops[1]["out"], [3, 5])
 
 
+class TestR6Limits(unittest.TestCase):
+    """CASE02_R6 S5 / S6: a memory limit that cannot be applied refuses the run instead of running unlimited; the
+    byte-to-line conversion uses one index per log instead of rescanning for every call."""
+
+    def test_memory_limit_failure_refuses_to_run(self):
+        import tempfile
+        if os.name == "nt":
+            self.skipTest("RLIMIT_AS is POSIX only")
+        import resource
+        from unittest import mock
+        log = tempfile.NamedTemporaryFile(prefix="memfail_", suffix=".log", dir=c2paths.RUNS, delete=False).name
+        try:
+            with mock.patch.object(resource, "setrlimit", side_effect=ValueError("not allowed")):   # the kernel refuses
+                rc, stop = rq.run_limited([sys.executable, "-c", "print('ran')"], log, os.environ, c2paths.RUNS, 60,
+                                          10 * 1024 * 1024, max_memory=256 * 1024 * 1024)
+            self.assertEqual(stop, "memory_limit_failed")
+            with open(log, errors="replace") as f:
+                self.assertNotIn("ran", f.read())
+        finally:
+            os.remove(log)
+
+    def test_line_index_matches_scan(self):
+        text = "ab\ncd\n\nef\n中文\n"
+        idx = rq.LineIndex(text)
+        for s, e in ((0, 2), (3, 5), (0, None), (6, 7), (7, None), (9, 9), (12, 18), (0, 0)):
+            self.assertEqual(idx.lines_for_bytes(s, e), rq.lines_for_bytes(text, s, e), (s, e))
+
+
 if __name__ == "__main__":
     unittest.main()
 

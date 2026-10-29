@@ -18,6 +18,7 @@ Each call is one fresh OpenSTA process in a new directory runs/<ts>-c2-query-<qi
      an attribution; calls.jsonl / tops.jsonl / result.json / query_full.txt / query_return.txt are written.
 """
 import argparse
+import bisect
 import datetime
 import json
 import os
@@ -202,30 +203,37 @@ def query_begin_offset(text, nonce):
     return len(text[:m.end()].encode("utf-8"))
 
 
-def lines_for_bytes(text, start, end):
-    """Half-open line range [first, last) of the lines touched by the byte range [start, end) of `text`
-    (UTF-8). A partial last line counts; end None means to the end of the text."""
-    data = text.encode("utf-8")
-    if end is None:
-        end = len(data)
-    starts = [0] + [i + 1 for i, b in enumerate(data) if b == 0x0A]
-    if starts[-1] >= len(data) and len(data) and data[-1] == 0x0A:
-        starts = starts[:-1]
+class LineIndex:
+    """Byte offsets of the line starts of a UTF-8 text, built once per log (R6 S6: acceptance (v) spent ~2 minutes
+    rescanning a 400 KB log for each of 5065 calls)."""
 
-    def line_of(off):
-        lo, hi = 0, len(starts) - 1
-        while lo < hi:
-            mid = (lo + hi + 1) // 2
-            if starts[mid] <= off:
-                lo = mid
-            else:
-                hi = mid - 1
-        return lo
-    first = line_of(start)
-    if end <= start:
-        return (first, first)
-    last = line_of(end - 1) + 1
-    return (first, last)
+    def __init__(self, text):
+        data = text.encode("utf-8")
+        self.size = len(data)
+        starts, pos = [0], data.find(b"\n")
+        while pos != -1:
+            starts.append(pos + 1)
+            pos = data.find(b"\n", pos + 1)
+        if starts[-1] >= self.size and self.size and data[-1] == 0x0A:
+            starts = starts[:-1]
+        self.starts = starts
+
+    def line_of(self, off):
+        return bisect.bisect_right(self.starts, off) - 1
+
+    def lines_for_bytes(self, start, end):
+        """Half-open line range [first, last) of the lines touched by the byte range [start, end). A partial last
+        line counts; end None means to the end of the text."""
+        if end is None:
+            end = self.size
+        first = self.line_of(start)
+        if end <= start:
+            return (first, first)
+        return (first, self.line_of(end - 1) + 1)
+
+
+def lines_for_bytes(text, start, end):
+    return LineIndex(text).lines_for_bytes(start, end)
 
 
 def tops_from_lines(query_lines, nonce):
@@ -320,12 +328,13 @@ def attach_line_ranges(calls, raw_text, nonce):
     base = query_begin_offset(raw_text, nonce)
     if base is None:
         return calls
+    index = LineIndex(raw_text)
+    base_line, _ = index.lines_for_bytes(base, base)
     for c in calls:
         s, e = c["raw_bytes"]
         if s is None:
             continue
-        fs, ls = lines_for_bytes(raw_text, max(s, base), e if e is not None else None)
-        base_line, _ = lines_for_bytes(raw_text, base, base)
+        fs, ls = index.lines_for_bytes(max(s, base), e if e is not None else None)
         c["raw_out"] = [fs - base_line, ls - base_line]
         c["norm_out"] = list(c["raw_out"])
     return calls
@@ -443,22 +452,27 @@ def _limit_memory(max_memory):
     """preexec_fn: cap the child's address space so a runaway query dies on its own instead of the kernel OOM killer
     taking the whole tree (acceptance (v) attempt 2: sta at 15.6 GB, parent killed, no record written)."""
     def apply():
-        try:
-            import resource
-            resource.setrlimit(resource.RLIMIT_AS, (max_memory, max_memory))
-        except (ImportError, ValueError, OSError):
-            pass
+        import resource
+        resource.setrlimit(resource.RLIMIT_AS, (max_memory, max_memory))
+        soft, _ = resource.getrlimit(resource.RLIMIT_AS)
+        if soft != max_memory:
+            raise RuntimeError(f"RLIMIT_AS not applied: wanted {max_memory}, got {soft}")
     return apply
 
 
 def run_limited(argv, log_path, env, cwd, timeout, max_bytes, max_memory=None):
     """Wall-clock, log-size and (POSIX) address-space limits with a kill of the whole process tree. Returns
-    (rc, stop): stop is None, "timed_out" or "output_limit" (rc None when stopped). The size is also checked after a
-    normal exit."""
+    (rc, stop): stop is None, "timed_out", "output_limit" or "memory_limit_failed" (rc None when stopped; the last
+    means the published memory limit could not be applied, so the child was NOT run: R6 S5). The size is also
+    checked after a normal exit."""
     with open(log_path, "w") as f:
-        proc = subprocess.Popen(argv, cwd=cwd, env=env, stdin=subprocess.DEVNULL, stdout=f,
-                                stderr=subprocess.STDOUT, start_new_session=True,
-                                preexec_fn=_limit_memory(max_memory) if (max_memory and os.name != "nt") else None)
+        try:
+            proc = subprocess.Popen(argv, cwd=cwd, env=env, stdin=subprocess.DEVNULL, stdout=f,
+                                    stderr=subprocess.STDOUT, start_new_session=True,
+                                    preexec_fn=_limit_memory(max_memory) if (max_memory and os.name != "nt") else None)
+        except (subprocess.SubprocessError, OSError, ValueError) as e:
+            f.write(f"CASE02-EXECUTOR: memory limit {max_memory} could not be applied, the tool was not started: {e}\n")
+            return None, "memory_limit_failed"
         deadline, stop = time.monotonic() + timeout, None
         try:
             while True:
@@ -608,6 +622,8 @@ def main(argv=None):
     if cmp["lib"].get("raw_lines"):
         write_text(os.path.join(root, "lib_lines_raw.txt"), cmp["lib"]["raw_lines"])
     status = stop or ("completed" if sta_rc == 0 and qrc is not None else f"crashed:{sta_rc}")
+    if stop == "memory_limit_failed":                      # R6 S5: refused to run without the published memory limit
+        problems.append("the memory limit could not be applied; the tool was not started")
 
     shown = normalize(query_lines, nonce)
     write_text(os.path.join(root, "query_full.txt"), shown)
@@ -615,7 +631,8 @@ def main(argv=None):
     returned = list(trunc["returned_lines"])
     if status != "completed":
         ended = f"被信号 {-sta_rc} 终止" if sta_rc is not None and sta_rc < 0 else f"以退出码 {sta_rc} 结束"
-        why = {"timed_out": "超过时限被终止", "output_limit": "输出超过上限被终止"}.get(stop, ended)
+        why = {"timed_out": "超过时限被终止", "output_limit": "输出超过上限被终止",
+               "memory_limit_failed": "未启动：执行器无法施加公开的内存上限"}.get(stop, ended)
         returned.append(f"[工具进程{why}，以上为结束前的输出]")
     write_text(os.path.join(root, "query_return.txt"), returned)
     calls_text = open(call_log, encoding="utf-8").read() if os.path.exists(call_log) else ""

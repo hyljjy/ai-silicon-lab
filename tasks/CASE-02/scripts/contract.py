@@ -85,10 +85,12 @@ def truncate(norm_lines, c):
     long_cut = bool(cut_lines)
     over_lines = raw_lines > c.per_instance_max_lines
     over_bytes = sum(_nbytes(l) for l in lines) > c.per_instance_max_bytes
+    suffix_bytes = len(cut_lines) * len(tr["long_line_marker"].encode("utf-8"))      # markers are not content (R6 S3)
     if not over_lines and not over_bytes:
         return {"returned_lines": lines, "truncated": long_cut, "omitted_lines": 0, "raw_lines": raw_lines,
                 "raw_bytes": raw_bytes, "returned_bytes": sum(_nbytes(l) for l in lines), "marker_index": None,
-                "cut_by": "bytes" if long_cut else None, "cut_lines": cut_lines}
+                "cut_by": "bytes" if long_cut else None, "cut_lines": cut_lines,
+                "file_bytes": sum(_nbytes(l) for l in lines), "marker_bytes": suffix_bytes}
     k = min(tr["head_lines"], raw_lines // 2)
     while k > 0 and sum(_nbytes(l) for l in lines[:k]) + sum(_nbytes(l) for l in lines[raw_lines - k:]) > c.per_instance_max_bytes:
         k -= 1
@@ -98,7 +100,8 @@ def truncate(norm_lines, c):
     returned = head + [marker] + tail
     return {"returned_lines": returned, "truncated": True, "omitted_lines": omitted, "raw_lines": raw_lines,
             "raw_bytes": raw_bytes, "returned_bytes": sum(_nbytes(l) for l in head + tail), "marker_index": k,
-            "cut_by": "lines" if over_lines else "bytes", "cut_lines": cut_lines}
+            "cut_by": "lines" if over_lines else "bytes", "cut_lines": cut_lines,
+            "file_bytes": sum(_nbytes(l) for l in returned), "marker_bytes": len(marker.encode("utf-8")) + suffix_bytes}
 
 
 def map_range(t, raw_range):
@@ -166,13 +169,14 @@ def render_context_section(c, allow_query_path, allow_whatif_path, setup_path):
     a("")
     a(f"每条查询对每一份分析记录各执行一次，称为一个实例：你写明只对 R1 或只对 R2 执行的，有 1 个实例；没写明的，有 {unspecified} 个实例（R1、R2 各一个，结果分别标注）。每个模型最多 {c.max_requests} 条检查请求；第 {c.max_requests + 1} 条起不执行。")
     a("")
-    a(f"每个实例交还给你的输出最多 {c.per_instance_max_lines} 行（含命令回显行），同时最多 {kib} KiB。超过时保留开头和结尾各一半，中间用一行 `[已截断：省略 N 行；原始 M 行 B 字节；见执行契约]` 代替，省略的行数相对原始输出计。原始输出会完整保存，但不交还。")
+    long_kib = c.truncation["long_line_bytes"] // 1024
+    a(f"每个实例交还给你的输出最多 {c.per_instance_max_lines} 行（含命令回显行），同时最多 {kib} KiB（按交还文字的 UTF-8 字节计）。超过时保留开头和结尾各一半，中间用一行 `[已截断：省略 N 行；原始 M 行 B 字节；见执行契约]` 代替，省略的行数相对原始输出计。计数的例外：截断标记那一行和下面说的单行截断后缀不计入上面的行数和字节数（所以被截断的实例交还 {c.per_instance_max_lines + 1} 行）；单独一行超过 {kib} KiB 时，这一行先缩短到 {long_kib} KiB 并在行尾加 `{c.truncation['long_line_marker'].strip()}` 标记，再按上面的规则处理。原始输出会完整保存，但不交还。")
     a("")
-    a("下面这些形态的查询保证不会被截断：")
+    a("下面这些形态的查询（编号 W01–W08）保证不会被截断：")
     for w in c.guaranteed_workloads:
-        a(f"- {w['description']}；")
+        a(f"- {w['name']}：{w['description']}；")
     a("")
-    a("下面这些形态会超过上限、被截断：")
+    a("下面这些形态不保证不被截断（按实测会超出上面的上限）：")
     for s in c.not_guaranteed:
         a(f"- {s}；")
     a("")
