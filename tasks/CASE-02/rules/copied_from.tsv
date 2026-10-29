@@ -18,3 +18,4 @@ prompts/system.md	tasks/CASE-01/diag/prompts/system.md	de1fdda35a524778d920c6407
 prompts/smoke_system.md	tasks/CASE-01/diag/prompts/smoke_system.md	a52d9b0344b18973f43150638439db037edd4699b86a6bd07e9b21a7de1ab2e1	-	byte copy
 prompts/smoke_user.md	tasks/CASE-01/diag/prompts/smoke_user.md	256d5e406c27314b39c2712cd2e077b02924c4b188774d114410768b65672509	-	byte copy
 prompts/cap_probe_user.md	tasks/CASE-01/diag/prompts/cap_probe_user.md	0e1eb3ecc59441cbfc970037c61ad60817fc0bea475dce010653b08e3a3924e8	-	byte copy
+scripts/claims_stats.py	tasks/CASE-01/diag/scripts/claims_stats.py	aa0e25fff6662dcac7ce6e492d94889f94a473548b689e2dec1f4fbe5f9e455d	rules/diff/claims_stats.py.diff	structure kept; validation rewritten for F1-F8 x propositions, evidence_map, six actions, no whole-instance gate
