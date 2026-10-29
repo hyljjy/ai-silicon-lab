@@ -1,1 +1,1 @@
-{"top_seq": 1, "first_line": "report_checks -path_delay max -from [get_ports {in_b[*]}] -scene ss_n40C_1v60 -unconstrained", "status": "ok", "out": [1, 66]}
+{"top_seq": 1, "first_line": "report_checks -path_delay max -from [get_ports {in_b[*]}] -scene ss_n40C_1v60 -unconstrained", "status": "ok", "out": [1, 66], "returned_out": [1, 66], "complete": true}

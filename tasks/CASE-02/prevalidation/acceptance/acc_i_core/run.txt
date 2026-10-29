@@ -1,5 +1,5 @@
-run_dir=runs/20261028-225509-c2-query-acc_i_core-R2-1b40
-elapsed_seconds=15.5
+run_dir=runs/20261029-050735-c2-query-acc_i_core-R2-8147
+elapsed_seconds=14.9
 stdout:
-CASE02 OK: acc_i_core ctx=R2 mode=query status=completed result=完成 attribution=- lines=198/198 calls=262 -> runs/20261028-225509-c2-query-acc_i_core-R2-1b40
+CASE02 OK: acc_i_core ctx=R2 mode=query status=completed result=完成 attribution=- lines=198/198 calls=262 -> runs/20261029-050735-c2-query-acc_i_core-R2-8147
 

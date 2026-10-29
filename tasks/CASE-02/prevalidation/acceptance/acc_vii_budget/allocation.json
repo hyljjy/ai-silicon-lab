@@ -246,7 +246,8 @@
     "attribution": "流程限制：总预算"
    }
   ],
-  "total_tokens": 750513,
+  "total_tokens": 751052,
+  "overhead_tokens": 545,
   "budget_tokens": 790000,
   "ratio": 1.91
  },
@@ -257,7 +258,7 @@
   "dropped": 1,
   "statement_lists_all_dropped": true,
   "rendered_check_ok": true,
-  "tokens": 751062,
+  "tokens": 751070,
   "budget_tokens": 790000
  },
  "instances": [

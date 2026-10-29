@@ -1,1 +1,1 @@
-{"top_seq": 1, "first_line": "foreach p [all_inputs -no_clocks] { puts \"=== [get_full_name $p]\"; flush stdout; report_checks -path_delay max -from $p -scene ss_n40C_1v60 -unconstrained }", "status": "ok", "out": [1, 7635]}
+{"top_seq": 1, "first_line": "foreach p [all_inputs -no_clocks] { puts \"=== [get_full_name $p]\"; flush stdout; report_checks -path_delay max -from $p -scene ss_n40C_1v60 -unconstrained }", "status": "ok", "out": [1, 7635], "returned_out": null, "complete": false}

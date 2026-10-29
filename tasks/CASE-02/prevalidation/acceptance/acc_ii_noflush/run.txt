@@ -1,5 +1,5 @@
-run_dir=runs/20261028-230635-c2-query-acc_ii_noflush-R2-87d3
-elapsed_seconds=15.1
+run_dir=runs/20261029-050750-c2-query-acc_ii_noflush-R2-a377
+elapsed_seconds=14.5
 stdout:
-CASE02 OK: acc_ii_noflush ctx=R2 mode=query status=completed result=完成 attribution=- lines=131/131 calls=261 -> runs/20261028-230635-c2-query-acc_ii_noflush-R2-87d3
+CASE02 OK: acc_ii_noflush ctx=R2 mode=query status=completed result=完成 attribution=- lines=131/131 calls=261 -> runs/20261029-050750-c2-query-acc_ii_noflush-R2-a377
 

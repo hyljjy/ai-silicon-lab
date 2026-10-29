@@ -1,5 +1,6 @@
-run_dir=runs/20261028-230252-c2-query-acc_v_timeout-R2-4b74
-elapsed_seconds=13.5
+run_dir=runs/20261029-051323-c2-query-acc_v_timeout-R2-5820
+elapsed_seconds=609.9
+not_copied=calls.jsonl: 11332983 bytes sha256 0c79affc4696a217517a2f31f903eb11b9a5bf05826088d05df0f84fb4c7e9fc (kept in runs/20261029-051323-c2-query-acc_v_timeout-R2-5820, not copied)
 stdout:
-CASE02 OK: acc_v_timeout ctx=R2 mode=query status=completed result=完成 attribution=- lines=33/33 calls=4 -> runs/20261028-230252-c2-query-acc_v_timeout-R2-4b74
+CASE02 OK: acc_v_timeout ctx=R2 mode=query status=completed result=超出预登记上限 attribution=流程限制：时限 lines=7403/2001 calls=5550 -> runs/20261029-051323-c2-query-acc_v_timeout-R2-5820
 
