@@ -1,0 +1,89 @@
+--- tasks/CASE-01/diag/scripts/collect_runs.py	2026-10-12 23:56:15.507678100 -0700
++++ tasks/CASE-02/scripts/collect_runs.py	2026-10-28 22:35:29.289377900 -0700
+@@ -1,51 +1,59 @@
+-"""Copy diag query runs into the repository (protocol v0.5 section 7.1, last paragraph).
+-
+-  python3 -B diag/scripts/collect_runs.py <group> runs/<ts>-diag-<id> [...]
+-
+-For each run directory: copies query.tcl, query_full.txt, query_return.txt, result.json, env_part.log and
+-snapshot.log to diag/queries/<group>/<id>/, then rewrites diag/queries/<group>/SHA256SUMS over every file in the
+-group. The env/ record files are not copied: result.json's env_ok says they matched F1 byte for byte, and F1's
+-records are already committed under evidence/F1. Refuses a run whose env_ok is false, a self-test, a run whose
+-executor manifest was not committed, a --strict-log run whose query log is not clean, and an id that is already
+-collected with different content. A run whose query crashed or timed out (query_status) is accepted: that is the
+-query's result (protocol v0.5 section 8 f).
+-"""
++"""Copy CASE-02 query runs into the repository (protocol v0.3 sections 6.4, 9). Copied and adapted from
++tasks/CASE-01/diag/scripts/collect_runs.py (rules/copied_from.tsv).
++  python3 -B scripts/collect_runs.py <group> runs/<run dir> [...]
++For each run directory: copies the query, outputs, per-call records and result.json to queries/<group>/<qid>_<ctx>/
++(a second run of the same instance, e.g. after a mechanical rewrite, gets a numbered suffix), with the version name
++stripped from result.json, then rewrites queries/<group>/SHA256SUMS. Refuses self-test runs and runs made with an
++uncommitted executor. A run whose environment check failed IS collected (the failure record is kept for the
++attribution and the instance table) but flagged; build_results never returns its output."""
+ import json
+ import os
+ import sys
+ 
+ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+-from diagpaths import CASE, DIAG, read_bytes, sha256_bytes, write_new_or_same  # noqa: E402
++from c2paths import CASE, QUERIES, read_bytes, sha256_bytes, write_new_or_same  # noqa: E402
+ 
+-FILES = ("query.tcl", "query_full.txt", "query_return.txt", "result.json", "env_part.log", "snapshot.log")
++FILES = ("query.tcl", "query_full.txt", "query_return.txt", "env_part.log", "snapshot.log", "calls.jsonl", "tops.jsonl")
+ 
+ 
+-def collect(group, run_dirs, case=CASE, diag=DIAG):
+-    dest_root = os.path.join(diag, "queries", group)
++def collect(group, run_dirs, case=CASE, dest_root=QUERIES, allow_invalid_env=True):
++    group_root = os.path.join(dest_root, group)
+     for rd in run_dirs:
+         src = rd if os.path.isabs(rd) else os.path.join(case, rd)
+         with open(os.path.join(src, "result.json"), encoding="utf-8") as f:
+             result = json.load(f)
+-        if not result.get("env_ok"):
+-            raise SystemExit(f"COLLECT FAIL: {rd} has env_ok false; its output cannot be used")
+-        if result.get("selftest") or not result.get("executor_committed"):
++        if result.get("selftest") or result.get("uncommitted_ok") or not result.get("executor_committed"):
+             raise SystemExit(f"COLLECT FAIL: {rd} is a self-test or ran with an uncommitted executor")
+-        if result.get("strict_log") and not result.get("query_log_ok"):
+-            raise SystemExit(f"COLLECT FAIL: {rd} was a --strict-log run and its query log is not clean")
++        if not result.get("env_relation_ok") and not allow_invalid_env:
++            raise SystemExit(f"COLLECT FAIL: {rd} has env_relation_ok false")
++        result.pop("version", None)
++        base = f"{result['id']}_{result['ctx']}"
++        dest = os.path.join(group_root, base)
++        n = 2
++        while os.path.exists(dest) and read_bytes(os.path.join(dest, "result.json")) != _dump(result):
++            dest = os.path.join(group_root, f"{base}_{n}")
++            n += 1
++        write_new_or_same(os.path.join(dest, "result.json"), _dump(result))
+         for name in FILES:
+-            write_new_or_same(os.path.join(dest_root, result["id"], name), read_bytes(os.path.join(src, name)))
++            p = os.path.join(src, name)
++            if os.path.exists(p):
++                write_new_or_same(os.path.join(dest, name), read_bytes(p))
+     lines = []
+-    for root, _, names in os.walk(dest_root):
+-        for n in names:
+-            p = os.path.join(root, n)
+-            rel = os.path.relpath(p, dest_root).replace(os.sep, "/")
++    for root, _, names in os.walk(group_root):
++        for name in names:
++            p = os.path.join(root, name)
++            rel = os.path.relpath(p, group_root).replace(os.sep, "/")
+             if rel != "SHA256SUMS":
+                 lines.append(f"{sha256_bytes(read_bytes(p))}  {rel}\n")
+-    with open(os.path.join(dest_root, "SHA256SUMS"), "w", newline="\n") as f:
++    with open(os.path.join(group_root, "SHA256SUMS"), "w", newline="\n") as f:
+         f.writelines(sorted(lines, key=lambda l: l.split("  ", 1)[1]))
+     return len(lines)
+ 
+ 
++def _dump(result):
++    return (json.dumps(result, ensure_ascii=False, indent=1) + "\n").encode("utf-8")
++
++
+ def main(argv=None):
+     argv = sys.argv[1:] if argv is None else argv
+     if len(argv) < 2:

@@ -1,0 +1,202 @@
+"""Extract the round-2 query units from one model's round-1 answer (protocol v0.3 sections 6.3, 6.4; rules/rewrite_table.md
+section 1). Copied and adapted from tasks/CASE-01/diag/scripts/extract_queries.py (rules/copied_from.tsv). Deterministic;
+the author reviews the result before round 2.
+
+  python3 -B scripts/extract_queries.py <code>
+
+Reads outputs/round1/<code>.md and writes round2/q/<code><n>.tcl (a query to run) or <code><n>.txt (not runnable), plus
+round2/extracted_<code>.tsv with columns: qid kind line file fixed_code ctx_requested priority over_limit.
+Part 4 runs from the line matching "四、检查请求" (also 下一步查询) to the line before the one matching "五、".
+CASE-02 additions: ctx_requested (R1 / R2 / both) from the code block first, else from the request item's prose
+(comments never count); priority from "优先级 n" / "第 n 优先" in the item; units after the 12th are over_limit and
+get the fixed code 未执行：超出预登记上限.
+"""
+import os
+import re
+import sys
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from c2paths import CASE, OUTPUTS, RULES, write_new_or_same  # noqa: E402
+import contract as contract_mod  # noqa: E402
+
+PART4 = re.compile(r"四\s*[、.．]\s*(?:检查请求|下一步查询)")
+PART5 = re.compile(r"五\s*[、.．]")
+FENCE = re.compile(r"^\s*```\s*([A-Za-z0-9_+-]*)\s*$")
+LIST = re.compile(r"^\s*(?:[-*•]|\d+[.)、]|（\d+）|\(\d+\))\s+")
+ITEM_START = re.compile(r"^\s*(?:\d+[.)、]|（\d+）|\(\d+\))\s+")
+LABEL = re.compile(r"^(?:\*\*[^*]+\*\*|__[^_]+__|[^`:：\s][^`:：]{0,29})\s*[:：]\s*")
+INLINE = re.compile(r"`([^`\n]+)`")
+CTX = re.compile(r"\bR([12])\b")
+PRIORITY = re.compile(r"优先级\s*([0-9０-９]+)|第\s*([0-9０-９]+)\s*优先")
+TCL_TAGS = {"", "tcl", "sdc"}
+OTHER_STA = {"report_timing", "get_timing_paths", "report_constraint", "report_global_timing", "report_qor",
+             "all_fanin", "all_fanout", "get_attribute", "report_timing_summary", "report_design"}
+TCL_BASIC = {"set", "puts", "foreach", "for", "if", "while", "expr", "llength", "lindex", "lsort", "catch"}
+NOT_RUN = "未执行：未指明可执行的对象或命令"
+OUTSIDE = "需要模型外数据"
+OVER_LIMIT = "未执行：超出预登记上限"
+
+
+def commands(rules=RULES):
+    out = set(OTHER_STA)
+    for name in ("allow_query.txt", "allow_whatif.txt", "setup_commands.txt"):
+        with open(os.path.join(rules, name), encoding="utf-8") as f:
+            out |= {w.strip() for w in f if w.strip() and not w.startswith("#")}
+    return out
+
+
+def qid_key(qid):
+    m = re.match(r"^([A-Za-z]*)(\d+)$", qid)
+    return (m.group(1), int(m.group(2))) if m else (qid, 0)
+
+
+def starts_with_command(text, cmds, basic=True):
+    words = text.strip().split()
+    if not words:
+        return False
+    return words[0] in cmds or (basic and words[0] in TCL_BASIC and len(words) > 1)
+
+
+def part4(lines):
+    start = next((i for i, l in enumerate(lines) if PART4.search(l)), None)
+    if start is None:
+        return None
+    end = next((i for i in range(start + 1, len(lines)) if PART5.search(l := lines[i]) and l.lstrip(" #*").startswith("五")),
+               len(lines))
+    return start + 1, end
+
+
+def block_kind(tag, body, cmds):
+    first = next((l for l in body if l.strip() and not l.strip().startswith("#")), "")
+    return "codeblock" if tag in TCL_TAGS or starts_with_command(first, cmds) else "nontcl"
+
+
+def _ctx_in(text):
+    found = set(CTX.findall(text))
+    if found == {"1"}:
+        return "R1"
+    if found == {"2"}:
+        return "R2"
+    return None
+
+
+def _to_int(s):
+    return int(s.translate(str.maketrans("０１２３４５６７８９", "0123456789")))
+
+
+def _item_prose(lines, start, end):
+    """The prose of the request item containing line `start`: from its list marker line to the next item, code
+    blocks excluded."""
+    i = start
+    while i > 0 and not ITEM_START.match(lines[i]):
+        if FENCE.match(lines[i]) and i != start:
+            i += 1
+            break
+        i -= 1
+    j = start + 1
+    prose, in_block = [lines[i]] if i >= 0 else [], bool(FENCE.match(lines[start]))   # start may be the opening fence
+    while j < end and not ITEM_START.match(lines[j]):
+        if FENCE.match(lines[j]):
+            in_block = not in_block
+        elif not in_block:
+            prose.append(lines[j])
+        j += 1
+    return "\n".join(prose)
+
+
+def extract(answer, cmds, max_requests=None):
+    """Part-4 units of one answer: [{qid_n, kind, line, text, ctx_requested, priority, over_limit, fixed_code}]."""
+    lines = answer.splitlines()
+    span = part4(lines)
+    if span is None:
+        raise ValueError("part 4 heading not found")
+    if max_requests is None:
+        max_requests = contract_mod.load(os.path.join(RULES, "contract.json")).max_requests
+    units, i = [], span[0]
+    while i < span[1]:
+        line = lines[i]
+        fence = FENCE.match(line)
+        if fence:
+            tag, body, j = fence.group(1).lower(), [], i + 1
+            while j < span[1] and not FENCE.match(lines[j]):
+                body.append(lines[j])
+                j += 1
+            code_ctx = _ctx_in("\n".join(l for l in body if not l.lstrip().startswith("#")))
+            prose = _item_prose(lines, i, span[1])
+            units.append({"kind": block_kind(tag, body, cmds), "line": i + 1, "text": "\n".join(body),
+                          "ctx_requested": code_ctx or _ctx_in(prose) or "both", "priority": _priority(prose)})
+            i = j + 1
+            continue
+        spans = INLINE.findall(line)
+        cmd_spans = [s.strip() for s in spans if starts_with_command(s, cmds)]
+        stripped = LIST.sub("", line, count=1).strip()
+        if not starts_with_command(stripped, cmds, basic=False):
+            stripped = LABEL.sub("", stripped, count=1)
+        prose = _item_prose(lines, i, span[1])
+        if cmd_spans:
+            units.append({"kind": "inline", "line": i + 1, "text": "\n".join(cmd_spans),
+                          "ctx_requested": _ctx_in("\n".join(cmd_spans)) or _ctx_in(prose) or "both", "priority": _priority(prose)})
+        elif not spans and starts_with_command(stripped, cmds, basic=False):
+            units.append({"kind": "line", "line": i + 1, "text": stripped,
+                          "ctx_requested": _ctx_in(stripped) or _ctx_in(prose) or "both", "priority": _priority(prose)})
+        elif LIST.match(line) and not _fence_follows(lines, i, span[1]):
+            units.append({"kind": "text", "line": i + 1, "text": line.strip(), "ctx_requested": _ctx_in(prose) or "both",
+                          "priority": _priority(prose)})
+        i += 1
+    for n, u in enumerate(units, 1):
+        u["qid_n"] = n
+        u["over_limit"] = n > max_requests
+        if u["over_limit"]:
+            u["fixed_code"] = OVER_LIMIT
+        else:
+            u["fixed_code"] = {"nontcl": OUTSIDE, "text": NOT_RUN}.get(u["kind"], "-")
+    return units
+
+
+def _fence_follows(lines, i, end):
+    """True when the next non-blank line after i (inside part 4) opens a code block: then line i is the request
+    item's prose for that block, not a text unit of its own."""
+    j = i + 1
+    while j < end and not lines[j].strip():
+        j += 1
+    return j < end and bool(FENCE.match(lines[j]))
+
+
+def _priority(prose):
+    m = PRIORITY.search(prose)
+    if not m:
+        return None
+    return _to_int(m.group(1) or m.group(2))
+
+
+def main(argv=None):
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8")
+    argv = sys.argv[1:] if argv is None else argv
+    if len(argv) != 1 or not re.fullmatch(r"[A-Z]", argv[0]):
+        print("usage: extract_queries.py <code>")
+        return 2
+    code = argv[0]
+    with open(os.path.join(OUTPUTS, "round1", f"{code}.md"), encoding="utf-8") as f:
+        answer = f.read()
+    try:
+        units = extract(answer, commands())
+    except ValueError as e:
+        print(f"EXTRACT FAIL: {code}: {e}; the author decides how to proceed")
+        return 1
+    rows = ["qid\tkind\tline\tfile\tfixed_code\tctx_requested\tpriority\tover_limit"]
+    for u in units:
+        qid = f"{code}{u['qid_n']}"
+        ext = ".tcl" if u["kind"] in ("codeblock", "inline", "line") else ".txt"
+        rel = f"round2/q/{qid}{ext}"
+        write_new_or_same(os.path.join(CASE, rel), (u["text"].rstrip("\n") + "\n").encode("utf-8"))
+        rows.append(f"{qid}\t{u['kind']}\t{u['line']}\t{rel}\t{u['fixed_code']}\t{u['ctx_requested']}\t"
+                    f"{u['priority'] if u['priority'] is not None else '-'}\t{int(u['over_limit'])}")
+    write_new_or_same(os.path.join(CASE, "round2", f"extracted_{code}.tsv"), ("\n".join(rows) + "\n").encode())
+    runnable = sum(u["kind"] in ("codeblock", "inline", "line") and not u["over_limit"] for u in units)
+    print(f"EXTRACT OK: {code}: {len(units)} unit(s), {runnable} to run")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
