@@ -208,12 +208,12 @@ add("15_other_cause_insufficient", [],
     rnd("尚不能确认", "假设", F3_R1, "未定位", "是", "是", "线索", "当成通过", ["判断合理"], evidence_level="线索", action="明确撤回"))
 
 add("16_over_budget", [],
-    f"{OBS}\n{HYP}", "预算账单说 A3 R2、A4 R1、A4 R2 没有交还（超出总预算）。交还的几条都显示 in_b 是无约束路径，与假设一致，但范围没查全。",
+    f"{OBS}\n{HYP}", "预算账单说 A3 R1、A3 R2、A4 R1、A4 R2 没有交还（超出总预算）。交还的几条都显示 in_b 是无约束路径，与假设一致，但范围没查全。",
     [req(f"foreach p [all_inputs -no_clocks] {{ foreach c {{tt_025C_1v80 tt_100C_1v80 ss_100C_1v60}} {{ report_checks -from $p -scene $c -unconstrained -group_path_count {n} }} }}", f"对 R1 和 R2 都执行（优先级 {n}）：", "both", n) for n in range(1, 5)],
     [inst(f"A{n}", ctx, 262144, 2000, 2001, truncated=True, attribution="流程限制：单实例截断", priority=n, body=B_OVER) for n in range(1, 5) for ctx in ("R1", "R2")],
     R1_OK,
     rnd("尚不能确认", "假设", F3_R1, "未定位", "是", "是", "现象级", "单独标记", ["判断合理", "查询任务未完成"], evidence_level="现象级", attribution="流程限制：总预算", action="保持"),
-    budget_dropped=["A3 R2", "A4 R1", "A4 R2"],   # 790000 token x 1.91 B = 1508900 B: five 256 KiB instances fit, the sixth does not
+    budget_dropped=["A3 R1", "A3 R2", "A4 R1", "A4 R2"],   # 600000 token x 1.91 B = 1146000 B: four 256 KiB instances fit, the fifth does not (addendum 3; five fitted under 790000)
     calls={"A1_R2": [{"call_seq": 1, "status": "ok", "returned_out": [1, 40], "complete": True, "cmd": "report_checks"}]})
 
 add("17_unidentified_with_full_evidence", [],
@@ -244,7 +244,7 @@ add("19_local_confirm", ["local_confirm"],
            "A2_R2": [{"call_seq": 1, "status": "ok", "returned_out": [1, 1], "complete": True, "cmd": "report_arrival"}],
            "A3_R2": [{"call_seq": 1, "status": "ok", "returned_out": [1, 1], "complete": True, "cmd": "report_arrival"}]})
 
-spec = {"version": "rehearsal spec v0.2 (2026-10-29; CASE02_R6 M1 corrections; author re-confirmation of checkpoint C pending)", "code": "A", "groups": G}
+spec = {"version": "rehearsal spec v0.2.1 (2026-10-29; v0.2 labels confirmed by the author; group 16 fixture follows the addendum-3 budget 600000)", "code": "A", "groups": G}
 out = pathlib.Path(__file__).resolve().parent / "spec.json"
 out.write_text(json.dumps(spec, ensure_ascii=False, indent=1) + "\n", encoding="utf-8", newline="\n")
 print("groups", len(G), "bytes", out.stat().st_size)

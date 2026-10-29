@@ -1,5 +1,5 @@
 {
- "version": "rehearsal spec v0.2 (2026-10-29; CASE02_R6 M1 corrections; author re-confirmation of checkpoint C pending)",
+ "version": "rehearsal spec v0.2.1 (2026-10-29; v0.2 labels confirmed by the author; group 16 fixture follows the addendum-3 budget 600000)",
  "code": "A",
  "groups": [
   {
@@ -7142,7 +7142,7 @@
    "name": "16_over_budget",
    "shapes": [],
    "r1_text": "- R2 的 ss_n40C_1v60 in2reg max slack 比 R1 大 0.0171 ns（summary_R1.tsv:9，summary_R2.tsv:9）。\n- 两份 path 报告的起点不同：R1 是 in_b[2]，R2 是 in_a[34]（path_R1.rpt:1，path_R2.rpt:1）。\n- TOPO 行相同，网表相同。\n报告差异来自约束而不是电路：这是假设。",
-   "r2_text": "预算账单说 A3 R2、A4 R1、A4 R2 没有交还（超出总预算）。交还的几条都显示 in_b 是无约束路径，与假设一致，但范围没查全。",
+   "r2_text": "预算账单说 A3 R1、A3 R2、A4 R1、A4 R2 没有交还（超出总预算）。交还的几条都显示 in_b 是无约束路径，与假设一致，但范围没查全。",
    "requests": [
     {
      "prose": "对 R1 和 R2 都执行（优先级 1）：",
@@ -7366,6 +7366,7 @@
     }
    },
    "budget_dropped": [
+    "A3 R1",
     "A3 R2",
     "A4 R1",
     "A4 R2"
