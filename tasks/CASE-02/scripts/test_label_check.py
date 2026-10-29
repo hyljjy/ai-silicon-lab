@@ -62,3 +62,41 @@ class TestScan(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestR6Label(unittest.TestCase):
+    """CASE02_R6 M13: unclosed fences do not hide later operator lines; model-visible list and system prompt are checked."""
+
+    def setUp(self):
+        self.tmp = tempfile.mkdtemp(prefix="label6_")
+        self.addCleanup(shutil.rmtree, self.tmp, True)
+
+    def write(self, rel, text):
+        p = os.path.join(self.tmp, rel)
+        os.makedirs(os.path.dirname(p), exist_ok=True)
+        with open(p, "w", encoding="utf-8", newline="\n") as f:
+            f.write(text)
+        return p
+
+    def test_unclosed_fence_does_not_hide_operator_label(self):
+        p = self.write("prompts/round2/A.md", "### 查询 A1（R1）\n```text\nWarning: missing\n\n### 来源 summary_missing.tsv\n")
+        found = lc.scan_operator_files([p])
+        self.assertTrue(any("summary_missing" in f for f in found), found)
+
+    def test_fence_inside_model_answer_does_not_leak_state(self):
+        p = self.write("prompts/round2/A.md", "题目\n<<<第 1 回答开始>>>\n```\nmissing in prose\n<<<第 1 轮回答结束>>>\n"
+                       "### 文件 restored_summary.tsv\n".replace("<<<第 1 回答开始>>>", "<<<第 1 轮回答开始>>>"))
+        found = lc.scan_operator_files([p])
+        self.assertTrue(any("restored_summary" in f for f in found), found)
+
+    def test_report_lists_skipped_segments(self):
+        text = "a\n<<<第 1 轮回答开始>>>\nmissing\n<<<第 1 轮回答结束>>>\n```\nmissing\n```\n"
+        rep = lc.scan_report(text, "prompts/round2/A.md")
+        self.assertEqual(rep["findings"], [])
+        self.assertEqual([s["kind"] for s in rep["skipped"]], ["model_answer", "fence"])
+
+    def test_model_visible_list_matching(self):
+        self.assertTrue(lc.is_model_visible("prompts/round2/B.md"))
+        self.assertTrue(lc.is_model_visible("package/summary_R1.tsv"))
+        self.assertFalse(lc.is_model_visible("package/SOURCES.tsv"))
+        self.assertFalse(lc.is_model_visible("rules/contract.json"))

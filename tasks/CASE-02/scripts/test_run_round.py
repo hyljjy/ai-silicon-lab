@@ -218,3 +218,31 @@ class TestSmoke(Base):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestR6Shell(Base):
+    """CASE02_R6 M12: size limits are checked after a normal exit too; the hard stage kills the whole tree; waits recorded."""
+
+    def test_burst_then_exit_is_still_output_limit(self):
+        self.scenarios({"k3[1M]": "burstexit"})
+        r = self.started()
+        r.limits["stdout_bytes"] = 100000
+        r.limits["poll_seconds"] = 5          # longer than the burst, so only the post-exit check can see it
+        r.run_round(1)
+        with open(os.path.join(self.sandbox, "sealed-case02", "round1", "kimi-1.proc.json"), encoding="utf-8") as f:
+            proc = json.load(f)
+        self.assertEqual(proc["limit_hit"], "stdout_bytes")
+        self.assertIn("waits", proc)
+
+    def test_child_of_child_killed_on_timeout(self):
+        self.scenarios({"claude-opus-5-5": "hangtree"})
+        r = self.started()
+        r.limits["process_seconds"] = 2
+        r.limits["poll_seconds"] = 0.2
+        r.limits["soft_kill_wait_seconds"] = 1
+        r.limits["hard_kill_wait_seconds"] = 2
+        r.run_round(1)
+        with open(os.path.join(self.sandbox, "sealed-case02", "round1", "claude-1.proc.json"), encoding="utf-8") as f:
+            proc = json.load(f)
+        self.assertEqual(proc["limit_hit"], "process_seconds")
+        self.assertTrue(proc["tree_clean"], proc)

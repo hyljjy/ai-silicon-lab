@@ -38,6 +38,13 @@ def main():
             time.sleep(0.05)
     if scenario == "hang":
         time.sleep(30)
+    if scenario == "burstexit":                        # a burst over the limit, then a normal exit within one poll
+        sys.stdout.write(json.dumps({"type": "noise", "pad": "y" * 150000}) + "\n")
+        sys.stdout.flush()
+    if scenario == "hangtree":                         # a grandchild that outlives a soft termination of this process
+        import subprocess
+        subprocess.Popen([sys.executable, "-c", "import time; time.sleep(30)"])
+        time.sleep(30)
     leaked = sorted(k for k in os.environ if k.upper().startswith(("ANTHROPIC_", "CLAUDE"))
                     and k not in ("CLAUDE_CODE_MAX_OUTPUT_TOKENS",))
     answer = f"echo system={len(system)} user={len(user)} leaked={leaked}"

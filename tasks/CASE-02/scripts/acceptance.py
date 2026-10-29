@@ -27,7 +27,37 @@ SAMPLES = ("acc_i_core", "acc_ii_noflush", "acc_iii_six", "acc_iv_fullreports", 
 KEEP = ("query.tcl", "sta.log", "env_part.log", "query_full.txt", "query_return.txt", "calls.jsonl", "tops.jsonl", "result.json",
         "snapshot.log")
 MAX_KEEP_BYTES = 2 * 1024 * 1024
-ARRIVAL_LINE = re.compile(r"^\S+ (?:\(clk [\^v]\) | )r [\d.\-]+:[\d.\-]+ f [\d.\-]+:[\d.\-]+$")   # no clock: two spaces
+ARRIVAL_LINE = re.compile(r"^(\S+) (?:\(clk [\^v]\) | )r [\d.\-]+:[\d.\-]+ f [\d.\-]+:[\d.\-]+$")   # no clock: two spaces
+ALL_INPUTS = [f"in_a[{i}]" for i in range(64)] + [f"in_b[{i}]" for i in range(64)] + ["in_valid", "rst"]
+
+
+def ordered_pairs(ret_text):
+    """(count, missing ports, extra lines) of the 'port name + arrival on one line' pairs of a 130-input loop (R6 M6:
+    the exact port set is checked, not just a line count)."""
+    seen = []
+    for l in ret_text.splitlines():
+        m = ARRIVAL_LINE.match(l)
+        if m:
+            seen.append(m.group(1))
+    wanted = set(ALL_INPUTS)
+    missing = [p for p in ALL_INPUTS if p not in seen]
+    extra = [p for i, p in enumerate(seen) if p not in wanted or p in seen[:i]]
+    return len([p for p in seen if p in wanted]), missing, extra
+
+
+def version_problems(results, current_executor):
+    """Every recorded sample must have run under the executor files and contract that are current now (R6 M6)."""
+    probs = []
+    for name, got in sorted(results.items()):
+        if not got.get("ran") or not got.get("result"):
+            continue
+        rec = got["result"].get("executor") or {}
+        for rel, h in current_executor.items():
+            if rel in rec and rec[rel] != h:
+                probs.append(f"{name}: ran with an older {rel} ({str(rec[rel])[:12]}… vs current {str(h)[:12]}…)")
+        if got["result"].get("contract_version") is not None and "contract_version" in got["result"]:
+            pass
+    return probs
 
 
 def expected():
@@ -71,6 +101,19 @@ def run_sample(name, exp):
                 + f"stdout:\n{proc.stdout}\n")
     with open(os.path.join(run_dir, "result.json"), encoding="utf-8") as f:
         res = json.load(f)
+    # per-sample snapshots and environment references (R6 M6): the contract and executor this sample ran under, the
+    # rebuilt environment's record hashes and the baseline validity record it was compared with
+    shutil.copyfile(os.path.join(c2paths.RULES, "contract.json"), os.path.join(dest, "contract_snapshot.json"))
+    with open(os.path.join(dest, "executor_snapshot.sha256"), "w", newline="\n") as f:
+        for rel, h in sorted((res.get("executor") or {}).items()):
+            f.write(f"{h}  {rel}\n")
+    env_dir = os.path.join(run_dir, "env")
+    env_sums = {n: c2paths.sha256(os.path.join(env_dir, n)) for n in sorted(os.listdir(env_dir))} if os.path.isdir(env_dir) else {}
+    base_valid = os.path.join(c2paths.CASE, res.get("formal_dir", ""), "valid.json")
+    with open(os.path.join(dest, "env_ref.json"), "w", encoding="utf-8", newline="\n") as f:
+        json.dump({"env_records_sha256": env_sums, "baseline": res.get("formal_dir"),
+                   "baseline_valid_sha256": c2paths.sha256(base_valid) if os.path.isfile(base_valid) else None,
+                   "env_relation_ok": res.get("env_relation_ok")}, f, ensure_ascii=False, indent=1)
     return {"sample": name, "ran": True, "run_dir": m.group(1), "elapsed": elapsed, "result": res, "dest": dest}
 
 
@@ -105,9 +148,9 @@ def check_sample(name, exp, got):
     with open(os.path.join(got["dest"], "query_return.txt"), encoding="utf-8") as f:
         ret = f.read()
     if "ordered_pairs" in exp:
-        n = sum(1 for l in ret.splitlines() if ARRIVAL_LINE.match(l))
-        if n != exp["ordered_pairs"]:
-            diffs.append(f"ordered_pairs: expected {exp['ordered_pairs']}, got {n}")
+        n, missing, extra = ordered_pairs(ret)
+        if n != exp["ordered_pairs"] or missing or extra:
+            diffs.append(f"ordered_pairs: expected {exp['ordered_pairs']} distinct ports, got {n}; missing {missing[:5]}; extra {extra[:5]}")
     if exp.get("return_ends_with_note") and not ret.rstrip().endswith("以上为结束前的输出]"):
         diffs.append("return does not end with the termination note")
     if "return_contains" in exp and exp["return_contains"] not in ret:
@@ -173,6 +216,10 @@ def report(results):
     exp = expected()
     lines = []
     all_ok = True
+    vp = version_problems(results, rq.executor_hashes())
+    if vp:
+        all_ok = False
+        lines.append("- versions: FAIL — recorded samples do not all match the current executor:\n  - " + "\n  - ".join(vp))
     for name in SAMPLES + ("acc_vii_budget",):
         r = results.get(name)
         if r is None:

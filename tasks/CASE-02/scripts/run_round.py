@@ -123,13 +123,52 @@ def shell_limits(case):
     return limits
 
 
-def _kill(proc, hard):
+def _descendants(pid):
+    """All descendant pids of `pid` (Windows: Win32_Process via PowerShell; POSIX: pgrep -P), for the tree check."""
+    found, todo = [], [pid]
+    while todo:
+        p = todo.pop()
+        try:
+            if os.name == "nt":
+                out = subprocess.run(["powershell", "-NoProfile", "-Command",
+                                      f"Get-CimInstance Win32_Process -Filter 'ParentProcessId={p}' | Select-Object -ExpandProperty ProcessId"],
+                                     capture_output=True, text=True, timeout=30).stdout
+            else:
+                out = subprocess.run(["pgrep", "-P", str(p)], capture_output=True, text=True, timeout=30).stdout
+        except (OSError, subprocess.SubprocessError):
+            out = ""
+        for tok in out.split():
+            if tok.isdigit() and int(tok) not in found:
+                found.append(int(tok))
+                todo.append(int(tok))
+    return found
+
+
+def _alive(pid):
+    try:
+        if os.name == "nt":
+            out = subprocess.run(["tasklist", "/FI", f"PID eq {pid}", "/NH"], capture_output=True, text=True, timeout=30).stdout
+            return str(pid) in out.split()
+        os.kill(pid, 0)
+        return True
+    except (OSError, subprocess.SubprocessError):
+        return False
+
+
+def _kill(proc, hard, pids=()):
     try:
         if hard:
             if os.name == "nt":
                 subprocess.run(["taskkill", "/F", "/T", "/PID", str(proc.pid)], capture_output=True, timeout=30)
+                for p in pids:
+                    subprocess.run(["taskkill", "/F", "/PID", str(p)], capture_output=True, timeout=30)
             else:
                 proc.kill()
+                for p in pids:
+                    try:
+                        os.kill(p, 9)
+                    except OSError:
+                        pass
         else:
             proc.terminate()
     except (OSError, subprocess.SubprocessError):
@@ -138,14 +177,15 @@ def _kill(proc, hard):
 
 def run_limited_win(argv, stdin_bytes, stdout_path, stderr_path, limits, cwd, env):
     """Run a model call with a wall-clock limit and stdout / stderr size limits, polled every poll_seconds; on a
-    limit: soft termination, wait, then hard kill, wait (R5 M6). Returns (exit_code, proc_record): exit_code is the
-    process's code, or "timeout" / "output_limit" when a limit stopped it."""
+    limit: soft termination, wait, then hard kill of the whole tree, wait (R5 M6, R6 M12). The size limits are
+    checked once more after a normal exit (a burst shorter than one poll interval). Returns (exit_code, record):
+    exit_code is the process's code, or "timeout" / "output_limit" when a limit was hit."""
     with open(stdout_path, "wb") as out, open(stderr_path, "wb") as err:
         proc = subprocess.Popen(argv, cwd=cwd, env=env, stdin=subprocess.PIPE, stdout=out, stderr=err)
         feeder = threading.Thread(target=_feed, args=(proc, stdin_bytes), daemon=True)
         feeder.start()
         start = time.monotonic()
-        hit, stage = None, None
+        hit, stage, waits, kids = None, None, {}, []
         while True:
             try:
                 proc.wait(timeout=limits["poll_seconds"])
@@ -161,22 +201,39 @@ def run_limited_win(argv, stdin_bytes, stdout_path, stderr_path, limits, cwd, en
             elif se > limits["stderr_bytes"]:
                 hit = "stderr_bytes"
             if hit:
+                kids = _descendants(proc.pid)
+                t0 = time.monotonic()
                 _kill(proc, hard=False)
                 stage = "soft"
                 try:
                     proc.wait(timeout=limits["soft_kill_wait_seconds"])
                 except subprocess.TimeoutExpired:
-                    _kill(proc, hard=True)
+                    pass
+                waits["soft_wait_seconds"] = round(time.monotonic() - t0, 3)
+                if proc.poll() is None or any(_alive(k) for k in kids):
+                    t1 = time.monotonic()
+                    _kill(proc, hard=True, pids=kids)
                     stage = "hard"
                     try:
                         proc.wait(timeout=limits["hard_kill_wait_seconds"])
                     except subprocess.TimeoutExpired:
                         raise RuntimeError(f"pid {proc.pid} survived the kill; stop it by hand")
+                    waits["hard_wait_seconds"] = round(time.monotonic() - t1, 3)
                 break
         elapsed = time.monotonic() - start
-    record = {"limit_hit": hit, "terminated": hit is not None, "kill_stage": stage, "returncode": proc.returncode,
-              "elapsed_seconds": round(elapsed, 3), "stdout_bytes": os.path.getsize(stdout_path),
-              "stderr_bytes": os.path.getsize(stderr_path), "limits": dict(limits)}
+    so, se = os.path.getsize(stdout_path), os.path.getsize(stderr_path)
+    if hit is None:                                   # post-exit check (R6 M12)
+        if so > limits["stdout_bytes"]:
+            hit = "stdout_bytes"
+        elif se > limits["stderr_bytes"]:
+            hit = "stderr_bytes"
+    deadline = time.monotonic() + 2
+    while kids and any(_alive(k) for k in kids) and time.monotonic() < deadline:
+        time.sleep(0.2)
+    tree_clean = not any(_alive(k) for k in kids)
+    record = {"limit_hit": hit, "terminated": stage is not None, "kill_stage": stage, "returncode": proc.returncode,
+              "elapsed_seconds": round(elapsed, 3), "stdout_bytes": so, "stderr_bytes": se, "limits": dict(limits),
+              "waits": waits, "descendants_seen": kids, "tree_clean": tree_clean}
     if hit == "process_seconds":
         return "timeout", record
     if hit:
@@ -409,13 +466,22 @@ class RoundRunner:
 
     def run_attempts(self, rnd, attempts, todo):
         sealed_dir = os.path.join(self.sealed, f"round{rnd}")
-        # label check of every prompt BEFORE anything is recorded or called (protocol 6.2)
+        # label check of the exact system and user bytes BEFORE anything is recorded or called (protocol 6.2; R6 M13)
+        reports = []
         for entry, code, n in todo:
-            _, user, _, path = self.prompts(rnd, code)
-            found = lc.scan_prompt_bytes(user, os.path.relpath(path, self.case))
-            if found:
-                raise SystemExit("ROUND FAIL: internal label in an operator-generated part of the prompt: " + "; ".join(found))
+            system, user, _, path = self.prompts(rnd, code)
+            rel = os.path.relpath(path, self.case)
+            if not lc.is_model_visible(rel):
+                raise SystemExit(f"ROUND FAIL: {rel} is not in rules/model_visible.txt")
+            reports.append(lc.scan_report(user.decode("utf-8", "replace"), rel))
+            reports.append(lc.scan_report(system.decode("utf-8", "replace"), "prompts/system.md"))
+        found = [f for r in reports for f in r["findings"]]
         os.makedirs(sealed_dir, exist_ok=True)
+        with open(os.path.join(sealed_dir, "label_check.json"), "a", encoding="utf-8") as f:
+            f.write(json.dumps({"time": datetime.datetime.now().isoformat(timespec="seconds"), "reports": reports},
+                               ensure_ascii=False) + "\n")
+        if found:
+            raise SystemExit("ROUND FAIL: internal label in an operator-generated part of the prompt: " + "; ".join(found))
         for (entry, code, n), workdir in zip(todo, self.make_workdirs(len(todo))):
             system, user, ok, _ = self.prompts(rnd, code)
             record = {"code": code, "model": entry["name"], "attempt": n, "label": f"{entry['name']}-{n}",
