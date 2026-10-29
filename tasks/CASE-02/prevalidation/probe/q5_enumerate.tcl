@@ -1,0 +1,5 @@
+# 5.5 complete enumeration inside the safe interpreter: per input port, constrained and unconstrained path-end counts
+# for max and min on one scene; then the check_setup list.
+foreach p [all_inputs -no_clocks] { puts "PORT [get_full_name $p] max_c=[llength [find_timing_paths -from $p -path_delay max -scenes ss_n40C_1v60]] max_u=[llength [find_timing_paths -from $p -path_delay max -scenes ss_n40C_1v60 -unconstrained]] min_c=[llength [find_timing_paths -from $p -path_delay min -scenes ss_n40C_1v60]] min_u=[llength [find_timing_paths -from $p -path_delay min -scenes ss_n40C_1v60 -unconstrained]]" }
+foreach p [get_ports {in_b[*]}] { foreach pe [find_timing_paths -from $p -path_delay max -scenes ss_n40C_1v60 -unconstrained] { puts "UPE max [get_full_name $p] -> [get_full_name [get_property $pe endpoint]]" } ; foreach pe [find_timing_paths -from $p -path_delay min -scenes ss_n40C_1v60 -unconstrained] { puts "UPE min [get_full_name $p] -> [get_full_name [get_property $pe endpoint]]" } }
+check_setup -verbose -no_input_delay

@@ -38,3 +38,10 @@ tasks/CASE-01/revise/impl_plan.md
 tasks/CASE-01/revise/interventions.md
 tasks/CASE-01/revise/**/.lock
 tasks/CASE-01/revise/**/.lock.*
+
+# CASE-02 protocol step 2 pre-validation scratch: never committed (protocol v0.2 section 9)
+tasks/CASE-02/scratch/
+
+# CASE-02 intervention log (kept locally, as for CASE-01) and reruns of the pre-validation scripts (2026-10-28)
+tasks/CASE-02/interventions.md
+tasks/CASE-02/prevalidation/rerun/

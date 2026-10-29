@@ -1,0 +1,4 @@
+8c8
+< source [file join $::env(CASE_DIR) scripts sta_run.tcl]
+---
+> source $::env(DRIVER)

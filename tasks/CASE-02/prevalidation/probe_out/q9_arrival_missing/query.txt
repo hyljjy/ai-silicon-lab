@@ -1,0 +1,215 @@
+=== CASE01-probe QUERY BEGIN (query) ===
+CASE01-probe-CMD: report_arrival -scene ss_n40C_1v60 [get_ports {in_a[0]}]
+(clk ^) r 0.00:5.58 f 0.00:5.58
+CASE01-probe-CMD: report_arrival -scene ss_n40C_1v60 [get_ports {in_b[0]}]
+ r 0.00:0.00 f 0.00:0.00
+CASE01-probe-CMD: report_arrival -scene ss_n40C_1v60 -min_max max [get_ports {in_b[0]}]
+CASE01-probe-ERROR: Error 562: safe_query.tcl line 1, report_arrival -min_max is not a known keyword or flag.
+CASE01-probe-CMD: report_required -scene ss_n40C_1v60 [get_ports {in_a[0]}]
+(clk ^) r -1.29:1.92 f -0.86:2.64
+CASE01-probe-CMD: report_required -scene ss_n40C_1v60 [get_ports {in_b[0]}]
+CASE01-probe-CMD: report_slack -scene ss_n40C_1v60 [get_ports {in_a[0]}]
+(clk ^) r 1.29:-3.66 f 0.86:-2.94
+CASE01-probe-CMD: report_slack -scene ss_n40C_1v60 [get_ports {in_b[0]}]
+CASE01-probe-CMD: report_arrival -scene ss_n40C_1v60 [get_pins {_12026_/D}]
+ r 0.72:24.27 f 0.75:25.96
+(clk ^) r 0.75:29.83 f 0.79:31.53
+CASE01-probe-CMD: report_arrival -scene ss_n40C_1v60 [get_ports {in_a[0] in_b[0]}]
+CASE01-probe-ERROR: Error 128: safe_query.tcl line 1, pin must be a single port or pin.
+CASE01-probe-CMD: foreach p [all_inputs -no_clocks] { puts -nonewline "[get_full_name $p] "; report_arrival -scene ss_n40C_1v60 $p }
+(clk ^) r 0.00:5.58 f 0.00:5.58
+(clk ^) r 0.00:5.58 f 0.00:5.58
+(clk ^) r 0.00:5.58 f 0.00:5.58
+(clk ^) r 0.00:5.58 f 0.00:5.58
+(clk ^) r 0.00:5.58 f 0.00:5.58
+(clk ^) r 0.00:5.58 f 0.00:5.58
+(clk ^) r 0.00:5.58 f 0.00:5.58
+(clk ^) r 0.00:5.58 f 0.00:5.58
+(clk ^) r 0.00:5.58 f 0.00:5.58
+(clk ^) r 0.00:5.58 f 0.00:5.58
+(clk ^) r 0.00:5.58 f 0.00:5.58
+(clk ^) r 0.00:5.58 f 0.00:5.58
+(clk ^) r 0.00:5.58 f 0.00:5.58
+(clk ^) r 0.00:5.58 f 0.00:5.58
+(clk ^) r 0.00:5.58 f 0.00:5.58
+(clk ^) r 0.00:5.58 f 0.00:5.58
+(clk ^) r 0.00:5.58 f 0.00:5.58
+(clk ^) r 0.00:5.58 f 0.00:5.58
+(clk ^) r 0.00:5.58 f 0.00:5.58
+(clk ^) r 0.00:5.58 f 0.00:5.58
+(clk ^) r 0.00:5.58 f 0.00:5.58
+(clk ^) r 0.00:5.58 f 0.00:5.58
+(clk ^) r 0.00:5.58 f 0.00:5.58
+(clk ^) r 0.00:5.58 f 0.00:5.58
+(clk ^) r 0.00:5.58 f 0.00:5.58
+(clk ^) r 0.00:5.58 f 0.00:5.58
+(clk ^) r 0.00:5.58 f 0.00:5.58
+(clk ^) r 0.00:5.58 f 0.00:5.58
+(clk ^) r 0.00:5.58 f 0.00:5.58
+(clk ^) r 0.00:5.58 f 0.00:5.58
+(clk ^) r 0.00:5.58 f 0.00:5.58
+(clk ^) r 0.00:5.58 f 0.00:5.58
+(clk ^) r 0.00:5.58 f 0.00:5.58
+(clk ^) r 0.00:5.58 f 0.00:5.58
+(clk ^) r 0.00:5.58 f 0.00:5.58
+(clk ^) r 0.00:5.58 f 0.00:5.58
+(clk ^) r 0.00:5.58 f 0.00:5.58
+(clk ^) r 0.00:5.58 f 0.00:5.58
+(clk ^) r 0.00:5.58 f 0.00:5.58
+(clk ^) r 0.00:5.58 f 0.00:5.58
+(clk ^) r 0.00:5.58 f 0.00:5.58
+(clk ^) r 0.00:5.58 f 0.00:5.58
+(clk ^) r 0.00:5.58 f 0.00:5.58
+(clk ^) r 0.00:5.58 f 0.00:5.58
+(clk ^) r 0.00:5.58 f 0.00:5.58
+(clk ^) r 0.00:5.58 f 0.00:5.58
+(clk ^) r 0.00:5.58 f 0.00:5.58
+(clk ^) r 0.00:5.58 f 0.00:5.58
+(clk ^) r 0.00:5.58 f 0.00:5.58
+(clk ^) r 0.00:5.58 f 0.00:5.58
+(clk ^) r 0.00:5.58 f 0.00:5.58
+(clk ^) r 0.00:5.58 f 0.00:5.58
+(clk ^) r 0.00:5.58 f 0.00:5.58
+(clk ^) r 0.00:5.58 f 0.00:5.58
+(clk ^) r 0.00:5.58 f 0.00:5.58
+(clk ^) r 0.00:5.58 f 0.00:5.58
+(clk ^) r 0.00:5.58 f 0.00:5.58
+(clk ^) r 0.00:5.58 f 0.00:5.58
+(clk ^) r 0.00:5.58 f 0.00:5.58
+(clk ^) r 0.00:5.58 f 0.00:5.58
+(clk ^) r 0.00:5.58 f 0.00:5.58
+(clk ^) r 0.00:5.58 f 0.00:5.58
+(clk ^) r 0.00:5.58 f 0.00:5.58
+(clk ^) r 0.00:5.58 f 0.00:5.58
+(clk ^) r 0.00:5.58 f 0.00:5.58
+(clk ^) r 0.00:5.58 f 0.00:5.58
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+rst in_valid in_a[63] in_a[62] in_a[61] in_a[60] in_a[59] in_a[58] in_a[57] in_a[56] in_a[55] in_a[54] in_a[53] in_a[52] in_a[51] in_a[50] in_a[49] in_a[48] in_a[47] in_a[46] in_a[45] in_a[44] in_a[43] in_a[42] in_a[41] in_a[40] in_a[39] in_a[38] in_a[37] in_a[36] in_a[35] in_a[34] in_a[33] in_a[32] in_a[31] in_a[30] in_a[29] in_a[28] in_a[27] in_a[26] in_a[25] in_a[24] in_a[23] in_a[22] in_a[21] in_a[20] in_a[19] in_a[18] in_a[17] in_a[16] in_a[15] in_a[14] in_a[13] in_a[12] in_a[11] in_a[10] in_a[9] in_a[8] in_a[7] in_a[6] in_a[5] in_a[4] in_a[3] in_a[2] in_a[1] in_a[0] in_b[63] in_b[62] in_b[61] in_b[60] in_b[59] in_b[58] in_b[57] in_b[56] in_b[55] in_b[54] in_b[53] in_b[52] in_b[51] in_b[50] in_b[49] in_b[48] in_b[47] in_b[46] in_b[45] in_b[44] in_b[43] in_b[42] in_b[41] in_b[40] in_b[39] in_b[38] in_b[37] in_b[36] in_b[35] in_b[34] in_b[33] in_b[32] in_b[31] in_b[30] in_b[29] in_b[28] in_b[27] in_b[26] in_b[25] in_b[24] in_b[23] in_b[22] in_b[21] in_b[20] in_b[19] in_b[18] in_b[17] in_b[16] in_b[15] in_b[14] in_b[13] in_b[12] in_b[11] in_b[10] in_b[9] in_b[8] in_b[7] in_b[6] in_b[5] in_b[4] in_b[3] in_b[2] in_b[1] in_b[0] CASE01-probe-CMD: foreach p [get_ports {in_b[*]}] { puts -nonewline "[get_full_name $p] slack_max=[get_property $p slack_max] slack_min=[get_property $p slack_min] " ; report_arrival -scene ss_n40C_1v60 $p }
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+ r 0.00:0.00 f 0.00:0.00
+in_b[63] slack_max=INF slack_min=INF in_b[62] slack_max=INF slack_min=INF in_b[61] slack_max=INF slack_min=INF in_b[60] slack_max=INF slack_min=INF in_b[59] slack_max=INF slack_min=INF in_b[58] slack_max=INF slack_min=INF in_b[57] slack_max=INF slack_min=INF in_b[56] slack_max=INF slack_min=INF in_b[55] slack_max=INF slack_min=INF in_b[54] slack_max=INF slack_min=INF in_b[53] slack_max=INF slack_min=INF in_b[52] slack_max=INF slack_min=INF in_b[51] slack_max=INF slack_min=INF in_b[50] slack_max=INF slack_min=INF in_b[49] slack_max=INF slack_min=INF in_b[48] slack_max=INF slack_min=INF in_b[47] slack_max=INF slack_min=INF in_b[46] slack_max=INF slack_min=INF in_b[45] slack_max=INF slack_min=INF in_b[44] slack_max=INF slack_min=INF in_b[43] slack_max=INF slack_min=INF in_b[42] slack_max=INF slack_min=INF in_b[41] slack_max=INF slack_min=INF in_b[40] slack_max=INF slack_min=INF in_b[39] slack_max=INF slack_min=INF in_b[38] slack_max=INF slack_min=INF in_b[37] slack_max=INF slack_min=INF in_b[36] slack_max=INF slack_min=INF in_b[35] slack_max=INF slack_min=INF in_b[34] slack_max=INF slack_min=INF in_b[33] slack_max=INF slack_min=INF in_b[32] slack_max=INF slack_min=INF in_b[31] slack_max=INF slack_min=INF in_b[30] slack_max=INF slack_min=INF in_b[29] slack_max=INF slack_min=INF in_b[28] slack_max=INF slack_min=INF in_b[27] slack_max=INF slack_min=INF in_b[26] slack_max=INF slack_min=INF in_b[25] slack_max=INF slack_min=INF in_b[24] slack_max=INF slack_min=INF in_b[23] slack_max=INF slack_min=INF in_b[22] slack_max=INF slack_min=INF in_b[21] slack_max=INF slack_min=INF in_b[20] slack_max=INF slack_min=INF in_b[19] slack_max=INF slack_min=INF in_b[18] slack_max=INF slack_min=INF in_b[17] slack_max=INF slack_min=INF in_b[16] slack_max=INF slack_min=INF in_b[15] slack_max=INF slack_min=INF in_b[14] slack_max=INF slack_min=INF in_b[13] slack_max=INF slack_min=INF in_b[12] slack_max=INF slack_min=INF in_b[11] slack_max=INF slack_min=INF in_b[10] slack_max=INF slack_min=INF in_b[9] slack_max=INF slack_min=INF in_b[8] slack_max=INF slack_min=INF in_b[7] slack_max=INF slack_min=INF in_b[6] slack_max=INF slack_min=INF in_b[5] slack_max=INF slack_min=INF in_b[4] slack_max=INF slack_min=INF in_b[3] slack_max=INF slack_min=INF in_b[2] slack_max=INF slack_min=INF in_b[1] slack_max=INF slack_min=INF in_b[0] slack_max=INF slack_min=INF === CASE01-probe QUERY END rc=1 ===

@@ -1,0 +1,28 @@
+=== CASE01-probe QUERY BEGIN (query) ===
+CASE01-probe-CMD: check_setup
+1
+CASE01-probe-CMD: check_setup -verbose
+1
+CASE01-probe-CMD: check_setup -no_input_delay
+1
+CASE01-probe-CMD: check_setup -verbose -no_input_delay
+1
+CASE01-probe-CMD: check_setup -verbose -unconstrained_endpoints
+1
+CASE01-probe-CMD: check_setup -unconstrained_endpoints
+1
+CASE01-probe-CMD: check_setup -verbose -no_output_delay
+1
+CASE01-probe-CMD: check_setup -verbose -no_clock
+1
+CASE01-probe-CMD: check_setup -verbose -multiple_clock
+1
+CASE01-probe-CMD: check_setup -verbose -loops
+1
+CASE01-probe-CMD: check_setup -verbose -generated_clocks
+1
+CASE01-probe-CMD: check_setup -bogus_option
+CASE01-probe-ERROR: Error 562: safe_query.tcl line 1, check_setup -bogus_option is not a known keyword or flag.
+CASE01-probe-CMD: puts "RET plain=[check_setup] verbose=[check_setup -verbose] noin=[check_setup -verbose -no_input_delay] unend=[check_setup -verbose -unconstrained_endpoints]"
+RET plain=1 verbose=1 noin=1 unend=1
+=== CASE01-probe QUERY END rc=1 ===

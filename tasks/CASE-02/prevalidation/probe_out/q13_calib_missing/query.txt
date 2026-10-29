@@ -1,0 +1,284 @@
+=== CASE01-probe QUERY BEGIN (whatif) ===
+CASE01-probe-CMD: set_input_delay 0 [get_ports {in_b[0]}]
+CASE01-probe-CMD: set_input_delay -clock clk -max 5.582 [get_ports {in_b[1]}]
+CASE01-probe-CMD: set_input_delay -clock clk -min 0 [get_ports {in_b[2]}]
+CASE01-probe-CMD: set_input_delay -clock clk -clock_fall -max 5.582 [get_ports {in_b[3]}]
+CASE01-probe-CMD: set_input_delay -clock clk -clock_fall -min 0 [get_ports {in_b[3]}]
+CASE01-probe-CMD: set_input_delay -clock clk 0 [get_ports {in_b[4]}]
+CASE01-probe-CMD: set_input_delay -clock clk -rise -max 5.582 [get_ports {in_b[5]}]
+CASE01-probe-CMD: set_input_delay -clock clk -rise -min 0 [get_ports {in_b[5]}]
+CASE01-probe-CMD: foreach p [get_ports {in_a[0] in_b[0] in_b[1] in_b[2] in_b[3] in_b[4] in_b[5] in_b[6]}] { puts -nonewline "ARR [get_full_name $p] "; flush stdout; report_arrival -scene ss_n40C_1v60 $p }
+ARR in_a[0] (clk ^) r 0.00:5.58 f 0.00:5.58
+ARR in_b[0]  r 0.00:0.00 f 0.00:0.00
+ARR in_b[1] (clk ^) r ---:5.58 f ---:5.58
+ARR in_b[2] (clk ^) r 0.00:--- f 0.00:---
+ARR in_b[3] (clk v) r 13.95:19.54 f 13.95:19.54
+ARR in_b[4] (clk ^) r 0.00:0.00 f 0.00:0.00
+ARR in_b[5] (clk ^) r 0.00:5.58 f ---:---
+ARR in_b[6]  r 0.00:0.00 f 0.00:0.00
+CASE01-probe-CMD: foreach p [get_ports {in_a[0] in_b[0] in_b[1] in_b[2] in_b[3] in_b[4] in_b[5] in_b[6]}] { puts "FTP [get_full_name $p] max_c=[llength [find_timing_paths -from $p -path_delay max -scenes ss_n40C_1v60]] max_u=[llength [find_timing_paths -from $p -path_delay max -scenes ss_n40C_1v60 -unconstrained]] min_c=[llength [find_timing_paths -from $p -path_delay min -scenes ss_n40C_1v60]] min_u=[llength [find_timing_paths -from $p -path_delay min -scenes ss_n40C_1v60 -unconstrained]] slack_max=[get_property $p slack_max] slack_min=[get_property $p slack_min]" }
+FTP in_a[0] max_c=1 max_u=1 min_c=1 min_u=1 slack_max=-3.662642 slack_min=0.295775
+FTP in_b[0] max_c=0 max_u=1 min_c=0 min_u=1 slack_max=INF slack_min=INF
+FTP in_b[1] max_c=1 max_u=1 min_c=0 min_u=0 slack_max=-3.698724 slack_min=INF
+FTP in_b[2] max_c=0 max_u=0 min_c=1 min_u=1 slack_max=INF slack_min=0.605549
+FTP in_b[3] max_c=1 max_u=1 min_c=1 min_u=1 slack_max=-18.083820 slack_min=14.643472
+FTP in_b[4] max_c=1 max_u=1 min_c=1 min_u=1 slack_max=2.032514 slack_min=0.704750
+FTP in_b[5] max_c=1 max_u=1 min_c=1 min_u=1 slack_max=-3.507314 slack_min=0.804537
+FTP in_b[6] max_c=0 max_u=1 min_c=0 min_u=1 slack_max=INF slack_min=INF
+CASE01-probe-CMD: foreach p [get_ports {in_b[0] in_b[1] in_b[2] in_b[3] in_b[4] in_b[5]}] { puts "RC [get_full_name $p] max:"; report_checks -path_delay max -from $p -scene ss_n40C_1v60 -unconstrained -format summary; puts "RC [get_full_name $p] min:"; report_checks -path_delay min -from $p -scene ss_n40C_1v60 -unconstrained -format summary }
+RC in_b[0] max:
+Startpoint                           Endpoint                               Slack
+--------------------------------------------------------------------------------
+in_b[0] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   23.28
+
+RC in_b[0] min:
+Startpoint                           Endpoint                               Slack
+--------------------------------------------------------------------------------
+in_b[0] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)    0.72
+
+RC in_b[1] max:
+Startpoint                           Endpoint                               Slack
+--------------------------------------------------------------------------------
+in_b[1] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.70
+
+RC in_b[1] min:
+Startpoint                           Endpoint                               Slack
+--------------------------------------------------------------------------------
+No paths found.
+
+RC in_b[2] max:
+Startpoint                           Endpoint                               Slack
+--------------------------------------------------------------------------------
+No paths found.
+
+RC in_b[2] min:
+Startpoint                           Endpoint                               Slack
+--------------------------------------------------------------------------------
+in_b[2] (input)                      _12030_/D (sky130_fd_sc_hd__dfxtp_1)    1.91
+
+RC in_b[3] max:
+Startpoint                           Endpoint                               Slack
+--------------------------------------------------------------------------------
+in_b[3] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)  -18.08
+
+RC in_b[3] min:
+Startpoint                           Endpoint                               Slack
+--------------------------------------------------------------------------------
+in_b[3] (input)                      _12034_/D (sky130_fd_sc_hd__dfxtp_1)   15.98
+
+RC in_b[4] max:
+Startpoint                           Endpoint                               Slack
+--------------------------------------------------------------------------------
+in_b[4] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)    2.03
+
+RC in_b[4] min:
+Startpoint                           Endpoint                               Slack
+--------------------------------------------------------------------------------
+in_b[4] (input)                      _12035_/D (sky130_fd_sc_hd__dfxtp_1)    2.17
+
+RC in_b[5] max:
+Startpoint                           Endpoint                               Slack
+--------------------------------------------------------------------------------
+in_b[5] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.51
+
+RC in_b[5] min:
+Startpoint                           Endpoint                               Slack
+--------------------------------------------------------------------------------
+in_b[5] (input)                      _12046_/D (sky130_fd_sc_hd__dfxtp_1)    2.56
+
+CASE01-probe-CMD: report_checks -path_delay max -from [get_ports {in_b[3]}] -scene ss_n40C_1v60 -unconstrained
+Startpoint: in_b[3] (input port clocked by clk)
+Endpoint: _12026_ (rising edge-triggered flip-flop clocked by clk)
+Path Group: clk
+Path Type: max
+Corner: ss_n40C_1v60
+
+  Delay    Time   Description
+---------------------------------------------------------
+  13.95   13.95   clock clk (fall edge)
+   0.00   13.95   clock network delay (ideal)
+   5.58   19.54 ^ input external delay
+   0.28   19.81 ^ in_b[3] (in)
+   0.28   20.09 v _10760_/Y (sky130_fd_sc_hd__nand2_1)
+   0.92   21.01 v _10905_/X (sky130_fd_sc_hd__xnor3_1)
+   0.63   21.64 ^ _10907_/Y (sky130_fd_sc_hd__xnor2_1)
+   1.04   22.68 v _11029_/X (sky130_fd_sc_hd__xnor3_1)
+   0.27   22.95 v _11087_/Y (sky130_fd_sc_hd__xnor2_1)
+   0.66   23.61 ^ _11113_/Y (sky130_fd_sc_hd__xnor2_1)
+   1.09   24.70 v _11186_/X (sky130_fd_sc_hd__xor3_1)
+   0.93   25.63 v _11255_/X (sky130_fd_sc_hd__xnor3_1)
+   0.40   26.03 ^ _11257_/X (sky130_fd_sc_hd__xor2_1)
+   0.73   26.76 v _11302_/X (sky130_fd_sc_hd__xor3_1)
+   0.94   27.70 v _11306_/X (sky130_fd_sc_hd__maj3_1)
+   0.98   28.68 v _11338_/X (sky130_fd_sc_hd__xor3_1)
+   0.41   29.09 ^ _11340_/X (sky130_fd_sc_hd__xor2_1)
+   0.26   29.35 v _11416_/Y (sky130_fd_sc_hd__a21oi_1)
+   0.93   30.28 v _11418_/X (sky130_fd_sc_hd__maj3_1)
+   0.54   30.82 ^ _11420_/Y (sky130_fd_sc_hd__o21ai_0)
+   0.53   31.36 ^ _11421_/X (sky130_fd_sc_hd__maj3_1)
+   0.18   31.54 v _11422_/Y (sky130_fd_sc_hd__a21oi_1)
+   0.95   32.48 v _11423_/X (sky130_fd_sc_hd__maj3_1)
+   0.94   33.42 v _11424_/X (sky130_fd_sc_hd__maj3_1)
+   0.53   33.95 ^ _11426_/Y (sky130_fd_sc_hd__o21ai_0)
+   0.32   34.27 v _11427_/Y (sky130_fd_sc_hd__a21oi_1)
+   0.94   35.22 v _11428_/X (sky130_fd_sc_hd__maj3_1)
+   0.95   36.16 v _11429_/X (sky130_fd_sc_hd__maj3_1)
+   0.44   36.60 ^ _11430_/Y (sky130_fd_sc_hd__o21bai_1)
+   0.25   36.85 v _11431_/Y (sky130_fd_sc_hd__a21oi_1)
+   0.51   37.36 ^ _11433_/Y (sky130_fd_sc_hd__o21ai_0)
+   0.34   37.70 v _11434_/Y (sky130_fd_sc_hd__a21oi_1)
+   0.85   38.55 ^ _11438_/Y (sky130_fd_sc_hd__o31ai_1)
+   0.43   38.98 v _11440_/Y (sky130_fd_sc_hd__a221oi_1)
+   1.02   40.00 ^ _11443_/Y (sky130_fd_sc_hd__o311ai_0)
+   0.49   40.49 v _11446_/Y (sky130_fd_sc_hd__a311oi_1)
+   0.84   41.33 ^ _11451_/Y (sky130_fd_sc_hd__o311ai_0)
+   0.35   41.68 v _11453_/Y (sky130_fd_sc_hd__nand2_1)
+   0.25   41.94 v _11507_/Y (sky130_fd_sc_hd__xnor2_1)
+   2.64   44.58 ^ _11509_/Y (sky130_fd_sc_hd__o21ai_0)
+   0.86   45.44 v _11512_/Y (sky130_fd_sc_hd__o21ai_0)
+   0.00   45.44 v _12026_/D (sky130_fd_sc_hd__dfxtp_1)
+          45.44   data arrival time
+
+  27.91   27.91   clock clk (rise edge)
+   0.00   27.91   clock network delay (ideal)
+   0.00   27.91   clock reconvergence pessimism
+          27.91 ^ _12026_/CLK (sky130_fd_sc_hd__dfxtp_1)
+  -0.56   27.35   library setup time
+          27.35   data required time
+---------------------------------------------------------
+          27.35   data required time
+         -45.44   data arrival time
+---------------------------------------------------------
+         -18.08   slack (VIOLATED)
+
+
+CASE01-probe-CMD: report_checks -path_delay max -from [get_ports {in_b[1]}] -scene ss_n40C_1v60 -unconstrained
+Startpoint: in_b[1] (input port clocked by clk)
+Endpoint: _12026_ (rising edge-triggered flip-flop clocked by clk)
+Path Group: clk
+Path Type: max
+Corner: ss_n40C_1v60
+
+  Delay    Time   Description
+---------------------------------------------------------
+   0.00    0.00   clock clk (rise edge)
+   0.00    0.00   clock network delay (ideal)
+   5.58    5.58 ^ input external delay
+   0.29    5.87 ^ in_b[1] (in)
+   0.25    6.12 v _10762_/Y (sky130_fd_sc_hd__nand2_1)
+   0.51    6.63 v _10905_/X (sky130_fd_sc_hd__xnor3_1)
+   0.63    7.25 ^ _10907_/Y (sky130_fd_sc_hd__xnor2_1)
+   1.04    8.29 v _11029_/X (sky130_fd_sc_hd__xnor3_1)
+   0.27    8.56 v _11087_/Y (sky130_fd_sc_hd__xnor2_1)
+   0.66    9.22 ^ _11113_/Y (sky130_fd_sc_hd__xnor2_1)
+   1.09   10.31 v _11186_/X (sky130_fd_sc_hd__xor3_1)
+   0.93   11.24 v _11255_/X (sky130_fd_sc_hd__xnor3_1)
+   0.40   11.64 ^ _11257_/X (sky130_fd_sc_hd__xor2_1)
+   0.73   12.37 v _11302_/X (sky130_fd_sc_hd__xor3_1)
+   0.94   13.31 v _11306_/X (sky130_fd_sc_hd__maj3_1)
+   0.98   14.29 v _11338_/X (sky130_fd_sc_hd__xor3_1)
+   0.41   14.70 ^ _11340_/X (sky130_fd_sc_hd__xor2_1)
+   0.26   14.96 v _11416_/Y (sky130_fd_sc_hd__a21oi_1)
+   0.93   15.89 v _11418_/X (sky130_fd_sc_hd__maj3_1)
+   0.54   16.44 ^ _11420_/Y (sky130_fd_sc_hd__o21ai_0)
+   0.53   16.97 ^ _11421_/X (sky130_fd_sc_hd__maj3_1)
+   0.18   17.15 v _11422_/Y (sky130_fd_sc_hd__a21oi_1)
+   0.95   18.10 v _11423_/X (sky130_fd_sc_hd__maj3_1)
+   0.94   19.04 v _11424_/X (sky130_fd_sc_hd__maj3_1)
+   0.53   19.57 ^ _11426_/Y (sky130_fd_sc_hd__o21ai_0)
+   0.32   19.89 v _11427_/Y (sky130_fd_sc_hd__a21oi_1)
+   0.94   20.83 v _11428_/X (sky130_fd_sc_hd__maj3_1)
+   0.95   21.78 v _11429_/X (sky130_fd_sc_hd__maj3_1)
+   0.44   22.21 ^ _11430_/Y (sky130_fd_sc_hd__o21bai_1)
+   0.25   22.47 v _11431_/Y (sky130_fd_sc_hd__a21oi_1)
+   0.51   22.98 ^ _11433_/Y (sky130_fd_sc_hd__o21ai_0)
+   0.34   23.31 v _11434_/Y (sky130_fd_sc_hd__a21oi_1)
+   0.85   24.16 ^ _11438_/Y (sky130_fd_sc_hd__o31ai_1)
+   0.43   24.59 v _11440_/Y (sky130_fd_sc_hd__a221oi_1)
+   1.02   25.62 ^ _11443_/Y (sky130_fd_sc_hd__o311ai_0)
+   0.49   26.11 v _11446_/Y (sky130_fd_sc_hd__a311oi_1)
+   0.84   26.95 ^ _11451_/Y (sky130_fd_sc_hd__o311ai_0)
+   0.35   27.30 v _11453_/Y (sky130_fd_sc_hd__nand2_1)
+   0.25   27.55 v _11507_/Y (sky130_fd_sc_hd__xnor2_1)
+   2.64   30.19 ^ _11509_/Y (sky130_fd_sc_hd__o21ai_0)
+   0.86   31.05 v _11512_/Y (sky130_fd_sc_hd__o21ai_0)
+   0.00   31.05 v _12026_/D (sky130_fd_sc_hd__dfxtp_1)
+          31.05   data arrival time
+
+  27.91   27.91   clock clk (rise edge)
+   0.00   27.91   clock network delay (ideal)
+   0.00   27.91   clock reconvergence pessimism
+          27.91 ^ _12026_/CLK (sky130_fd_sc_hd__dfxtp_1)
+  -0.56   27.35   library setup time
+          27.35   data required time
+---------------------------------------------------------
+          27.35   data required time
+         -31.05   data arrival time
+---------------------------------------------------------
+          -3.70   slack (VIOLATED)
+
+
+CASE01-probe-CMD: report_checks -path_delay min -from [get_ports {in_b[1]}] -scene ss_n40C_1v60 -unconstrained
+No paths found.
+CASE01-probe-CMD: check_setup -verbose
+Warning: There are 58 input ports missing set_input_delay.
+  in_b[10]
+  in_b[11]
+  in_b[12]
+  in_b[13]
+  in_b[14]
+  in_b[15]
+  in_b[16]
+  in_b[17]
+  in_b[18]
+  in_b[19]
+  in_b[20]
+  in_b[21]
+  in_b[22]
+  in_b[23]
+  in_b[24]
+  in_b[25]
+  in_b[26]
+  in_b[27]
+  in_b[28]
+  in_b[29]
+  in_b[30]
+  in_b[31]
+  in_b[32]
+  in_b[33]
+  in_b[34]
+  in_b[35]
+  in_b[36]
+  in_b[37]
+  in_b[38]
+  in_b[39]
+  in_b[40]
+  in_b[41]
+  in_b[42]
+  in_b[43]
+  in_b[44]
+  in_b[45]
+  in_b[46]
+  in_b[47]
+  in_b[48]
+  in_b[49]
+  in_b[50]
+  in_b[51]
+  in_b[52]
+  in_b[53]
+  in_b[54]
+  in_b[55]
+  in_b[56]
+  in_b[57]
+  in_b[58]
+  in_b[59]
+  in_b[60]
+  in_b[61]
+  in_b[62]
+  in_b[63]
+  in_b[6]
+  in_b[7]
+  in_b[8]
+  in_b[9]
+0
+=== CASE01-probe QUERY END rc=0 ===

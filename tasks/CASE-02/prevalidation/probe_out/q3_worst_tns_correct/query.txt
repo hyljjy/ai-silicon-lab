@@ -1,0 +1,178 @@
+=== CASE01-probe QUERY BEGIN (query) ===
+CASE01-probe-CMD: foreach c {tt_025C_1v80 tt_100C_1v80 ss_100C_1v60 ss_n40C_1v60 ff_n40C_1v95 ff_100C_1v95} { puts "WS $c max=[worst_slack -scene $c -max] min=[worst_slack -scene $c -min]" }
+WS tt_025C_1v80 max=11.185458209594348 min=0.09305387279663745
+WS tt_100C_1v80 max=11.317221258240215 min=0.08983023607005908
+WS ss_100C_1v60 max=-0.687277809672019 min=0.18567888030452087
+WS ss_n40C_1v60 max=-4.189726018044011 min=0.18500412836443383
+WS ff_n40C_1v95 max=15.871505448031069 min=0.06347266641938298
+WS ff_100C_1v95 max=15.894228605363333 min=0.059112952317363035
+CASE01-probe-CMD: worst_slack -max
+-4.189726018044011
+CASE01-probe-CMD: worst_slack -scene ss_n40C_1v60 -max
+-4.189726018044011
+CASE01-probe-CMD: total_negative_slack -max
+-130.4888465326457
+CASE01-probe-CMD: total_negative_slack -scene ss_n40C_1v60 -max
+-130.4888465326457
+CASE01-probe-CMD: foreach c {tt_025C_1v80 tt_100C_1v80 ss_100C_1v60 ss_n40C_1v60 ff_n40C_1v95 ff_100C_1v95} { puts "TNS $c max=[total_negative_slack -scene $c -max] min=[total_negative_slack -scene $c -min]" }
+TNS tt_025C_1v80 max=0.0 min=0.0
+TNS tt_100C_1v80 max=0.0 min=0.0
+TNS ss_100C_1v60 max=-21.231488279541733 min=0.0
+TNS ss_n40C_1v60 max=-130.4888465326457 min=0.0
+TNS ff_n40C_1v95 max=0.0 min=0.0
+TNS ff_100C_1v95 max=0.0 min=0.0
+CASE01-probe-CMD: report_tns
+tns max -130.49
+CASE01-probe-CMD: report_tns -scene ss_n40C_1v60
+CASE01-probe-ERROR: Error 562: safe_query.tcl line 1, report_tns -scene is not a known keyword or flag.
+CASE01-probe-CMD: report_tns -max
+tns max -130.49
+CASE01-probe-CMD: report_wns
+wns max -4.19
+CASE01-probe-CMD: report_wns -scene ss_n40C_1v60
+CASE01-probe-ERROR: Error 562: safe_query.tcl line 1, report_wns -scene is not a known keyword or flag.
+CASE01-probe-CMD: report_worst_slack -max
+worst slack max -4.19
+CASE01-probe-CMD: report_worst_slack -scene ss_n40C_1v60 -max
+CASE01-probe-ERROR: Error 562: safe_query.tcl line 1, report_worst_slack -scene is not a known keyword or flag.
+CASE01-probe-CMD: worst_negative_slack -scene ss_n40C_1v60 -max
+-4.189726018044011
+CASE01-probe-CMD: report_check_types -max_delay -scene ss_n40C_1v60
+Group                                  Slack
+--------------------------------------------
+clk                                    -4.19
+
+CASE01-probe-CMD: report_check_types -verbose -scene ss_n40C_1v60
+Startpoint: rst (input port clocked by clk)
+Endpoint: _12058_ (rising edge-triggered flip-flop clocked by clk)
+Path Group: clk
+Path Type: min
+Corner: ss_n40C_1v60
+
+  Delay    Time   Description
+---------------------------------------------------------
+   0.00    0.00   clock clk (rise edge)
+   0.00    0.00   clock network delay (ideal)
+   0.00    0.00 ^ input external delay
+   0.02    0.02 ^ rst (in)
+   0.05    0.07 v _11506_/Y (sky130_fd_sc_hd__nor2b_1)
+   0.00    0.07 v _12058_/D (sky130_fd_sc_hd__dfxtp_1)
+           0.07   data arrival time
+
+   0.00    0.00   clock clk (rise edge)
+   0.00    0.00   clock network delay (ideal)
+   0.00    0.00   clock reconvergence pessimism
+           0.00 ^ _12058_/CLK (sky130_fd_sc_hd__dfxtp_1)
+  -0.12   -0.12   library hold time
+          -0.12   data required time
+---------------------------------------------------------
+          -0.12   data required time
+          -0.07   data arrival time
+---------------------------------------------------------
+           0.19   slack (MET)
+
+
+Startpoint: in_b[2] (input port clocked by clk)
+Endpoint: _12026_ (rising edge-triggered flip-flop clocked by clk)
+Path Group: clk
+Path Type: max
+Corner: ss_n40C_1v60
+
+  Delay    Time   Description
+---------------------------------------------------------
+   0.00    0.00   clock clk (rise edge)
+   0.00    0.00   clock network delay (ideal)
+   5.58    5.58 ^ input external delay
+   0.31    5.89 ^ in_b[2] (in)
+   0.25    6.14 v _10621_/Y (sky130_fd_sc_hd__nand2_1)
+   0.98    7.12 v _10905_/X (sky130_fd_sc_hd__xnor3_1)
+   0.63    7.74 ^ _10907_/Y (sky130_fd_sc_hd__xnor2_1)
+   1.04    8.78 v _11029_/X (sky130_fd_sc_hd__xnor3_1)
+   0.27    9.05 v _11087_/Y (sky130_fd_sc_hd__xnor2_1)
+   0.66    9.71 ^ _11113_/Y (sky130_fd_sc_hd__xnor2_1)
+   1.09   10.81 v _11186_/X (sky130_fd_sc_hd__xor3_1)
+   0.93   11.73 v _11255_/X (sky130_fd_sc_hd__xnor3_1)
+   0.40   12.13 ^ _11257_/X (sky130_fd_sc_hd__xor2_1)
+   0.73   12.86 v _11302_/X (sky130_fd_sc_hd__xor3_1)
+   0.94   13.81 v _11306_/X (sky130_fd_sc_hd__maj3_1)
+   0.98   14.79 v _11338_/X (sky130_fd_sc_hd__xor3_1)
+   0.41   15.19 ^ _11340_/X (sky130_fd_sc_hd__xor2_1)
+   0.26   15.45 v _11416_/Y (sky130_fd_sc_hd__a21oi_1)
+   0.93   16.38 v _11418_/X (sky130_fd_sc_hd__maj3_1)
+   0.54   16.93 ^ _11420_/Y (sky130_fd_sc_hd__o21ai_0)
+   0.53   17.46 ^ _11421_/X (sky130_fd_sc_hd__maj3_1)
+   0.18   17.64 v _11422_/Y (sky130_fd_sc_hd__a21oi_1)
+   0.95   18.59 v _11423_/X (sky130_fd_sc_hd__maj3_1)
+   0.94   19.53 v _11424_/X (sky130_fd_sc_hd__maj3_1)
+   0.53   20.06 ^ _11426_/Y (sky130_fd_sc_hd__o21ai_0)
+   0.32   20.38 v _11427_/Y (sky130_fd_sc_hd__a21oi_1)
+   0.94   21.32 v _11428_/X (sky130_fd_sc_hd__maj3_1)
+   0.95   22.27 v _11429_/X (sky130_fd_sc_hd__maj3_1)
+   0.44   22.71 ^ _11430_/Y (sky130_fd_sc_hd__o21bai_1)
+   0.25   22.96 v _11431_/Y (sky130_fd_sc_hd__a21oi_1)
+   0.51   23.47 ^ _11433_/Y (sky130_fd_sc_hd__o21ai_0)
+   0.34   23.81 v _11434_/Y (sky130_fd_sc_hd__a21oi_1)
+   0.85   24.65 ^ _11438_/Y (sky130_fd_sc_hd__o31ai_1)
+   0.43   25.08 v _11440_/Y (sky130_fd_sc_hd__a221oi_1)
+   1.02   26.11 ^ _11443_/Y (sky130_fd_sc_hd__o311ai_0)
+   0.49   26.60 v _11446_/Y (sky130_fd_sc_hd__a311oi_1)
+   0.84   27.44 ^ _11451_/Y (sky130_fd_sc_hd__o311ai_0)
+   0.35   27.79 v _11453_/Y (sky130_fd_sc_hd__nand2_1)
+   0.25   28.05 v _11507_/Y (sky130_fd_sc_hd__xnor2_1)
+   2.64   30.68 ^ _11509_/Y (sky130_fd_sc_hd__o21ai_0)
+   0.86   31.54 v _11512_/Y (sky130_fd_sc_hd__o21ai_0)
+   0.00   31.54 v _12026_/D (sky130_fd_sc_hd__dfxtp_1)
+          31.54   data arrival time
+
+  27.91   27.91   clock clk (rise edge)
+   0.00   27.91   clock network delay (ideal)
+   0.00   27.91   clock reconvergence pessimism
+          27.91 ^ _12026_/CLK (sky130_fd_sc_hd__dfxtp_1)
+  -0.56   27.35   library setup time
+          27.35   data required time
+---------------------------------------------------------
+          27.35   data required time
+         -31.54   data arrival time
+---------------------------------------------------------
+          -4.19   slack (VIOLATED)
+
+
+max slew
+
+Pin _11587_/Y ^ (corner ss_n40C_1v60)
+max slew    1.48
+slew        3.66
+----------------
+Slack      -2.18 (VIOLATED)
+
+max capacitance
+
+Pin _11587_/Y ^ (corner ss_n40C_1v60)
+max capacitance    0.03
+capacitance        0.08
+-----------------------
+Slack             -0.05 (VIOLATED)
+
+Pin: _12026_/CLK
+Check: sequential_clock_pulse_width
+
+  Delay    Time   Description
+---------------------------------------------------------
+  13.95   13.95   clock clk (fall edge)
+   0.00   13.95   clock network delay (ideal)
+   0.00   13.95   _12026_/CLK
+          13.95   open edge arrival time
+
+  27.91   27.91   clock clk (rise edge)
+   0.00   27.91   clock network delay (ideal)
+   0.00   27.91   _12026_/CLK
+   0.00   27.91   clock reconvergence pessimism
+          27.91   close edge arrival time
+---------------------------------------------------------
+           0.53   required pulse width (low)
+          13.95   actual pulse width
+---------------------------------------------------------
+          13.43   slack (MET)
+
+
+=== CASE01-probe QUERY END rc=1 ===

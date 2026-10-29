@@ -1,0 +1,4 @@
+name=q1_checksetup_missing kind=missing query=q1_checksetup.tcl mode=query rc=0 seconds=18.380409506
+argv: sta -no_init -no_splash -exit /mnt/d/study/ai_native_design/tasks/CASE-02/scratch/probe/safe_query.tcl
+SDC_FILE=/mnt/d/study/ai_native_design/tasks/CASE-02/scratch/case02_missing_inb.tcl
+env_records_identical_to_runs/missing_1=1

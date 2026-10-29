@@ -1,0 +1,264 @@
+=== CASE01-probe QUERY BEGIN (query) ===
+CASE01-probe-CMD: foreach p [all_inputs -no_clocks] { puts "PORT [get_full_name $p] max_c=[llength [find_timing_paths -from $p -path_delay max -scenes ss_n40C_1v60]] max_u=[llength [find_timing_paths -from $p -path_delay max -scenes ss_n40C_1v60 -unconstrained]] min_c=[llength [find_timing_paths -from $p -path_delay min -scenes ss_n40C_1v60]] min_u=[llength [find_timing_paths -from $p -path_delay min -scenes ss_n40C_1v60 -unconstrained]]" }
+PORT rst max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_valid max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_a[63] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_a[62] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_a[61] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_a[60] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_a[59] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_a[58] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_a[57] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_a[56] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_a[55] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_a[54] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_a[53] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_a[52] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_a[51] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_a[50] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_a[49] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_a[48] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_a[47] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_a[46] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_a[45] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_a[44] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_a[43] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_a[42] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_a[41] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_a[40] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_a[39] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_a[38] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_a[37] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_a[36] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_a[35] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_a[34] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_a[33] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_a[32] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_a[31] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_a[30] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_a[29] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_a[28] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_a[27] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_a[26] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_a[25] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_a[24] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_a[23] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_a[22] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_a[21] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_a[20] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_a[19] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_a[18] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_a[17] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_a[16] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_a[15] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_a[14] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_a[13] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_a[12] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_a[11] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_a[10] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_a[9] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_a[8] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_a[7] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_a[6] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_a[5] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_a[4] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_a[3] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_a[2] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_a[1] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_a[0] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_b[63] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_b[62] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_b[61] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_b[60] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_b[59] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_b[58] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_b[57] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_b[56] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_b[55] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_b[54] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_b[53] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_b[52] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_b[51] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_b[50] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_b[49] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_b[48] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_b[47] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_b[46] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_b[45] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_b[44] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_b[43] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_b[42] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_b[41] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_b[40] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_b[39] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_b[38] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_b[37] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_b[36] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_b[35] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_b[34] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_b[33] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_b[32] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_b[31] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_b[30] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_b[29] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_b[28] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_b[27] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_b[26] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_b[25] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_b[24] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_b[23] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_b[22] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_b[21] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_b[20] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_b[19] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_b[18] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_b[17] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_b[16] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_b[15] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_b[14] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_b[13] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_b[12] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_b[11] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_b[10] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_b[9] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_b[8] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_b[7] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_b[6] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_b[5] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_b[4] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_b[3] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_b[2] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_b[1] max_c=1 max_u=1 min_c=1 min_u=1
+PORT in_b[0] max_c=1 max_u=1 min_c=1 min_u=1
+CASE01-probe-CMD: foreach p [get_ports {in_b[*]}] { foreach pe [find_timing_paths -from $p -path_delay max -scenes ss_n40C_1v60 -unconstrained] { puts "UPE max [get_full_name $p] -> [get_full_name [get_property $pe endpoint]]" } ; foreach pe [find_timing_paths -from $p -path_delay min -scenes ss_n40C_1v60 -unconstrained] { puts "UPE min [get_full_name $p] -> [get_full_name [get_property $pe endpoint]]" } }
+UPE max in_b[63] -> _12026_/D
+UPE min in_b[63] -> _12042_/D
+UPE max in_b[62] -> _12026_/D
+UPE min in_b[62] -> _12057_/D
+UPE max in_b[61] -> _12026_/D
+UPE min in_b[61] -> _12057_/D
+UPE max in_b[60] -> _12026_/D
+UPE min in_b[60] -> _12057_/D
+UPE max in_b[59] -> _12026_/D
+UPE min in_b[59] -> _12044_/D
+UPE max in_b[58] -> _12026_/D
+UPE min in_b[58] -> _12040_/D
+UPE max in_b[57] -> _12026_/D
+UPE min in_b[57] -> _12049_/D
+UPE max in_b[56] -> _12026_/D
+UPE min in_b[56] -> _12049_/D
+UPE max in_b[55] -> _12026_/D
+UPE min in_b[55] -> _12039_/D
+UPE max in_b[54] -> _12026_/D
+UPE min in_b[54] -> _12049_/D
+UPE max in_b[53] -> _12026_/D
+UPE min in_b[53] -> _12038_/D
+UPE max in_b[52] -> _12026_/D
+UPE min in_b[52] -> _12036_/D
+UPE max in_b[51] -> _12026_/D
+UPE min in_b[51] -> _12030_/D
+UPE max in_b[50] -> _12026_/D
+UPE min in_b[50] -> _12028_/D
+UPE max in_b[49] -> _12026_/D
+UPE min in_b[49] -> _12027_/D
+UPE max in_b[48] -> _12026_/D
+UPE min in_b[48] -> _12026_/D
+UPE max in_b[47] -> _12026_/D
+UPE min in_b[47] -> _12043_/D
+UPE max in_b[46] -> _12026_/D
+UPE min in_b[46] -> _12053_/D
+UPE max in_b[45] -> _12026_/D
+UPE min in_b[45] -> _12053_/D
+UPE max in_b[44] -> _12026_/D
+UPE min in_b[44] -> _12053_/D
+UPE max in_b[43] -> _12026_/D
+UPE min in_b[43] -> _12043_/D
+UPE max in_b[42] -> _12026_/D
+UPE min in_b[42] -> _12051_/D
+UPE max in_b[41] -> _12026_/D
+UPE min in_b[41] -> _12043_/D
+UPE max in_b[40] -> _12026_/D
+UPE min in_b[40] -> _12043_/D
+UPE max in_b[39] -> _12026_/D
+UPE min in_b[39] -> _12043_/D
+UPE max in_b[38] -> _12026_/D
+UPE min in_b[38] -> _12038_/D
+UPE max in_b[37] -> _12026_/D
+UPE min in_b[37] -> _12036_/D
+UPE max in_b[36] -> _12026_/D
+UPE min in_b[36] -> _12034_/D
+UPE max in_b[35] -> _12026_/D
+UPE min in_b[35] -> _12030_/D
+UPE max in_b[34] -> _12026_/D
+UPE min in_b[34] -> _12028_/D
+UPE max in_b[33] -> _12026_/D
+UPE min in_b[33] -> _12027_/D
+UPE max in_b[32] -> _12026_/D
+UPE min in_b[32] -> _12026_/D
+UPE max in_b[31] -> _12026_/D
+UPE min in_b[31] -> _12046_/D
+UPE max in_b[30] -> _12026_/D
+UPE min in_b[30] -> _12057_/D
+UPE max in_b[29] -> _12026_/D
+UPE min in_b[29] -> _12051_/D
+UPE max in_b[28] -> _12026_/D
+UPE min in_b[28] -> _12043_/D
+UPE max in_b[27] -> _12026_/D
+UPE min in_b[27] -> _12044_/D
+UPE max in_b[26] -> _12026_/D
+UPE min in_b[26] -> _12043_/D
+UPE max in_b[25] -> _12026_/D
+UPE min in_b[25] -> _12040_/D
+UPE max in_b[24] -> _12026_/D
+UPE min in_b[24] -> _12039_/D
+UPE max in_b[23] -> _12026_/D
+UPE min in_b[23] -> _12038_/D
+UPE max in_b[22] -> _12026_/D
+UPE min in_b[22] -> _12035_/D
+UPE max in_b[21] -> _12026_/D
+UPE min in_b[21] -> _12057_/D
+UPE max in_b[20] -> _12026_/D
+UPE min in_b[20] -> _12034_/D
+UPE max in_b[19] -> _12026_/D
+UPE min in_b[19] -> _12035_/D
+UPE max in_b[18] -> _12026_/D
+UPE min in_b[18] -> _12028_/D
+UPE max in_b[17] -> _12026_/D
+UPE min in_b[17] -> _12027_/D
+UPE max in_b[16] -> _12026_/D
+UPE min in_b[16] -> _12026_/D
+UPE max in_b[15] -> _12026_/D
+UPE min in_b[15] -> _12046_/D
+UPE max in_b[14] -> _12026_/D
+UPE min in_b[14] -> _12057_/D
+UPE max in_b[13] -> _12026_/D
+UPE min in_b[13] -> _12051_/D
+UPE max in_b[12] -> _12026_/D
+UPE min in_b[12] -> _12057_/D
+UPE max in_b[11] -> _12026_/D
+UPE min in_b[11] -> _12040_/D
+UPE max in_b[10] -> _12026_/D
+UPE min in_b[10] -> _12040_/D
+UPE max in_b[9] -> _12026_/D
+UPE min in_b[9] -> _12053_/D
+UPE max in_b[8] -> _12026_/D
+UPE min in_b[8] -> _12053_/D
+UPE max in_b[7] -> _12026_/D
+UPE min in_b[7] -> _12038_/D
+UPE max in_b[6] -> _12026_/D
+UPE min in_b[6] -> _12049_/D
+UPE max in_b[5] -> _12026_/D
+UPE min in_b[5] -> _12049_/D
+UPE max in_b[4] -> _12026_/D
+UPE min in_b[4] -> _12035_/D
+UPE max in_b[3] -> _12026_/D
+UPE min in_b[3] -> _12034_/D
+UPE max in_b[2] -> _12026_/D
+UPE min in_b[2] -> _12030_/D
+UPE max in_b[1] -> _12026_/D
+UPE min in_b[1] -> _12027_/D
+UPE max in_b[0] -> _12026_/D
+UPE min in_b[0] -> _12026_/D
+CASE01-probe-CMD: check_setup -verbose -no_input_delay
+1
+=== CASE01-probe QUERY END rc=0 ===

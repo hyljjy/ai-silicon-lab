@@ -1,0 +1,22 @@
+=== CASE01-probe QUERY BEGIN (query) ===
+CASE01-probe-CMD: exec ls
+CASE01-probe-ERROR: invalid command name "exec"
+CASE01-probe-CMD: write_sdc /tmp/x.sdc
+CASE01-probe-ERROR: invalid command name "write_sdc"
+CASE01-probe-CMD: sta::port_ext_pin_cap [get_ports {out_valid}] max
+CASE01-probe-ERROR: invalid command name "sta::port_ext_pin_cap"
+CASE01-probe-CMD: report_checks > /tmp/x.txt
+CASE01-probe-ERROR: CASE01: output redirection is disabled
+CASE01-probe-CMD: source /etc/hostname
+CASE01-probe-ERROR: invalid command name "source"
+CASE01-probe-CMD: open /etc/hostname
+CASE01-probe-ERROR: invalid command name "open"
+CASE01-probe-CMD: set_input_delay -clock clk -max 5.582 [get_ports {in_b[0]}]
+CASE01-probe-ERROR: invalid command name "set_input_delay"
+CASE01-probe-CMD: read_sdc /tmp/none.sdc
+CASE01-probe-CODE: SETUP_SKIPPED read_sdc
+CASE01-probe-CMD: create_clock -name clk -period 27.91 [get_ports clk]
+CASE01-probe-CODE: SETUP_SKIPPED create_clock
+CASE01-probe-CMD: puts "still alive"
+still alive
+=== CASE01-probe QUERY END rc=1 ===

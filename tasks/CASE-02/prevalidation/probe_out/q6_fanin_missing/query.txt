@@ -1,0 +1,175 @@
+=== CASE01-probe QUERY BEGIN (query) ===
+CASE01-probe-CMD: foreach p [get_ports {in_b[*]}] { puts "OBJ [get_full_name $p] [get_property $p direction]" }
+OBJ in_b[63] input
+OBJ in_b[62] input
+OBJ in_b[61] input
+OBJ in_b[60] input
+OBJ in_b[59] input
+OBJ in_b[58] input
+OBJ in_b[57] input
+OBJ in_b[56] input
+OBJ in_b[55] input
+OBJ in_b[54] input
+OBJ in_b[53] input
+OBJ in_b[52] input
+OBJ in_b[51] input
+OBJ in_b[50] input
+OBJ in_b[49] input
+OBJ in_b[48] input
+OBJ in_b[47] input
+OBJ in_b[46] input
+OBJ in_b[45] input
+OBJ in_b[44] input
+OBJ in_b[43] input
+OBJ in_b[42] input
+OBJ in_b[41] input
+OBJ in_b[40] input
+OBJ in_b[39] input
+OBJ in_b[38] input
+OBJ in_b[37] input
+OBJ in_b[36] input
+OBJ in_b[35] input
+OBJ in_b[34] input
+OBJ in_b[33] input
+OBJ in_b[32] input
+OBJ in_b[31] input
+OBJ in_b[30] input
+OBJ in_b[29] input
+OBJ in_b[28] input
+OBJ in_b[27] input
+OBJ in_b[26] input
+OBJ in_b[25] input
+OBJ in_b[24] input
+OBJ in_b[23] input
+OBJ in_b[22] input
+OBJ in_b[21] input
+OBJ in_b[20] input
+OBJ in_b[19] input
+OBJ in_b[18] input
+OBJ in_b[17] input
+OBJ in_b[16] input
+OBJ in_b[15] input
+OBJ in_b[14] input
+OBJ in_b[13] input
+OBJ in_b[12] input
+OBJ in_b[11] input
+OBJ in_b[10] input
+OBJ in_b[9] input
+OBJ in_b[8] input
+OBJ in_b[7] input
+OBJ in_b[6] input
+OBJ in_b[5] input
+OBJ in_b[4] input
+OBJ in_b[3] input
+OBJ in_b[2] input
+OBJ in_b[1] input
+OBJ in_b[0] input
+CASE01-probe-CMD: puts "N in_b=[llength [get_ports {in_b[*]}]]"
+N in_b=64
+CASE01-probe-CMD: set regs_d [all_registers -data_pins]
+_a001b3aee5590000_p_Pin _f004b3aee5590000_p_Pin _4008b3aee5590000_p_Pin _900bb3aee5590000_p_Pin _e00eb3aee5590000_p_Pin _3012b3aee5590000_p_Pin _8015b3aee5590000_p_Pin _d018b3aee5590000_p_Pin _201cb3aee5590000_p_Pin _701fb3aee5590000_p_Pin _c022b3aee5590000_p_Pin _1026b3aee5590000_p_Pin _6029b3aee5590000_p_Pin _b02cb3aee5590000_p_Pin _0030b3aee5590000_p_Pin _5033b3aee5590000_p_Pin _a036b3aee5590000_p_Pin _f039b3aee5590000_p_Pin _403db3aee5590000_p_Pin _9040b3aee5590000_p_Pin _e043b3aee5590000_p_Pin _3047b3aee5590000_p_Pin _804ab3aee5590000_p_Pin _d04db3aee5590000_p_Pin _2051b3aee5590000_p_Pin _7054b3aee5590000_p_Pin _c057b3aee5590000_p_Pin _105bb3aee5590000_p_Pin _605eb3aee5590000_p_Pin _b061b3aee5590000_p_Pin _0065b3aee5590000_p_Pin _5068b3aee5590000_p_Pin _a06bb3aee5590000_p_Pin
+CASE01-probe-CMD: set starts [get_fanin -to $regs_d -startpoints_only -flat -trace_arcs all]
+_70dc0daee5590000_p_Pin _50b429aee5590000_p_Pin _b0b029aee5590000_p_Pin _303831aee5590000_p_Pin _102818abe5590000_p_Pin _402918abe5590000_p_Pin _702a18abe5590000_p_Pin _a02b18abe5590000_p_Pin _d02c18abe5590000_p_Pin _002e18abe5590000_p_Pin _302f18abe5590000_p_Pin _603018abe5590000_p_Pin _903118abe5590000_p_Pin _c03218abe5590000_p_Pin _f03318abe5590000_p_Pin _503518abe5590000_p_Pin _70db23ace5590000_p_Pin _d0dc23ace5590000_p_Pin _30de23ace5590000_p_Pin _90df23ace5590000_p_Pin _f0e023ace5590000_p_Pin _50e223ace5590000_p_Pin _b0e323ace5590000_p_Pin _10e523ace5590000_p_Pin _70e623ace5590000_p_Pin _d0e723ace5590000_p_Pin _30e923ace5590000_p_Pin _90ea23ace5590000_p_Pin _f0eb23ace5590000_p_Pin _50ed23ace5590000_p_Pin _b0ee23ace5590000_p_Pin _10f023ace5590000_p_Pin _70f123ace5590000_p_Pin _d0f223ace5590000_p_Pin _30f423ace5590000_p_Pin _90f523ace5590000_p_Pin _f0f623ace5590000_p_Pin _50f823ace5590000_p_Pin _b0f923ace5590000_p_Pin _509a34aee5590000_p_Pin _b09b34aee5590000_p_Pin _109d34aee5590000_p_Pin _709e34aee5590000_p_Pin _d09f34aee5590000_p_Pin _30a134aee5590000_p_Pin _90a234aee5590000_p_Pin _f0a334aee5590000_p_Pin _50a534aee5590000_p_Pin _b0a634aee5590000_p_Pin _10a834aee5590000_p_Pin _70a934aee5590000_p_Pin _d0aa34aee5590000_p_Pin _30ac34aee5590000_p_Pin _90ad34aee5590000_p_Pin _f0ae34aee5590000_p_Pin _50b034aee5590000_p_Pin _b0b134aee5590000_p_Pin _10b334aee5590000_p_Pin _70b434aee5590000_p_Pin _d0b534aee5590000_p_Pin _30b734aee5590000_p_Pin _90b834aee5590000_p_Pin _f0b934aee5590000_p_Pin _50bb34aee5590000_p_Pin _b0bc34aee5590000_p_Pin _10be34aee5590000_p_Pin _70bf34aee5590000_p_Pin _d0c034aee5590000_p_Pin _30c234aee5590000_p_Pin _90c334aee5590000_p_Pin _f0c434aee5590000_p_Pin _50c634aee5590000_p_Pin _b0c734aee5590000_p_Pin _10c934aee5590000_p_Pin _70ca34aee5590000_p_Pin _d0cb34aee5590000_p_Pin _30cd34aee5590000_p_Pin _90ce34aee5590000_p_Pin _f0cf34aee5590000_p_Pin _50d134aee5590000_p_Pin _b0d234aee5590000_p_Pin _10d434aee5590000_p_Pin _70d534aee5590000_p_Pin _d0d634aee5590000_p_Pin _30d834aee5590000_p_Pin _90d934aee5590000_p_Pin _40810aa9e5590000_p_Pin _a0820aa9e5590000_p_Pin _00840aa9e5590000_p_Pin _60850aa9e5590000_p_Pin _c0860aa9e5590000_p_Pin _20880aa9e5590000_p_Pin _80890aa9e5590000_p_Pin _e08a0aa9e5590000_p_Pin _408c0aa9e5590000_p_Pin _a08d0aa9e5590000_p_Pin _008f0aa9e5590000_p_Pin _60900aa9e5590000_p_Pin _c0910aa9e5590000_p_Pin _20930aa9e5590000_p_Pin _80940aa9e5590000_p_Pin _e0950aa9e5590000_p_Pin _40970aa9e5590000_p_Pin _a0980aa9e5590000_p_Pin _009a0aa9e5590000_p_Pin _609b0aa9e5590000_p_Pin _c09c0aa9e5590000_p_Pin _209e0aa9e5590000_p_Pin _809f0aa9e5590000_p_Pin _e0a00aa9e5590000_p_Pin _40a20aa9e5590000_p_Pin _a0a30aa9e5590000_p_Pin _00a50aa9e5590000_p_Pin _60a60aa9e5590000_p_Pin _c0a70aa9e5590000_p_Pin _20a90aa9e5590000_p_Pin _80aa0aa9e5590000_p_Pin _e0ab0aa9e5590000_p_Pin _40ad0aa9e5590000_p_Pin _a0ae0aa9e5590000_p_Pin _00b00aa9e5590000_p_Pin _60b10aa9e5590000_p_Pin _c0b20aa9e5590000_p_Pin _20b40aa9e5590000_p_Pin _80b50aa9e5590000_p_Pin _e0b60aa9e5590000_p_Pin _40b80aa9e5590000_p_Pin _a0b90aa9e5590000_p_Pin _00bb0aa9e5590000_p_Pin _60bc0aa9e5590000_p_Pin
+CASE01-probe-CMD: puts "N fanin startpoints=[llength $starts]"
+N fanin startpoints=130
+CASE01-probe-CMD: set names {}
+CASE01-probe-CMD: foreach s $starts { lappend names [get_full_name $s] }
+CASE01-probe-CMD: foreach p [get_ports {in_b[*]}] { set n [get_full_name $p]; puts "FANIN $n in_startpoints=[expr {[lsearch -exact $names $n] >= 0}] fanout_endpoints=[llength [get_fanout -from $p -endpoints_only -flat -trace_arcs all]]" }
+FANIN in_b[63] in_startpoints=1 fanout_endpoints=32
+FANIN in_b[62] in_startpoints=1 fanout_endpoints=32
+FANIN in_b[61] in_startpoints=1 fanout_endpoints=32
+FANIN in_b[60] in_startpoints=1 fanout_endpoints=32
+FANIN in_b[59] in_startpoints=1 fanout_endpoints=32
+FANIN in_b[58] in_startpoints=1 fanout_endpoints=32
+FANIN in_b[57] in_startpoints=1 fanout_endpoints=32
+FANIN in_b[56] in_startpoints=1 fanout_endpoints=32
+FANIN in_b[55] in_startpoints=1 fanout_endpoints=32
+FANIN in_b[54] in_startpoints=1 fanout_endpoints=32
+FANIN in_b[53] in_startpoints=1 fanout_endpoints=32
+FANIN in_b[52] in_startpoints=1 fanout_endpoints=32
+FANIN in_b[51] in_startpoints=1 fanout_endpoints=32
+FANIN in_b[50] in_startpoints=1 fanout_endpoints=32
+FANIN in_b[49] in_startpoints=1 fanout_endpoints=32
+FANIN in_b[48] in_startpoints=1 fanout_endpoints=32
+FANIN in_b[47] in_startpoints=1 fanout_endpoints=32
+FANIN in_b[46] in_startpoints=1 fanout_endpoints=32
+FANIN in_b[45] in_startpoints=1 fanout_endpoints=32
+FANIN in_b[44] in_startpoints=1 fanout_endpoints=32
+FANIN in_b[43] in_startpoints=1 fanout_endpoints=32
+FANIN in_b[42] in_startpoints=1 fanout_endpoints=32
+FANIN in_b[41] in_startpoints=1 fanout_endpoints=32
+FANIN in_b[40] in_startpoints=1 fanout_endpoints=32
+FANIN in_b[39] in_startpoints=1 fanout_endpoints=32
+FANIN in_b[38] in_startpoints=1 fanout_endpoints=32
+FANIN in_b[37] in_startpoints=1 fanout_endpoints=32
+FANIN in_b[36] in_startpoints=1 fanout_endpoints=32
+FANIN in_b[35] in_startpoints=1 fanout_endpoints=32
+FANIN in_b[34] in_startpoints=1 fanout_endpoints=32
+FANIN in_b[33] in_startpoints=1 fanout_endpoints=32
+FANIN in_b[32] in_startpoints=1 fanout_endpoints=32
+FANIN in_b[31] in_startpoints=1 fanout_endpoints=32
+FANIN in_b[30] in_startpoints=1 fanout_endpoints=32
+FANIN in_b[29] in_startpoints=1 fanout_endpoints=32
+FANIN in_b[28] in_startpoints=1 fanout_endpoints=32
+FANIN in_b[27] in_startpoints=1 fanout_endpoints=32
+FANIN in_b[26] in_startpoints=1 fanout_endpoints=32
+FANIN in_b[25] in_startpoints=1 fanout_endpoints=32
+FANIN in_b[24] in_startpoints=1 fanout_endpoints=32
+FANIN in_b[23] in_startpoints=1 fanout_endpoints=32
+FANIN in_b[22] in_startpoints=1 fanout_endpoints=32
+FANIN in_b[21] in_startpoints=1 fanout_endpoints=32
+FANIN in_b[20] in_startpoints=1 fanout_endpoints=32
+FANIN in_b[19] in_startpoints=1 fanout_endpoints=32
+FANIN in_b[18] in_startpoints=1 fanout_endpoints=32
+FANIN in_b[17] in_startpoints=1 fanout_endpoints=32
+FANIN in_b[16] in_startpoints=1 fanout_endpoints=32
+FANIN in_b[15] in_startpoints=1 fanout_endpoints=32
+FANIN in_b[14] in_startpoints=1 fanout_endpoints=32
+FANIN in_b[13] in_startpoints=1 fanout_endpoints=32
+FANIN in_b[12] in_startpoints=1 fanout_endpoints=32
+FANIN in_b[11] in_startpoints=1 fanout_endpoints=32
+FANIN in_b[10] in_startpoints=1 fanout_endpoints=32
+FANIN in_b[9] in_startpoints=1 fanout_endpoints=32
+FANIN in_b[8] in_startpoints=1 fanout_endpoints=32
+FANIN in_b[7] in_startpoints=1 fanout_endpoints=32
+FANIN in_b[6] in_startpoints=1 fanout_endpoints=32
+FANIN in_b[5] in_startpoints=1 fanout_endpoints=32
+FANIN in_b[4] in_startpoints=1 fanout_endpoints=32
+FANIN in_b[3] in_startpoints=1 fanout_endpoints=32
+FANIN in_b[2] in_startpoints=1 fanout_endpoints=32
+FANIN in_b[1] in_startpoints=1 fanout_endpoints=32
+FANIN in_b[0] in_startpoints=1 fanout_endpoints=32
+CASE01-probe-CMD: foreach e [get_fanout -from [get_ports {in_b[0]}] -endpoints_only -flat -trace_arcs all] { puts "FANOUT in_b\[0\] -> [get_full_name $e]" }
+FANOUT in_b[0] -> _12026_/D
+FANOUT in_b[0] -> _12027_/D
+FANOUT in_b[0] -> _12028_/D
+FANOUT in_b[0] -> _12029_/D
+FANOUT in_b[0] -> _12030_/D
+FANOUT in_b[0] -> _12031_/D
+FANOUT in_b[0] -> _12032_/D
+FANOUT in_b[0] -> _12033_/D
+FANOUT in_b[0] -> _12034_/D
+FANOUT in_b[0] -> _12035_/D
+FANOUT in_b[0] -> _12036_/D
+FANOUT in_b[0] -> _12037_/D
+FANOUT in_b[0] -> _12038_/D
+FANOUT in_b[0] -> _12039_/D
+FANOUT in_b[0] -> _12040_/D
+FANOUT in_b[0] -> _12041_/D
+FANOUT in_b[0] -> _12042_/D
+FANOUT in_b[0] -> _12043_/D
+FANOUT in_b[0] -> _12044_/D
+FANOUT in_b[0] -> _12045_/D
+FANOUT in_b[0] -> _12046_/D
+FANOUT in_b[0] -> _12047_/D
+FANOUT in_b[0] -> _12048_/D
+FANOUT in_b[0] -> _12049_/D
+FANOUT in_b[0] -> _12050_/D
+FANOUT in_b[0] -> _12051_/D
+FANOUT in_b[0] -> _12052_/D
+FANOUT in_b[0] -> _12053_/D
+FANOUT in_b[0] -> _12054_/D
+FANOUT in_b[0] -> _12055_/D
+FANOUT in_b[0] -> _12056_/D
+FANOUT in_b[0] -> _12057_/D
+=== CASE01-probe QUERY END rc=0 ===

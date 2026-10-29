@@ -1,0 +1,4 @@
+name=q13_calib_missing kind=missing query=q13_calib.tcl mode=whatif rc=0 seconds=19.038944616
+argv: sta -no_init -no_splash -exit /mnt/d/study/ai_native_design/tasks/CASE-02/scratch/probe/safe_query.tcl
+SDC_FILE=/mnt/d/study/ai_native_design/tasks/CASE-02/scratch/case02_missing_inb.tcl
+env_records_identical_to_runs/missing_1=1

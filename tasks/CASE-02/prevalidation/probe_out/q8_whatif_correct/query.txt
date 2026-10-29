@@ -1,0 +1,23 @@
+=== CASE01-probe QUERY BEGIN (whatif) ===
+CASE01-probe-CMD: report_checks -path_delay max -from [get_ports {in_b[2]}] -scene ss_n40C_1v60 -format summary
+Startpoint                           Endpoint                               Slack
+--------------------------------------------------------------------------------
+in_b[2] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -4.19
+
+CASE01-probe-CMD: set_input_delay -clock clk -max 5.582 [get_ports {in_b[*]}]
+CASE01-probe-CMD: set_input_delay -clock clk -min 0 [get_ports {in_b[*]}]
+CASE01-probe-CMD: report_checks -path_delay max -from [get_ports {in_b[2]}] -scene ss_n40C_1v60 -format summary
+Startpoint                           Endpoint                               Slack
+--------------------------------------------------------------------------------
+in_b[2] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -4.19
+
+CASE01-probe-CMD: report_checks -path_delay max -from [get_ports {in_b[*]}] -scene ss_n40C_1v60 -unconstrained -format summary
+Startpoint                           Endpoint                               Slack
+--------------------------------------------------------------------------------
+in_b[2] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -4.19
+
+CASE01-probe-CMD: worst_slack -scene ss_n40C_1v60 -max
+-4.189726018044011
+CASE01-probe-CMD: check_setup -verbose
+1
+=== CASE01-probe QUERY END rc=0 ===

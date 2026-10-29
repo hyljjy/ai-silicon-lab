@@ -1,0 +1,844 @@
+=== CASE01-probe QUERY BEGIN (query) ===
+CASE01-probe-CMD: report_checks -path_delay max -from [get_ports {in_a[0]}] -scene ss_n40C_1v60
+Startpoint: in_a[0] (input port clocked by clk)
+Endpoint: _12026_ (rising edge-triggered flip-flop clocked by clk)
+Path Group: clk
+Path Type: max
+Corner: ss_n40C_1v60
+
+  Delay    Time   Description
+---------------------------------------------------------
+   0.00    0.00   clock clk (rise edge)
+   0.00    0.00   clock network delay (ideal)
+   5.58    5.58 ^ input external delay
+   0.41    5.99 ^ in_a[0] (in)
+   0.46    6.46 v _10902_/Y (sky130_fd_sc_hd__nand4_1)
+   0.76    7.22 ^ _10907_/Y (sky130_fd_sc_hd__xnor2_1)
+   1.04    8.25 v _11029_/X (sky130_fd_sc_hd__xnor3_1)
+   0.27    8.53 v _11087_/Y (sky130_fd_sc_hd__xnor2_1)
+   0.66    9.19 ^ _11113_/Y (sky130_fd_sc_hd__xnor2_1)
+   1.09   10.28 v _11186_/X (sky130_fd_sc_hd__xor3_1)
+   0.93   11.21 v _11255_/X (sky130_fd_sc_hd__xnor3_1)
+   0.40   11.61 ^ _11257_/X (sky130_fd_sc_hd__xor2_1)
+   0.73   12.33 v _11302_/X (sky130_fd_sc_hd__xor3_1)
+   0.94   13.28 v _11306_/X (sky130_fd_sc_hd__maj3_1)
+   0.98   14.26 v _11338_/X (sky130_fd_sc_hd__xor3_1)
+   0.41   14.67 ^ _11340_/X (sky130_fd_sc_hd__xor2_1)
+   0.26   14.93 v _11416_/Y (sky130_fd_sc_hd__a21oi_1)
+   0.93   15.86 v _11418_/X (sky130_fd_sc_hd__maj3_1)
+   0.54   16.40 ^ _11420_/Y (sky130_fd_sc_hd__o21ai_0)
+   0.53   16.94 ^ _11421_/X (sky130_fd_sc_hd__maj3_1)
+   0.18   17.11 v _11422_/Y (sky130_fd_sc_hd__a21oi_1)
+   0.95   18.06 v _11423_/X (sky130_fd_sc_hd__maj3_1)
+   0.94   19.00 v _11424_/X (sky130_fd_sc_hd__maj3_1)
+   0.53   19.53 ^ _11426_/Y (sky130_fd_sc_hd__o21ai_0)
+   0.32   19.85 v _11427_/Y (sky130_fd_sc_hd__a21oi_1)
+   0.94   20.79 v _11428_/X (sky130_fd_sc_hd__maj3_1)
+   0.95   21.74 v _11429_/X (sky130_fd_sc_hd__maj3_1)
+   0.44   22.18 ^ _11430_/Y (sky130_fd_sc_hd__o21bai_1)
+   0.25   22.43 v _11431_/Y (sky130_fd_sc_hd__a21oi_1)
+   0.51   22.94 ^ _11433_/Y (sky130_fd_sc_hd__o21ai_0)
+   0.34   23.28 v _11434_/Y (sky130_fd_sc_hd__a21oi_1)
+   0.85   24.12 ^ _11438_/Y (sky130_fd_sc_hd__o31ai_1)
+   0.43   24.56 v _11440_/Y (sky130_fd_sc_hd__a221oi_1)
+   1.02   25.58 ^ _11443_/Y (sky130_fd_sc_hd__o311ai_0)
+   0.49   26.07 v _11446_/Y (sky130_fd_sc_hd__a311oi_1)
+   0.84   26.91 ^ _11451_/Y (sky130_fd_sc_hd__o311ai_0)
+   0.35   27.26 v _11453_/Y (sky130_fd_sc_hd__nand2_1)
+   0.25   27.52 v _11507_/Y (sky130_fd_sc_hd__xnor2_1)
+   2.64   30.15 ^ _11509_/Y (sky130_fd_sc_hd__o21ai_0)
+   0.86   31.02 v _11512_/Y (sky130_fd_sc_hd__o21ai_0)
+   0.00   31.02 v _12026_/D (sky130_fd_sc_hd__dfxtp_1)
+          31.02   data arrival time
+
+  27.91   27.91   clock clk (rise edge)
+   0.00   27.91   clock network delay (ideal)
+   0.00   27.91   clock reconvergence pessimism
+          27.91 ^ _12026_/CLK (sky130_fd_sc_hd__dfxtp_1)
+  -0.56   27.35   library setup time
+          27.35   data required time
+---------------------------------------------------------
+          27.35   data required time
+         -31.02   data arrival time
+---------------------------------------------------------
+          -3.66   slack (VIOLATED)
+
+
+CASE01-probe-CMD: report_checks -path_delay max -from [get_ports {in_b[0]}] -scene ss_n40C_1v60
+Startpoint: in_b[0] (input port clocked by clk)
+Endpoint: _12026_ (rising edge-triggered flip-flop clocked by clk)
+Path Group: clk
+Path Type: max
+Corner: ss_n40C_1v60
+
+  Delay    Time   Description
+---------------------------------------------------------
+   0.00    0.00   clock clk (rise edge)
+   0.00    0.00   clock network delay (ideal)
+   5.58    5.58 ^ input external delay
+   0.33    5.92 ^ in_b[0] (in)
+   0.25    6.17 v _11117_/Y (sky130_fd_sc_hd__nand2_1)
+   0.74    6.91 ^ _11118_/Y (sky130_fd_sc_hd__nor3_1)
+   0.37    7.28 v _11183_/Y (sky130_fd_sc_hd__nor2_1)
+   0.59    7.87 ^ _11185_/Y (sky130_fd_sc_hd__xnor2_1)
+   1.18    9.05 v _11255_/X (sky130_fd_sc_hd__xnor3_1)
+   0.40    9.45 ^ _11257_/X (sky130_fd_sc_hd__xor2_1)
+   0.73   10.18 v _11302_/X (sky130_fd_sc_hd__xor3_1)
+   0.94   11.13 v _11306_/X (sky130_fd_sc_hd__maj3_1)
+   0.98   12.11 v _11338_/X (sky130_fd_sc_hd__xor3_1)
+   0.41   12.51 ^ _11340_/X (sky130_fd_sc_hd__xor2_1)
+   0.26   12.78 v _11416_/Y (sky130_fd_sc_hd__a21oi_1)
+   0.93   13.70 v _11418_/X (sky130_fd_sc_hd__maj3_1)
+   0.54   14.25 ^ _11420_/Y (sky130_fd_sc_hd__o21ai_0)
+   0.53   14.78 ^ _11421_/X (sky130_fd_sc_hd__maj3_1)
+   0.18   14.96 v _11422_/Y (sky130_fd_sc_hd__a21oi_1)
+   0.95   15.91 v _11423_/X (sky130_fd_sc_hd__maj3_1)
+   0.94   16.85 v _11424_/X (sky130_fd_sc_hd__maj3_1)
+   0.53   17.38 ^ _11426_/Y (sky130_fd_sc_hd__o21ai_0)
+   0.32   17.70 v _11427_/Y (sky130_fd_sc_hd__a21oi_1)
+   0.94   18.64 v _11428_/X (sky130_fd_sc_hd__maj3_1)
+   0.95   19.59 v _11429_/X (sky130_fd_sc_hd__maj3_1)
+   0.44   20.03 ^ _11430_/Y (sky130_fd_sc_hd__o21bai_1)
+   0.25   20.28 v _11431_/Y (sky130_fd_sc_hd__a21oi_1)
+   0.51   20.79 ^ _11433_/Y (sky130_fd_sc_hd__o21ai_0)
+   0.34   21.13 v _11434_/Y (sky130_fd_sc_hd__a21oi_1)
+   0.85   21.97 ^ _11438_/Y (sky130_fd_sc_hd__o31ai_1)
+   0.43   22.41 v _11440_/Y (sky130_fd_sc_hd__a221oi_1)
+   1.02   23.43 ^ _11443_/Y (sky130_fd_sc_hd__o311ai_0)
+   0.49   23.92 v _11446_/Y (sky130_fd_sc_hd__a311oi_1)
+   0.84   24.76 ^ _11451_/Y (sky130_fd_sc_hd__o311ai_0)
+   0.35   25.11 v _11453_/Y (sky130_fd_sc_hd__nand2_1)
+   0.25   25.37 v _11507_/Y (sky130_fd_sc_hd__xnor2_1)
+   2.64   28.00 ^ _11509_/Y (sky130_fd_sc_hd__o21ai_0)
+   0.86   28.87 v _11512_/Y (sky130_fd_sc_hd__o21ai_0)
+   0.00   28.87 v _12026_/D (sky130_fd_sc_hd__dfxtp_1)
+          28.87   data arrival time
+
+  27.91   27.91   clock clk (rise edge)
+   0.00   27.91   clock network delay (ideal)
+   0.00   27.91   clock reconvergence pessimism
+          27.91 ^ _12026_/CLK (sky130_fd_sc_hd__dfxtp_1)
+  -0.56   27.35   library setup time
+          27.35   data required time
+---------------------------------------------------------
+          27.35   data required time
+         -28.87   data arrival time
+---------------------------------------------------------
+          -1.51   slack (VIOLATED)
+
+
+CASE01-probe-CMD: report_checks -path_delay max -from [get_ports {in_b[0]}] -scene ss_n40C_1v60 -unconstrained
+Startpoint: in_b[0] (input port clocked by clk)
+Endpoint: _12026_ (rising edge-triggered flip-flop clocked by clk)
+Path Group: clk
+Path Type: max
+Corner: ss_n40C_1v60
+
+  Delay    Time   Description
+---------------------------------------------------------
+   0.00    0.00   clock clk (rise edge)
+   0.00    0.00   clock network delay (ideal)
+   5.58    5.58 ^ input external delay
+   0.33    5.92 ^ in_b[0] (in)
+   0.25    6.17 v _11117_/Y (sky130_fd_sc_hd__nand2_1)
+   0.74    6.91 ^ _11118_/Y (sky130_fd_sc_hd__nor3_1)
+   0.37    7.28 v _11183_/Y (sky130_fd_sc_hd__nor2_1)
+   0.59    7.87 ^ _11185_/Y (sky130_fd_sc_hd__xnor2_1)
+   1.18    9.05 v _11255_/X (sky130_fd_sc_hd__xnor3_1)
+   0.40    9.45 ^ _11257_/X (sky130_fd_sc_hd__xor2_1)
+   0.73   10.18 v _11302_/X (sky130_fd_sc_hd__xor3_1)
+   0.94   11.13 v _11306_/X (sky130_fd_sc_hd__maj3_1)
+   0.98   12.11 v _11338_/X (sky130_fd_sc_hd__xor3_1)
+   0.41   12.51 ^ _11340_/X (sky130_fd_sc_hd__xor2_1)
+   0.26   12.78 v _11416_/Y (sky130_fd_sc_hd__a21oi_1)
+   0.93   13.70 v _11418_/X (sky130_fd_sc_hd__maj3_1)
+   0.54   14.25 ^ _11420_/Y (sky130_fd_sc_hd__o21ai_0)
+   0.53   14.78 ^ _11421_/X (sky130_fd_sc_hd__maj3_1)
+   0.18   14.96 v _11422_/Y (sky130_fd_sc_hd__a21oi_1)
+   0.95   15.91 v _11423_/X (sky130_fd_sc_hd__maj3_1)
+   0.94   16.85 v _11424_/X (sky130_fd_sc_hd__maj3_1)
+   0.53   17.38 ^ _11426_/Y (sky130_fd_sc_hd__o21ai_0)
+   0.32   17.70 v _11427_/Y (sky130_fd_sc_hd__a21oi_1)
+   0.94   18.64 v _11428_/X (sky130_fd_sc_hd__maj3_1)
+   0.95   19.59 v _11429_/X (sky130_fd_sc_hd__maj3_1)
+   0.44   20.03 ^ _11430_/Y (sky130_fd_sc_hd__o21bai_1)
+   0.25   20.28 v _11431_/Y (sky130_fd_sc_hd__a21oi_1)
+   0.51   20.79 ^ _11433_/Y (sky130_fd_sc_hd__o21ai_0)
+   0.34   21.13 v _11434_/Y (sky130_fd_sc_hd__a21oi_1)
+   0.85   21.97 ^ _11438_/Y (sky130_fd_sc_hd__o31ai_1)
+   0.43   22.41 v _11440_/Y (sky130_fd_sc_hd__a221oi_1)
+   1.02   23.43 ^ _11443_/Y (sky130_fd_sc_hd__o311ai_0)
+   0.49   23.92 v _11446_/Y (sky130_fd_sc_hd__a311oi_1)
+   0.84   24.76 ^ _11451_/Y (sky130_fd_sc_hd__o311ai_0)
+   0.35   25.11 v _11453_/Y (sky130_fd_sc_hd__nand2_1)
+   0.25   25.37 v _11507_/Y (sky130_fd_sc_hd__xnor2_1)
+   2.64   28.00 ^ _11509_/Y (sky130_fd_sc_hd__o21ai_0)
+   0.86   28.87 v _11512_/Y (sky130_fd_sc_hd__o21ai_0)
+   0.00   28.87 v _12026_/D (sky130_fd_sc_hd__dfxtp_1)
+          28.87   data arrival time
+
+  27.91   27.91   clock clk (rise edge)
+   0.00   27.91   clock network delay (ideal)
+   0.00   27.91   clock reconvergence pessimism
+          27.91 ^ _12026_/CLK (sky130_fd_sc_hd__dfxtp_1)
+  -0.56   27.35   library setup time
+          27.35   data required time
+---------------------------------------------------------
+          27.35   data required time
+         -28.87   data arrival time
+---------------------------------------------------------
+          -1.51   slack (VIOLATED)
+
+
+CASE01-probe-CMD: report_checks -path_delay min -from [get_ports {in_b[0]}] -scene ss_n40C_1v60 -unconstrained
+Startpoint: in_b[0] (input port clocked by clk)
+Endpoint: _12026_ (rising edge-triggered flip-flop clocked by clk)
+Path Group: clk
+Path Type: min
+Corner: ss_n40C_1v60
+
+  Delay    Time   Description
+---------------------------------------------------------
+   0.00    0.00   clock clk (rise edge)
+   0.00    0.00   clock network delay (ideal)
+   0.00    0.00 v input external delay
+   0.14    0.14 v in_b[0] (in)
+   0.22    0.36 ^ _11376_/Y (sky130_fd_sc_hd__nand2_1)
+   0.12    0.48 v _11511_/X (sky130_fd_sc_hd__xor2_1)
+   0.24    0.72 ^ _11512_/Y (sky130_fd_sc_hd__o21ai_0)
+   0.00    0.72 ^ _12026_/D (sky130_fd_sc_hd__dfxtp_1)
+           0.72   data arrival time
+
+   0.00    0.00   clock clk (rise edge)
+   0.00    0.00   clock network delay (ideal)
+   0.00    0.00   clock reconvergence pessimism
+           0.00 ^ _12026_/CLK (sky130_fd_sc_hd__dfxtp_1)
+  -0.11   -0.11   library hold time
+          -0.11   data required time
+---------------------------------------------------------
+          -0.11   data required time
+          -0.72   data arrival time
+---------------------------------------------------------
+           0.83   slack (MET)
+
+
+CASE01-probe-CMD: report_checks -path_delay min -from [get_ports {in_a[0]}] -scene ss_n40C_1v60 -format summary
+Startpoint                           Endpoint                               Slack
+--------------------------------------------------------------------------------
+in_a[0] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)    0.86
+
+CASE01-probe-CMD: report_checks -path_delay max -from [get_ports {in_b[0]}] -scene ss_n40C_1v60 -unconstrained -format full_clock_expanded
+Startpoint: in_b[0] (input port clocked by clk)
+Endpoint: _12026_ (rising edge-triggered flip-flop clocked by clk)
+Path Group: clk
+Path Type: max
+Corner: ss_n40C_1v60
+
+  Delay    Time   Description
+---------------------------------------------------------
+   0.00    0.00   clock clk (rise edge)
+   0.00    0.00   clock network delay (ideal)
+   5.58    5.58 ^ input external delay
+   0.33    5.92 ^ in_b[0] (in)
+   0.25    6.17 v _11117_/Y (sky130_fd_sc_hd__nand2_1)
+   0.74    6.91 ^ _11118_/Y (sky130_fd_sc_hd__nor3_1)
+   0.37    7.28 v _11183_/Y (sky130_fd_sc_hd__nor2_1)
+   0.59    7.87 ^ _11185_/Y (sky130_fd_sc_hd__xnor2_1)
+   1.18    9.05 v _11255_/X (sky130_fd_sc_hd__xnor3_1)
+   0.40    9.45 ^ _11257_/X (sky130_fd_sc_hd__xor2_1)
+   0.73   10.18 v _11302_/X (sky130_fd_sc_hd__xor3_1)
+   0.94   11.13 v _11306_/X (sky130_fd_sc_hd__maj3_1)
+   0.98   12.11 v _11338_/X (sky130_fd_sc_hd__xor3_1)
+   0.41   12.51 ^ _11340_/X (sky130_fd_sc_hd__xor2_1)
+   0.26   12.78 v _11416_/Y (sky130_fd_sc_hd__a21oi_1)
+   0.93   13.70 v _11418_/X (sky130_fd_sc_hd__maj3_1)
+   0.54   14.25 ^ _11420_/Y (sky130_fd_sc_hd__o21ai_0)
+   0.53   14.78 ^ _11421_/X (sky130_fd_sc_hd__maj3_1)
+   0.18   14.96 v _11422_/Y (sky130_fd_sc_hd__a21oi_1)
+   0.95   15.91 v _11423_/X (sky130_fd_sc_hd__maj3_1)
+   0.94   16.85 v _11424_/X (sky130_fd_sc_hd__maj3_1)
+   0.53   17.38 ^ _11426_/Y (sky130_fd_sc_hd__o21ai_0)
+   0.32   17.70 v _11427_/Y (sky130_fd_sc_hd__a21oi_1)
+   0.94   18.64 v _11428_/X (sky130_fd_sc_hd__maj3_1)
+   0.95   19.59 v _11429_/X (sky130_fd_sc_hd__maj3_1)
+   0.44   20.03 ^ _11430_/Y (sky130_fd_sc_hd__o21bai_1)
+   0.25   20.28 v _11431_/Y (sky130_fd_sc_hd__a21oi_1)
+   0.51   20.79 ^ _11433_/Y (sky130_fd_sc_hd__o21ai_0)
+   0.34   21.13 v _11434_/Y (sky130_fd_sc_hd__a21oi_1)
+   0.85   21.97 ^ _11438_/Y (sky130_fd_sc_hd__o31ai_1)
+   0.43   22.41 v _11440_/Y (sky130_fd_sc_hd__a221oi_1)
+   1.02   23.43 ^ _11443_/Y (sky130_fd_sc_hd__o311ai_0)
+   0.49   23.92 v _11446_/Y (sky130_fd_sc_hd__a311oi_1)
+   0.84   24.76 ^ _11451_/Y (sky130_fd_sc_hd__o311ai_0)
+   0.35   25.11 v _11453_/Y (sky130_fd_sc_hd__nand2_1)
+   0.25   25.37 v _11507_/Y (sky130_fd_sc_hd__xnor2_1)
+   2.64   28.00 ^ _11509_/Y (sky130_fd_sc_hd__o21ai_0)
+   0.86   28.87 v _11512_/Y (sky130_fd_sc_hd__o21ai_0)
+   0.00   28.87 v _12026_/D (sky130_fd_sc_hd__dfxtp_1)
+          28.87   data arrival time
+
+  27.91   27.91   clock clk (rise edge)
+   0.00   27.91   clock network delay (ideal)
+   0.00   27.91   clock reconvergence pessimism
+          27.91 ^ _12026_/CLK (sky130_fd_sc_hd__dfxtp_1)
+  -0.56   27.35   library setup time
+          27.35   data required time
+---------------------------------------------------------
+          27.35   data required time
+         -28.87   data arrival time
+---------------------------------------------------------
+          -1.51   slack (VIOLATED)
+
+
+CASE01-probe-CMD: report_arrival [get_ports {in_a[0]}]
+CASE01-probe-ERROR: Error 103: safe_query.tcl line 1, -scene keyword required with multi-scene analysis.
+CASE01-probe-CMD: report_arrival [get_ports {in_b[0]}]
+CASE01-probe-ERROR: Error 103: safe_query.tcl line 1, -scene keyword required with multi-scene analysis.
+CASE01-probe-CMD: report_required [get_ports {in_a[0]}]
+CASE01-probe-ERROR: Error 103: safe_query.tcl line 1, -scene keyword required with multi-scene analysis.
+CASE01-probe-CMD: report_required [get_ports {in_b[0]}]
+CASE01-probe-ERROR: Error 103: safe_query.tcl line 1, -scene keyword required with multi-scene analysis.
+CASE01-probe-CMD: report_slack [get_ports {in_a[0]}]
+CASE01-probe-ERROR: Error 103: safe_query.tcl line 1, -scene keyword required with multi-scene analysis.
+CASE01-probe-CMD: report_slack [get_ports {in_b[0]}]
+CASE01-probe-ERROR: Error 103: safe_query.tcl line 1, -scene keyword required with multi-scene analysis.
+CASE01-probe-CMD: report_arrival -scene ss_n40C_1v60 [get_ports {in_a[0]}]
+(clk ^) r 0.00:5.58 f 0.00:5.58
+CASE01-probe-CMD: get_property [get_ports {in_a[0]}] slack_max
+-3.662642
+CASE01-probe-CMD: get_property [get_ports {in_b[0]}] slack_max
+-1.510958
+CASE01-probe-CMD: get_property [get_ports {in_a[0]}] slack_min
+0.295775
+CASE01-probe-CMD: get_property [get_ports {in_b[0]}] slack_min
+0.281626
+CASE01-probe-CMD: get_property [get_ports {in_a[0]}] arrival_max_rise
+CASE01-probe-ERROR: Error: port objects do not have a arrival_max_rise property.
+CASE01-probe-CMD: get_property [get_ports {in_b[0]}] arrival_max_rise
+CASE01-probe-ERROR: Error: port objects do not have a arrival_max_rise property.
+CASE01-probe-CMD: get_property [get_ports {in_a[0]}] input_delay
+CASE01-probe-ERROR: Error: port objects do not have a input_delay property.
+CASE01-probe-CMD: get_property [get_ports {in_b[0]}] clocks
+CASE01-probe-ERROR: Error: port objects do not have a clocks property.
+CASE01-probe-CMD: get_property [get_ports {in_a[0]}] clocks
+CASE01-probe-ERROR: Error: port objects do not have a clocks property.
+CASE01-probe-CMD: get_property [get_ports {in_a[0]}] bogus_property
+CASE01-probe-ERROR: Error: port objects do not have a bogus_property property.
+CASE01-probe-CMD: get_property [get_pins {_12026_/D}] slack_max
+-4.189726
+CASE01-probe-CMD: get_clocks -of_objects [get_ports {in_a[0]}]
+CASE01-probe-ERROR: Error 562: safe_query.tcl line 1, get_clocks -of_objects is not a known keyword or flag.
+CASE01-probe-CMD: report_edges -from [get_ports {in_b[0]}]
+in_b[0] -> _09913_/B wire
+  ^ -> ^ 0.17:0.17:0.16:0.16:0.27:0.27:0.33:0.33:0.12:0.12:0.12:0.12
+  v -> v 0.10:0.10:0.11:0.11:0.18:0.18:0.14:0.14:0.07:0.07:0.08:0.08
+in_b[0] -> _10128_/B wire
+  ^ -> ^ 0.17:0.17:0.16:0.16:0.27:0.27:0.33:0.33:0.12:0.12:0.12:0.12
+  v -> v 0.10:0.10:0.11:0.11:0.18:0.18:0.14:0.14:0.07:0.07:0.08:0.08
+in_b[0] -> _10323_/B wire
+  ^ -> ^ 0.17:0.17:0.16:0.16:0.27:0.27:0.33:0.33:0.12:0.12:0.12:0.12
+  v -> v 0.10:0.10:0.11:0.11:0.18:0.18:0.14:0.14:0.07:0.07:0.08:0.08
+in_b[0] -> _10485_/B wire
+  ^ -> ^ 0.17:0.17:0.16:0.16:0.27:0.27:0.33:0.33:0.12:0.12:0.12:0.12
+  v -> v 0.10:0.10:0.11:0.11:0.18:0.18:0.14:0.14:0.07:0.07:0.08:0.08
+in_b[0] -> _10639_/C1 wire
+  ^ -> ^ 0.17:0.17:0.16:0.16:0.27:0.27:0.33:0.33:0.12:0.12:0.12:0.12
+  v -> v 0.10:0.10:0.11:0.11:0.18:0.18:0.14:0.14:0.07:0.07:0.08:0.08
+in_b[0] -> _10784_/B wire
+  ^ -> ^ 0.17:0.17:0.16:0.16:0.27:0.27:0.33:0.33:0.12:0.12:0.12:0.12
+  v -> v 0.10:0.10:0.11:0.11:0.18:0.18:0.14:0.14:0.07:0.07:0.08:0.08
+in_b[0] -> _10786_/A2 wire
+  ^ -> ^ 0.17:0.17:0.16:0.16:0.27:0.27:0.33:0.33:0.12:0.12:0.12:0.12
+  v -> v 0.10:0.10:0.11:0.11:0.18:0.18:0.14:0.14:0.07:0.07:0.08:0.08
+in_b[0] -> _10920_/B wire
+  ^ -> ^ 0.17:0.17:0.16:0.16:0.27:0.27:0.33:0.33:0.12:0.12:0.12:0.12
+  v -> v 0.10:0.10:0.11:0.11:0.18:0.18:0.14:0.14:0.07:0.07:0.08:0.08
+in_b[0] -> _11035_/B wire
+  ^ -> ^ 0.17:0.17:0.16:0.16:0.27:0.27:0.33:0.33:0.12:0.12:0.12:0.12
+  v -> v 0.10:0.10:0.11:0.11:0.18:0.18:0.14:0.14:0.07:0.07:0.08:0.08
+in_b[0] -> _11117_/B wire
+  ^ -> ^ 0.17:0.17:0.16:0.16:0.27:0.27:0.33:0.33:0.12:0.12:0.12:0.12
+  v -> v 0.10:0.10:0.11:0.11:0.18:0.18:0.14:0.14:0.07:0.07:0.08:0.08
+in_b[0] -> _11179_/B wire
+  ^ -> ^ 0.17:0.17:0.16:0.16:0.27:0.27:0.33:0.33:0.12:0.12:0.12:0.12
+  v -> v 0.10:0.10:0.11:0.11:0.18:0.18:0.14:0.14:0.07:0.07:0.08:0.08
+in_b[0] -> _11245_/B wire
+  ^ -> ^ 0.17:0.17:0.16:0.16:0.27:0.27:0.33:0.33:0.12:0.12:0.12:0.12
+  v -> v 0.10:0.10:0.11:0.11:0.18:0.18:0.14:0.14:0.07:0.07:0.08:0.08
+in_b[0] -> _11246_/B wire
+  ^ -> ^ 0.17:0.17:0.16:0.16:0.27:0.27:0.33:0.33:0.12:0.12:0.12:0.12
+  v -> v 0.10:0.10:0.11:0.11:0.18:0.18:0.14:0.14:0.07:0.07:0.08:0.08
+in_b[0] -> _11323_/B wire
+  ^ -> ^ 0.17:0.17:0.16:0.16:0.27:0.27:0.33:0.33:0.12:0.12:0.12:0.12
+  v -> v 0.10:0.10:0.11:0.11:0.18:0.18:0.14:0.14:0.07:0.07:0.08:0.08
+in_b[0] -> _11354_/B wire
+  ^ -> ^ 0.17:0.17:0.16:0.16:0.27:0.27:0.33:0.33:0.12:0.12:0.12:0.12
+  v -> v 0.10:0.10:0.11:0.11:0.18:0.18:0.14:0.14:0.07:0.07:0.08:0.08
+in_b[0] -> _11376_/B wire
+  ^ -> ^ 0.17:0.17:0.16:0.16:0.27:0.27:0.33:0.33:0.12:0.12:0.12:0.12
+  v -> v 0.10:0.10:0.11:0.11:0.18:0.18:0.14:0.14:0.07:0.07:0.08:0.08
+in_b[0] -> _11378_/A2 wire
+  ^ -> ^ 0.17:0.17:0.16:0.16:0.27:0.27:0.33:0.33:0.12:0.12:0.12:0.12
+  v -> v 0.10:0.10:0.11:0.11:0.18:0.18:0.14:0.14:0.07:0.07:0.08:0.08
+in_b[0] -> _11394_/B1 wire
+  ^ -> ^ 0.17:0.17:0.16:0.16:0.27:0.27:0.33:0.33:0.12:0.12:0.12:0.12
+  v -> v 0.10:0.10:0.11:0.11:0.18:0.18:0.14:0.14:0.07:0.07:0.08:0.08
+in_b[0] -> _11404_/B wire
+  ^ -> ^ 0.17:0.17:0.16:0.16:0.27:0.27:0.33:0.33:0.12:0.12:0.12:0.12
+  v -> v 0.10:0.10:0.11:0.11:0.18:0.18:0.14:0.14:0.07:0.07:0.08:0.08
+in_b[0] -> _11943_/B wire
+  ^ -> ^ 0.17:0.17:0.16:0.16:0.27:0.27:0.33:0.33:0.12:0.12:0.12:0.12
+  v -> v 0.10:0.10:0.11:0.11:0.18:0.18:0.14:0.14:0.07:0.07:0.08:0.08
+in_b[0] -> _11944_/B wire
+  ^ -> ^ 0.17:0.17:0.16:0.16:0.27:0.27:0.33:0.33:0.12:0.12:0.12:0.12
+  v -> v 0.10:0.10:0.11:0.11:0.18:0.18:0.14:0.14:0.07:0.07:0.08:0.08
+CASE01-probe-CMD: report_edges -from [get_ports {in_a[0]}]
+in_a[0] -> _08476_/A wire
+  ^ -> ^ 0.20:0.20:0.20:0.20:0.33:0.33:0.41:0.41:0.15:0.15:0.14:0.14
+  v -> v 0.12:0.12:0.13:0.13:0.22:0.22:0.16:0.16:0.08:0.08:0.10:0.10
+in_a[0] -> _08791_/A wire
+  ^ -> ^ 0.20:0.20:0.20:0.20:0.33:0.33:0.41:0.41:0.15:0.15:0.14:0.14
+  v -> v 0.12:0.12:0.13:0.13:0.22:0.22:0.16:0.16:0.08:0.08:0.10:0.10
+in_a[0] -> _08794_/A wire
+  ^ -> ^ 0.20:0.20:0.20:0.20:0.33:0.33:0.41:0.41:0.15:0.15:0.14:0.14
+  v -> v 0.12:0.12:0.13:0.13:0.22:0.22:0.16:0.16:0.08:0.08:0.10:0.10
+in_a[0] -> _09088_/A1 wire
+  ^ -> ^ 0.20:0.20:0.20:0.20:0.33:0.33:0.41:0.41:0.15:0.15:0.14:0.14
+  v -> v 0.12:0.12:0.13:0.13:0.22:0.22:0.16:0.16:0.08:0.08:0.10:0.10
+in_a[0] -> _09370_/A wire
+  ^ -> ^ 0.20:0.20:0.20:0.20:0.33:0.33:0.41:0.41:0.15:0.15:0.14:0.14
+  v -> v 0.12:0.12:0.13:0.13:0.22:0.22:0.16:0.16:0.08:0.08:0.10:0.10
+in_a[0] -> _09373_/A1 wire
+  ^ -> ^ 0.20:0.20:0.20:0.20:0.33:0.33:0.41:0.41:0.15:0.15:0.14:0.14
+  v -> v 0.12:0.12:0.13:0.13:0.22:0.22:0.16:0.16:0.08:0.08:0.10:0.10
+in_a[0] -> _09646_/A wire
+  ^ -> ^ 0.20:0.20:0.20:0.20:0.33:0.33:0.41:0.41:0.15:0.15:0.14:0.14
+  v -> v 0.12:0.12:0.13:0.13:0.22:0.22:0.16:0.16:0.08:0.08:0.10:0.10
+in_a[0] -> _09647_/A wire
+  ^ -> ^ 0.20:0.20:0.20:0.20:0.33:0.33:0.41:0.41:0.15:0.15:0.14:0.14
+  v -> v 0.12:0.12:0.13:0.13:0.22:0.22:0.16:0.16:0.08:0.08:0.10:0.10
+in_a[0] -> _10089_/A1 wire
+  ^ -> ^ 0.20:0.20:0.20:0.20:0.33:0.33:0.41:0.41:0.15:0.15:0.14:0.14
+  v -> v 0.12:0.12:0.13:0.13:0.22:0.22:0.16:0.16:0.08:0.08:0.10:0.10
+in_a[0] -> _10093_/A wire
+  ^ -> ^ 0.20:0.20:0.20:0.20:0.33:0.33:0.41:0.41:0.15:0.15:0.14:0.14
+  v -> v 0.12:0.12:0.13:0.13:0.22:0.22:0.16:0.16:0.08:0.08:0.10:0.10
+in_a[0] -> _10094_/A wire
+  ^ -> ^ 0.20:0.20:0.20:0.20:0.33:0.33:0.41:0.41:0.15:0.15:0.14:0.14
+  v -> v 0.12:0.12:0.13:0.13:0.22:0.22:0.16:0.16:0.08:0.08:0.10:0.10
+in_a[0] -> _10096_/A1 wire
+  ^ -> ^ 0.20:0.20:0.20:0.20:0.33:0.33:0.41:0.41:0.15:0.15:0.14:0.14
+  v -> v 0.12:0.12:0.13:0.13:0.22:0.22:0.16:0.16:0.08:0.08:0.10:0.10
+in_a[0] -> _10290_/A wire
+  ^ -> ^ 0.20:0.20:0.20:0.20:0.33:0.33:0.41:0.41:0.15:0.15:0.14:0.14
+  v -> v 0.12:0.12:0.13:0.13:0.22:0.22:0.16:0.16:0.08:0.08:0.10:0.10
+in_a[0] -> _10294_/A wire
+  ^ -> ^ 0.20:0.20:0.20:0.20:0.33:0.33:0.41:0.41:0.15:0.15:0.14:0.14
+  v -> v 0.12:0.12:0.13:0.13:0.22:0.22:0.16:0.16:0.08:0.08:0.10:0.10
+in_a[0] -> _10764_/A wire
+  ^ -> ^ 0.20:0.20:0.20:0.20:0.33:0.33:0.41:0.41:0.15:0.15:0.14:0.14
+  v -> v 0.12:0.12:0.13:0.13:0.22:0.22:0.16:0.16:0.08:0.08:0.10:0.10
+in_a[0] -> _10901_/A wire
+  ^ -> ^ 0.20:0.20:0.20:0.20:0.33:0.33:0.41:0.41:0.15:0.15:0.14:0.14
+  v -> v 0.12:0.12:0.13:0.13:0.22:0.22:0.16:0.16:0.08:0.08:0.10:0.10
+in_a[0] -> _10902_/A wire
+  ^ -> ^ 0.20:0.20:0.20:0.20:0.33:0.33:0.41:0.41:0.15:0.15:0.14:0.14
+  v -> v 0.12:0.12:0.13:0.13:0.22:0.22:0.16:0.16:0.08:0.08:0.10:0.10
+in_a[0] -> _11025_/A1 wire
+  ^ -> ^ 0.20:0.20:0.20:0.20:0.33:0.33:0.41:0.41:0.15:0.15:0.14:0.14
+  v -> v 0.12:0.12:0.13:0.13:0.22:0.22:0.16:0.16:0.08:0.08:0.10:0.10
+in_a[0] -> _11100_/A wire
+  ^ -> ^ 0.20:0.20:0.20:0.20:0.33:0.33:0.41:0.41:0.15:0.15:0.14:0.14
+  v -> v 0.12:0.12:0.13:0.13:0.22:0.22:0.16:0.16:0.08:0.08:0.10:0.10
+in_a[0] -> _11101_/A wire
+  ^ -> ^ 0.20:0.20:0.20:0.20:0.33:0.33:0.41:0.41:0.15:0.15:0.14:0.14
+  v -> v 0.12:0.12:0.13:0.13:0.22:0.22:0.16:0.16:0.08:0.08:0.10:0.10
+in_a[0] -> _11110_/A wire
+  ^ -> ^ 0.20:0.20:0.20:0.20:0.33:0.33:0.41:0.41:0.15:0.15:0.14:0.14
+  v -> v 0.12:0.12:0.13:0.13:0.22:0.22:0.16:0.16:0.08:0.08:0.10:0.10
+in_a[0] -> _11242_/A wire
+  ^ -> ^ 0.20:0.20:0.20:0.20:0.33:0.33:0.41:0.41:0.15:0.15:0.14:0.14
+  v -> v 0.12:0.12:0.13:0.13:0.22:0.22:0.16:0.16:0.08:0.08:0.10:0.10
+in_a[0] -> _11376_/A wire
+  ^ -> ^ 0.20:0.20:0.20:0.20:0.33:0.33:0.41:0.41:0.15:0.15:0.14:0.14
+  v -> v 0.12:0.12:0.13:0.13:0.22:0.22:0.16:0.16:0.08:0.08:0.10:0.10
+in_a[0] -> _11394_/A1 wire
+  ^ -> ^ 0.20:0.20:0.20:0.20:0.33:0.33:0.41:0.41:0.15:0.15:0.14:0.14
+  v -> v 0.12:0.12:0.13:0.13:0.22:0.22:0.16:0.16:0.08:0.08:0.10:0.10
+in_a[0] -> _11404_/A wire
+  ^ -> ^ 0.20:0.20:0.20:0.20:0.33:0.33:0.41:0.41:0.15:0.15:0.14:0.14
+  v -> v 0.12:0.12:0.13:0.13:0.22:0.22:0.16:0.16:0.08:0.08:0.10:0.10
+CASE01-probe-CMD: report_object_full_names [get_ports {in_b[*]}]
+in_b[0]
+in_b[10]
+in_b[11]
+in_b[12]
+in_b[13]
+in_b[14]
+in_b[15]
+in_b[16]
+in_b[17]
+in_b[18]
+in_b[19]
+in_b[1]
+in_b[20]
+in_b[21]
+in_b[22]
+in_b[23]
+in_b[24]
+in_b[25]
+in_b[26]
+in_b[27]
+in_b[28]
+in_b[29]
+in_b[2]
+in_b[30]
+in_b[31]
+in_b[32]
+in_b[33]
+in_b[34]
+in_b[35]
+in_b[36]
+in_b[37]
+in_b[38]
+in_b[39]
+in_b[3]
+in_b[40]
+in_b[41]
+in_b[42]
+in_b[43]
+in_b[44]
+in_b[45]
+in_b[46]
+in_b[47]
+in_b[48]
+in_b[49]
+in_b[4]
+in_b[50]
+in_b[51]
+in_b[52]
+in_b[53]
+in_b[54]
+in_b[55]
+in_b[56]
+in_b[57]
+in_b[58]
+in_b[59]
+in_b[5]
+in_b[60]
+in_b[61]
+in_b[62]
+in_b[63]
+in_b[6]
+in_b[7]
+in_b[8]
+in_b[9]
+CASE01-probe-CMD: llength [get_ports {in_b[*]}]
+64
+CASE01-probe-CMD: get_property [get_ports {in_b[0]}] direction
+input
+CASE01-probe-CMD: report_checks -path_delay max -to [get_pins {_12026_/D}] -scene ss_n40C_1v60 -unconstrained -group_path_count 300 -endpoint_path_count 300 -format summary
+Startpoint                           Endpoint                               Slack
+--------------------------------------------------------------------------------
+in_b[2] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -4.19
+in_b[2] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -4.18
+in_b[35] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -4.18
+in_b[2] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -4.18
+in_a[34] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -4.17
+in_b[2] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -4.17
+in_b[35] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -4.17
+in_a[34] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -4.16
+in_a[4] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -4.15
+in_a[4] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -4.15
+in_a[4] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -4.14
+in_a[3] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -4.14
+in_a[4] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -4.13
+in_a[3] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -4.13
+in_b[3] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -4.13
+in_a[3] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -4.12
+in_b[3] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -4.12
+in_a[3] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -4.12
+in_b[3] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -4.12
+in_b[3] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -4.11
+in_a[32] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -4.11
+in_a[33] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -4.10
+in_a[32] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -4.09
+in_a[33] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -4.08
+in_a[33] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -4.05
+in_a[33] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -4.04
+in_a[35] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -4.01
+in_b[35] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -4.01
+in_b[35] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -4.01
+in_a[35] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -4.00
+in_b[35] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.99
+in_b[35] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.99
+in_b[2] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.98
+in_b[35] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.98
+in_b[2] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.98
+in_a[35] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.98
+in_b[2] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.97
+in_a[34] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.97
+in_b[35] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.97
+in_a[35] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.97
+in_b[2] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.97
+in_b[2] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.97
+in_b[35] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.97
+in_b[35] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.96
+in_a[35] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.96
+in_b[2] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.96
+in_a[34] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.96
+in_b[35] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.96
+in_b[2] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.96
+in_a[35] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.96
+in_b[35] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.96
+in_b[2] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.95
+in_b[2] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.95
+in_b[35] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.95
+in_b[2] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.95
+in_b[35] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.95
+in_b[36] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.95
+in_b[2] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.95
+in_b[2] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.95
+in_a[34] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.94
+in_a[4] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.94
+in_b[2] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.94
+in_b[35] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.94
+in_b[35] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.94
+in_b[36] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.94
+in_a[4] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.94
+in_b[2] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.94
+in_b[36] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.94
+in_b[2] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.94
+in_a[4] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.94
+in_a[4] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.93
+in_a[34] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.93
+in_b[2] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.93
+in_a[4] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.93
+in_a[4] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.93
+in_a[3] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.93
+in_b[35] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.93
+in_a[4] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.93
+in_b[36] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.93
+in_b[2] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.92
+in_a[4] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.92
+in_a[3] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.92
+in_b[3] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.92
+in_a[3] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.92
+in_a[4] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.92
+in_a[34] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.92
+in_b[32] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.92
+in_b[35] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.92
+in_b[2] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.92
+in_a[4] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.92
+in_a[4] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.92
+in_b[2] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.92
+in_b[3] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.92
+in_a[4] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.91
+in_b[35] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.91
+in_a[3] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.91
+in_a[3] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.91
+in_a[4] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.91
+in_b[35] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.91
+in_b[3] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.91
+in_b[2] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.91
+in_a[34] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.91
+in_a[34] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.91
+in_a[4] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.91
+in_a[3] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.91
+in_b[3] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.91
+in_b[3] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.91
+in_a[34] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.91
+in_a[34] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.91
+in_b[32] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.91
+in_b[35] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.90
+in_b[2] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.90
+in_a[3] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.90
+in_a[3] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.90
+in_b[35] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.90
+in_b[35] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.90
+in_b[3] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.90
+in_a[4] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.90
+in_a[3] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.90
+in_b[2] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.90
+in_a[34] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.90
+in_a[34] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.90
+in_b[3] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.89
+in_b[3] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.89
+in_a[4] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.89
+in_a[3] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.89
+in_a[34] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.89
+in_a[34] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.89
+in_b[3] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.89
+in_a[32] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.89
+in_b[35] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.89
+in_a[4] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.89
+in_b[36] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.89
+in_b[3] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.89
+in_a[3] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.88
+in_b[2] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.88
+in_a[4] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.88
+in_b[35] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.88
+in_a[33] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.88
+in_a[34] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.88
+in_a[34] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.88
+in_a[4] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.88
+in_a[3] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.88
+in_b[35] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.88
+in_b[3] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.88
+in_b[2] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.88
+in_a[32] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.87
+in_b[36] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.87
+in_a[4] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.87
+in_b[35] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.87
+in_a[34] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.87
+in_a[3] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.87
+in_b[3] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.87
+in_a[34] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.87
+in_b[2] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.87
+in_a[35] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.87
+in_b[35] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.87
+in_a[33] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.87
+in_b[35] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.87
+in_a[34] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.87
+in_b[3] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.87
+in_a[4] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.87
+in_a[3] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.86
+in_a[34] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.86
+in_b[35] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.86
+in_b[3] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.86
+in_a[3] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.86
+in_b[35] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.86
+in_b[2] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.86
+in_b[3] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.86
+in_a[4] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.86
+in_a[3] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.86
+in_a[34] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.86
+in_a[34] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.86
+in_b[3] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.86
+in_a[3] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.86
+in_a[34] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.86
+in_b[3] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.86
+in_a[32] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.85
+in_a[35] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.85
+in_b[35] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.85
+in_b[3] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.85
+in_a[3] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.85
+in_b[36] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.85
+in_a[3] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.85
+in_b[3] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.85
+in_b[35] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.85
+in_a[33] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.85
+in_b[2] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.85
+in_b[3] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.85
+in_a[33] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.85
+in_a[3] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.84
+in_a[34] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.84
+in_a[34] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.84
+in_a[4] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.84
+in_a[3] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.84
+in_b[36] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.84
+in_b[3] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.84
+in_b[2] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.84
+in_a[32] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.84
+in_a[35] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.84
+in_a[3] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.84
+in_b[35] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.84
+in_a[4] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.84
+in_b[36] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.84
+in_a[34] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.84
+in_b[3] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.84
+in_a[33] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.83
+in_a[33] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.83
+in_a[34] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.83
+in_a[4] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.83
+in_b[36] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.83
+in_a[34] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.83
+in_a[3] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.83
+in_a[35] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.83
+in_b[33] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.83
+in_a[4] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.82
+in_b[2] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.82
+in_a[34] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.82
+in_b[35] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.82
+in_a[3] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.82
+in_a[32] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.82
+in_a[33] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.82
+in_b[3] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.82
+in_b[2] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.82
+in_a[33] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.82
+in_a[34] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.81
+in_b[3] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.81
+in_a[3] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.81
+in_a[33] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.81
+in_b[33] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.81
+in_b[2] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.81
+in_a[4] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.81
+in_a[3] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.81
+in_a[32] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.81
+in_a[33] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.81
+in_b[3] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.81
+in_b[2] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.80
+in_a[32] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.80
+in_a[4] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.80
+in_a[33] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.80
+in_b[2] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.80
+in_b[35] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.80
+in_b[3] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.80
+in_a[33] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.80
+in_b[35] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.80
+in_a[32] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.80
+in_b[34] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.80
+in_b[2] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.80
+in_a[33] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.80
+in_a[33] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.80
+in_a[34] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.79
+in_a[3] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.79
+in_b[35] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.79
+in_b[35] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.79
+in_a[32] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.79
+in_a[32] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.79
+in_a[34] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.79
+in_a[33] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.79
+in_a[32] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.79
+in_a[3] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.79
+in_b[35] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.79
+in_a[4] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.79
+in_b[3] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.79
+in_a[33] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.79
+in_b[35] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.79
+in_a[34] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.79
+in_b[34] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.78
+in_a[33] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.78
+in_a[33] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.78
+in_a[33] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.78
+in_a[33] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.78
+in_a[4] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.78
+in_b[3] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.78
+in_b[35] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.78
+in_a[32] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.78
+in_a[34] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.78
+in_a[32] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.77
+in_b[35] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.77
+in_b[2] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.77
+in_a[4] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.77
+in_a[33] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.77
+in_a[3] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.77
+in_a[33] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.77
+in_a[35] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.77
+in_a[33] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.77
+in_a[33] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.77
+in_a[4] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.77
+in_a[35] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.77
+in_a[4] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.77
+in_b[35] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.76
+in_a[3] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.76
+in_a[32] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.76
+in_b[3] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.76
+in_b[35] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.76
+in_b[2] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.76
+in_b[2] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.76
+in_b[2] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.76
+in_a[4] (input)                      _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.76
+in_b[35] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -3.76
+
+=== CASE01-probe QUERY END rc=1 ===
