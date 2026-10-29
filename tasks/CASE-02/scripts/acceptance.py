@@ -103,7 +103,7 @@ def run_sample(name, exp):
             else:
                 shutil.copyfile(p, os.path.join(dest, f))
     with open(os.path.join(dest, "run.txt"), "w", encoding="utf-8", newline="\n") as f:
-        f.write(f"run_dir={m.group(1)}\nelapsed_seconds={elapsed:.1f}\n" + "".join("not_copied=" + b + "\n" for b in big)
+        f.write(f"run_dir={m.group(1)}\nelapsed_seconds={elapsed:.1f}\nwall_elapsed_seconds={wall:.1f}\n" + "".join("not_copied=" + b + "\n" for b in big)
                 + f"stdout:\n{proc.stdout}\n")
     with open(os.path.join(run_dir, "result.json"), encoding="utf-8") as f:
         res = json.load(f)
