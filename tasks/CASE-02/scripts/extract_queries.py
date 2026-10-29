@@ -23,8 +23,8 @@ import scoring  # noqa: E402
 PART4 = re.compile(r"四\s*[、.．]\s*(?:检查请求|下一步查询)")
 PART5 = re.compile(r"五\s*[、.．]")
 FENCE = re.compile(r"^\s*```\s*([A-Za-z0-9_+-]*)\s*$")
-LIST = re.compile(r"^\s*(?:[-*•]|\d+[.)、]|（\d+）|\(\d+\))\s+")
-ITEM_START = re.compile(r"^\s*(?:\d+[.)、]|（\d+）|\(\d+\))\s+")
+LIST = re.compile(r"^\s*(?:\*\*)?(?:[-*•]\s+|\d+[.)、](?:\s+|(?=[（(【]))|（\d+）\s*|\(\d+\)\s*)")   # a bold "**1. …**" heading and "1.（…）" without a space are items too (2026-10-29)
+ITEM_START = re.compile(r"^\s*(?:\*\*)?(?:\d+[.)、](?:\s+|(?=[（(【]))|（\d+）\s*|\(\d+\)\s*)")
 LABEL = re.compile(r"^(?:\*\*[^*]+\*\*|__[^_]+__|[^`:：\s][^`:：]{0,29})\s*[:：]\s*")
 INLINE = re.compile(r"`([^`\n]+)`")
 CTX = re.compile(r"\bR([12])\b")
@@ -55,7 +55,11 @@ def starts_with_command(text, cmds, basic=True):
     words = text.strip().split()
     if not words:
         return False
-    return words[0] in cmds or (basic and words[0] in TCL_BASIC and len(words) > 1)
+    if words[0] in cmds:
+        return True
+    # a control structure counts only when an allowed command appears inside it (a prose line starting with "set"
+    # or "if" is not a query)
+    return basic and words[0] in TCL_BASIC and any(w.strip("[]{}();$") in cmds for w in words[1:])
 
 
 def part4(lines):
@@ -95,7 +99,18 @@ def _item_prose(lines, start, end):
             break
         i -= 1
     j = start + 1
-    prose, in_block = [lines[i]] if i >= 0 else [], bool(FENCE.match(lines[start]))   # start may be the opening fence
+    # the item's own lines from its start up to `start` (headings, explanations), then what follows the unit until the
+    # next item; code blocks excluded. Before 2026-10-29 the lines between the item start and the block were skipped,
+    # so a block took the priority of the NEXT item (round-1 answer A).
+    prose, in_block = [], False
+    for k in range(max(i, 0), start):
+        if FENCE.match(lines[k]):
+            in_block = not in_block
+        elif not in_block:
+            prose.append(lines[k])
+    if not FENCE.match(lines[start]):
+        prose.append(lines[start])
+    in_block = bool(FENCE.match(lines[start]))   # start may be the opening fence
     while j < end and not ITEM_START.match(lines[j]):
         if FENCE.match(lines[j]):
             in_block = not in_block
@@ -148,10 +163,10 @@ def extract(answer, cmds, max_requests=None, window=True):
         if cmd_spans:
             units.append({"kind": "inline", "line": i + 1, "text": "\n".join(cmd_spans),
                           "ctx_requested": _ctx_in("\n".join(cmd_spans)) or _ctx_in(prose) or "both", "priority": _priority(prose)})
-        elif not spans and starts_with_command(stripped, cmds, basic=False):
+        elif not spans and starts_with_command(stripped, cmds, basic=True):
             units.append({"kind": "line", "line": i + 1, "text": stripped,
                           "ctx_requested": _ctx_in(stripped) or _ctx_in(prose) or "both", "priority": _priority(prose)})
-        elif LIST.match(line) and not _fence_follows(lines, i, span[1]):
+        elif LIST.match(line) and not _runnable_follows(lines, i, span[1], cmds):
             units.append({"kind": "text", "line": i + 1, "text": line.strip(), "ctx_requested": _ctx_in(prose) or "both",
                           "priority": _priority(prose)})
         i += 1
@@ -163,6 +178,19 @@ def extract(answer, cmds, max_requests=None, window=True):
         else:
             u["fixed_code"] = {"nontcl": OUTSIDE, "text": NOT_RUN}.get(u["kind"], "-")
     return units
+
+
+def _runnable_follows(lines, i, end, cmds):
+    """True when the request item that starts at line i goes on (before the next item) with something runnable: a code
+    block, an inline command span or a bare command / control-structure line. Then line i is the item's prose, not a
+    text unit of its own (2026-10-29: a heading followed by an explanation line and then the block, or by bare lines)."""
+    j = i + 1
+    while j < end and not ITEM_START.match(lines[j]):
+        l = lines[j]
+        if FENCE.match(l) or any(starts_with_command(sp, cmds) for sp in INLINE.findall(l))            or starts_with_command(LIST.sub("", l, count=1).strip(), cmds, basic=True):
+            return True
+        j += 1
+    return False
 
 
 def _fence_follows(lines, i, end):

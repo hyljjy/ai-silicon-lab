@@ -239,6 +239,72 @@ class TestCollect(unittest.TestCase):
             shutil.rmtree(tmp)
 
 
+A_STYLE = """一、观察
+- x
+四、检查请求
+
+**1. 优先级 1，两组都执行（W01）：未约束的输入**
+```
+check_setup -verbose
+```
+
+**2. 优先级 1，两组都执行（W02）：逐端口到达时间**
+同时含外部延迟和驱动延迟。
+```
+foreach p [all_inputs -no_clocks] { report_arrival -scene ss_n40C_1v60 $p }
+```
+
+**3. 优先级 2，两组都执行（W06）：in_b[2] 的 setup 路径**
+```
+report_checks -from [get_ports {in_b[2]}] -scene ss_n40C_1v60
+```
+"""
+
+C_STYLE = """一、观察
+- x
+四、检查请求
+
+1.（优先级 1，仅 R1）
+report_checks -from [get_ports {in_b[2]}] -path_delay max -scene ss_n40C_1v60
+report_checks -from [get_ports {in_b[2]}] -path_delay min -scene ss_n40C_1v60
+（若无受约束路径输出 → R1 未约束 in_b[2]。）
+
+2.（优先级 2，仅 R2）
+report_checks -from [get_ports {in_a[34]}] -path_delay max -scene ss_n40C_1v60
+（期望到达时间 31.5267。）
+
+3.（优先级 3，R1 与 R2 各一次）
+check_setup
+（查看 unconstrained endpoints。）
+
+4.（优先级 4，R1 与 R2 各一次，W02 形态）
+foreach p [all_inputs -no_clocks] { puts "PORT [get_full_name $p]"; report_arrival $p -scene ss_n40C_1v60 }
+（逐端口看输入到达时间。）
+"""
+
+
+class TestRound1Formats(unittest.TestCase):
+    """Round-1 answers of 2026-10-29 exposed three parser defects (change process no. 2): a bold heading ("**1. 优先级 1 …**")
+    is an item start; the prose of an item is the lines from its start to its code block, not the text after the
+    block; "1.（…）" without a space after the number is an item; bare command lines and bare control-structure
+    lines (foreach/set/if around allowed commands) are line units; "仅 R1" / "仅 R2" / "R1 与 R2 各一次" set the scope."""
+
+    def test_bold_headings_priorities_follow_the_item_not_the_next_one(self):
+        self.assertEqual([u["kind"] for u in eq.extract(A_STYLE, CMDS)], ["codeblock"] * 3)   # headings are not text units
+        units = [u for u in eq.extract(A_STYLE, CMDS) if u["kind"] != "text"]
+        self.assertEqual([u["priority"] for u in units], [1, 1, 2])
+        self.assertEqual([u["ctx_requested"] for u in units], ["both", "both", "both"])
+
+    def test_numbered_items_without_space_bare_lines_and_loops(self):
+        self.assertEqual([u["kind"] for u in eq.extract(C_STYLE, CMDS)], ["line"] * 5)   # item lines are not text units
+        units = [u for u in eq.extract(C_STYLE, CMDS) if u["kind"] != "text"]
+        self.assertEqual(len(units), 5, [u["text"][:30] for u in units])
+        self.assertEqual([u["priority"] for u in units], [1, 1, 2, 3, 4])
+        self.assertEqual([u["ctx_requested"] for u in units], ["R1", "R1", "R2", "both", "both"])
+        self.assertTrue(units[4]["text"].startswith("foreach"))
+        self.assertEqual(units[3]["text"], "check_setup")
+
+
 class TestR6Window(unittest.TestCase):
     """CASE02_R6 Q3 ruling: check requests are taken only from the 120-line core window of the answer (the same
     window the core scoring reads); requests after it are recorded as dropped, not executed."""
