@@ -175,3 +175,21 @@ class TestWorkloads(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestR6Visibility(unittest.TestCase):
+    """CASE02_R6 M4: a cut long line is not 'complete'; the truncation record names the lines it changed."""
+
+    def test_long_line_cut_recorded_and_range_not_complete(self):
+        c = contract.load(CONTRACT)
+        src = ["ok line", "a" * 300000, "tail"]
+        t = contract.truncate(src, c)
+        self.assertEqual(t["cut_lines"], [1])
+        self.assertEqual(contract.map_range(t, (0, 1)), (0, 1))
+        self.assertIsNone(contract.map_range(t, (1, 2)))
+        self.assertIsNone(contract.map_range(t, (0, 3)))
+        self.assertEqual(contract.map_range(t, (2, 3)), (2, 3))
+
+    def test_no_cut_lines_when_untouched(self):
+        c = contract.load(CONTRACT)
+        self.assertEqual(contract.truncate(lines(10), c)["cut_lines"], [])

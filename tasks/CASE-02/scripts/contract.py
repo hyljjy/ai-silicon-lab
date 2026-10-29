@@ -77,17 +77,18 @@ def truncate(norm_lines, c):
     raw_lines = len(norm_lines)
     raw_bytes = sum(_nbytes(l) for l in norm_lines)
     lines = list(norm_lines)
-    long_cut = False
+    cut_lines = []                                   # raw indices of lines shortened in place (R6 M4)
     for i, l in enumerate(lines):
         if _nbytes(l) - 1 > c.per_instance_max_bytes:
             lines[i] = _cut_utf8(l, tr["long_line_bytes"]) + tr["long_line_marker"]
-            long_cut = True
+            cut_lines.append(i)
+    long_cut = bool(cut_lines)
     over_lines = raw_lines > c.per_instance_max_lines
     over_bytes = sum(_nbytes(l) for l in lines) > c.per_instance_max_bytes
     if not over_lines and not over_bytes:
         return {"returned_lines": lines, "truncated": long_cut, "omitted_lines": 0, "raw_lines": raw_lines,
                 "raw_bytes": raw_bytes, "returned_bytes": sum(_nbytes(l) for l in lines), "marker_index": None,
-                "cut_by": "bytes" if long_cut else None}
+                "cut_by": "bytes" if long_cut else None, "cut_lines": cut_lines}
     k = min(tr["head_lines"], raw_lines // 2)
     while k > 0 and sum(_nbytes(l) for l in lines[:k]) + sum(_nbytes(l) for l in lines[raw_lines - k:]) > c.per_instance_max_bytes:
         k -= 1
@@ -97,13 +98,15 @@ def truncate(norm_lines, c):
     returned = head + [marker] + tail
     return {"returned_lines": returned, "truncated": True, "omitted_lines": omitted, "raw_lines": raw_lines,
             "raw_bytes": raw_bytes, "returned_bytes": sum(_nbytes(l) for l in head + tail), "marker_index": k,
-            "cut_by": "lines" if over_lines else "bytes"}
+            "cut_by": "lines" if over_lines else "bytes", "cut_lines": cut_lines}
 
 
 def map_range(t, raw_range):
     """Map a half-open [start, end) line range of the raw (normalized) output to the returned output; None when the
-    range crosses or lies inside the omitted middle."""
+    range crosses or lies inside the omitted middle, or touches a line that was shortened in place (R6 M4)."""
     s, e = raw_range
+    if any(s <= i < e for i in t.get("cut_lines", [])):
+        return None
     k = t["marker_index"]
     if k is None:
         return (s, e)

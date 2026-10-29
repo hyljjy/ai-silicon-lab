@@ -32,28 +32,64 @@ def _rule_between(prev, cur):
     return "R1_before_R2"
 
 
+FRAME_BYTES = 24          # the one-line marker a dropped instance leaves in the results ("### 查询 … [未交还…]")
+
+
+def _cost(instances, dropped_rest, c):
+    """Tokens the prompt actually carries for these returned instances: their rendered bytes plus the budget
+    statement that will list them and the dropped ones, plus one marker line per dropped instance (R6 M5)."""
+    body = sum(i["rendered_bytes"] for i in instances)
+    markers = FRAME_BYTES * len(dropped_rest)
+    total = 0
+    for _ in range(3):      # the statement prints the total itself; iterate to a fixed point of its byte length
+        stmt = len(statement({"returned": instances, "dropped": dropped_rest, "total_tokens": total}, c).encode("utf-8"))
+        new_total = math.ceil((body + stmt + markers) / c.token_bytes_ratio)
+        if new_total == total:
+            break
+        total = new_total
+    return total, math.ceil((stmt + markers) / c.token_bytes_ratio)
+
+
 def allocate(instances, c):
     if not c.budget_ready:
         raise contract_mod.ContractError("total budget not set in contract.json")
     ordered = sorted(instances, key=_sort_key)
-    returned, dropped, total = [], [], 0
+    returned, dropped = [], []
     cut = False
     for n, inst in enumerate(ordered):
         tokens = math.ceil(inst["rendered_bytes"] / c.token_bytes_ratio)
-        if not cut and total + tokens <= c.total_budget_tokens:
-            total += tokens
-            returned.append(dict(inst, tokens=tokens, returned=True))
+        rest = [dict(x, rule="-") for x in ordered[n + 1:]]
+        cand = returned + [dict(inst, tokens=tokens, returned=True)]
+        total_if, _ = _cost(cand, rest, c)
+        if not cut and total_if <= c.total_budget_tokens:
+            returned = cand
         else:
             cut = True
             rule = _rule_between(ordered[n - 1], inst) if n else c.keep_order[0]
             dropped.append(dict(inst, tokens=tokens, returned=False, rule=rule, attribution=ATTR_BUDGET))
-    return {"returned": returned, "dropped": dropped, "total_tokens": total, "budget_tokens": c.total_budget_tokens,
-            "ratio": c.token_bytes_ratio}
+    total, overhead = _cost(returned, dropped, c)
+    return {"returned": returned, "dropped": dropped, "total_tokens": total, "overhead_tokens": overhead,
+            "budget_tokens": c.total_budget_tokens, "ratio": c.token_bytes_ratio}
+
+
+def prompt_capacity(rendered_bytes, results_bytes, c, capacity_tokens=None):
+    """Two separate checks (R6 M5): the returned results against total_budget_tokens, and the whole round-2 prompt
+    against the input capacity (ctx_min minus the shell overhead, the round-2 output reserve and the safety margin)."""
+    if capacity_tokens is None:
+        bt = c.budget_table or {}
+        capacity_tokens = int(bt.get("ctx_min", 0) - bt.get("overhead_tokens", 0) - bt.get("round2_output_reserve_tokens", 0)
+                              - bt.get("safety_fraction", 0.1) * bt.get("ctx_min", 0))
+    results_tokens = math.ceil(results_bytes / c.token_bytes_ratio)
+    prompt_tokens = math.ceil(rendered_bytes / c.token_bytes_ratio)
+    return {"results_bytes": results_bytes, "results_tokens": results_tokens, "results_budget": c.total_budget_tokens,
+            "results_ok": results_tokens <= c.total_budget_tokens, "rendered_bytes": rendered_bytes,
+            "prompt_tokens": prompt_tokens, "capacity_tokens": capacity_tokens, "capacity_ok": prompt_tokens <= capacity_tokens,
+            "ok": results_tokens <= c.total_budget_tokens and prompt_tokens <= capacity_tokens}
 
 
 def statement(alloc, c):
     L = ["## 预算账单", "",
-         f"① 总预算：{c.total_budget_tokens} token（每 token 约 {c.token_bytes_ratio} 字节的保守换算；本次已交还合计 {alloc['total_tokens']} token）。",
+         f"① 总预算：{c.total_budget_tokens} token（每 token 约 {c.token_bytes_ratio} 字节的保守换算；本次已交还合计 {alloc.get('total_tokens', 0)} token，含本账单）。",
          "", "② 已交还的实例："]
     if alloc["returned"]:
         for i in alloc["returned"]:

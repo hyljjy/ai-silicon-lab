@@ -75,15 +75,17 @@ def main(argv=None):
         same = os.path.exists(path) and read_bytes(path) == data
         print(f"PROMPT {'OK' if same else 'DIFFERS'}: {os.path.relpath(path, CASE)}")
         return 0 if same else 1
-    write_new_or_same(path, data)
     if kind == "round2":
+        import budget
         c = contract_mod.load(os.path.join(RULES, "contract.json"))
-        chk = prompt_budget(data, c.token_bytes_ratio, c.total_budget_tokens)
+        results = read_bytes(os.path.join(CASE, "round2", f"{code}_results.md"))
+        chk = budget.prompt_capacity(len(data), len(results), c)          # two checks, before anything is written
         write_new_or_same(os.path.join(CASE, "round2", f"{code}_rendered_check.json"),
                           (json.dumps(chk, ensure_ascii=False, indent=1) + "\n").encode("utf-8"))
         if not chk["ok"]:
             print(f"PROMPT BUDGET FAIL: {chk}")
             return 1
+    write_new_or_same(path, data)
     print(f"PROMPT OK: {os.path.relpath(path, CASE)} ({len(data)} bytes)")
     return 0
 

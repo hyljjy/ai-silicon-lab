@@ -153,7 +153,7 @@ class TestResults(unittest.TestCase):
             r2 = t.run("A1_R2", returned="y" * 300 + "\n")
             t.translation([{"code": "A", "qid": "A1", "ctx": "R1", "original": q, "executed": q, "collected": r1},
                            {"code": "A", "qid": "A1", "ctx": "R2", "original": q, "executed": q, "collected": r2}])
-            text, alloc = build_results.render("A", c(total=600, ratio=1.0), case=t.tmp)
+            text, alloc = build_results.render("A", c(total=1200, ratio=1.0), case=t.tmp)
             self.assertIn("[未交还：超出总预算，见文末预算账单]", text)
             self.assertNotIn("y" * 300, text)
             self.assertIn("x" * 300, text)
@@ -241,3 +241,18 @@ class TestCollect(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestR6Visibility(unittest.TestCase):
+    def test_visibility_table_marks_dropped_instances(self):
+        with TmpRound2() as t:
+            q = t.unit("A1")
+            r1 = t.run("A1_R1", returned="x" * 300 + "\n")
+            r2 = t.run("A1_R2", returned="y" * 300 + "\n")
+            t.translation([{"code": "A", "qid": "A1", "ctx": "R1", "original": q, "executed": q, "collected": r1},
+                           {"code": "A", "qid": "A1", "ctx": "R2", "original": q, "executed": q, "collected": r2}])
+            text, alloc = build_results.render("A", c(total=1200, ratio=1.0), case=t.tmp)
+            vis = build_results.visibility(alloc)
+            self.assertEqual(vis["A1_R1"]["visible"], True)
+            self.assertEqual(vis["A1_R2"]["visible"], False)
+            self.assertEqual(vis["A1_R2"]["reason"], "流程限制：总预算")

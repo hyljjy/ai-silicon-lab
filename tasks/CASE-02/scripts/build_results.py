@@ -109,6 +109,17 @@ def _priority_of(r, case):
     return None
 
 
+def visibility(alloc):
+    """Final visibility of every instance in the model's prompt (R6 M4): the evidence checks of claims_stats refuse
+    an instance that was executed but never returned."""
+    out = {}
+    for i in alloc["returned"]:
+        out[f"{i['qid']}_{i['ctx']}"] = {"visible": True, "reason": "-"}
+    for d in alloc["dropped"]:
+        out[f"{d['qid']}_{d['ctx']}"] = {"visible": False, "reason": d["attribution"], "rule": d["rule"]}
+    return out
+
+
 def check_budget(text, alloc, c):
     """Budget check of a complete rendered text (the whole round-2 prompt is checked by build_prompt)."""
     import math
@@ -130,6 +141,8 @@ def main(argv=None):
     write_new_or_same(os.path.join(CASE, "round2", f"{code}_results.md"), data)
     write_new_or_same(os.path.join(CASE, "round2", f"{code}_budget.json"),
                       json.dumps(alloc, ensure_ascii=False, indent=1).encode("utf-8") + b"\n")
+    write_new_or_same(os.path.join(CASE, "round2", f"{code}_visibility.json"),
+                      json.dumps(visibility(alloc), ensure_ascii=False, indent=1).encode("utf-8") + b"\n")
     print(f"RESULTS OK: round2/{code}_results.md ({len(data)} bytes; returned {len(alloc['returned'])}, "
           f"dropped {len(alloc['dropped'])}, {alloc['total_tokens']}/{alloc['budget_tokens']} tokens)")
     return 0
