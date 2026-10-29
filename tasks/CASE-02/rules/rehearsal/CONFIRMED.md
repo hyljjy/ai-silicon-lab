@@ -21,3 +21,5 @@
 操作者评分改为独立填写：`operator_fill.py` 是操作者读答复和交还结果后自己填的标签，`rehearse.py fill` 生成 `claims_rehearsal.tsv` / `evidence_map_rehearsal.tsv`，`run` 再与 `expected.tsv` 逐行比对（含 `scope_claimed`）。本次填写与预期由同一会话写成，独立只是程序上的（两份分开写的文件）；正式轮次按真实答复填写。
 
 `spec.json` v0.2 sha256：`cca1f9eaacd9f36e5f7df8454170972a9abe79d3bb1f10256db67996beac0ad5`。预演结果 `result.md`：19 组 PASS，70 个目标全部命中（这是标签覆盖，不等于全部评分规则已验证）。
+
+**作者再确认（2026-10-29）**：作者看过上面的改动清单后确认 v0.2 的预期标签作为预登记的预期。原话："同意"。此后 `expected.tsv` 再改动，继续在本文件追加。
