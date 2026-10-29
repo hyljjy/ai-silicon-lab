@@ -1,0 +1,33 @@
+CASE02-CMD: set i 0
+0
+CASE02-CMD: while {1} { incr i; if {$i % 100000 == 0} { report_units } }
+ time 1ns
+ capacitance 1pF
+ resistance 1kohm
+ voltage 1v
+ current 1mA
+ power 1nW
+ distance 1um
+ time 1ns
+ capacitance 1pF
+ resistance 1kohm
+ voltage 1v
+ current 1mA
+ power 1nW
+ distance 1um
+ time 1ns
+ capacitance 1pF
+ resistance 1kohm
+ voltage 1v
+ current 1mA
+ power 1nW
+ distance 1um
+ time 1ns
+ capacitance 1pF
+ resistance 1kohm
+ voltage 1v
+ current 1mA
+ power 1nW
+ distance 1um
+CASE02-ERROR: command count limit exceeded
+CASE02-ERROR: remaining commands not run, interpreter command count limit exceeded

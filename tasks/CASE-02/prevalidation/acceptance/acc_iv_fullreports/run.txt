@@ -1,0 +1,5 @@
+run_dir=runs/20261028-230039-c2-query-acc_iv_fullreports-R2-fba1
+elapsed_seconds=35.0
+stdout:
+CASE02 OK: acc_iv_fullreports ctx=R2 mode=query status=completed result=完成 attribution=流程限制：单实例截断 lines=7635/2001 calls=261 -> runs/20261028-230039-c2-query-acc_iv_fullreports-R2-fba1
+

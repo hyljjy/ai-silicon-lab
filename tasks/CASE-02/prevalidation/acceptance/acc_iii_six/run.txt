@@ -1,0 +1,5 @@
+run_dir=runs/20261028-225538-c2-query-acc_iii_six-R2-bcfd
+elapsed_seconds=308.1
+stdout:
+CASE02 OK: acc_iii_six ctx=R2 mode=query status=completed result=完成 attribution=- lines=1564/1564 calls=5472 -> runs/20261028-225538-c2-query-acc_iii_six-R2-bcfd
+

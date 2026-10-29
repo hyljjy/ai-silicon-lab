@@ -1,0 +1,465 @@
+{
+ "alloc": {
+  "returned": [
+   {
+    "qid": "A1",
+    "ctx": "R1",
+    "rendered_bytes": 6186,
+    "returned_bytes": 5786,
+    "priority": null,
+    "truncated": false,
+    "raw_lines": 198,
+    "returned_lines": 198,
+    "tokens": 3239,
+    "returned": true
+   },
+   {
+    "qid": "A1",
+    "ctx": "R2",
+    "rendered_bytes": 6186,
+    "returned_bytes": 5786,
+    "priority": null,
+    "truncated": false,
+    "raw_lines": 198,
+    "returned_lines": 198,
+    "tokens": 3239,
+    "returned": true
+   },
+   {
+    "qid": "A2",
+    "ctx": "R1",
+    "rendered_bytes": 82414,
+    "returned_bytes": 82014,
+    "priority": null,
+    "truncated": false,
+    "raw_lines": 1564,
+    "returned_lines": 1564,
+    "tokens": 43149,
+    "returned": true
+   },
+   {
+    "qid": "A2",
+    "ctx": "R2",
+    "rendered_bytes": 82414,
+    "returned_bytes": 82014,
+    "priority": null,
+    "truncated": false,
+    "raw_lines": 1564,
+    "returned_lines": 1564,
+    "tokens": 43149,
+    "returned": true
+   },
+   {
+    "qid": "A3",
+    "ctx": "R1",
+    "rendered_bytes": 92443,
+    "returned_bytes": 91963,
+    "priority": null,
+    "truncated": true,
+    "raw_lines": 7635,
+    "returned_lines": 2001,
+    "tokens": 48400,
+    "returned": true
+   },
+   {
+    "qid": "A3",
+    "ctx": "R2",
+    "rendered_bytes": 92443,
+    "returned_bytes": 91963,
+    "priority": null,
+    "truncated": true,
+    "raw_lines": 7635,
+    "returned_lines": 2001,
+    "tokens": 48400,
+    "returned": true
+   },
+   {
+    "qid": "A4",
+    "ctx": "R1",
+    "rendered_bytes": 82414,
+    "returned_bytes": 82014,
+    "priority": null,
+    "truncated": false,
+    "raw_lines": 1564,
+    "returned_lines": 1564,
+    "tokens": 43149,
+    "returned": true
+   },
+   {
+    "qid": "A4",
+    "ctx": "R2",
+    "rendered_bytes": 82414,
+    "returned_bytes": 82014,
+    "priority": null,
+    "truncated": false,
+    "raw_lines": 1564,
+    "returned_lines": 1564,
+    "tokens": 43149,
+    "returned": true
+   },
+   {
+    "qid": "A5",
+    "ctx": "R1",
+    "rendered_bytes": 82414,
+    "returned_bytes": 82014,
+    "priority": null,
+    "truncated": false,
+    "raw_lines": 1564,
+    "returned_lines": 1564,
+    "tokens": 43149,
+    "returned": true
+   },
+   {
+    "qid": "A5",
+    "ctx": "R2",
+    "rendered_bytes": 82414,
+    "returned_bytes": 82014,
+    "priority": null,
+    "truncated": false,
+    "raw_lines": 1564,
+    "returned_lines": 1564,
+    "tokens": 43149,
+    "returned": true
+   },
+   {
+    "qid": "A6",
+    "ctx": "R1",
+    "rendered_bytes": 82414,
+    "returned_bytes": 82014,
+    "priority": null,
+    "truncated": false,
+    "raw_lines": 1564,
+    "returned_lines": 1564,
+    "tokens": 43149,
+    "returned": true
+   },
+   {
+    "qid": "A6",
+    "ctx": "R2",
+    "rendered_bytes": 82414,
+    "returned_bytes": 82014,
+    "priority": null,
+    "truncated": false,
+    "raw_lines": 1564,
+    "returned_lines": 1564,
+    "tokens": 43149,
+    "returned": true
+   },
+   {
+    "qid": "A7",
+    "ctx": "R1",
+    "rendered_bytes": 82414,
+    "returned_bytes": 82014,
+    "priority": null,
+    "truncated": false,
+    "raw_lines": 1564,
+    "returned_lines": 1564,
+    "tokens": 43149,
+    "returned": true
+   },
+   {
+    "qid": "A7",
+    "ctx": "R2",
+    "rendered_bytes": 82414,
+    "returned_bytes": 82014,
+    "priority": null,
+    "truncated": false,
+    "raw_lines": 1564,
+    "returned_lines": 1564,
+    "tokens": 43149,
+    "returned": true
+   },
+   {
+    "qid": "A8",
+    "ctx": "R1",
+    "rendered_bytes": 82414,
+    "returned_bytes": 82014,
+    "priority": null,
+    "truncated": false,
+    "raw_lines": 1564,
+    "returned_lines": 1564,
+    "tokens": 43149,
+    "returned": true
+   },
+   {
+    "qid": "A8",
+    "ctx": "R2",
+    "rendered_bytes": 82414,
+    "returned_bytes": 82014,
+    "priority": null,
+    "truncated": false,
+    "raw_lines": 1564,
+    "returned_lines": 1564,
+    "tokens": 43149,
+    "returned": true
+   },
+   {
+    "qid": "A9",
+    "ctx": "R1",
+    "rendered_bytes": 82414,
+    "returned_bytes": 82014,
+    "priority": null,
+    "truncated": false,
+    "raw_lines": 1564,
+    "returned_lines": 1564,
+    "tokens": 43149,
+    "returned": true
+   },
+   {
+    "qid": "A9",
+    "ctx": "R2",
+    "rendered_bytes": 82414,
+    "returned_bytes": 82014,
+    "priority": null,
+    "truncated": false,
+    "raw_lines": 1564,
+    "returned_lines": 1564,
+    "tokens": 43149,
+    "returned": true
+   },
+   {
+    "qid": "A10",
+    "ctx": "R1",
+    "rendered_bytes": 82414,
+    "returned_bytes": 82014,
+    "priority": null,
+    "truncated": false,
+    "raw_lines": 1564,
+    "returned_lines": 1564,
+    "tokens": 43149,
+    "returned": true
+   }
+  ],
+  "dropped": [
+   {
+    "qid": "A10",
+    "ctx": "R2",
+    "rendered_bytes": 82414,
+    "returned_bytes": 82014,
+    "priority": null,
+    "truncated": false,
+    "raw_lines": 1564,
+    "returned_lines": 1564,
+    "tokens": 43149,
+    "returned": false,
+    "rule": "R1_before_R2",
+    "attribution": "流程限制：总预算"
+   }
+  ],
+  "total_tokens": 750513,
+  "budget_tokens": 790000,
+  "ratio": 1.91
+ },
+ "check": {
+  "ran": true,
+  "instances": 20,
+  "returned": 19,
+  "dropped": 1,
+  "statement_lists_all_dropped": true,
+  "rendered_check_ok": true,
+  "tokens": 751062,
+  "budget_tokens": 790000
+ },
+ "instances": [
+  {
+   "qid": "A1",
+   "ctx": "R1",
+   "rendered_bytes": 6186,
+   "returned_bytes": 5786,
+   "priority": null,
+   "truncated": false,
+   "raw_lines": 198,
+   "returned_lines": 198
+  },
+  {
+   "qid": "A1",
+   "ctx": "R2",
+   "rendered_bytes": 6186,
+   "returned_bytes": 5786,
+   "priority": null,
+   "truncated": false,
+   "raw_lines": 198,
+   "returned_lines": 198
+  },
+  {
+   "qid": "A2",
+   "ctx": "R1",
+   "rendered_bytes": 82414,
+   "returned_bytes": 82014,
+   "priority": null,
+   "truncated": false,
+   "raw_lines": 1564,
+   "returned_lines": 1564
+  },
+  {
+   "qid": "A2",
+   "ctx": "R2",
+   "rendered_bytes": 82414,
+   "returned_bytes": 82014,
+   "priority": null,
+   "truncated": false,
+   "raw_lines": 1564,
+   "returned_lines": 1564
+  },
+  {
+   "qid": "A3",
+   "ctx": "R1",
+   "rendered_bytes": 92443,
+   "returned_bytes": 91963,
+   "priority": null,
+   "truncated": true,
+   "raw_lines": 7635,
+   "returned_lines": 2001
+  },
+  {
+   "qid": "A3",
+   "ctx": "R2",
+   "rendered_bytes": 92443,
+   "returned_bytes": 91963,
+   "priority": null,
+   "truncated": true,
+   "raw_lines": 7635,
+   "returned_lines": 2001
+  },
+  {
+   "qid": "A4",
+   "ctx": "R1",
+   "rendered_bytes": 82414,
+   "returned_bytes": 82014,
+   "priority": null,
+   "truncated": false,
+   "raw_lines": 1564,
+   "returned_lines": 1564
+  },
+  {
+   "qid": "A4",
+   "ctx": "R2",
+   "rendered_bytes": 82414,
+   "returned_bytes": 82014,
+   "priority": null,
+   "truncated": false,
+   "raw_lines": 1564,
+   "returned_lines": 1564
+  },
+  {
+   "qid": "A5",
+   "ctx": "R1",
+   "rendered_bytes": 82414,
+   "returned_bytes": 82014,
+   "priority": null,
+   "truncated": false,
+   "raw_lines": 1564,
+   "returned_lines": 1564
+  },
+  {
+   "qid": "A5",
+   "ctx": "R2",
+   "rendered_bytes": 82414,
+   "returned_bytes": 82014,
+   "priority": null,
+   "truncated": false,
+   "raw_lines": 1564,
+   "returned_lines": 1564
+  },
+  {
+   "qid": "A6",
+   "ctx": "R1",
+   "rendered_bytes": 82414,
+   "returned_bytes": 82014,
+   "priority": null,
+   "truncated": false,
+   "raw_lines": 1564,
+   "returned_lines": 1564
+  },
+  {
+   "qid": "A6",
+   "ctx": "R2",
+   "rendered_bytes": 82414,
+   "returned_bytes": 82014,
+   "priority": null,
+   "truncated": false,
+   "raw_lines": 1564,
+   "returned_lines": 1564
+  },
+  {
+   "qid": "A7",
+   "ctx": "R1",
+   "rendered_bytes": 82414,
+   "returned_bytes": 82014,
+   "priority": null,
+   "truncated": false,
+   "raw_lines": 1564,
+   "returned_lines": 1564
+  },
+  {
+   "qid": "A7",
+   "ctx": "R2",
+   "rendered_bytes": 82414,
+   "returned_bytes": 82014,
+   "priority": null,
+   "truncated": false,
+   "raw_lines": 1564,
+   "returned_lines": 1564
+  },
+  {
+   "qid": "A8",
+   "ctx": "R1",
+   "rendered_bytes": 82414,
+   "returned_bytes": 82014,
+   "priority": null,
+   "truncated": false,
+   "raw_lines": 1564,
+   "returned_lines": 1564
+  },
+  {
+   "qid": "A8",
+   "ctx": "R2",
+   "rendered_bytes": 82414,
+   "returned_bytes": 82014,
+   "priority": null,
+   "truncated": false,
+   "raw_lines": 1564,
+   "returned_lines": 1564
+  },
+  {
+   "qid": "A9",
+   "ctx": "R1",
+   "rendered_bytes": 82414,
+   "returned_bytes": 82014,
+   "priority": null,
+   "truncated": false,
+   "raw_lines": 1564,
+   "returned_lines": 1564
+  },
+  {
+   "qid": "A9",
+   "ctx": "R2",
+   "rendered_bytes": 82414,
+   "returned_bytes": 82014,
+   "priority": null,
+   "truncated": false,
+   "raw_lines": 1564,
+   "returned_lines": 1564
+  },
+  {
+   "qid": "A10",
+   "ctx": "R1",
+   "rendered_bytes": 82414,
+   "returned_bytes": 82014,
+   "priority": null,
+   "truncated": false,
+   "raw_lines": 1564,
+   "returned_lines": 1564
+  },
+  {
+   "qid": "A10",
+   "ctx": "R2",
+   "rendered_bytes": 82414,
+   "returned_bytes": 82014,
+   "priority": null,
+   "truncated": false,
+   "raw_lines": 1564,
+   "returned_lines": 1564
+  }
+ ]
+}

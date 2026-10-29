@@ -1,0 +1,1 @@
+{"top_seq": 1, "first_line": "for {set i 0} {$i < 300000} {incr i} { puts [string repeat x 400] }", "status": "ok", "out": [1, 134160]}

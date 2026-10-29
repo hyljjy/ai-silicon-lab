@@ -1,0 +1,2 @@
+{"top_seq": 1, "first_line": "set i 0", "status": "ok", "out": [1, 2]}
+{"top_seq": 2, "first_line": "while {1} { incr i; if {$i % 100000 == 0} { report_units } }", "status": "error", "out": [3, 33]}
