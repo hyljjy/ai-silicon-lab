@@ -101,7 +101,7 @@ class TestConstants(unittest.TestCase):
     def test_default_limits_from_contract(self):
         r = rr.RoundRunner("/r", "/c", "/sb", ["x"])
         self.assertEqual((r.limits["process_seconds"], r.limits["stdout_bytes"], r.limits["stderr_bytes"]),
-                         (1800, 52428800, 1048576))
+                         (3600, 52428800, 1048576))
 
 
 class TestLimits(Base):

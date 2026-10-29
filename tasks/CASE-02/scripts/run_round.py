@@ -69,7 +69,7 @@ CLI_PATH = r"D:\study\diag_sandbox\bin\claude-2.1.296.exe"
 CLI_VERSION = "2.1.296"
 RUN_DIR = re.compile(r"run-[0-9a-f]{8}")
 TAGS = {"smoke": "case02-prereg", "round": "case02-prereg-round"}
-DEFAULT_LIMITS = {"process_seconds": 1800, "stdout_bytes": 52428800, "stderr_bytes": 1048576, "poll_seconds": 1,
+DEFAULT_LIMITS = {"process_seconds": 3600, "stdout_bytes": 52428800, "stderr_bytes": 1048576, "poll_seconds": 1,
                   "soft_kill_wait_seconds": 30, "hard_kill_wait_seconds": 30}
 PROBES = ("blank", "prose", "report")
 
@@ -80,7 +80,7 @@ def sha256(data):
 
 def clean_env(base):
     env = {k: v for k, v in base.items() if not k.upper().startswith(("ANTHROPIC_", "CLAUDE"))}
-    env.update({"CLAUDE_CODE_MAX_OUTPUT_TOKENS": "32000", "DISABLE_AUTOUPDATER": "1"})
+    env.update({"CLAUDE_CODE_MAX_OUTPUT_TOKENS": "128000", "DISABLE_AUTOUPDATER": "1"})
     return env
 
 
