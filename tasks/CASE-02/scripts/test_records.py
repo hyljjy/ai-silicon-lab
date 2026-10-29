@@ -59,7 +59,7 @@ class TestFileSet(unittest.TestCase):
 
     def test_metadata_files_not_counted_as_extra(self):
         with TmpCopy(MISSING) as run:
-            for name in ("cmd.txt", "valid.json", "SHA256SUMS", "lib_lines_raw.txt"):
+            for name in ("cmd.txt", "valid.json", "SHA256SUMS", "lib_lines_raw.txt", "snapshot.log"):
                 with open(os.path.join(run, name), "w") as f:
                     f.write("x\n")
             os.makedirs(os.path.join(run, "musts"))

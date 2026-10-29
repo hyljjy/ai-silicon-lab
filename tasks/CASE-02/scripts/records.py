@@ -24,7 +24,7 @@ RECORD_FILES = frozenset(
     + [f"dcalc_{c}_{m}.txt" for c in SCENES for m in ("max", "min")]
     + [f"cat_{c}_{g}_{m}.rpt" for c in SCENES for g in ("in2reg", "reg2out") for m in ("max", "min")]
     + [f"path_{m}_{c}.rpt" for c in SCENES for m in ("max", "min")])
-METADATA_FILES = frozenset(["sta.log", "cmd.txt", "valid.json", "SHA256SUMS", "lib_lines_raw.txt", "musts"])
+METADATA_FILES = frozenset(["sta.log", "cmd.txt", "valid.json", "SHA256SUMS", "lib_lines_raw.txt", "musts", "snapshot.log"])
 EXPECTED_CHECK_SETUP = {"correct": "1", "missing": "0", "restored": "1"}
 TARGET_PORTS = [f"in_b[{i}]" for i in range(64)]
 ALL_INPUTS = [f"in_a[{i}]" for i in range(64)] + TARGET_PORTS + ["in_valid", "rst"]
