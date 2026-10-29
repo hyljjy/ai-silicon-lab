@@ -1,11 +1,79 @@
 {
   "_comment": "Expected results of the execution-contract acceptance (protocol v0.3 section 6.4 last paragraph; impl_plan Task 9). Written before the runs. 'calls' counts every aliased STA call (helpers included).",
-  "acc_i_core":        {"ctx": "R2", "mode": "query",  "truncated": false, "raw_lines": 198,  "exec_result": "完成", "attribution": "-", "calls": 262, "calls_all_ok": true, "query_status": "completed"},
-  "acc_ii_noflush":    {"ctx": "R2", "mode": "query",  "truncated": false, "raw_lines": 131,  "exec_result": "完成", "attribution": "-", "ordered_pairs": 130, "query_status": "completed"},
-  "acc_iii_six":       {"ctx": "R2", "mode": "query",  "truncated": false, "raw_lines": 1564, "exec_result": "完成", "attribution": "-", "query_status": "completed", "max_seconds": 600},
-  "acc_iv_fullreports":{"ctx": "R2", "mode": "query",  "truncated": true,  "cut_by": "bytes", "returned_bytes_max": 262144, "attribution": "流程限制：单实例截断", "exec_result": "完成", "query_status": "completed"},
-  "acc_v_timeout":     {"ctx": "R2", "mode": "query",  "abnormal": "超时", "query_status": "timed_out", "attribution": "流程限制：时限", "last_call_unfinished": true, "return_ends_with_note": true},
-  "acc_vi_outlimit":   {"ctx": "R2", "mode": "query",  "abnormal": "输出超限", "query_status": "output_limit", "attribution": "流程限制：输出上限", "return_ends_with_note": true},
-  "acc_vii_budget":    {"dropped_at_least": 1, "statement_lists_all_dropped": true, "rendered_check_ok": true},
-  "acc_ctrl_correct":  {"ctx": "R1", "mode": "query",  "truncated": false, "exec_result": "完成", "attribution": "-", "output_contains": "Path Group: clk", "output_lacks": "Path is unconstrained", "query_status": "completed"}
+  "acc_i_core": {
+    "ctx": "R2",
+    "mode": "query",
+    "truncated": false,
+    "raw_lines": 198,
+    "exec_result": "完成",
+    "attribution": "-",
+    "calls": 262,
+    "calls_all_ok": true,
+    "query_status": "completed"
+  },
+  "acc_ii_noflush": {
+    "ctx": "R2",
+    "mode": "query",
+    "truncated": false,
+    "raw_lines": 131,
+    "exec_result": "完成",
+    "attribution": "-",
+    "ordered_pairs": 130,
+    "query_status": "completed"
+  },
+  "acc_iii_six": {
+    "ctx": "R2",
+    "mode": "query",
+    "truncated": false,
+    "raw_lines": 1564,
+    "exec_result": "完成",
+    "attribution": "-",
+    "query_status": "completed",
+    "max_seconds": 600
+  },
+  "acc_iv_fullreports": {
+    "ctx": "R2",
+    "mode": "query",
+    "truncated": true,
+    "cut_by": "lines",
+    "returned_bytes_max": 262144,
+    "attribution": "流程限制：单实例截断",
+    "exec_result": "完成",
+    "query_status": "completed"
+  },
+  "acc_v_timeout": {
+    "ctx": "R2",
+    "mode": "query",
+    "abnormal": "超时",
+    "query_status": "completed",
+    "exec_result": "超出预登记上限",
+    "attribution": "流程限制：时限",
+    "return_contains": "time limit exceeded",
+    "max_seconds": 700
+  },
+  "acc_vi_outlimit": {
+    "ctx": "R2",
+    "mode": "query",
+    "abnormal": "输出超限",
+    "query_status": "output_limit",
+    "attribution": "流程限制：输出上限",
+    "return_ends_with_note": true
+  },
+  "acc_vii_budget": {
+    "dropped_at_least": 1,
+    "statement_lists_all_dropped": true,
+    "rendered_check_ok": true
+  },
+  "acc_ctrl_correct": {
+    "ctx": "R1",
+    "mode": "query",
+    "truncated": false,
+    "exec_result": "完成",
+    "attribution": "-",
+    "output_contains": "Path Group: clk",
+    "output_lacks": "Path is unconstrained",
+    "query_status": "completed"
+  },
+  "_note_iv": "2026-10-28 after the first run: the prediction cut_by=bytes was wrong — the measured raw output is 7635 lines x ~46 B = 352310 B; the line cap applies first and the kept 2000 lines are 91963 B < 256 KiB, so the contract's own rule gives cut_by=lines. The rule was not changed; the prediction was. Recorded in the ledger and RESULT.md.",
+  "_note_v_vi": "2026-10-28 after the first run: (v) and (vi) first hit the Tcl command-count limit (an attribution of its own, 流程限制：Tcl 命令计数上限); the samples were rewritten to reach the time limit / the 50 MiB limit within the command limit, and (v)'s expectation now describes the interpreter time limit (process completes, END marker rc=1, error lines) instead of a process kill."
 }

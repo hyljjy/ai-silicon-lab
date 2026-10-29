@@ -1,0 +1,32 @@
+# Files that must be committed and unchanged before any model run (protocol v0.3 section 8). run_round.py refuses
+# to run otherwise: each path must be tracked, equal to HEAD, have no untracked files under it, and be unchanged
+# since the tag of its tier. Plain lines are tier 1 (tag case02-prereg, impl_plan Task 12). Lines starting with
+# "round " are tier 2 (tag case02-prereg-round, impl_plan Task 14): the formal context runs, the package, the
+# round-1 prompt and the two commitments. Both tiers are listed here once, at tier 1; tier 2 only makes its files
+# ready. The implementation plan itself is not in git: its hash is in rules/impl_plan.sha256.
+tasks/CASE-02/protocol.md
+tasks/CASE-02/appendix_A.md
+tasks/CASE-02/intent.md
+tasks/CASE-02/refs.sha256
+tasks/CASE-02/sdc/case02_missing_inb.tcl
+tasks/CASE-02/scripts
+tasks/CASE-02/rules
+tasks/CASE-02/models
+tasks/CASE-02/package_src/context_body.md
+tasks/CASE-02/package_src/context.md
+tasks/CASE-02/prompts/system.md
+tasks/CASE-02/prompts/round1_template.md
+tasks/CASE-02/prompts/round2_template.md
+tasks/CASE-02/prompts/budget_statement_template.md
+tasks/CASE-02/prompts/smoke_system.md
+tasks/CASE-02/prompts/smoke_user.md
+tasks/CASE-02/prompts/cap_probe_user.md
+tasks/CASE-02/prompts/budget_probe_blank.md
+tasks/CASE-02/prompts/budget_probe_prose.md
+tasks/CASE-02/prompts/budget_probe_report.md
+tasks/CASE-02/prevalidation
+round tasks/CASE-02/queries/formal
+round tasks/CASE-02/package
+round tasks/CASE-02/prompts/round1_user.md
+round tasks/CASE-02/outputs/assign.sha256
+round tasks/CASE-02/outputs/mapping.sha256

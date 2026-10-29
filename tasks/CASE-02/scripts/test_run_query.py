@@ -198,6 +198,25 @@ class TestClassify(unittest.TestCase):
                                  content_lines=5)
         self.assertEqual(r["attribution"], "执行器或环境问题")
 
+    def test_interp_time_limit_is_timeout_attribution(self):
+        # the safe interpreter's own time limit ends the query while the process completes normally
+        r = rq.classify_instance(self.mk(["ok", "ok"]), status="completed", truncated=False, env_ok=True, mode="query",
+                                 content_lines=50, top_errors=["time limit exceeded", "remaining commands not run, interpreter time limit exceeded"])
+        self.assertEqual(r["abnormal"], "超时")
+        self.assertEqual(r["exec_result"], "超出预登记上限")
+        self.assertEqual(r["attribution"], "流程限制：时限")
+
+    def test_command_limit_is_over_limit(self):
+        r = rq.classify_instance(self.mk(["ok"]), status="completed", truncated=False, env_ok=True, mode="query",
+                                 content_lines=50, top_errors=["command count limit exceeded"])
+        self.assertEqual(r["exec_result"], "超出预登记上限")
+        self.assertEqual(r["attribution"], "流程限制：Tcl 命令计数上限")
+        self.assertEqual(r["abnormal"], "-")
+
+    def test_pure_tcl_query_without_sta_calls_is_done(self):
+        r = rq.classify_instance([], status="completed", truncated=False, env_ok=True, mode="query", content_lines=10, tops=1)
+        self.assertEqual(r["exec_result"], "完成")
+
     def test_no_calls_is_no_executable_command(self):
         r = rq.classify_instance([], status="completed", truncated=False, env_ok=True, mode="query", content_lines=0)
         self.assertEqual(r["exec_result"], "未指明可执行命令")

@@ -68,6 +68,9 @@ ABN_NONE, ABN_CRASH, ABN_TIMEOUT, ABN_OUTPUT = "-", "崩溃", "超时", "输出�
 ATTR_NONE, ATTR_REQUEST, ATTR_TRUNC, ATTR_TIME, ATTR_OUTPUT, ATTR_WHITELIST, ATTR_BUDGET, ATTR_EXEC, ATTR_UNKNOWN = \
     ("-", "请求本身的问题", "流程限制：单实例截断", "流程限制：时限", "流程限制：输出上限", "流程限制：白名单拒绝",
      "流程限制：总预算", "执行器或环境问题", "原因未定")
+ATTR_CMDLIMIT = "流程限制：Tcl 命令计数上限"
+TIME_LIMIT = re.compile(r"time limit exceeded", re.I)
+CMD_LIMIT = re.compile(r"command count limit exceeded", re.I)
 
 
 # ---------------------------------------------------------------- executor identity (same pattern as stage A)
@@ -292,20 +295,28 @@ def evidence_ranges(calls, trunc):
 
 
 # ---------------------------------------------------------------- classification (five fields + attribution)
-def classify_instance(calls, status, truncated, env_ok, mode, content_lines):
+def classify_instance(calls, status, truncated, env_ok, mode, content_lines, top_errors=(), tops=None):
+    """The five instance fields and the attribution. top_errors: the texts of the top-level CASE02-ERROR lines (the
+    safe interpreter's own limits show up there, not in a call); tops: number of top-level commands (None = unknown)."""
     ok_calls = [c["call_seq"] for c in calls if c["status"] == "ok"]
     skipped = [c["call_seq"] for c in calls if c["status"] == "skipped"]
     errors = [c for c in calls if c["status"] == "error"]
     exec_type = EXEC_TYPE_WHATIF if (mode == "whatif" or any(c.get("decision") == "whatif" for c in calls)) else EXEC_TYPE_PLAIN
-    if not calls:
+    hit_time = any(TIME_LIMIT.search(e) for e in top_errors)
+    hit_cmds = any(CMD_LIMIT.search(e) for e in top_errors)
+    if hit_time or hit_cmds:
+        exec_result = RES_OVER
+    elif not calls and not tops:
         exec_result = RES_NO_CMD
+    elif not calls:
+        exec_result = RES_DONE
     elif errors:
         exec_result = RES_NO_OBJECT if all(NOT_FOUND.search(c["error"] or "") for c in errors) else RES_SYNTAX
     elif calls and all(c["status"] == "skipped" for c in calls):
         exec_result = RES_SKIPPED
     else:
         exec_result = RES_DONE
-    if status == "timed_out":
+    if status == "timed_out" or hit_time:
         abnormal = ABN_TIMEOUT
     elif status == "output_limit":
         abnormal = ABN_OUTPUT
@@ -322,6 +333,8 @@ def classify_instance(calls, status, truncated, env_ok, mode, content_lines):
         attributions.append(ATTR_OUTPUT)
     elif abnormal == ABN_CRASH:
         attributions.append(ATTR_EXEC)
+    if hit_cmds:
+        attributions.append(ATTR_CMDLIMIT)
     if truncated:
         attributions.append(ATTR_TRUNC)
     if errors:
@@ -533,7 +546,9 @@ def main(argv=None):
         for t in tops:
             f.write(json.dumps(t, ensure_ascii=False) + "\n")
     content_lines = contract_mod.count([l for l in shown if not l.startswith("CASE02-CMD: ")])
-    cls = classify_instance(calls, status, trunc["truncated"], not problems, mode, content_lines)
+    tag = f"CASE02-{nonce}-"
+    top_errors = [l[len(tag) + len("ERROR: "):] for l in query_lines if l.startswith(tag + "ERROR:")]
+    cls = classify_instance(calls, status, trunc["truncated"], not problems, mode, content_lines, top_errors, len(tops))
     result.update({"env_relation_ok": not problems, "env_problems": problems, "sta_rc": sta_rc,
                    "query_status": status, "query_rc": qrc, "raw_lines": trunc["raw_lines"],
                    "raw_bytes": trunc["raw_bytes"], "returned_lines": len(returned),

@@ -26,7 +26,8 @@ RULES_ACC = os.path.join(c2paths.RULES, "acceptance")
 SAMPLES = ("acc_i_core", "acc_ii_noflush", "acc_iii_six", "acc_iv_fullreports", "acc_v_timeout", "acc_vi_outlimit", "acc_ctrl_correct")
 KEEP = ("query.tcl", "sta.log", "env_part.log", "query_full.txt", "query_return.txt", "calls.jsonl", "tops.jsonl", "result.json",
         "snapshot.log")
-ARRIVAL_LINE = re.compile(r"^\S+ (\(clk [\^v]\) )?r [\d.\-]+:[\d.\-]+ f [\d.\-]+:[\d.\-]+$")
+MAX_KEEP_BYTES = 2 * 1024 * 1024
+ARRIVAL_LINE = re.compile(r"^\S+ (?:\(clk [\^v]\) | )r [\d.\-]+:[\d.\-]+ f [\d.\-]+:[\d.\-]+$")   # no clock: two spaces
 
 
 def expected():
@@ -57,12 +58,17 @@ def run_sample(name, exp):
     if os.path.exists(dest):
         shutil.rmtree(dest)
     os.makedirs(dest)
+    big = []
     for f in KEEP:
         p = os.path.join(run_dir, f)
         if os.path.exists(p):
-            shutil.copyfile(p, os.path.join(dest, f))
+            if os.path.getsize(p) > MAX_KEEP_BYTES:          # e.g. the 50 MiB log of the output-limit sample: hash only
+                big.append(f"{f}: {os.path.getsize(p)} bytes sha256 {c2paths.sha256(p)} (kept in {m.group(1)}, not copied)")
+            else:
+                shutil.copyfile(p, os.path.join(dest, f))
     with open(os.path.join(dest, "run.txt"), "w", encoding="utf-8", newline="\n") as f:
-        f.write(f"run_dir={m.group(1)}\nelapsed_seconds={elapsed:.1f}\nstdout:\n{proc.stdout}\n")
+        f.write(f"run_dir={m.group(1)}\nelapsed_seconds={elapsed:.1f}\n" + "".join("not_copied=" + b + "\n" for b in big)
+                + f"stdout:\n{proc.stdout}\n")
     with open(os.path.join(run_dir, "result.json"), encoding="utf-8") as f:
         res = json.load(f)
     return {"sample": name, "ran": True, "run_dir": m.group(1), "elapsed": elapsed, "result": res, "dest": dest}
@@ -104,6 +110,8 @@ def check_sample(name, exp, got):
             diffs.append(f"ordered_pairs: expected {exp['ordered_pairs']}, got {n}")
     if exp.get("return_ends_with_note") and not ret.rstrip().endswith("以上为结束前的输出]"):
         diffs.append("return does not end with the termination note")
+    if "return_contains" in exp and exp["return_contains"] not in ret:
+        diffs.append(f"return lacks {exp['return_contains']!r}")
     if "output_contains" in exp and exp["output_contains"] not in ret:
         diffs.append(f"output lacks {exp['output_contains']!r}")
     if "output_lacks" in exp and exp["output_lacks"] in ret:
