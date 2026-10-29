@@ -37,7 +37,7 @@ class LibPrefixError(ValueError):
 
 
 def _read(path):
-    with open(path, encoding="utf-8", errors="replace") as f:
+    with open(path, encoding="utf-8", errors="replace", newline="") as f:      # keep CR/LF exactly as on disk
         return f.read()
 
 
@@ -107,6 +107,17 @@ def _points_in_report(path):
     return start, end
 
 
+def _header_in_report(path):
+    """(Corner, Path Type) of a report: the allowed-change reports must name the scene and kind the record names (R6 M9)."""
+    corner = ptype = None
+    for line in _read(path).splitlines()[:12]:
+        if line.startswith("Corner: "):
+            corner = line.split(":", 1)[1].strip()
+        elif line.startswith("Path Type: "):
+            ptype = line.split(":", 1)[1].strip()
+    return corner, ptype
+
+
 def _round_to(value, places):
     q = Decimal(1).scaleb(-places)
     return str(Decimal(value).quantize(q, rounding=ROUND_HALF_UP))
@@ -138,8 +149,14 @@ def numeric_checks(tsv_text, run_dir, allowed_records):
             scene_ok = r[1] in SCENES
             kind_ok = item["kind"] == "max"
             rpath = os.path.join(run_dir, item["report_file"])
+            header_ok = True
             if os.path.isfile(rpath):
                 item["report_value"] = _slack_in_report(rpath)
+                corner, ptype = _header_in_report(rpath)
+                item["report_corner"], item["report_path_type"] = corner, ptype
+                header_ok = (corner == r[1] and ptype == item["kind"])
+                if not header_ok:
+                    item["header_problem"] = f"report header Corner={corner} Path Type={ptype}, record scene={r[1]} kind={item['kind']}"
                 if r[0] == "CAT":
                     # the category report's start/end must be the ones the CAT record names
                     start, end = _points_in_report(rpath)
@@ -147,7 +164,7 @@ def numeric_checks(tsv_text, run_dir, allowed_records):
                     item["endpoint_ok"] = (end == r[6].split("/")[0]) if len(r) >= 7 else False
             value_ok = item["finite"] and item["report_value"] is not None and \
                 _round_to(item["value"], places) == _round_to(item["report_value"], places)
-            item["ok"] = bool(scene_ok and kind_ok and value_ok and item["startpoint_ok"] and item["endpoint_ok"])
+            item["ok"] = bool(scene_ok and kind_ok and value_ok and header_ok and item["startpoint_ok"] and item["endpoint_ok"])
         except (InvalidOperation, IndexError, ValueError):
             item["ok"] = False
         out.append(item)
@@ -155,8 +172,9 @@ def numeric_checks(tsv_text, run_dir, allowed_records):
 
 
 def _compare_tsv(relation, run_text, base_text, allowed_records, rules_dir, result):
-    run_lines = run_text.splitlines()
-    base_lines = base_text.splitlines()
+    # keepends=True: a CRLF or a missing final newline is a difference (R6 M9); keys are taken from the stripped line
+    run_lines = run_text.splitlines(keepends=True)
+    base_lines = base_text.splitlines(keepends=True)
     problems = []
     if len(run_lines) != len(base_lines):
         problems.append(f"sta_results.tsv: {len(run_lines)} lines, baseline {len(base_lines)}")
@@ -167,14 +185,15 @@ def _compare_tsv(relation, run_text, base_text, allowed_records, rules_dir, resu
         b = base_lines[i] if i < len(base_lines) else None
         if a is None or b is None:
             continue
-        key = _record_key(a)
-        if key != _record_key(b):
-            problems.append(f"sta_results.tsv line {i + 1}: record {key!r} vs baseline {_record_key(b)!r}")
+        a_s, b_s = a.rstrip("\r\n"), b.rstrip("\r\n")
+        key = _record_key(a_s)
+        if key != _record_key(b_s):
+            problems.append(f"sta_results.tsv line {i + 1}: record {key!r} vs baseline {_record_key(b_s)!r}")
             continue
         if a.startswith("LIB\t"):
-            raw_lines.append(a)
+            raw_lines.append(a_s)
             try:
-                if parse_lib_line(a, rules_dir) != parse_lib_line(b, rules_dir):
+                if parse_lib_line(a_s, rules_dir) != parse_lib_line(b_s, rules_dir) or a[len(a_s):] != b[len(b_s):]:
                     lib_norm_ok = False
                     problems.append(f"LIB normalized differs: {key}")
             except LibPrefixError as e:
@@ -182,7 +201,7 @@ def _compare_tsv(relation, run_text, base_text, allowed_records, rules_dir, resu
                 problems.append(f"LIB: {e}")
             continue
         if a.startswith("CHECK_SETUP\t"):
-            v = a.split("\t")[1]
+            v = a_s.split("\t")[1]
             if v not in ("0", "1"):
                 problems.append(f"CHECK_SETUP must be 0 or 1, got {v!r}")
             exp = {"correct_vs_f1": "1", "missing_vs_correct": "0", "restored_vs_correct": "1"}.get(relation)
@@ -196,7 +215,7 @@ def _compare_tsv(relation, run_text, base_text, allowed_records, rules_dir, resu
                 result["allowed_changes_seen"].append(key)
             else:
                 problems.append(f"sta_results.tsv differs: {key}")
-    base_raw = [l for l in base_lines if l.startswith("LIB\t")]
+    base_raw = [l.rstrip("\r\n") for l in base_lines if l.startswith("LIB\t")]
     result["lib"] = {"normalized_ok": lib_norm_ok, "raw_identical": raw_lines == base_raw, "raw_lines": raw_lines}
     return problems
 
@@ -239,7 +258,8 @@ def compare(relation, run_dir, base_dir, rules_dir):
             problems.append(f"{name} differs from baseline")
     if relation == "missing_vs_correct" and "sta_results.tsv" in present:
         result["numeric"] = numeric_checks(_read(os.path.join(run_dir, "sta_results.tsv")), run_dir, allowed_records)
-        problems += [f"semantic check failed: {n['record']}" for n in result["numeric"] if not n["ok"]]
+        problems += [f"semantic check failed: {n['record']}" + (" (" + n["header_problem"] + ")" if n.get("header_problem") else "")
+                     for n in result["numeric"] if not n["ok"]]
     result["problems"] = problems
     result["ok"] = not problems
     return result
@@ -296,9 +316,9 @@ def warning_block(sta_log_text, mutation_lines_path):
 def expanded_diff_is_exactly(correct_text, missing_text, mutation_lines):
     """True when missing == correct with exactly the contiguous block mutation_lines removed, in order, and no other
     difference."""
-    c = correct_text.splitlines()
-    m = missing_text.splitlines()
-    mut = [l.rstrip("\n") for l in mutation_lines]
+    c = correct_text.splitlines(keepends=True)
+    m = missing_text.splitlines(keepends=True)
+    mut = [l if l.endswith("\n") else l + "\n" for l in mutation_lines]
     problems = []
     n = len(mut)
     if n == 0:
@@ -362,7 +382,7 @@ def layer2_check(constraints, version):
             continue
         if e["driver"] != "sky130_fd_sc_hd__buf_2":
             problems.append(f"{p}: driver {e['driver']}")
-        complete = e["min"] is not None and e["max"] is not None and e["clock"] == "clk" and e["edge"] == "rise" \
+        complete = e["min"] == "0.0000" and e["max"] == "5.5820" and e["clock"] == "clk" and e["edge"] == "rise" \
             and e["rise"] and e["fall"]
         absent = e["min"] is None and e["max"] is None
         if version == "missing" and p in TARGET_PORTS:

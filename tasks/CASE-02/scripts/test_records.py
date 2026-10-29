@@ -277,3 +277,47 @@ class TestExpanded(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestR6Bytes(unittest.TestCase):
+    """CASE02_R6 M9: strict comparisons are byte comparisons; allowed-change reports are checked semantically."""
+
+    def test_crlf_in_strict_file_fails(self):
+        with TmpCopy(CORRECT) as run:
+            p = os.path.join(run, "sta_results.tsv")
+            with open(p, "rb") as f:
+                data = f.read()
+            with open(p, "wb") as f:
+                f.write(data.replace(b"\n", b"\r\n", 1))
+            self.assertFalse(records.compare("restored_vs_correct", run, CORRECT, RULES)["ok"])
+
+    def test_missing_trailing_newline_in_expanded_fails(self):
+        with TmpCopy(MISSING) as run:
+            p = os.path.join(run, "expanded.sdc")
+            with open(p, "rb") as f:
+                data = f.read()
+            with open(p, "wb") as f:
+                f.write(data.rstrip(b"\n"))
+            r = records.compare("missing_vs_correct", run, CORRECT, RULES)
+            self.assertFalse(r["ok"])
+            self.assertIs(r["mutation_verified"], False)
+
+    def test_report_corner_and_path_type_checked(self):
+        with TmpCopy(MISSING) as run:
+            p = os.path.join(run, "cat_ss_n40C_1v60_in2reg_max.rpt")
+            edit(p, "Corner: ss_n40C_1v60", "Corner: ss_100C_1v60")
+            r = records.compare("missing_vs_correct", run, CORRECT, RULES)
+            self.assertFalse(r["ok"])
+            self.assertTrue(any("Corner" in p_ for p_ in r["problems"]), r["problems"])
+        with TmpCopy(MISSING) as run:
+            p = os.path.join(run, "path_max_ss_n40C_1v60.rpt")
+            edit(p, "Path Type: max", "Path Type: min")
+            r = records.compare("missing_vs_correct", run, CORRECT, RULES)
+            self.assertFalse(r["ok"])
+
+    def test_layer2_checks_values(self):
+        c = records.expanded_constraints(read(os.path.join(CORRECT, "expanded.sdc")))
+        c["in_a[5]"]["max"] = "5.5821"
+        ok, problems = records.layer2_check(c, "correct")
+        self.assertFalse(ok)
+        self.assertTrue(any("in_a[5]" in p for p in problems))
