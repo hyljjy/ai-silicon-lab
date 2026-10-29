@@ -5,7 +5,7 @@
 声明（拟）：本次**声明"完整定位可评价"**。依据：
 
 1. 附录 A 第 3.3 节：安全解释器内可以取得满足第 5.5 节条件 (1)–(5) 的证据（`check_setup -verbose` 的名单 + 逐端口 `report_arrival -scene` 的 min/max 与参考），单 scene 198 行、82 KB 以内。
-2. 执行契约验收（`prevalidation/acceptance/RESULT.md`，2026-10-29 最终执行器下全部重跑，`ACCEPTANCE OK`，sha256 `4b708a96cd050231c26bdc018bbb919125b5db1461d1dc0691643507e4db63c8`）：样例 (i) 核心证据组合在正式交还链下未截断、262 次调用全部成功；(iii) 六 scene 枚举 1564 行未截断；(ii)(iv)(v)(vi)(vii) 和正确版对照按预期；七个样例记录的执行器版本与当前一致。
+2. 执行契约验收（`prevalidation/acceptance/RESULT.md`，2026-10-29 最终执行器下全部重跑，`ACCEPTANCE OK`，sha256 `5bf98ca6a63e882b28e86479b9eab542a8db92b66b156d5d8a5b46e5e768fed6`（规程补记 3 后、总预算 600000 下的重跑；(v) 因 SYS-010 单独重跑一次））：样例 (i) 核心证据组合在正式交还链下未截断、262 次调用全部成功；(iii) 六 scene 枚举 1564 行未截断；(ii)(iv)(v)(vi)(vii) 和正确版对照按预期；七个样例记录的执行器版本与当前一致。
 3. 预演（`rules/rehearsal/result.md`，sha256 `be97da111838935dccb8e70a915f1cab92ed97be51b1bb96dc228074129b8ea3`）：规格 v0.2，19 组、70 个覆盖目标全部命中（作者 2026-10-29 再确认预期标签）。这是标签覆盖，不等于全部评分规则已验证。
 4. 执行契约已写进 `package_src/context.md`（第一档冻结），三家同一份。
 

@@ -998,7 +998,7 @@ in_a[34] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -4.1
 Startpoint                           Endpoint                               Slack
 --------------------------------------------------------------------------------
 in_a[34] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -4.17
-[已截断：省略 5403 行；原始 7403 行 455396 字节；见执行契约]
+[已截断：省略 2535 行；原始 4535 行 279014 字节；见执行契约]
 in_a[34] (input)                     _12026_/D (sky130_fd_sc_hd__dfxtp_1)   -4.17
 
 Startpoint                           Endpoint                               Slack

@@ -1,128 +1,129 @@
 {
-  "version": "CASE-02 execution contract, protocol v0.3 section 6.4; numbers fixed by impl_plan v0.2 Task 2; budget fields filled by Task 6",
-  "per_instance_max_lines": 2000,
-  "per_instance_max_bytes": 262144,
-  "truncation": {
-    "head_lines": 1000,
-    "tail_lines": 1000,
-    "marker": "[已截断：省略 {omitted} 行；原始 {raw_lines} 行 {raw_bytes} 字节；见执行契约]",
-    "long_line_bytes": 131072,
-    "long_line_marker": " …[本行截断]"
-  },
-  "query_seconds": 600,
-  "process_seconds": 1200,
-  "process_max_bytes": 52428800,
-  "process_max_memory_bytes": 8589934592,
-  "_process_max_memory_note": "added 2026-10-28 after acceptance (v) attempt 2: an unbounded find_timing_paths loop let sta grow to 15.6 GB and the kernel OOM killer took it; the executor now sets RLIMIT_AS on the sta process so a runaway query dies on its own (recorded as 崩溃) and the parent keeps the record",
-  "tcl_command_limit": 1000000,
-  "max_requests": 12,
-  "instances_per_request": {
-    "unspecified": 2,
-    "specified": 1
-  },
-  "max_logical_instances": 72,
-  "max_executions": 144,
-  "total_budget_tokens": 790000,
+ "version": "CASE-02 execution contract, protocol v0.3 section 6.4; numbers fixed by impl_plan v0.2 Task 2; budget fields filled by Task 6",
+ "per_instance_max_lines": 2000,
+ "per_instance_max_bytes": 262144,
+ "truncation": {
+  "head_lines": 1000,
+  "tail_lines": 1000,
+  "marker": "[已截断：省略 {omitted} 行；原始 {raw_lines} 行 {raw_bytes} 字节；见执行契约]",
+  "long_line_bytes": 131072,
+  "long_line_marker": " …[本行截断]"
+ },
+ "query_seconds": 600,
+ "process_seconds": 1200,
+ "process_max_bytes": 52428800,
+ "process_max_memory_bytes": 8589934592,
+ "_process_max_memory_note": "added 2026-10-28 after acceptance (v) attempt 2: an unbounded find_timing_paths loop let sta grow to 15.6 GB and the kernel OOM killer took it; the executor now sets RLIMIT_AS on the sta process so a runaway query dies on its own (recorded as 崩溃) and the parent keeps the record",
+ "tcl_command_limit": 1000000,
+ "max_requests": 12,
+ "instances_per_request": {
+  "unspecified": 2,
+  "specified": 1
+ },
+ "max_logical_instances": 72,
+ "max_executions": 144,
+ "total_budget_tokens": 600000,
+ "token_bytes_ratio": 1.91,
+ "budget_table": {
+  "ctx_min": 1000000,
+  "overhead_tokens": 699,
+  "P1_bound_tokens": 40000,
+  "P1_estimate_tokens": 21183,
+  "round1_answer_bound_tokens": 128000,
+  "splice_tokens": 2000,
+  "round2_output_reserve_tokens": 128000,
+  "safety_fraction": 0.1,
+  "computed_1M": 601301,
+  "computed_128k": -183499,
+  "total_budget_tokens": 600000,
   "token_bytes_ratio": 1.91,
-  "budget_table": {
-    "ctx_min": 1000000,
-    "overhead_tokens": 699,
-    "P1_bound_tokens": 40000,
-    "P1_estimate_tokens": 21183,
-    "round1_answer_bound_tokens": 32000,
-    "splice_tokens": 2000,
-    "round2_output_reserve_tokens": 32000,
-    "safety_fraction": 0.1,
-    "computed_1M": 793301,
-    "computed_128k": 8501,
-    "total_budget_tokens": 790000,
-    "token_bytes_ratio": 1.91,
-    "ratio_source": "min over 3 models x 2 text types of prompt_bytes/(total_input_tokens - blank_overhead), probe 2026-10-28",
-    "probe_dir": "D:/study/diag_sandbox/smoke-case02-budget-20261028-225242"
+  "ratio_source": "min over 3 models x 2 text types of prompt_bytes/(total_input_tokens - blank_overhead), probe 2026-10-28",
+  "probe_dir": "D:/study/diag_sandbox/smoke-case02-budget-20261028-225242",
+  "revision": "2026-10-29 protocol v0.3 addendum 3: output cap 128000 for all three models; was 790000 with 32000/32000"
+ },
+ "keep_order": [
+  "declared_priority",
+  "qid_numeric",
+  "R1_before_R2"
+ ],
+ "shell_limits": {
+  "process_seconds": 1800,
+  "stdout_bytes": 52428800,
+  "stderr_bytes": 1048576,
+  "poll_seconds": 1,
+  "soft_kill_wait_seconds": 30,
+  "hard_kill_wait_seconds": 30,
+  "note": "the size limits are checked once per poll interval, so a burst of at most one interval's output may exceed them before termination"
+ },
+ "guaranteed_workloads": [
+  {
+   "name": "W01",
+   "file": "rules/workloads/W01_checksetup.tcl",
+   "description": "check_setup 带端口名单",
+   "raw_lines": 67,
+   "raw_bytes": null,
+   "expect_truncated": false
   },
-  "keep_order": [
-    "declared_priority",
-    "qid_numeric",
-    "R1_before_R2"
-  ],
-  "shell_limits": {
-    "process_seconds": 1800,
-    "stdout_bytes": 52428800,
-    "stderr_bytes": 1048576,
-    "poll_seconds": 1,
-    "soft_kill_wait_seconds": 30,
-    "hard_kill_wait_seconds": 30,
-    "note": "the size limits are checked once per poll interval, so a burst of at most one interval's output may exceed them before termination"
+  {
+   "name": "W02",
+   "file": "rules/workloads/W02_arrival_130.tcl",
+   "description": "单 scene 对全部非时钟输入逐端口 report_arrival 的循环",
+   "raw_lines": 131,
+   "raw_bytes": null,
+   "expect_truncated": false
   },
-  "guaranteed_workloads": [
-    {
-      "name": "W01",
-      "file": "rules/workloads/W01_checksetup.tcl",
-      "description": "check_setup 带端口名单",
-      "raw_lines": 67,
-      "raw_bytes": null,
-      "expect_truncated": false
-    },
-    {
-      "name": "W02",
-      "file": "rules/workloads/W02_arrival_130.tcl",
-      "description": "单 scene 对全部非时钟输入逐端口 report_arrival 的循环",
-      "raw_lines": 131,
-      "raw_bytes": null,
-      "expect_truncated": false
-    },
-    {
-      "name": "W03",
-      "file": "rules/workloads/W03_pairs_130.tcl",
-      "description": "单 scene 对全部非时钟输入逐端口 find_timing_paths 计数（max/min，带与不带 -unconstrained）的循环",
-      "raw_lines": 131,
-      "raw_bytes": null,
-      "expect_truncated": false
-    },
-    {
-      "name": "W04",
-      "file": "rules/workloads/W04_core.tcl",
-      "description": "W01 与 W02 放在同一实例",
-      "raw_lines": 198,
-      "raw_bytes": null,
-      "expect_truncated": false
-    },
-    {
-      "name": "W05",
-      "file": "rules/workloads/W05_six_scene.tcl",
-      "description": "六个 scene 的 W02 与 W03 放在同一实例",
-      "raw_lines": 1564,
-      "raw_bytes": null,
-      "expect_truncated": false
-    },
-    {
-      "name": "W06",
-      "file": "rules/workloads/W06_report_checks_default.tcl",
-      "description": "默认路径数的一条 report_checks",
-      "raw_lines": 60,
-      "raw_bytes": null,
-      "expect_truncated": false
-    },
-    {
-      "name": "W07",
-      "file": "rules/workloads/W07_check_types.tcl",
-      "description": "单 scene 的 report_check_types -verbose",
-      "raw_lines": 95,
-      "raw_bytes": null,
-      "expect_truncated": false
-    },
-    {
-      "name": "W08",
-      "file": "rules/workloads/W08_six_point_scalars.tcl",
-      "description": "六个 scene 的 worst_slack 与 total_negative_slack（max 与 min）",
-      "raw_lines": 14,
-      "raw_bytes": null,
-      "expect_truncated": false
-    }
-  ],
-  "not_guaranteed": [
-    "逐端口完整 report_checks 报告乘以多端口（单 scene 全部输入约 6500 行，六个 scene 约 39000 行）",
-    "-group_path_count 或 -endpoint_path_count 不小于 40 的报告",
-    "跨多个 scene 的完整报告枚举"
-  ]
+  {
+   "name": "W03",
+   "file": "rules/workloads/W03_pairs_130.tcl",
+   "description": "单 scene 对全部非时钟输入逐端口 find_timing_paths 计数（max/min，带与不带 -unconstrained）的循环",
+   "raw_lines": 131,
+   "raw_bytes": null,
+   "expect_truncated": false
+  },
+  {
+   "name": "W04",
+   "file": "rules/workloads/W04_core.tcl",
+   "description": "W01 与 W02 放在同一实例",
+   "raw_lines": 198,
+   "raw_bytes": null,
+   "expect_truncated": false
+  },
+  {
+   "name": "W05",
+   "file": "rules/workloads/W05_six_scene.tcl",
+   "description": "六个 scene 的 W02 与 W03 放在同一实例",
+   "raw_lines": 1564,
+   "raw_bytes": null,
+   "expect_truncated": false
+  },
+  {
+   "name": "W06",
+   "file": "rules/workloads/W06_report_checks_default.tcl",
+   "description": "默认路径数的一条 report_checks",
+   "raw_lines": 60,
+   "raw_bytes": null,
+   "expect_truncated": false
+  },
+  {
+   "name": "W07",
+   "file": "rules/workloads/W07_check_types.tcl",
+   "description": "单 scene 的 report_check_types -verbose",
+   "raw_lines": 95,
+   "raw_bytes": null,
+   "expect_truncated": false
+  },
+  {
+   "name": "W08",
+   "file": "rules/workloads/W08_six_point_scalars.tcl",
+   "description": "六个 scene 的 worst_slack 与 total_negative_slack（max 与 min）",
+   "raw_lines": 14,
+   "raw_bytes": null,
+   "expect_truncated": false
+  }
+ ],
+ "not_guaranteed": [
+  "逐端口完整 report_checks 报告乘以多端口（单 scene 全部输入约 6500 行，六个 scene 约 39000 行）",
+  "-group_path_count 或 -endpoint_path_count 不小于 40 的报告",
+  "跨多个 scene 的完整报告枚举"
+ ]
 }

@@ -1,7 +1,7 @@
-run_dir=runs/20261029-052338-c2-query-acc_vi_outlimit-R2-e179
-elapsed_seconds=50.9
-not_copied=sta.log: 53352749 bytes sha256 2540fd34ce0f56aef93b965b78c9cc8164c5dffa844d70758bf711a1c8581c65 (kept in runs/20261029-052338-c2-query-acc_vi_outlimit-R2-e179, not copied)
-not_copied=query_full.txt: 53351927 bytes sha256 4089682943968d2f3229c9e52c31492d33b5f463125bff96ab12eb96d9e80131 (kept in runs/20261029-052338-c2-query-acc_vi_outlimit-R2-e179, not copied)
+run_dir=runs/20261029-081932-c2-query-acc_vi_outlimit-R2-1153
+elapsed_seconds=104.0
+not_copied=sta.log: 52677866 bytes sha256 94bee8f970fb165a940140daeb5bd51ef89d306dcdfb9fbfc19b11ffb050edb3 (kept in runs/20261029-081932-c2-query-acc_vi_outlimit-R2-1153, not copied)
+not_copied=query_full.txt: 52677044 bytes sha256 5c43db9e21f5cb36c9e6494f112a7637ae95feebb19e583d9773e52d941bfb90 (kept in runs/20261029-081932-c2-query-acc_vi_outlimit-R2-1153, not copied)
 stdout:
-CASE02 OK: acc_vi_outlimit ctx=R2 mode=query status=output_limit result=完成 attribution=流程限制：输出上限 lines=133048/656 calls=0 -> runs/20261029-052338-c2-query-acc_vi_outlimit-R2-e179
+CASE02 OK: acc_vi_outlimit ctx=R2 mode=query status=output_limit result=完成 attribution=流程限制：输出上限 lines=131365/656 calls=0 -> runs/20261029-081932-c2-query-acc_vi_outlimit-R2-1153
 

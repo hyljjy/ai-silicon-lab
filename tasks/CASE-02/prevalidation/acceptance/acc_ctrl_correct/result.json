@@ -13,7 +13,7 @@
   "scripts/contract.py": "c84d25507696ba75ca67c079f50efca306b978b145e0b1af3762ab1450366fff",
   "scripts/records.py": "7b437e41e3ccc0dd10171a14ac3944e6af6abffb096df4380605d34321aa8248",
   "scripts/sta_run_case02.tcl": "a121e2f3ca86231964e26b85f804124ea12d1cca4e2f447e9f1157368070b2da",
-  "rules/contract.json": "2e048e77f5fa7fc494f0f6fa60ac4515fa7a4222a132f2b3ccdecda2d124b6b3",
+  "rules/contract.json": "8fe7dc7dbd536a66bdecb25c43d484bcdfffcc05eea02bb5dc26ff27c72144a1",
   "rules/allow_query.txt": "a2b351510216e1ab0349233e774dd97cc85c571c83ebdf0d20326674a753dd21",
   "rules/allow_whatif.txt": "97fbfbf7ed2a440346868d548a58bdd7795b7af3f2035f32c3c9f5911a70849d",
   "rules/setup_commands.txt": "0ddde6e8825043dc09096a2bddef79736a85a1b0ec3abe96eaf3b91863b7afff",
@@ -31,11 +31,11 @@
   "rules/workloads/W08_six_point_scalars.tcl": "364271b9483759fe3cd58787ec2e053f58ad47d2054963b510e487fd8c884f4e"
  },
  "executor_problems": [
-  "executor manifest rules/executor.sha256 missing"
+  "executor file rules/contract.json differs from executor.sha256"
  ],
- "executor_committed": false,
+ "executor_committed": true,
  "uncommitted_ok": true,
- "head": "59b8451195fac7375252ebaccb96dda04be15fd8",
+ "head": "2cc5b98fc776118e12ddbceb59226288ed3c5ca3",
  "contract_version": "CASE-02 execution contract, protocol v0.3 section 6.4; numbers fixed by impl_plan v0.2 Task 2; budget fields filled by Task 6",
  "env_relation": "query_env_vs_formal",
  "formal_dir": "queries/selftest/correct",
@@ -54,7 +54,7 @@
  "cut_by": null,
  "calls": 2,
  "tops": 1,
- "run_dir": "runs/20261029-052430-c2-query-acc_ctrl_correct-R1-770e",
+ "run_dir": "runs/20261029-082117-c2-query-acc_ctrl_correct-R1-0631",
  "exec_type": "原上下文",
  "exec_result": "完成",
  "output_attr": {

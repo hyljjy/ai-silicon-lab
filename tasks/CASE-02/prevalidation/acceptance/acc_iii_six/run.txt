@@ -1,6 +1,6 @@
-run_dir=runs/20261029-050805-c2-query-acc_iii_six-R2-a6d3
-elapsed_seconds=286.9
-not_copied=calls.jsonl: 3404192 bytes sha256 4bd7a222c7a19d309d068d5c8f1b6cd2f98113275229d13180b21fedc1c51292 (kept in runs/20261029-050805-c2-query-acc_iii_six-R2-a6d3, not copied)
+run_dir=runs/20261029-071653-c2-query-acc_iii_six-R2-e810
+elapsed_seconds=369.1
+not_copied=calls.jsonl: 3404192 bytes sha256 2da50de8b7ce973db7ff0fab3908d532b9c391c6e1e9b9b2ed3b30b3d9034fa5 (kept in runs/20261029-071653-c2-query-acc_iii_six-R2-e810, not copied)
 stdout:
-CASE02 OK: acc_iii_six ctx=R2 mode=query status=completed result=完成 attribution=- lines=1564/1564 calls=5472 -> runs/20261029-050805-c2-query-acc_iii_six-R2-a6d3
+CASE02 OK: acc_iii_six ctx=R2 mode=query status=completed result=完成 attribution=- lines=1564/1564 calls=5472 -> runs/20261029-071653-c2-query-acc_iii_six-R2-e810
 

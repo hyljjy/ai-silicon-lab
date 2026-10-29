@@ -180,59 +180,11 @@
     "returned_lines": 1564,
     "tokens": 43149,
     "returned": true
-   },
-   {
-    "qid": "A8",
-    "ctx": "R2",
-    "rendered_bytes": 82414,
-    "returned_bytes": 82014,
-    "priority": null,
-    "truncated": false,
-    "raw_lines": 1564,
-    "returned_lines": 1564,
-    "tokens": 43149,
-    "returned": true
-   },
-   {
-    "qid": "A9",
-    "ctx": "R1",
-    "rendered_bytes": 82414,
-    "returned_bytes": 82014,
-    "priority": null,
-    "truncated": false,
-    "raw_lines": 1564,
-    "returned_lines": 1564,
-    "tokens": 43149,
-    "returned": true
-   },
-   {
-    "qid": "A9",
-    "ctx": "R2",
-    "rendered_bytes": 82414,
-    "returned_bytes": 82014,
-    "priority": null,
-    "truncated": false,
-    "raw_lines": 1564,
-    "returned_lines": 1564,
-    "tokens": 43149,
-    "returned": true
-   },
-   {
-    "qid": "A10",
-    "ctx": "R1",
-    "rendered_bytes": 82414,
-    "returned_bytes": 82014,
-    "priority": null,
-    "truncated": false,
-    "raw_lines": 1564,
-    "returned_lines": 1564,
-    "tokens": 43149,
-    "returned": true
    }
   ],
   "dropped": [
    {
-    "qid": "A10",
+    "qid": "A8",
     "ctx": "R2",
     "rendered_bytes": 82414,
     "returned_bytes": 82014,
@@ -246,20 +198,20 @@
     "attribution": "流程限制：总预算"
    }
   ],
-  "total_tokens": 751052,
-  "overhead_tokens": 545,
-  "budget_tokens": 790000,
+  "total_tokens": 578391,
+  "overhead_tokens": 479,
+  "budget_tokens": 600000,
   "ratio": 1.91
  },
  "check": {
   "ran": true,
-  "instances": 20,
-  "returned": 19,
+  "instances": 16,
+  "returned": 15,
   "dropped": 1,
   "statement_lists_all_dropped": true,
   "rendered_check_ok": true,
-  "tokens": 751070,
-  "budget_tokens": 790000
+  "tokens": 578402,
+  "budget_tokens": 600000
  },
  "instances": [
   {
@@ -414,46 +366,6 @@
   },
   {
    "qid": "A8",
-   "ctx": "R2",
-   "rendered_bytes": 82414,
-   "returned_bytes": 82014,
-   "priority": null,
-   "truncated": false,
-   "raw_lines": 1564,
-   "returned_lines": 1564
-  },
-  {
-   "qid": "A9",
-   "ctx": "R1",
-   "rendered_bytes": 82414,
-   "returned_bytes": 82014,
-   "priority": null,
-   "truncated": false,
-   "raw_lines": 1564,
-   "returned_lines": 1564
-  },
-  {
-   "qid": "A9",
-   "ctx": "R2",
-   "rendered_bytes": 82414,
-   "returned_bytes": 82014,
-   "priority": null,
-   "truncated": false,
-   "raw_lines": 1564,
-   "returned_lines": 1564
-  },
-  {
-   "qid": "A10",
-   "ctx": "R1",
-   "rendered_bytes": 82414,
-   "returned_bytes": 82014,
-   "priority": null,
-   "truncated": false,
-   "raw_lines": 1564,
-   "returned_lines": 1564
-  },
-  {
-   "qid": "A10",
    "ctx": "R2",
    "rendered_bytes": 82414,
    "returned_bytes": 82014,

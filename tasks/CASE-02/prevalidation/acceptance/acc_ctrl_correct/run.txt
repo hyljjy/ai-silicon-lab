@@ -1,5 +1,5 @@
-run_dir=runs/20261029-052430-c2-query-acc_ctrl_correct-R1-770e
-elapsed_seconds=10.7
+run_dir=runs/20261029-082117-c2-query-acc_ctrl_correct-R1-0631
+elapsed_seconds=16.3
 stdout:
-CASE02 OK: acc_ctrl_correct ctx=R1 mode=query status=completed result=完成 attribution=- lines=66/66 calls=2 -> runs/20261029-052430-c2-query-acc_ctrl_correct-R1-770e
+CASE02 OK: acc_ctrl_correct ctx=R1 mode=query status=completed result=完成 attribution=- lines=66/66 calls=2 -> runs/20261029-082117-c2-query-acc_ctrl_correct-R1-0631
 
