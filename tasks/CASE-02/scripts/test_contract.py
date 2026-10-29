@@ -29,7 +29,7 @@ class TestLoad(unittest.TestCase):
         self.assertEqual(c.tcl_command_limit, 1000000)
         self.assertEqual((c.max_requests, c.max_logical_instances, c.max_executions), (12, 72, 144))
         self.assertEqual(c.keep_order, ["declared_priority", "qid_numeric", "R1_before_R2"])
-        self.assertFalse(c.budget_ready)
+        self.assertTrue(c.budget_ready)            # filled by Task 6 (budget.md section 3)
 
     def test_budget_ready_when_filled(self):
         with open(CONTRACT, encoding="utf-8") as f:
@@ -153,7 +153,10 @@ class TestRender(unittest.TestCase):
         self.assertIn("flush", self.text)
 
     def test_render_refuses_without_budget(self):
-        c = contract.load(CONTRACT)
+        with open(CONTRACT, encoding="utf-8") as f:
+            d = json.load(f)
+        d["total_budget_tokens"], d["token_bytes_ratio"] = None, None
+        c = contract.from_dict(d)
         with self.assertRaises(contract.ContractError):
             contract.render_context_section(c, ALLOW, WHATIF, SETUP)
 

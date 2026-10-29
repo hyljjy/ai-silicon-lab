@@ -78,7 +78,7 @@ class TestAllocate(unittest.TestCase):
 
     def test_refuses_without_budget(self):
         with self.assertRaises(contract.ContractError):
-            budget.allocate([inst("A1", "R1", 1)], contract.load(os.path.join(c2paths.RULES, "contract.json")))
+            budget.allocate([inst("A1", "R1", 1)], c(total=None, ratio=None))
 
 
 class TestStatement(unittest.TestCase):
