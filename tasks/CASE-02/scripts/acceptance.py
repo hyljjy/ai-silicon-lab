@@ -73,13 +73,19 @@ def snapshots():
             f.write(f"{h}  {rel}\n")
 
 
+def suspended(wall_seconds, monotonic_seconds, tolerance=60.0):
+    """True when the wall clock advanced much more than the monotonic clock: the VM was frozen (Windows sleep,
+    SYS-010) and every wall-clock limit inside the run is meaningless."""
+    return (wall_seconds - monotonic_seconds) > tolerance
+
+
 def run_sample(name, exp):
     query = os.path.join(RULES_ACC, f"{name}.tcl")
-    t0 = time.monotonic()
+    t0, w0 = time.monotonic(), time.time()
     proc = subprocess.run([sys.executable, "-B", os.path.join(HERE, "run_query.py"), "--id", name, "--ctx", exp["ctx"],
                            "--query", query, "--mode", exp.get("mode", "auto"), "--selftest", "--uncommitted-ok"],
                           cwd=c2paths.CASE, capture_output=True, text=True)
-    elapsed = time.monotonic() - t0
+    elapsed, wall = time.monotonic() - t0, time.time() - w0
     m = re.search(r"-> (runs/\S+)", proc.stdout)
     if not m:
         return {"sample": name, "ran": False, "stdout": proc.stdout[-2000:], "stderr": proc.stderr[-2000:]}
@@ -114,7 +120,7 @@ def run_sample(name, exp):
         json.dump({"env_records_sha256": env_sums, "baseline": res.get("formal_dir"),
                    "baseline_valid_sha256": c2paths.sha256(base_valid) if os.path.isfile(base_valid) else None,
                    "env_relation_ok": res.get("env_relation_ok")}, f, ensure_ascii=False, indent=1)
-    return {"sample": name, "ran": True, "run_dir": m.group(1), "elapsed": elapsed, "result": res, "dest": dest}
+    return {"sample": name, "ran": True, "run_dir": m.group(1), "elapsed": elapsed, "wall_elapsed": wall, "result": res, "dest": dest}
 
 
 def check_sample(name, exp, got):
@@ -145,6 +151,8 @@ def check_sample(name, exp, got):
         diffs.append(f"returned_bytes {res.get('returned_bytes')} > {exp['returned_bytes_max']}")
     if "max_seconds" in exp and got["elapsed"] > exp["max_seconds"]:
         diffs.append(f"elapsed {got['elapsed']:.0f}s > {exp['max_seconds']}s")
+    if got.get("wall_elapsed") is not None and suspended(got["wall_elapsed"], got["elapsed"]):
+        diffs.append(f"environment suspended during the run (wall {got['wall_elapsed']:.0f}s vs monotonic {got['elapsed']:.0f}s; SYS-010)")
     with open(os.path.join(got["dest"], "query_return.txt"), encoding="utf-8") as f:
         ret = f.read()
     if "ordered_pairs" in exp:
@@ -256,9 +264,12 @@ def load_recorded():
             rp = os.path.join(d, "run.txt")
             if os.path.exists(rp):
                 with open(rp, encoding="utf-8") as f:
-                    m = re.search(r"elapsed_seconds=([\d.]+)", f.read())
+                    txt = f.read()
+                    m = re.search(r"^elapsed_seconds=([\d.]+)", txt, re.M)
                     elapsed = float(m.group(1)) if m else 0.0
-            got = {"sample": name, "ran": True, "result": res, "dest": d, "elapsed": elapsed}
+                    mw = re.search(r"^wall_elapsed_seconds=([\d.]+)", txt, re.M)
+                    wall = float(mw.group(1)) if mw else None
+            got = {"sample": name, "ran": True, "result": res, "dest": d, "elapsed": elapsed, "wall_elapsed": wall}
             got["diffs"] = check_sample(name, exp[name], got)
             results[name] = got
     vp = os.path.join(ACC, "acc_vii_budget", "allocation.json")

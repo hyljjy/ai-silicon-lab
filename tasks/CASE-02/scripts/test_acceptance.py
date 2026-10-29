@@ -6,6 +6,7 @@ import unittest
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import acceptance as acc  # noqa: E402
+import c2paths  # noqa: E402
 
 PORTS = [f"in_a[{i}]" for i in range(64)] + [f"in_b[{i}]" for i in range(64)] + ["in_valid", "rst"]
 
@@ -36,6 +37,24 @@ class TestVersions(unittest.TestCase):
         self.assertTrue(any("c" in p for p in probs))
         probs2 = acc.version_problems({"a": a}, {"scripts/run_query.py": "z"})
         self.assertTrue(probs2)
+
+
+class TestSuspended(unittest.TestCase):
+    """SYS-010: a run during which the WSL VM was frozen (Windows sleep) shows a wall-clock elapsed far above the
+    monotonic elapsed; such a record is not comparable and the sample fails."""
+
+    def test_clock_gap_flags_suspension(self):
+        self.assertFalse(acc.suspended(80.0, 79.0))
+        self.assertTrue(acc.suspended(3337.0, 79.0))
+
+    def test_compare_fails_a_suspended_run(self):
+        import tempfile, shutil
+        dest = tempfile.mkdtemp(prefix="acc_susp_", dir=c2paths.RUNS)
+        self.addCleanup(shutil.rmtree, dest, True)
+        open(os.path.join(dest, "query_return.txt"), "w").close()
+        got = {"ran": True, "elapsed": 79.0, "wall_elapsed": 3337.0, "result": {}, "dest": dest}
+        diffs = acc.check_sample("acc_x", {}, got)
+        self.assertTrue(any("suspended" in d or "冻结" in d for d in diffs), diffs)
 
 
 if __name__ == "__main__":
