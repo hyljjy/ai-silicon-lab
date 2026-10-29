@@ -1,0 +1,71 @@
+--- tasks/CASE-01/diag/scripts/fake_claude.py	2026-10-12 23:56:15.516602700 -0700
++++ tasks/CASE-02/scripts/fake_claude_c2.py	2026-10-28 22:51:32.810626800 -0700
+@@ -1,23 +1,19 @@
+-"""Test double for claude.exe (tests only). Emits stream-json like Claude Code 2.1.296 in print mode.
+-Behaviour per model is chosen by FAKE_CLAUDE_SCENARIOS, a JSON object {model flag: scenario}:
+-  ok | truncated | email | nostdin | workdir | nomemory | crash | nocap
+-A prompt asking to count to 300 under CLAUDE_CODE_MAX_OUTPUT_TOKENS < 300 ends like the real CLI when the cap is hit
+-(auto-continue, then "exceeded the N output token maximum", exit 1), unless the scenario is nocap.
+---version and `auth status --json` answer from FAKE_CLAUDE_VERSION and FAKE_LOGGED_IN.
+-"""
++"""Test double for claude.exe (CASE-02 tests only). Same stream-json shape as tasks/CASE-01/diag/scripts/fake_claude.py
++(Claude Code 2.1.296 print mode) plus: a `usage` object in the result event (the budget probe reads it), and the
++scenarios bigout (writes ~3 MB to stdout before answering), bigerr (~1 MB to stderr), hang (sleeps 30 s).
++Behaviour per model comes from FAKE_CLAUDE_SCENARIOS, a JSON object {model flag: scenario}."""
+ import json
+ import os
+ import sys
++import time
+ 
+ NAMES = {"claude-opus-5-5": ("claude-opus-5-5", "claude-opus-5-5"), "k3[1M]": ("k3[1m]", "k3"),
+          "deepseek-v4-pro[1M]": ("deepseek-v4-pro[1m]", "deepseek-v4-pro")}
+-# modelUsage.maxOutputTokens as Claude Code 2.1.296 reports it: the model's own value for Claude, the default for
+-# unrecognised model IDs; it never follows CLAUDE_CODE_MAX_OUTPUT_TOKENS (diagnosed 2026-10-12)
+ REPORTED_MAX = {"claude-opus-5-5": 128000, "k3[1M]": 32000, "deepseek-v4-pro[1M]": 32000}
+ 
+ 
+ def main():
+-    sys.stdout.reconfigure(encoding="utf-8")            # the real claude.exe writes UTF-8 whatever the console
++    sys.stdout.reconfigure(encoding="utf-8")
+     argv = sys.argv[1:]
+     if argv == ["--version"]:
+         print(os.environ.get("FAKE_CLAUDE_VERSION", "2.1.296") + " (Claude Code)")
+@@ -30,6 +26,18 @@
+     scenario = json.loads(os.environ.get("FAKE_CLAUDE_SCENARIOS", "{}")).get(model, "ok")
+     user = "" if scenario == "nostdin" else sys.stdin.buffer.read().decode("utf-8")
+     init_model, msg_model = NAMES[model]
++    if scenario == "bigout":
++        for _ in range(60):
++            sys.stdout.write(json.dumps({"type": "noise", "pad": "y" * 50000}) + "\n")
++            sys.stdout.flush()
++            time.sleep(0.05)
++    if scenario == "bigerr":
++        for _ in range(60):
++            sys.stderr.write("e" * 20000 + "\n")
++            sys.stderr.flush()
++            time.sleep(0.05)
++    if scenario == "hang":
++        time.sleep(30)
+     leaked = sorted(k for k in os.environ if k.upper().startswith(("ANTHROPIC_", "CLAUDE"))
+                     and k not in ("CLAUDE_CODE_MAX_OUTPUT_TOKENS",))
+     answer = f"echo system={len(system)} user={len(user)} leaked={leaked}"
+@@ -47,6 +55,7 @@
+     if capped:
+         answer = (f"API Error: Claude's response exceeded the {cap} output token maximum. To configure this "
+                   "behavior, set the CLAUDE_CODE_MAX_OUTPUT_TOKENS environment variable.")
++    in_tok = 2000 + len(user.encode("utf-8")) // 4
+     events = [
+         {"type": "system", "subtype": "init", "model": init_model, "tools": [], "mcp_servers": [],
+          "claude_code_version": "2.1.296", "per_turn_effort_active": model.startswith("claude"),
+@@ -56,7 +65,10 @@
+         {"type": "assistant", "message": {"model": msg_model, "content": [{"type": "text", "text": answer}]}},
+         {"type": "result", "subtype": "success", "is_error": capped, "num_turns": 4 if capped else 1,
+          "stop_reason": "stop_sequence" if capped else "max_tokens" if scenario == "truncated" else "end_turn",
+-         "result": answer, "modelUsage": {init_model: {"maxOutputTokens": REPORTED_MAX[model]}}},
++         "result": answer,
++         "usage": {"input_tokens": in_tok, "cache_creation_input_tokens": 0, "cache_read_input_tokens": 0, "output_tokens": 5},
++         "modelUsage": {init_model: {"maxOutputTokens": REPORTED_MAX[model], "inputTokens": in_tok,
++                                     "cacheCreationInputTokens": 0, "cacheReadInputTokens": 0, "outputTokens": 5}}},
+     ]
+     for e in events:
+         sys.stdout.write(json.dumps(e, ensure_ascii=False) + "\n")

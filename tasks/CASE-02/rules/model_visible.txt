@@ -1,0 +1,13 @@
+# Files the models can see (protocol 6.2). label_check scans the operator-generated parts of these: path names, title lines, metadata lines.
+package/intent.md
+package/values.txt
+package/summary_R1.tsv
+package/summary_R2.tsv
+package/path_R1.rpt
+package/path_R2.rpt
+package/dot4sat.v
+package/context.md
+prompts/system.md
+prompts/round1_user.md
+prompts/round2/*.md
+round2/*_results.md
