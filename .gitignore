@@ -45,3 +45,6 @@ tasks/CASE-02/scratch/
 # CASE-02 intervention log (kept locally, as for CASE-01) and reruns of the pre-validation scripts (2026-10-28)
 tasks/CASE-02/interventions.md
 tasks/CASE-02/prevalidation/rerun/
+
+# CASE-02 implementation plan: kept locally, not published (as for CASE-01; 2026-10-28)
+tasks/CASE-02/impl_plan.md
