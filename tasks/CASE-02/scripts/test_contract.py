@@ -27,6 +27,7 @@ class TestLoad(unittest.TestCase):
         self.assertEqual(c.per_instance_max_bytes, 262144)
         self.assertEqual((c.query_seconds, c.process_seconds, c.process_max_bytes), (600, 1200, 52428800))
         self.assertEqual(c.tcl_command_limit, 1000000)
+        self.assertEqual(c.process_max_memory_bytes, 8 * 1024 ** 3)
         self.assertEqual((c.max_requests, c.max_logical_instances, c.max_executions), (12, 72, 144))
         self.assertEqual(c.keep_order, ["declared_priority", "qid_numeric", "R1_before_R2"])
         self.assertTrue(c.budget_ready)            # filled by Task 6 (budget.md section 3)
@@ -147,7 +148,7 @@ class TestRender(unittest.TestCase):
             self.assertIsNone(re.search(bad, self.text), bad)
 
     def test_render_mentions_limits(self):
-        for s in ("2000", "256 KiB", "600", "1200", "50 MiB", "1000000", "120000", "12 条"):
+        for s in ("2000", "256 KiB", "600", "1200", "50 MiB", "1000000", "120000", "12 条", "8 GiB"):
             self.assertIn(s, self.text, s)
         self.assertIn("Error 103", self.text)
         self.assertIn("flush", self.text)

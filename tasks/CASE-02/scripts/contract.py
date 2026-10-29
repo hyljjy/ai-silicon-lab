@@ -32,6 +32,7 @@ class Contract:
     guaranteed_workloads: list = field(default_factory=list)
     not_guaranteed: list = field(default_factory=list)
     version: str = ""
+    process_max_memory_bytes: int = 8 * 1024 ** 3
 
     @property
     def budget_ready(self):
@@ -180,7 +181,8 @@ def render_context_section(c, allow_query_path, allow_whatif_path, setup_path):
     a("")
     a("### 时间和其他上限")
     a("")
-    a(f"每个实例里查询部分的时限 {c.query_seconds} 秒，整个工具进程 {c.process_seconds} 秒；进程输出超过 {mib} MiB 时终止；受限解释器最多执行 {c.tcl_command_limit} 条 Tcl 命令。"
+    gib = c.process_max_memory_bytes // (1024 ** 3)
+    a(f"每个实例里查询部分的时限 {c.query_seconds} 秒，整个工具进程 {c.process_seconds} 秒；进程输出超过 {mib} MiB 时终止；工具进程的内存上限 {gib} GiB（超过时工具进程自行退出）；受限解释器最多执行 {c.tcl_command_limit} 条 Tcl 命令。"
       f"因超时或超限终止的实例，交还的是终止前已经产生的输出，末尾附一行说明。")
     a("")
     a("### 交还的内容")

@@ -382,12 +382,26 @@ def reap(proc, cause):
         raise RuntimeError(f"pid {proc.pid} survived the kill; stop it by hand") from cause
 
 
-def run_limited(argv, log_path, env, cwd, timeout, max_bytes):
-    """Wall-clock and log-size limits with a kill of the whole process tree. Returns (rc, stop): stop is None,
-    "timed_out" or "output_limit" (rc None when stopped). The size is also checked after a normal exit."""
+def _limit_memory(max_memory):
+    """preexec_fn: cap the child's address space so a runaway query dies on its own instead of the kernel OOM killer
+    taking the whole tree (acceptance (v) attempt 2: sta at 15.6 GB, parent killed, no record written)."""
+    def apply():
+        try:
+            import resource
+            resource.setrlimit(resource.RLIMIT_AS, (max_memory, max_memory))
+        except (ImportError, ValueError, OSError):
+            pass
+    return apply
+
+
+def run_limited(argv, log_path, env, cwd, timeout, max_bytes, max_memory=None):
+    """Wall-clock, log-size and (POSIX) address-space limits with a kill of the whole process tree. Returns
+    (rc, stop): stop is None, "timed_out" or "output_limit" (rc None when stopped). The size is also checked after a
+    normal exit."""
     with open(log_path, "w") as f:
         proc = subprocess.Popen(argv, cwd=cwd, env=env, stdin=subprocess.DEVNULL, stdout=f,
-                                stderr=subprocess.STDOUT, start_new_session=True)
+                                stderr=subprocess.STDOUT, start_new_session=True,
+                                preexec_fn=_limit_memory(max_memory) if (max_memory and os.name != "nt") else None)
         deadline, stop = time.monotonic() + timeout, None
         try:
             while True:
@@ -505,7 +519,8 @@ def main(argv=None):
                QUERY_MODE=mode, RULES_DIR=RULES, CASE02_NONCE=nonce, CASE02_QUERY_SECONDS=str(c.query_seconds),
                CASE02_COMMAND_LIMIT=str(c.tcl_command_limit), CALL_LOG=call_log, STA_LOG=sta_log)
     sta_rc, stop = run_limited(["sta", "-no_init", "-no_splash", "-exit", os.path.join(HERE, "c2_query.tcl")],
-                               sta_log, env, root, c.process_seconds, c.process_max_bytes)
+                               sta_log, env, root, c.process_seconds, c.process_max_bytes, c.process_max_memory_bytes)
+    result["process_max_memory_bytes"] = c.process_max_memory_bytes
     with open(sta_log, errors="replace") as f:
         raw_text = f.read()
     env_part, query_lines, logged_mode, qrc = split_log(raw_text, nonce)

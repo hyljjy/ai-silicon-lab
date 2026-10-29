@@ -12,6 +12,8 @@
   "query_seconds": 600,
   "process_seconds": 1200,
   "process_max_bytes": 52428800,
+  "process_max_memory_bytes": 8589934592,
+  "_process_max_memory_note": "added 2026-10-28 after acceptance (v) attempt 2: an unbounded find_timing_paths loop let sta grow to 15.6 GB and the kernel OOM killer took it; the executor now sets RLIMIT_AS on the sta process so a runaway query dies on its own (recorded as 崩溃) and the parent keeps the record",
   "tcl_command_limit": 1000000,
   "max_requests": 12,
   "instances_per_request": {

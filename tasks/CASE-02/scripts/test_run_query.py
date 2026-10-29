@@ -223,6 +223,23 @@ class TestClassify(unittest.TestCase):
         self.assertEqual(r["output_attr"]["empty"], True)
 
 
+class TestMemoryLimit(unittest.TestCase):
+    def test_child_memory_limit_kills_child_not_parent(self):
+        import subprocess, tempfile
+        if os.name == "nt":
+            self.skipTest("RLIMIT_AS is POSIX only; the executor runs in WSL")
+        log = tempfile.NamedTemporaryFile(prefix="mem_", suffix=".log", dir=c2paths.RUNS, delete=False).name
+        try:
+            rc, stop = rq.run_limited([sys.executable, "-c", "x = bytearray(600 * 1024 * 1024); print(len(x))"], log,
+                                      os.environ, c2paths.RUNS, 60, 10 * 1024 * 1024, max_memory=256 * 1024 * 1024)
+            self.assertIsNone(stop)
+            self.assertNotEqual(rc, 0)                 # the child died (MemoryError or a signal); we are still here
+            with open(log, errors="replace") as f:
+                self.assertNotIn("629145600", f.read())
+        finally:
+            os.remove(log)
+
+
 class TestResultShape(unittest.TestCase):
     def test_result_json_formal_has_ctx_not_version(self):
         r = rq.result_record(base={"id": "A1"}, ctx="R1", version="missing", selftest=False)
