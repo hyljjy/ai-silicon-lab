@@ -34,3 +34,7 @@
 ## 结论
 
 冒烟的全部硬性项通过（预检、暗号、字段、上限生效、无重试、无泄露），两档登记状态有效，可以进入第 1 轮。第 1、2、5 条属于"模型收到的隐藏文本"，本次没有设计复述题目去核，仍按阶段 A 的历史观察在笔记里如实写出；第 7 条的 `<synthetic>` 事件是新记录到的形态，写进笔记的外壳说明。
+
+## 2026-10-29 08:44 变更后复测（规程补记 3：输出上限 128000、两档标签重打）
+
+`SMOKE OK`，记录 `D:\study\diag_sandbox\smoke-case02-20261029-084421\`。三家暗号都对、`maxOutputTokens` 仍为 128000/32000/32000（字段不随环境变量变化，与阶段 A 第 6 条一致）、`per_turn_effort_active` true/false/false、无重试、无泄露；上限探针 64 对三家都截停（Claude 这次 `is_error=True, exit 1`，上一次是 `is_error=False, exit 0`，截停形态在 Claude 直连上两种都出现过）。之前 08:36 的一次冒烟 `SMOKE FAIL`：Claude 两次调用都返回 `Failed to refresh OAuth token: another Claude Code process is refreshing it`（本会话自己就是一个 Claude Code 进程，刷新冲突是瞬时的），其余两家正常；那次记录保留在 `smoke-case02-20261029-083658\`，不是外壳或模型问题。
