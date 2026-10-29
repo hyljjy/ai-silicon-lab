@@ -11,7 +11,8 @@
   "exec_result": "完成",
   "attribution": "-",
   "abnormal": "-",
-  "description": ""
+  "description": "",
+  "body": "sky130_fd_sc_hd__tt_025C_1v80 sky130_fd_sc_hd__tt_100C_1v80 sky130_fd_sc_hd__ss_100C_1v60 sky130_fd_sc_hd__ss_n40C_1v60 sky130_fd_sc_hd__ff_n40C_1v95 sky130_fd_sc_hd__ff_100C_1v95"
  },
  {
   "qid": "A1",
@@ -25,7 +26,8 @@
   "exec_result": "完成",
   "attribution": "-",
   "abnormal": "-",
-  "description": ""
+  "description": "",
+  "body": "sky130_fd_sc_hd__tt_025C_1v80 sky130_fd_sc_hd__tt_100C_1v80 sky130_fd_sc_hd__ss_100C_1v60 sky130_fd_sc_hd__ss_n40C_1v60 sky130_fd_sc_hd__ff_n40C_1v95 sky130_fd_sc_hd__ff_100C_1v95"
  },
  {
   "qid": "A2",
@@ -39,7 +41,8 @@
   "exec_result": "完成",
   "attribution": "-",
   "abnormal": "-",
-  "description": ""
+  "description": "",
+  "body": "Startpoint: in_b[0] (input port)\nEndpoint: _0421_ (rising edge-triggered flip-flop clocked by clk)\nPath Group: in2reg\nPath Type: max\n…\n(Path is in2reg)"
  },
  {
   "qid": "A2",
@@ -53,6 +56,7 @@
   "exec_result": "完成",
   "attribution": "-",
   "abnormal": "-",
-  "description": "No paths found."
+  "description": "No paths found.",
+  "body": "No paths found."
  }
 ]

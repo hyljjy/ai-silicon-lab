@@ -1,0 +1,4 @@
+code	round	port	item	ctx	scene	run_id	call_seq	returned_range	element_row	complete	mapping_rule	review_status	dissent
+A	2	in_b[0]	list	R2	ss_n40C_1v60	A1_R2	1	1-66	E1	1	E1	未复核	
+A	2	in_b[0]	min,max,clock	R2	ss_n40C_1v60	A2_R2	1	1-1	E3	1	E3	未复核	
+A	2	in_b[1]	min,max,clock	R2	ss_n40C_1v60	A3_R2	1	1-1	E3	1	E3	未复核	

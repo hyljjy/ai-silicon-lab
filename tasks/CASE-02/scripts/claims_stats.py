@@ -58,6 +58,15 @@ REVIEW = {"已复核", "未复核", "有分歧"}
 ACTIONS = ("没有再提", "保持", "提高确定程度", "降低确定程度", "修改结论", "明确撤回")
 MAX_FACTS = 10
 MATERIAL = re.compile(r"package/([\w.-]+):(\d+)(?:-(\d+))?")
+TARGET_PORTS = [f"in_b[{i}]" for i in range(64)]                      # the core endpoint (protocol 5.5)
+# evidence element rows (rules/evidence_elements.tsv) and the items a row of that element may carry; E8 is supporting
+# only and never enters evidence_map; E9 is the ctx/scene annotation every row must carry
+ELEMENT_ITEMS = {"E1": {"list"}, "E2": {"list"}, "E3": {"min,max,clock", "min", "max", "clock"}, "E4": {"min", "max"},
+                 "E5": {"min", "max"}, "E6": {"edge"}, "E7": {"rise,fall", "rise", "fall"}}
+LIST_ELEMENTS = {"E1", "E2"}
+PORT_ELEMENTS = {"E3", "E4", "E5"}
+NOT_TOOL_CMDS = {"puts", "echo", "print"}
+RANGE = re.compile(r"^(\d+)-(\d+)$")
 
 
 def load(path, columns=COLUMNS):
@@ -85,13 +94,69 @@ def _calls(case, run_id):
         return {c["call_seq"]: c for c in (json.loads(l) for l in f if l.strip())}
 
 
-def problems(rows, evidence_rows=(), case=CASE):
+def _sides(valid, code, ctx, scene, port):
+    """Which of min / max the valid per-port rows of `port` cover (E3 'min,max,clock' covers both)."""
+    sides = set()
+    for e in valid:
+        if e["code"] != code or e["port"] != port or e["element_row"] not in PORT_ELEMENTS:
+            continue
+        if ctx and e["ctx"] != ctx or scene and e["scene"] != scene:
+            continue
+        for it in e["item"].split(","):
+            if it in ("min", "max"):
+                sides.add(it)
+            elif it == "clock" and e["element_row"] == "E3":
+                sides |= {"min", "max"}
+    return sides
+
+
+def level_problems(level, code, valid):
+    """The element set the claimed F7 level needs, from the VALID evidence rows of this model (protocol 5.5 / scoring.md:
+    only (1) → 名单级; only (2) → 现象级; (1)+(2) for some ports → 局部确认; (1)–(5) for all 64 → 目标集合完整)."""
+    mine = [e for e in valid if e["code"] == code]
+    lists = [e for e in mine if e["element_row"] in LIST_ELEMENTS]
+    ports = [e for e in mine if e["element_row"] in PORT_ELEMENTS]
+    out = []
+    if level == "名单级" and not lists:
+        out.append(f"{code}: F7 名单级 needs a valid E1/E2 (名单) row")
+    elif level == "现象级" and not ports:
+        out.append(f"{code}: F7 现象级 needs a valid per-port row (E3/E4/E5)")
+    elif level == "局部确认":
+        if not lists or not ports:
+            out.append(f"{code}: F7 局部确认 needs a valid 名单 row (E1/E2) AND a per-port row (E3/E4/E5) in the same context")
+        elif not any(l["ctx"] == p["ctx"] for l in lists for p in ports):
+            out.append(f"{code}: F7 局部确认: the 名单 row and the per-port rows are not in the same context")
+    elif level == "目标集合完整":
+        if not lists:
+            out.append(f"{code}: F7 目标集合完整 needs a valid 名单 row (E1/E2)")
+        done = False
+        for l in lists:
+            for scene in sorted({p["scene"] for p in ports if p["ctx"] == l["ctx"]}):
+                missing = [p for p in TARGET_PORTS if _sides(valid, code, l["ctx"], scene, p) != {"min", "max"}]
+                if not missing:
+                    done = True
+                    break
+                out.append(f"{code}: F7 目标集合完整 ({l['ctx']}, {scene}): {len(missing)} of 64 target ports lack valid min+max rows"
+                           f" (first: {missing[:3]})")
+            if done:
+                break
+        if done:
+            out = []
+        elif not any("target ports" in p for p in out) and lists:
+            out.append(f"{code}: F7 目标集合完整 needs per-port rows for all 64 target ports in the 名单 row's context")
+    return out
+
+
+def problems(rows, evidence_rows=(), case=CASE, expected_rounds=None):
     out, seen = [], set()
     by_id = {r["id"]: r for r in rows}
     children = Counter(r["parent_id"] for r in rows if r["field"] == "cite")
     rounds = defaultdict(list)
     for r in rows:
         rounds[(r["code"], r["round"])].append(r)
+    for code, rnd in expected_rounds or ():                 # fixed denominator: every planned model-round is present
+        if (code, rnd) not in rounds:
+            out.append(f"{code} round {rnd}: missing — no field rows and no ROUND (unobtained) row")
     for (code, rnd), rs in sorted(rounds.items()):
         unobtained = [r for r in rs if r["field"] == "ROUND"]
         if unobtained:
@@ -174,15 +239,31 @@ def problems(rows, evidence_rows=(), case=CASE):
                 out.append(f"{rid}: r2_action must be one of {list(ACTIONS)}")
             elif r["r2_action"] not in ("没有再提",) and r["r1_ref"] and by_id.get(r["r1_ref"], {}).get("round") != "1":
                 out.append(f"{rid}: r1_ref must name a round-1 row")
+    valid = []
     for i, e in enumerate(evidence_rows, 1):
         tag = f"evidence_map row {i} ({e.get('port')} {e.get('item')})"
+        bad = len(out)
         if e.get("review_status") not in REVIEW:
             out.append(f"{tag}: review_status")
         if e.get("review_status") == "有分歧" and not (e.get("dissent") or "").strip():
             out.append(f"{tag}: dissent")
-        calls = _calls(case, e.get("run_id", ""))
+        el = e.get("element_row", "")
+        if el == "E8":
+            out.append(f"{tag}: E8 is supporting evidence only and does not enter evidence_map")
+        elif el not in ELEMENT_ITEMS:
+            out.append(f"{tag}: element_row {el!r} is not one of {sorted(ELEMENT_ITEMS)}")
+        elif e.get("item") not in ELEMENT_ITEMS[el]:
+            out.append(f"{tag}: item {e.get('item')!r} does not belong to element {el} ({sorted(ELEMENT_ITEMS[el])})")
+        if not (e.get("mapping_rule") or "").startswith(el or "?"):
+            out.append(f"{tag}: mapping_rule must name the element row ({el})")
+        if not (e.get("scene") or "").strip() or not (e.get("ctx") or "").strip():
+            out.append(f"{tag}: ctx and scene are required (E9)")
+        run_id = e.get("run_id", "")
+        if e.get("ctx") and run_id and not run_id.endswith("_" + e["ctx"]):
+            out.append(f"{tag}: ctx {e.get('ctx')} does not match run_id {run_id}")
+        calls = _calls(case, run_id)
         if calls is None:
-            out.append(f"{tag}: run {e.get('run_id')} is not a collected instance")
+            out.append(f"{tag}: run {run_id} is not a collected instance")
             continue
         try:
             call = calls.get(int(e.get("call_seq", "0")))
@@ -195,10 +276,25 @@ def problems(rows, evidence_rows=(), case=CASE):
             out.append(f"{tag}: call {e.get('call_seq')} status is {call.get('status')} (error / unfinished calls are not evidence)")
         if (str(e.get("complete")) in ("1", "True", "true")) != bool(call.get("complete")):
             out.append(f"{tag}: complete flag {e.get('complete')} does not match calls.jsonl ({call.get('complete')})")
+        if call.get("cmd") in NOT_TOOL_CMDS:
+            out.append(f"{tag}: call {e.get('call_seq')} is a {call.get('cmd')} line written by the model, not a tool output")
+        m = RANGE.match(e.get("returned_range") or "")
+        ro = call.get("returned_out")
+        if not m:
+            out.append(f"{tag}: returned_range must be 'first-last'")
+        elif ro and not (ro[0] <= int(m.group(1)) <= int(m.group(2)) <= ro[1]):
+            out.append(f"{tag}: returned_range {e.get('returned_range')} lies outside the call's returned lines {ro}")
+        if len(out) == bad and call.get("complete"):
+            valid.append(e)
+    for r in rows:
+        if r["field"] == "F7" and r["round"] == "2":
+            out += level_problems(final(r), r["code"], valid)
     return out
 
 
-def stats(rows, evidence_rows=(), names=None):
+def stats(rows, evidence_rows=(), names=None, instances=()):
+    """instances: optional per-instance records {code, qid, ctx, truncated, attribution, raw_lines, returned_lines}
+    (round2/<code>_budget.json items) for the per-model truncation / budget counts of protocol section 11 (R6 S4)."""
     names = names or {}
     who = lambda r: names.get(r["code"], r["code"])
     lines = ["# 核心表统计（规程 v0.3 第 7 节；只列分母和条数，不汇总成一个数、不排序；并列判定按行列出、不相加）", "",
@@ -225,6 +321,25 @@ def stats(rows, evidence_rows=(), names=None):
     lines += ["", "| 对象 | F7 证据层次 × 归因 | 条数 |", "|---|---|---|"]
     for w, c in sorted(cross.items()):
         lines += [f"| {w} | {lvl} × {att} | {n} |" for (lvl, att), n in sorted(c.items())]
+    acts = defaultdict(Counter)
+    for r in rows:
+        if r["round"] == "2" and r["field"] in FIELDS and r["r2_action"]:
+            acts[who(r)][r["r2_action"]] += 1
+    lines += ["", "| 对象 | 第 2 轮动作 | 字段行数 / 第 2 轮字段行 |", "|---|---|---|"]
+    for w, c in sorted(acts.items()):
+        total = sum(c.values())
+        lines += [f"| {w} | {a} | {c.get(a, 0)} / {total} |" for a in ACTIONS]
+    if instances:
+        lines += ["", "| 对象 | 实例数 | 截断实例 | 截断前原始行 / 交还行 | 流程限制归因（实例数） |", "|---|---|---|---|---|"]
+        per = defaultdict(list)
+        for i in instances:
+            per[names.get(i.get("code"), i.get("code"))].append(i)
+        for w, items in sorted(per.items()):
+            trunc = [i for i in items if i.get("truncated")]
+            att = Counter(i.get("attribution") for i in items if (i.get("attribution") or "-").startswith("流程限制"))
+            lines.append(f"| {w} | {len(items)} | {len(trunc)} | "
+                         + ("；".join(f"{i.get('qid')} {i.get('ctx')}: {i.get('raw_lines')} / {i.get('returned_lines')}" for i in trunc) or "-")
+                         + " | " + ("；".join(f"{k} {v}" for k, v in sorted(att.items())) or "-") + " |")
     rev = Counter(r["review_status"] for r in rows)
     ev_rev = Counter(e.get("review_status", "") for e in evidence_rows)
     changed = sum(1 for r in rows if r["author_label"].strip() and r["author_label"].strip() != r["value"].strip())
@@ -242,10 +357,13 @@ def main(argv=None):
     ap.add_argument("--evidence", default=os.path.join(CASE, "evidence_map.tsv"))
     ap.add_argument("--mapping")
     ap.add_argument("--out", default=os.path.join(CASE, "stats.md"))
+    ap.add_argument("--codes", help="comma-separated model codes the run planned (fixed denominator: both rounds of each)")
+    ap.add_argument("--budgets", nargs="*", default=[], help="round2/<code>_budget.json files for the per-model instance counts")
     args = ap.parse_args(argv)
     rows = load(args.claims)
     ev = load(args.evidence, EVIDENCE_COLUMNS) if os.path.exists(args.evidence) else []
-    bad = problems(rows, ev)
+    expected_rounds = [(c, r) for c in (args.codes.split(",") if args.codes else []) for r in ("1", "2")]
+    bad = problems(rows, ev, expected_rounds=expected_rounds)
     for p in bad:
         print(f"CLAIMS {p}")
     if bad:
@@ -255,7 +373,17 @@ def main(argv=None):
     if args.mapping:
         with open(args.mapping, encoding="utf-8") as f:
             names = json.load(f)["codes"]
-    text = stats(rows, ev, names)
+    instances = []
+    for p in args.budgets:
+        code = os.path.basename(p).split("_")[0]
+        with open(p, encoding="utf-8") as f:
+            alloc = json.load(f)
+        for key in ("kept", "dropped"):
+            for i in alloc.get(key, []):
+                instances.append({"code": code, "qid": i.get("qid"), "ctx": i.get("ctx"), "truncated": i.get("truncated"),
+                                  "attribution": i.get("attribution") if key == "kept" else "流程限制：总预算",
+                                  "raw_lines": i.get("raw_lines"), "returned_lines": i.get("returned_lines") if key == "kept" else 0})
+    text = stats(rows, ev, names, instances)
     with open(args.out, "w", encoding="utf-8", newline="\n") as f:
         f.write(text)
     print(text, end="")

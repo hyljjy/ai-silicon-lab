@@ -11,7 +11,8 @@
   "exec_result": "语法错误",
   "attribution": "请求本身的问题",
   "abnormal": "-",
-  "description": ""
+  "description": "",
+  "body": "Error 103：缺 -scene（原样交还的报错一行）"
  },
  {
   "qid": "A2",
@@ -25,6 +26,7 @@
   "exec_result": "完成",
   "attribution": "-",
   "abnormal": "-",
-  "description": "No paths found."
+  "description": "No paths found.",
+  "body": "No paths found."
  }
 ]

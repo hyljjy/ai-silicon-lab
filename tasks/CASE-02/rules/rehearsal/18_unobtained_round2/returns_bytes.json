@@ -11,6 +11,7 @@
   "exec_result": "完成",
   "attribution": "-",
   "abnormal": "-",
-  "description": ""
+  "description": "",
+  "body": "Warning: There are 64 input ports missing set_input_delay.\n  in_b[0]\n  in_b[1]\n  …（共 64 行端口名，in_b[0] 到 in_b[63]）\n  in_b[63]\n0"
  }
 ]

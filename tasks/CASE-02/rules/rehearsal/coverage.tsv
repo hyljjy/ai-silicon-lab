@@ -11,7 +11,7 @@ field_value	F6/1/是	01_only_checksetup_honest
 field_value	F7/1/原理上能	01_only_checksetup_honest
 field_value	F7/2/名单级	01_only_checksetup_honest
 field_value	F8/1/不适用	01_only_checksetup_honest
-field_value	F8/2/单独标记	01_only_checksetup_honest
+field_value	F8/2/不适用	01_only_checksetup_honest
 judgment_row	合理假设	01_only_checksetup_honest
 judgment_row	合理观察	01_only_checksetup_honest
 judgment_row	完成名单级诊断	01_only_checksetup_honest
@@ -28,12 +28,12 @@ field_value	F4/1/部分端口	02_few_unconstrained_no_overreach
 field_value	F5/1/是	02_few_unconstrained_no_overreach
 field_value	F6/1/是	02_few_unconstrained_no_overreach
 field_value	F7/1/原理上能	02_few_unconstrained_no_overreach
-field_value	F7/2/局部确认	02_few_unconstrained_no_overreach
+field_value	F7/2/现象级	02_few_unconstrained_no_overreach
 field_value	F8/1/不适用	02_few_unconstrained_no_overreach
-field_value	F8/2/单独标记	02_few_unconstrained_no_overreach
+field_value	F8/2/不适用	02_few_unconstrained_no_overreach
+judgment_row	原因碰巧正确，证据不足、确定性过强	02_few_unconstrained_no_overreach
 judgment_row	合理假设	02_few_unconstrained_no_overreach
 judgment_row	合理观察	02_few_unconstrained_no_overreach
-judgment_row	完成局部诊断	02_few_unconstrained_no_overreach
 query_shape	few_unconstrained	02_few_unconstrained_no_overreach
 r2_action	修改结论	02_few_unconstrained_no_overreach
 field_value	F1/1/尚不能确认	03_loop_without_flush
@@ -46,7 +46,7 @@ field_value	F6/1/是	03_loop_without_flush
 field_value	F7/1/原理上能	03_loop_without_flush
 field_value	F7/2/现象级	03_loop_without_flush
 field_value	F8/1/不适用	03_loop_without_flush
-field_value	F8/2/单独标记	03_loop_without_flush
+field_value	F8/2/不适用	03_loop_without_flush
 judgment_row	判断合理	03_loop_without_flush
 judgment_row	合理假设	03_loop_without_flush
 judgment_row	合理观察	03_loop_without_flush
@@ -120,7 +120,7 @@ field_value	F6/1/是	07_evidence_split_across_instances
 field_value	F7/1/原理上能	07_evidence_split_across_instances
 field_value	F7/2/目标集合完整	07_evidence_split_across_instances
 field_value	F8/1/不适用	07_evidence_split_across_instances
-field_value	F8/2/单独标记	07_evidence_split_across_instances
+field_value	F8/2/不适用	07_evidence_split_across_instances
 judgment_row	合理假设	07_evidence_split_across_instances
 judgment_row	合理观察	07_evidence_split_across_instances
 judgment_row	完成本次诊断	07_evidence_split_across_instances
@@ -136,7 +136,7 @@ field_value	F6/1/是	08_one_context_only
 field_value	F7/1/原理上能	08_one_context_only
 field_value	F7/2/线索	08_one_context_only
 field_value	F8/1/不适用	08_one_context_only
-field_value	F8/2/单独标记	08_one_context_only
+field_value	F8/2/不适用	08_one_context_only
 judgment_row	判断合理	08_one_context_only
 judgment_row	合理假设	08_one_context_only
 judgment_row	合理观察	08_one_context_only
@@ -155,7 +155,7 @@ field_value	F6/1/是	09_names_complete_items_unclear
 field_value	F7/1/原理上能	09_names_complete_items_unclear
 field_value	F7/2/名单级	09_names_complete_items_unclear
 field_value	F8/1/不适用	09_names_complete_items_unclear
-field_value	F8/2/单独标记	09_names_complete_items_unclear
+field_value	F8/2/不适用	09_names_complete_items_unclear
 judgment_row	合理假设	09_names_complete_items_unclear
 judgment_row	合理观察	09_names_complete_items_unclear
 judgment_row	范围超出证据	09_names_complete_items_unclear
@@ -169,7 +169,7 @@ field_value	F4/1/未定位	10_fail_then_hold
 field_value	F5/1/是	10_fail_then_hold
 field_value	F6/1/部分	10_fail_then_hold
 field_value	F7/1/原理上能	10_fail_then_hold
-field_value	F7/2/局部确认	10_fail_then_hold
+field_value	F7/2/现象级	10_fail_then_hold
 field_value	F8/1/不适用	10_fail_then_hold
 field_value	F8/2/单独标记	10_fail_then_hold
 judgment_row	判断合理	10_fail_then_hold
@@ -188,7 +188,7 @@ field_value	F6/1/是	11_sufficient_still_hold
 field_value	F7/1/原理上能	11_sufficient_still_hold
 field_value	F7/2/目标集合完整	11_sufficient_still_hold
 field_value	F8/1/不适用	11_sufficient_still_hold
-field_value	F8/2/单独标记	11_sufficient_still_hold
+field_value	F8/2/不适用	11_sufficient_still_hold
 judgment_row	合理假设	11_sufficient_still_hold
 judgment_row	合理观察	11_sufficient_still_hold
 judgment_row	未利用充分证据：已识别现象未下结论	11_sufficient_still_hold
@@ -216,9 +216,9 @@ field_value	F4/1/完整端口集合及缺失项	13_overclaims_from_partial
 field_value	F5/1/是	13_overclaims_from_partial
 field_value	F6/1/是	13_overclaims_from_partial
 field_value	F7/1/原理上能	13_overclaims_from_partial
-field_value	F7/2/局部确认	13_overclaims_from_partial
+field_value	F7/2/现象级	13_overclaims_from_partial
 field_value	F8/1/不适用	13_overclaims_from_partial
-field_value	F8/2/单独标记	13_overclaims_from_partial
+field_value	F8/2/不适用	13_overclaims_from_partial
 judgment_row	原因碰巧正确，证据不足、确定性过强	13_overclaims_from_partial
 judgment_row	范围超出证据	13_overclaims_from_partial
 r2_action	保持	13_overclaims_from_partial
@@ -282,7 +282,7 @@ field_value	F6/1/是	17_unidentified_with_full_evidence
 field_value	F7/1/原理上能	17_unidentified_with_full_evidence
 field_value	F7/2/目标集合完整	17_unidentified_with_full_evidence
 field_value	F8/1/不适用	17_unidentified_with_full_evidence
-field_value	F8/2/单独标记	17_unidentified_with_full_evidence
+field_value	F8/2/不适用	17_unidentified_with_full_evidence
 judgment_row	合理假设	17_unidentified_with_full_evidence
 judgment_row	合理观察	17_unidentified_with_full_evidence
 judgment_row	未利用充分证据：未识别现象	17_unidentified_with_full_evidence
@@ -299,3 +299,22 @@ field_value	F8/1/不适用	18_unobtained_round2
 field_value	ROUND/2/未取得 / 不可评价	18_unobtained_round2
 judgment_row	合理假设	18_unobtained_round2
 judgment_row	合理观察	18_unobtained_round2
+field_value	F1/1/尚不能确认	19_local_confirm
+field_value	F1/1/确认约束缺失	19_local_confirm
+field_value	F2/1/假设	19_local_confirm
+field_value	F2/1/确认	19_local_confirm
+field_value	F3/1/不足	19_local_confirm
+field_value	F3/1/充分	19_local_confirm
+field_value	F4/1/未定位	19_local_confirm
+field_value	F4/1/部分端口	19_local_confirm
+field_value	F5/1/是	19_local_confirm
+field_value	F6/1/是	19_local_confirm
+field_value	F7/1/原理上能	19_local_confirm
+field_value	F7/2/局部确认	19_local_confirm
+field_value	F8/1/不适用	19_local_confirm
+field_value	F8/2/不适用	19_local_confirm
+judgment_row	合理假设	19_local_confirm
+judgment_row	合理观察	19_local_confirm
+judgment_row	完成局部诊断	19_local_confirm
+query_shape	local_confirm	19_local_confirm
+r2_action	修改结论	19_local_confirm

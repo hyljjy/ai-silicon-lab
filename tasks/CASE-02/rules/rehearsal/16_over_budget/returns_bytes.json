@@ -11,7 +11,8 @@
   "exec_result": "完成",
   "attribution": "流程限制：单实例截断",
   "abnormal": "-",
-  "description": ""
+  "description": "",
+  "body": "Startpoint: in_a[0] (input port clocked by clk)\n…（2000 行后截断；in_b 的报告都是 Path Group: unconstrained）"
  },
  {
   "qid": "A1",
@@ -25,7 +26,8 @@
   "exec_result": "完成",
   "attribution": "流程限制：单实例截断",
   "abnormal": "-",
-  "description": ""
+  "description": "",
+  "body": "Startpoint: in_a[0] (input port clocked by clk)\n…（2000 行后截断；in_b 的报告都是 Path Group: unconstrained）"
  },
  {
   "qid": "A2",
@@ -39,7 +41,8 @@
   "exec_result": "完成",
   "attribution": "流程限制：单实例截断",
   "abnormal": "-",
-  "description": ""
+  "description": "",
+  "body": "Startpoint: in_a[0] (input port clocked by clk)\n…（2000 行后截断；in_b 的报告都是 Path Group: unconstrained）"
  },
  {
   "qid": "A2",
@@ -53,7 +56,8 @@
   "exec_result": "完成",
   "attribution": "流程限制：单实例截断",
   "abnormal": "-",
-  "description": ""
+  "description": "",
+  "body": "Startpoint: in_a[0] (input port clocked by clk)\n…（2000 行后截断；in_b 的报告都是 Path Group: unconstrained）"
  },
  {
   "qid": "A3",
@@ -67,7 +71,8 @@
   "exec_result": "完成",
   "attribution": "流程限制：单实例截断",
   "abnormal": "-",
-  "description": ""
+  "description": "",
+  "body": "Startpoint: in_a[0] (input port clocked by clk)\n…（2000 行后截断；in_b 的报告都是 Path Group: unconstrained）"
  },
  {
   "qid": "A3",
@@ -81,7 +86,8 @@
   "exec_result": "完成",
   "attribution": "流程限制：单实例截断",
   "abnormal": "-",
-  "description": ""
+  "description": "",
+  "body": "Startpoint: in_a[0] (input port clocked by clk)\n…（2000 行后截断；in_b 的报告都是 Path Group: unconstrained）"
  },
  {
   "qid": "A4",
@@ -95,7 +101,8 @@
   "exec_result": "完成",
   "attribution": "流程限制：单实例截断",
   "abnormal": "-",
-  "description": ""
+  "description": "",
+  "body": "Startpoint: in_a[0] (input port clocked by clk)\n…（2000 行后截断；in_b 的报告都是 Path Group: unconstrained）"
  },
  {
   "qid": "A4",
@@ -109,6 +116,7 @@
   "exec_result": "完成",
   "attribution": "流程限制：单实例截断",
   "abnormal": "-",
-  "description": ""
+  "description": "",
+  "body": "Startpoint: in_a[0] (input port clocked by clk)\n…（2000 行后截断；in_b 的报告都是 Path Group: unconstrained）"
  }
 ]

@@ -11,6 +11,7 @@
   "exec_result": "语法错误",
   "attribution": "请求本身的问题",
   "abnormal": "-",
-  "description": "Error 103"
+  "description": "Error 103",
+  "body": "Error 103：缺 -scene（原样交还的报错一行）"
  }
 ]

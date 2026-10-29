@@ -11,6 +11,7 @@
   "exec_result": "完成",
   "attribution": "流程限制：时限",
   "abnormal": "超时",
-  "description": "超时终止"
+  "description": "超时终止",
+  "body": "Startpoint: in_a[0] (input port clocked by clk)\n…\nStartpoint: in_b[0] (input port)\nPath Group: unconstrained\n…（600 s 时终止，交还前面 2001 行）"
  }
 ]

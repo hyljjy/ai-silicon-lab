@@ -38,7 +38,7 @@ def full_round(code="A", rnd="1", **over):
             row(id=rid(), code=code, round=rnd, field="F4", value="未定位"),
             row(id=rid(), code=code, round=rnd, field="F5", value="是"),
             row(id=rid(), code=code, round=rnd, field="F6", value="待执行核实"),
-            row(id=rid(), code=code, round=rnd, field="F7", value="原理上能" if rnd == "1" else "名单级"),
+            row(id=rid(), code=code, round=rnd, field="F7", value="原理上能" if rnd == "1" else "线索"),
             row(id=rid(), code=code, round=rnd, field="F8", value="不适用" if rnd == "1" else "单独标记")]
     if rnd == "2":
         for r in rows:
@@ -158,7 +158,7 @@ class TestFactsAndEvidence(Base):
 
     def test_evidence_map_complete_from_calls(self):
         ev = [{"code": "A", "round": "2", "port": "in_b[0]", "item": "max", "ctx": "R2", "scene": "ss_n40C_1v60",
-               "run_id": "A1_R2", "call_seq": "1", "returned_range": "1-66", "element_row": "3", "complete": "1",
+               "run_id": "A1_R2", "call_seq": "1", "returned_range": "1-66", "element_row": "E3", "complete": "1",
                "mapping_rule": "E3", "review_status": "已复核", "dissent": ""}]
         self.assertEqual(self.problems(full_round(), ev), [])
         bad = [dict(ev[0], call_seq="2", complete="1")]
@@ -169,7 +169,7 @@ class TestFactsAndEvidence(Base):
     def test_partial_instance_evidence_counts(self):
         # call 1 is complete although call 3 of the same instance errored: no whole-instance gate
         ev = [{"code": "A", "round": "2", "port": "in_b[0]", "item": "min", "ctx": "R2", "scene": "ss_n40C_1v60",
-               "run_id": "A1_R2", "call_seq": "1", "returned_range": "1-66", "element_row": "3", "complete": "1",
+               "run_id": "A1_R2", "call_seq": "1", "returned_range": "1-66", "element_row": "E3", "complete": "1",
                "mapping_rule": "E3", "review_status": "已复核", "dissent": ""}]
         self.assertEqual(self.problems(full_round(), ev), [])
 
@@ -201,6 +201,80 @@ class TestStats(Base):
         self.assertIn("分母", text)
         self.assertIn("复核状态", text)
         self.assertIn("F7", text)
+
+
+def ev_row(**kw):
+    e = {"code": "A", "round": "2", "port": "in_b[0]", "item": "min,max,clock", "ctx": "R2", "scene": "ss_n40C_1v60",
+         "run_id": "A1_R2", "call_seq": "1", "returned_range": "1-66", "element_row": "E3", "complete": "1",
+         "mapping_rule": "E3", "review_status": "已复核", "dissent": ""}
+    e.update(kw)
+    if "mapping_rule" not in kw:
+        e["mapping_rule"] = e["element_row"]
+    return e
+
+
+class TestR6Evidence(Base):
+    """CASE02_R6 M2: evidence rows are checked against the call they cite (range, context, element/item), and the F7
+    level claimed for a model-round needs the element set of that level; S4: action and limit counts in stats."""
+
+    def r2(self, level):
+        rows = full_round() + full_round(rnd="2")
+        for r in rows:
+            if r["field"] == "F7" and r["round"] == "2":
+                r["value"] = level
+                r["evidence_level"] = level
+        return rows
+
+    def test_returned_range_must_lie_inside_the_call(self):
+        probs = self.problems(self.r2("名单级"), [ev_row(element_row="E1", item="list", returned_range="60-70")])
+        self.assertTrue(any("returned_range" in p for p in probs), probs)
+
+    def test_ctx_must_match_run_id(self):
+        probs = self.problems(self.r2("名单级"), [ev_row(element_row="E1", item="list", ctx="R1")])
+        self.assertTrue(any("ctx" in p for p in probs), probs)
+
+    def test_element_and_item_must_agree(self):
+        probs = self.problems(self.r2("名单级"), [ev_row(element_row="E1", item="max")])
+        self.assertTrue(any("item" in p for p in probs), probs)
+        probs = self.problems(self.r2("现象级"), [ev_row(element_row="E8")])
+        self.assertTrue(any("E8" in p for p in probs), probs)
+        probs = self.problems(self.r2("现象级"), [ev_row(element_row="E3", scene="")])
+        self.assertTrue(any("scene" in p for p in probs), probs)
+
+    def test_puts_output_is_not_tool_evidence(self):
+        with open(os.path.join(self.case, "queries", "round2", "A1_R2", "calls.jsonl"), "a", encoding="utf-8") as f:
+            f.write(json.dumps({"call_seq": 4, "status": "ok", "returned_out": [80, 81], "complete": True, "cmd": "puts"}) + "\n")
+        probs = self.problems(self.r2("名单级"), [ev_row(element_row="E2", item="list", call_seq="4", returned_range="80-81")])
+        self.assertTrue(any("puts" in p for p in probs), probs)
+
+    def test_level_needs_its_elements(self):
+        lst = ev_row(element_row="E1", item="list")
+        arr = ev_row(element_row="E3")
+        self.assertTrue(any("名单级" in p for p in self.problems(self.r2("名单级"), [arr])))
+        self.assertEqual([p for p in self.problems(self.r2("名单级"), [lst]) if "名单级" in p], [])
+        self.assertTrue(any("现象级" in p for p in self.problems(self.r2("现象级"), [lst])))
+        self.assertTrue(any("局部确认" in p for p in self.problems(self.r2("局部确认"), [arr])))
+        self.assertEqual([p for p in self.problems(self.r2("局部确认"), [lst, arr]) if "局部确认" in p], [])
+        probs = self.problems(self.r2("目标集合完整"), [lst, arr])
+        self.assertTrue(any("目标集合完整" in p and "63" in p for p in probs), probs)
+        full = [lst] + [ev_row(port=f"in_b[{i}]") for i in range(64)]
+        self.assertEqual([p for p in self.problems(self.r2("目标集合完整"), full) if "目标集合完整" in p], [])
+
+    def test_expected_rounds_fixed_denominator(self):
+        rows = full_round()
+        probs = cs.problems(rows, [], self.case, expected_rounds=[("A", "1"), ("A", "2"), ("B", "1")])
+        self.assertTrue(any("A round 2" in p for p in probs), probs)
+        self.assertTrue(any("B round 1" in p for p in probs), probs)
+        self.assertEqual([p for p in cs.problems(rows, [], self.case, expected_rounds=[("A", "1")]) if "missing" in p], [])
+
+    def test_stats_count_actions_and_limits(self):
+        rows = full_round() + full_round(rnd="2")
+        inst = [{"code": "A", "qid": "A1", "ctx": "R2", "truncated": True, "attribution": "流程限制：单实例截断", "raw_lines": 39000, "returned_lines": 2001},
+                {"code": "A", "qid": "A2", "ctx": "R2", "truncated": False, "attribution": "流程限制：总预算", "raw_lines": 50, "returned_lines": 0}]
+        text = cs.stats(rows, [], {"A": "模型甲"}, instances=inst)
+        self.assertIn("保持", text)
+        self.assertIn("流程限制：单实例截断", text)
+        self.assertIn("39000", text)
 
 
 if __name__ == "__main__":

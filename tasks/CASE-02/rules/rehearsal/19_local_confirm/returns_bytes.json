@@ -1,0 +1,47 @@
+[
+ {
+  "qid": "A1",
+  "ctx": "R2",
+  "rendered_bytes": 4200,
+  "returned_bytes": 3900,
+  "raw_lines": 67,
+  "returned_lines": 67,
+  "truncated": false,
+  "priority": 1,
+  "exec_result": "完成",
+  "attribution": "-",
+  "abnormal": "-",
+  "description": "",
+  "body": "Warning: There are 64 input ports missing set_input_delay.\n  in_b[0]\n  in_b[1]\n  …（共 64 行端口名，in_b[0] 到 in_b[63]）\n  in_b[63]\n0"
+ },
+ {
+  "qid": "A2",
+  "ctx": "R2",
+  "rendered_bytes": 500,
+  "returned_bytes": 200,
+  "raw_lines": 1,
+  "returned_lines": 1,
+  "truncated": false,
+  "priority": null,
+  "exec_result": "完成",
+  "attribution": "-",
+  "abnormal": "-",
+  "description": "",
+  "body": "in_b[0]  r 0.00:0.00 f 0.00:0.00"
+ },
+ {
+  "qid": "A3",
+  "ctx": "R2",
+  "rendered_bytes": 500,
+  "returned_bytes": 200,
+  "raw_lines": 1,
+  "returned_lines": 1,
+  "truncated": false,
+  "priority": null,
+  "exec_result": "完成",
+  "attribution": "-",
+  "abnormal": "-",
+  "description": "",
+  "body": "in_b[1]  r 0.00:0.00 f 0.00:0.00"
+ }
+]

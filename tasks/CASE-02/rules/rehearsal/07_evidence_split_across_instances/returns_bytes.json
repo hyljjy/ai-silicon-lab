@@ -11,7 +11,8 @@
   "exec_result": "完成",
   "attribution": "-",
   "abnormal": "-",
-  "description": ""
+  "description": "",
+  "body": "Warning: There are 64 input ports missing set_input_delay.\n  in_b[0]\n  in_b[1]\n  …（共 64 行端口名，in_b[0] 到 in_b[63]）\n  in_b[63]\n0"
  },
  {
   "qid": "A2",
@@ -25,7 +26,8 @@
   "exec_result": "完成",
   "attribution": "-",
   "abnormal": "-",
-  "description": ""
+  "description": "",
+  "body": "in_a[0] (clk ^) r 0.00:5.58 f 0.00:5.58\n…（in_a[1] 到 in_a[63]、in_valid、rst 同形）\nin_b[0]  r 0.00:0.00 f 0.00:0.00\nin_b[1]  r 0.00:0.00 f 0.00:0.00\n…（in_b[2] 到 in_b[63] 同形；共 130 行）"
  },
  {
   "qid": "A3",
@@ -39,6 +41,7 @@
   "exec_result": "完成",
   "attribution": "-",
   "abnormal": "-",
-  "description": ""
+  "description": "",
+  "body": "1"
  }
 ]

@@ -3,9 +3,13 @@
   python3 -B scripts/rehearse.py run           # extraction, budget, claims validation, expected comparison, coverage
 For every group of rules/rehearsal/spec.json: the fake round-1 answer goes through extract_queries (context scope and
 priority must match the spec), the instances through budget.allocate (dropped set must match), the operator's claims
-rows (claims_rehearsal.tsv) through claims_stats.problems, and every cell is compared with expected.tsv (the labels the
-author confirmed at checkpoint C; the operator's draft until then). coverage.tsv maps every decision-table row, every
-field value and every query shape to the groups that exercise it; run() fails when a target has no passing group."""
+rows (claims_rehearsal.tsv, written by rules/rehearsal/operator_fill.py from the operator's OWN reading of the answers
+and returns, never from the expected labels: R6 M2) through claims_stats.problems, and every row is compared with
+expected.tsv (the labels the author confirmed at checkpoint C; the operator's draft until then) on value,
+scope_claimed, judgments, evidence_level, attribution and r2_action. coverage.tsv maps every decision-table row, every
+field value and every query shape to the groups that exercise it; run() fails when a target has no passing group.
+Passing here means label coverage of the scoring rules on fixed inputs, not that every rule is verified."""
+import importlib.util
 import csv
 import json
 import os
@@ -24,7 +28,7 @@ import extract_queries as eq  # noqa: E402
 REH = os.path.join(c2paths.RULES, "rehearsal")
 QUERY_SHAPES = ["only_checksetup_honest", "few_unconstrained", "loop_without_flush", "missing_scene", "truncated", "timeout",
                 "split_across_instances", "one_context_only", "names_complete_items_unclear", "fail_then_hold",
-                "sufficient_still_hold"]
+                "sufficient_still_hold", "local_confirm"]
 FAKE_CASE = os.path.join(c2paths.RUNS, "rehearsal_case")
 CLAIM_COLS = cs.COLUMNS
 
@@ -58,10 +62,12 @@ def answer_r2(g):
 
 
 def returns_md(g):
-    lines = ["# 交还结果（操作者按契约手写的摘要，供预演）", ""]
+    lines = ["# 交还结果（操作者按契约手写的摘要和固定输出正文，供预演）", ""]
     for i in g["instances"]:
         lines.append(f"- {i['qid']} {i['ctx']}：{i['description'] or i['exec_result']}；原始 {i['raw_lines']} 行，交还 {i['returned_lines']} 行"
                      f"{'，已截断' if i['truncated'] else ''}；执行结果 {i['exec_result']}；归因 {i['attribution']}")
+        if i.get("body"):
+            lines += ["", "```text", i["body"], "```", ""]
     if not g["instances"]:
         lines.append("- 你第 1 轮没有提出可执行的查询。")
     return "\n".join(lines) + "\n"
@@ -77,12 +83,12 @@ def allocate_group(g, c=None):
     return budget.allocate([dict(i) for i in g["instances"]], c)
 
 
-def claims_rows(g, code=None):
-    """(claims rows, evidence rows) the operator fills for this group, generated from the spec."""
-    code = code or "A"
-    rows, ev = [], []
+def rows_from_labels(labels, code="A"):
+    """claims.tsv rows from a per-round label set {"1": {...}, "2": {...}} (the spec's expected labels, or the
+    operator's own fill in rules/rehearsal/operator_fill.py). Facts become fact + cite row pairs."""
+    rows = []
     for rnd in ("1", "2"):
-        e = g["expected"][rnd]
+        e = labels[rnd]
         n = 0
 
         def rid():
@@ -98,15 +104,33 @@ def claims_rows(g, code=None):
             if f == "F3":
                 for prop in cs.PROPOSITIONS:
                     val, scope = e["F3"][prop]
-                    rows.append(_row(rid(), code, rnd, f, prop, val, scope, e, g))
+                    rows.append(_row(rid(), code, rnd, f, prop, val, scope, e))
             else:
-                rows.append(_row(rid(), code, rnd, f, "-", e[f], e["scope"] if f in ("F1", "F4") else "-", e, g))
-    for x in g.get("evidence", []):
-        ev.append(dict(x, code=code, round="2", review_status="未复核", dissent=""))
-    return rows, ev
+                rows.append(_row(rid(), code, rnd, f, "-", e[f], e["scope"] if f in ("F1", "F4") else "-", e))
+        for fct in e.get("facts", []):
+            fid = rid()
+            r = dict.fromkeys(CLAIM_COLS, "") | {"id": fid, "code": code, "round": rnd, "field": "fact", "proposition": "-",
+                        "quote": fct["quote"], "value": fct["label"], "scope_claimed": "-", "evidence_level": "-", "judgments": "-",
+                        "attribution": "-", "review_status": "未复核", "location": "二、结论", "note": fct["note"],
+                        "evidence": fct["cite_evidence"]}
+            if rnd == "2":
+                r["r2_action"] = fct.get("r2_action", e["r2_action"])
+            rows.append(r)
+            rows.append(dict.fromkeys(CLAIM_COLS, "") | {"id": rid(), "code": code, "round": rnd, "field": "cite", "proposition": "-",
+                        "quote": fct["quote"], "value": fct.get("cite_label", "引用正确"), "scope_claimed": "-", "evidence_level": "-",
+                        "judgments": "-", "attribution": "-", "review_status": "未复核", "parent_id": fid,
+                        "evidence": fct["cite_evidence"]})
+    return rows
 
 
-def _row(rid, code, rnd, field, prop, value, scope, e, g):
+def claims_rows(g, code=None):
+    """(rows, evidence rows) derived from the spec's EXPECTED labels: the fixture for expected.tsv, not the operator's fill."""
+    code = code or "A"
+    ev = [dict(x, code=code, round="2", review_status="未复核", dissent="") for x in g.get("evidence", [])]
+    return rows_from_labels(g["expected"], code), ev
+
+
+def _row(rid, code, rnd, field, prop, value, scope, e):
     r = dict.fromkeys(CLAIM_COLS, "")
     r.update({"id": rid, "code": code, "round": rnd, "field": field, "proposition": prop, "value": value, "scope_claimed": scope,
               "evidence_level": e["evidence_level"] if field == "F7" and rnd == "2" else "-",
@@ -118,6 +142,15 @@ def _row(rid, code, rnd, field, prop, value, scope, e, g):
         r["r2_action"] = e["r2_action"]
         r["r1_ref"] = rid.replace("-2-", "-1-") if e["r2_action"] != "没有再提" else ""
     return r
+
+
+def operator_fill(path=None):
+    """The operator's own fill module (rules/rehearsal/operator_fill.py): write_all(spec, out_dir)."""
+    path = path or os.path.join(REH, "operator_fill.py")
+    s = importlib.util.spec_from_file_location("operator_fill", path)
+    mod = importlib.util.module_from_spec(s)
+    s.loader.exec_module(mod)
+    return mod
 
 
 def write_tsv(path, cols, rows):
@@ -174,7 +207,11 @@ def coverage_hits(spec):
 
 
 # ---------------------------------------------------------------- generate / run
-def generate(spec, out_dir=None):
+def generate(spec, out_dir=None, refresh_expected=False):
+    """Fixtures per group: the two answers, returns.md (summary + fixed output body), returns_bytes.json and, when
+    missing or with refresh_expected, expected.tsv from the spec's expected labels (the author's file after
+    checkpoint C; a refresh needs the author's re-confirmation in CONFIRMED.md). The operator's claims are NOT written
+    here (R6 M2): operator_fill.write_all does that from the operator's own reading."""
     out = out_dir or REH
     rows = []
     for g in spec["groups"]:
@@ -185,10 +222,8 @@ def generate(spec, out_dir=None):
                 f.write(text)
         with open(os.path.join(d, "returns_bytes.json"), "w", encoding="utf-8", newline="\n") as f:
             json.dump(g["instances"], f, ensure_ascii=False, indent=1)
-        claims, ev = claims_rows(g)
-        write_tsv(os.path.join(d, "claims_rehearsal.tsv"), CLAIM_COLS, claims)
-        write_tsv(os.path.join(d, "evidence_map_rehearsal.tsv"), cs.EVIDENCE_COLUMNS, ev)
-        if not os.path.exists(os.path.join(d, "expected.tsv")):          # the author's file is never overwritten
+        claims, _ = claims_rows(g)
+        if refresh_expected or not os.path.exists(os.path.join(d, "expected.tsv")):
             write_tsv(os.path.join(d, "expected.tsv"), CLAIM_COLS, claims)
         for kind, value in sorted(group_targets(g)):
             rows.append({"target_type": kind, "target_value": value, "group": g["name"]})
@@ -200,22 +235,25 @@ def generate(spec, out_dir=None):
 
 
 def _fake_case(spec):
-    """A scratch case directory with the fake queries/round2/<run_id>/calls.jsonl the evidence rows point to."""
+    """Scratch case directories (one per group: run ids repeat between groups) with the fake
+    queries/round2/<run_id>/calls.jsonl the evidence rows point to. Returns {group name: case dir}."""
     if os.path.isdir(FAKE_CASE):
         shutil.rmtree(FAKE_CASE)
+    cases = {}
     for g in spec["groups"]:
+        cases[g["name"]] = os.path.join(FAKE_CASE, g["name"])
         for run_id, calls in g.get("calls", {}).items():
-            d = os.path.join(FAKE_CASE, "queries", "round2", run_id)
+            d = os.path.join(cases[g["name"]], "queries", "round2", run_id)
             os.makedirs(d, exist_ok=True)
             with open(os.path.join(d, "calls.jsonl"), "w", encoding="utf-8", newline="\n") as f:
                 for c in calls:
                     f.write(json.dumps(c) + "\n")
-    return FAKE_CASE
+    return cases
 
 
 def run(spec, out_dir=None):
     out = out_dir or REH
-    _fake_case(spec)
+    cases = _fake_case(spec)
     c = contract_mod.load(os.path.join(c2paths.RULES, "contract.json"))
     report, all_ok, passed = ["# 预演结果（rehearse.py run）", ""], True, set()
     for g in spec["groups"]:
@@ -229,16 +267,26 @@ def run(spec, out_dir=None):
         dropped = [f"{x['qid']} {x['ctx']}" for x in alloc["dropped"]]
         if dropped != g["budget_dropped"]:
             probs.append(f"budget: dropped {dropped}, expected {g['budget_dropped']}")
-        claims = read_tsv(os.path.join(d, "claims_rehearsal.tsv"))
-        ev = read_tsv(os.path.join(d, "evidence_map_rehearsal.tsv")) if os.path.exists(os.path.join(d, "evidence_map_rehearsal.tsv")) else []
-        probs += ["claims: " + p for p in cs.problems(claims, ev, case=FAKE_CASE)]
-        expected = {(r["round"], r["field"], r["proposition"]): r for r in read_tsv(os.path.join(d, "expected.tsv"))}
+        cpath = os.path.join(d, "claims_rehearsal.tsv")
+        if not os.path.exists(cpath):
+            probs.append("operator claims missing: claims_rehearsal.tsv (operator_fill.py write_all)")
+            claims = []
+        else:
+            claims = read_tsv(cpath)
+            ev = read_tsv(os.path.join(d, "evidence_map_rehearsal.tsv")) if os.path.exists(os.path.join(d, "evidence_map_rehearsal.tsv")) else []
+            probs += ["claims: " + p for p in cs.problems(claims, ev, case=cases[g["name"]], expected_rounds=[("A", "1"), ("A", "2")])]
+        key = lambda r: (r["round"], r["field"], r["proposition"], r.get("quote") or "")
+        expected = {key(r): r for r in read_tsv(os.path.join(d, "expected.tsv"))}
+        got = {key(r): r for r in claims}
+        for k in sorted(set(expected) - set(got)):
+            if claims:
+                probs.append(f"operator claims have no row for expected {k[0]}/{k[1]}/{k[2]} {k[3]}".rstrip())
         for r in claims:
-            e = expected.get((r["round"], r["field"], r["proposition"]))
+            e = expected.get(key(r))
             if e is None:
-                probs.append(f"expected.tsv has no row for {r['round']}/{r['field']}/{r['proposition']}")
+                probs.append(f"expected.tsv has no row for {r['round']}/{r['field']}/{r['proposition']} {r.get('quote') or ''}".rstrip())
                 continue
-            for col in ("value", "judgments", "evidence_level", "attribution", "r2_action"):
+            for col in ("value", "scope_claimed", "judgments", "evidence_level", "attribution", "r2_action"):
                 if (r.get(col) or "") != (e.get(col) or ""):
                     probs.append(f"{r['round']}/{r['field']}/{r['proposition']} {col}: claims {r.get(col)!r} vs expected {e.get(col)!r}")
         ok = not probs
@@ -266,13 +314,17 @@ def run(spec, out_dir=None):
 
 def main(argv=None):
     argv = sys.argv[1:] if argv is None else argv
-    if not argv or argv[0] not in ("generate", "run"):
-        print("usage: rehearse.py generate | run")
+    if not argv or argv[0] not in ("generate", "fill", "run"):
+        print("usage: rehearse.py generate [--refresh-expected] | fill | run")
         return 2
     spec = load_spec()
     if argv[0] == "generate":
-        out = generate(spec)
+        out = generate(spec, refresh_expected="--refresh-expected" in argv)
         print(f"REHEARSAL GENERATED: {len(spec['groups'])} groups -> {os.path.relpath(out, c2paths.CASE)}")
+        return 0
+    if argv[0] == "fill":
+        n = operator_fill().write_all(spec, REH)
+        print(f"REHEARSAL FILLED: operator claims for {n} groups")
         return 0
     ok, text = run(spec)
     print(text, end="")

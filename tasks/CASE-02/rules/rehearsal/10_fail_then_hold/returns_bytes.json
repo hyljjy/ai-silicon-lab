@@ -11,7 +11,8 @@
   "exec_result": "对象不匹配",
   "attribution": "请求本身的问题",
   "abnormal": "-",
-  "description": "port not found"
+  "description": "port not found",
+  "body": "Error: port 'in_b[64]' not found"
  },
  {
   "qid": "A2",
@@ -25,6 +26,7 @@
   "exec_result": "完成",
   "attribution": "-",
   "abnormal": "-",
-  "description": ""
+  "description": "",
+  "body": "Startpoint: in_b[0] (input port)\nEndpoint: _0421_ (rising edge-triggered flip-flop clocked by clk)\nPath Group: unconstrained\nPath Type: max\n…\n(Path is unconstrained)"
  }
 ]

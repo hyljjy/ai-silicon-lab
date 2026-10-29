@@ -11,7 +11,8 @@
   "exec_result": "完成",
   "attribution": "-",
   "abnormal": "-",
-  "description": ""
+  "description": "",
+  "body": "Startpoint: in_b[0] (input port)\nEndpoint: _0421_ (rising edge-triggered flip-flop clocked by clk)\nPath Group: unconstrained\nPath Type: max\n…\n(Path is unconstrained)"
  },
  {
   "qid": "A2",
@@ -25,6 +26,7 @@
   "exec_result": "完成",
   "attribution": "-",
   "abnormal": "-",
-  "description": ""
+  "description": "",
+  "body": "Startpoint: in_b[1] (input port)\nEndpoint: _0421_ (rising edge-triggered flip-flop clocked by clk)\nPath Group: unconstrained\nPath Type: max\n…\n(Path is unconstrained)"
  }
 ]

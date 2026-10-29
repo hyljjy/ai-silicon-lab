@@ -11,6 +11,7 @@
   "exec_result": "完成",
   "attribution": "流程限制：单实例截断",
   "abnormal": "-",
-  "description": "六 scene 逐端口完整报告"
+  "description": "六 scene 逐端口完整报告",
+  "body": "=== tt_025C_1v80 in_a[0]\nStartpoint: in_a[0] (input port clocked by clk)\n…（头 1000 行）\n--- 截断：原始 39000 行，保留头 1000 行与尾 1000 行 ---\n…（尾 1000 行：ff_100C_1v95 下最后一批端口，in_b 的报告都是 Path Group: unconstrained）"
  }
 ]

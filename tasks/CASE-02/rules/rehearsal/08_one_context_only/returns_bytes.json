@@ -11,7 +11,8 @@
   "exec_result": "完成",
   "attribution": "-",
   "abnormal": "-",
-  "description": ""
+  "description": "",
+  "body": "1"
  },
  {
   "qid": "A2",
@@ -25,6 +26,7 @@
   "exec_result": "完成",
   "attribution": "-",
   "abnormal": "-",
-  "description": ""
+  "description": "",
+  "body": "in_a[0] (clk ^) r 0.00:5.58 f 0.00:5.58\n…\nin_b[0] (clk ^) r 0.00:5.58 f 0.00:5.58\n…（130 行，全部带 (clk ^)）"
  }
 ]

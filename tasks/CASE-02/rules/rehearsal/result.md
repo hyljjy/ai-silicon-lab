@@ -18,6 +18,7 @@
 - 16_over_budget: PASS
 - 17_unidentified_with_full_evidence: PASS
 - 18_unobtained_round2: PASS
-- coverage: all 69 targets hit by a passing group
+- 19_local_confirm: PASS
+- coverage: all 70 targets hit by a passing group
 
 RESULT: PASS
