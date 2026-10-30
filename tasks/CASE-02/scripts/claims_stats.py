@@ -349,6 +349,25 @@ def stats(rows, evidence_rows=(), names=None, instances=()):
     return "\n".join(lines) + "\n"
 
 
+def load_instances(budget_paths):
+    """Per-instance records from round2/<code>_budget.json (build_results.py: 'returned' instances, 'dropped' ones; the
+    older key 'kept' is accepted). A truncated returned instance is 流程限制：单实例截断, a dropped one 流程限制：总预算
+    (protocol 5.5 / 7.3); an intact instance keeps the attribution the file gives it, else '-'."""
+    instances = []
+    for p in budget_paths:
+        code = os.path.basename(p).split("_")[0]
+        with open(p, encoding="utf-8") as f:
+            alloc = json.load(f)
+        for i in alloc.get("returned", alloc.get("kept", [])):
+            att = i.get("attribution") or ("流程限制：单实例截断" if i.get("truncated") else "-")
+            instances.append({"code": code, "qid": i.get("qid"), "ctx": i.get("ctx"), "truncated": bool(i.get("truncated")),
+                              "attribution": att, "raw_lines": i.get("raw_lines"), "returned_lines": i.get("returned_lines")})
+        for i in alloc.get("dropped", []):
+            instances.append({"code": code, "qid": i.get("qid"), "ctx": i.get("ctx"), "truncated": False,
+                              "attribution": "流程限制：总预算", "raw_lines": i.get("raw_lines"), "returned_lines": 0})
+    return instances
+
+
 def main(argv=None):
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8")
@@ -373,17 +392,7 @@ def main(argv=None):
     if args.mapping:
         with open(args.mapping, encoding="utf-8") as f:
             names = json.load(f)["codes"]
-    instances = []
-    for p in args.budgets:
-        code = os.path.basename(p).split("_")[0]
-        with open(p, encoding="utf-8") as f:
-            alloc = json.load(f)
-        for key in ("kept", "dropped"):
-            for i in alloc.get(key, []):
-                instances.append({"code": code, "qid": i.get("qid"), "ctx": i.get("ctx"), "truncated": i.get("truncated"),
-                                  "attribution": i.get("attribution") if key == "kept" else "流程限制：总预算",
-                                  "raw_lines": i.get("raw_lines"), "returned_lines": i.get("returned_lines") if key == "kept" else 0})
-    text = stats(rows, ev, names, instances)
+    text = stats(rows, ev, names, load_instances(args.budgets))
     with open(args.out, "w", encoding="utf-8", newline="\n") as f:
         f.write(text)
     print(text, end="")

@@ -276,6 +276,20 @@ class TestR6Evidence(Base):
         self.assertIn("流程限制：单实例截断", text)
         self.assertIn("39000", text)
 
+    def test_load_instances_reads_build_results_budget_files(self):
+        """round2/<code>_budget.json (build_results.py) has 'returned' and 'dropped'; a truncated returned instance is
+        流程限制：单实例截断, a dropped one 流程限制：总预算, an intact one keeps its own attribution or '-'."""
+        p = os.path.join(self.case, "A_budget.json")
+        with open(p, "w", encoding="utf-8") as f:
+            json.dump({"returned": [{"qid": "A1", "ctx": "R1", "truncated": False, "raw_lines": 67, "returned_lines": 67, "returned": True},
+                                    {"qid": "A2", "ctx": "R2", "truncated": True, "raw_lines": 39000, "returned_lines": 2001, "returned": True}],
+                       "dropped": [{"qid": "A3", "ctx": "R2", "raw_lines": 50}]}, f)
+        inst = cs.load_instances([p])
+        self.assertEqual([(i["code"], i["qid"], i["ctx"]) for i in inst], [("A", "A1", "R1"), ("A", "A2", "R2"), ("A", "A3", "R2")])
+        self.assertEqual([i["attribution"] for i in inst], ["-", "流程限制：单实例截断", "流程限制：总预算"])
+        self.assertEqual([i["returned_lines"] for i in inst], [67, 2001, 0])
+        self.assertEqual(inst[1]["raw_lines"], 39000)
+
 
 if __name__ == "__main__":
     unittest.main()
