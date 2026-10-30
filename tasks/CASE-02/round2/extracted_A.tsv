@@ -1,0 +1,10 @@
+qid	kind	line	file	fixed_code	ctx_requested	priority	over_limit
+A1	codeblock	78	round2/q/A1.tcl	-	both	1	0
+A2	codeblock	84	round2/q/A2.tcl	-	both	1	0
+A3	codeblock	89	round2/q/A3.tcl	-	both	2	0
+A4	codeblock	94	round2/q/A4.tcl	-	both	2	0
+A5	codeblock	99	round2/q/A5.tcl	-	both	3	0
+A6	codeblock	104	round2/q/A6.tcl	-	both	3	0
+A7	codeblock	110	round2/q/A7.tcl	-	both	4	0
+A8	codeblock	115	round2/q/A8.tcl	-	both	4	0
+A9	codeblock	120	round2/q/A9.tcl	未执行：超出 120 行核心窗口	both	5	1

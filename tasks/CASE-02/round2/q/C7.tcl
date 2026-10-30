@@ -1,0 +1,1 @@
+report_checks -from [get_ports in_b*] -to [all_registers -data_pins] -path_delay max -scene ss_n40C_1v60 -digits 4

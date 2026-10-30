@@ -1,0 +1,2 @@
+CASE02-CMD: check_setup
+1

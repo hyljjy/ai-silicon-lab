@@ -1,0 +1,11 @@
+{"top_seq": 1, "first_line": "foreach p [get_ports {in_a[34] in_b[2] in_a[3] in_b[35]}] {", "status": "ok", "out": [1, 223], "returned_out": [1, 223], "complete": true}
+{"top_seq": 2, "first_line": "set scene ss_n40C_1v60", "status": "ok", "out": [224, 225], "returned_out": [224, 225], "complete": true}
+{"top_seq": 3, "first_line": "foreach p [all_inputs -no_clocks] {", "status": "ok", "out": [226, 356], "returned_out": [226, 356], "complete": true}
+{"top_seq": 4, "first_line": "set scene ss_n40C_1v60", "status": "ok", "out": [357, 358], "returned_out": [357, 358], "complete": true}
+{"top_seq": 5, "first_line": "foreach p [all_inputs -no_clocks] {", "status": "ok", "out": [359, 489], "returned_out": [359, 489], "complete": true}
+{"top_seq": 6, "first_line": "foreach p [all_inputs -no_clocks] {", "status": "ok", "out": [490, 1270], "returned_out": [490, 1270], "complete": true}
+{"top_seq": 7, "first_line": "foreach sc {tt_025C_1v80 tt_100C_1v80 ss_100C_1v60 ss_n40C_1v60 ff_n40C_1v95 ff_100C_1v95} {", "status": "ok", "out": [1271, 1283], "returned_out": [1271, 1283], "complete": true}
+{"top_seq": 8, "first_line": "set scene ss_n40C_1v60", "status": "ok", "out": [1284, 1285], "returned_out": [1284, 1285], "complete": true}
+{"top_seq": 9, "first_line": "set cn 0; set un 0", "status": "ok", "out": [1286, 1287], "returned_out": [1286, 1287], "complete": true}
+{"top_seq": 10, "first_line": "foreach p [all_inputs -no_clocks] {", "status": "ok", "out": [1288, 1288], "returned_out": [1288, 1288], "complete": true}
+{"top_seq": 11, "first_line": "puts \"constrained_in2reg_max_endpoints=$cn unconstrained_only=$un\"", "status": "ok", "out": [1289, 1290], "returned_out": [1289, 1290], "complete": true}

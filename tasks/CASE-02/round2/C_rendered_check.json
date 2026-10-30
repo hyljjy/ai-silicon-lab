@@ -1,0 +1,11 @@
+{
+ "results_bytes": 52072,
+ "results_tokens": 27263,
+ "results_budget": 600000,
+ "results_ok": true,
+ "rendered_bytes": 97906,
+ "prompt_tokens": 51260,
+ "capacity_tokens": 771301,
+ "capacity_ok": true,
+ "ok": true
+}

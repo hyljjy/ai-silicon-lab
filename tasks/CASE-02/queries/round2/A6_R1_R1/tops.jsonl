@@ -1,0 +1,1 @@
+{"top_seq": 1, "first_line": "report_checks -from [get_ports {in_b[2]}] -to [all_registers -data_pins] -path_delay min -scene ss_n40C_1v60 -fields {slew cap input_pins fanout} -digits 4", "status": "ok", "out": [1, 2], "returned_out": [1, 2], "complete": true}

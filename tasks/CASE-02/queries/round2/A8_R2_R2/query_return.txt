@@ -1,0 +1,28 @@
+CASE02-CMD: report_checks -to [get_ports {out_valid}] -path_delay min -scene ss_n40C_1v60 -fields {slew cap fanout} -digits 4
+Startpoint: _12058_ (rising edge-triggered flip-flop clocked by clk)
+Endpoint: out_valid (output port clocked by clk)
+Path Group: clk
+Path Type: min
+Corner: ss_n40C_1v60
+
+Fanout       Cap      Slew     Delay      Time   Description
+-------------------------------------------------------------------------------------
+                    0.0000    0.0000    0.0000   clock clk (rise edge)
+                              0.0000    0.0000   clock network delay (ideal)
+                    0.0000    0.0000    0.0000 ^ _12058_/CLK (sky130_fd_sc_hd__dfxtp_1)
+     1    0.0024    0.0399    0.5484    0.5484 v _12058_/Q (sky130_fd_sc_hd__dfxtp_1)
+                    0.0399    0.0000    0.5484 v out_valid (out)
+                                        0.5484   data arrival time
+
+                    0.0000    0.0000    0.0000   clock clk (rise edge)
+                              0.0000    0.0000   clock network delay (ideal)
+                              0.0000    0.0000   clock reconvergence pessimism
+                              0.0000    0.0000   output external delay
+                                        0.0000   data required time
+-------------------------------------------------------------------------------------
+                                        0.0000   data required time
+                                       -0.5484   data arrival time
+-------------------------------------------------------------------------------------
+                                        0.5484   slack (MET)
+
+

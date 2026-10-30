@@ -1,0 +1,33 @@
+{
+ "returned": [
+  {
+   "qid": "B1",
+   "ctx": "R1",
+   "rendered_bytes": 53728,
+   "returned_bytes": 48091,
+   "priority": null,
+   "truncated": false,
+   "raw_lines": 1290,
+   "returned_lines": 1290,
+   "tokens": 28130,
+   "returned": true
+  },
+  {
+   "qid": "B1",
+   "ctx": "R2",
+   "rendered_bytes": 64570,
+   "returned_bytes": 58933,
+   "priority": null,
+   "truncated": false,
+   "raw_lines": 1492,
+   "returned_lines": 1492,
+   "tokens": 33807,
+   "returned": true
+  }
+ ],
+ "dropped": [],
+ "total_tokens": 62141,
+ "overhead_tokens": 205,
+ "budget_tokens": 600000,
+ "ratio": 1.91
+}

@@ -1,0 +1,1 @@
+{"top_seq": 1, "first_line": "foreach p [all_inputs -no_clocks] { puts \"PORT [get_full_name $p]\"; report_arrival $p -scene ss_n40C_1v60 }", "status": "ok", "out": [1, 261], "returned_out": [1, 261], "complete": true}

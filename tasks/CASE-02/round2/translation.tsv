@@ -1,0 +1,34 @@
+# 作者复核：2026-10-29 翻译表第 1 版（32 行，B1 两行结果代码为执行器所记的「语法错误 / 请求本身的问题」，A9 固定代码「未执行：超出 120 行核心窗口」）由作者确认，原话「确认，跑第 2 轮」。复核文件 runs/round2_translation_review.md（本机）。
+code	qid	ctx	original	executed	rewrites	run_id_first	run_id_rewritten	collected	fixed_code	attribution	author_note
+A	A1	R1	round2/q/A1.tcl	round2/q/A1.tcl	-	20261029-163734-c2-query-A1_R1-R1-1675	-	A1_R1_R1	-	-	-
+A	A1	R2	round2/q/A1.tcl	round2/q/A1.tcl	-	20261029-163748-c2-query-A1_R2-R2-7329	-	A1_R2_R2	-	-	-
+A	A2	R1	round2/q/A2.tcl	round2/q/A2.tcl	-	20261029-163800-c2-query-A2_R1-R1-bde7	-	A2_R1_R1	-	-	-
+A	A2	R2	round2/q/A2.tcl	round2/q/A2.tcl	-	20261029-163814-c2-query-A2_R2-R2-a7f9	-	A2_R2_R2	-	-	-
+A	A3	R1	round2/q/A3.tcl	round2/q/A3.tcl	-	20261029-163826-c2-query-A3_R1-R1-20b3	-	A3_R1_R1	-	-	-
+A	A3	R2	round2/q/A3.tcl	round2/q/A3.tcl	-	20261029-163840-c2-query-A3_R2-R2-4aaa	-	A3_R2_R2	-	-	-
+A	A4	R1	round2/q/A4.tcl	round2/q/A4.tcl	-	20261029-163851-c2-query-A4_R1-R1-2ecc	-	A4_R1_R1	-	-	-
+A	A4	R2	round2/q/A4.tcl	round2/q/A4.tcl	-	20261029-163904-c2-query-A4_R2-R2-0baa	-	A4_R2_R2	-	-	-
+A	A5	R1	round2/q/A5.tcl	round2/q/A5.tcl	-	20261029-163915-c2-query-A5_R1-R1-d879	-	A5_R1_R1	-	-	-
+A	A5	R2	round2/q/A5.tcl	round2/q/A5.tcl	-	20261029-164012-c2-query-A5_R2-R2-2677	-	A5_R2_R2	-	-	-
+A	A6	R1	round2/q/A6.tcl	round2/q/A6.tcl	-	20261029-164053-c2-query-A6_R1-R1-316c	-	A6_R1_R1	-	-	-
+A	A6	R2	round2/q/A6.tcl	round2/q/A6.tcl	-	20261029-164107-c2-query-A6_R2-R2-2a7b	-	A6_R2_R2	-	-	-
+A	A7	R1	round2/q/A7.tcl	round2/q/A7.tcl	-	20261029-164118-c2-query-A7_R1-R1-8bde	-	A7_R1_R1	-	-	-
+A	A7	R2	round2/q/A7.tcl	round2/q/A7.tcl	-	20261029-164131-c2-query-A7_R2-R2-ef11	-	A7_R2_R2	-	-	-
+A	A8	R1	round2/q/A8.tcl	round2/q/A8.tcl	-	20261029-164142-c2-query-A8_R1-R1-41ab	-	A8_R1_R1	-	-	-
+A	A8	R2	round2/q/A8.tcl	round2/q/A8.tcl	-	20261029-164155-c2-query-A8_R2-R2-8e40	-	A8_R2_R2	-	-	-
+A	A9	-	round2/q/A9.tcl	-	-	-	-	-	未执行：超出 120 行核心窗口	-	-
+B	B1	R1	round2/q/B1.tcl	round2/q/B1.tcl	-	20261029-164206-c2-query-B1_R1-R1-280e	-	B1_R1_R1	-	请求本身的问题	-
+B	B1	R2	round2/q/B1.tcl	round2/q/B1.tcl	-	20261029-164327-c2-query-B1_R2-R2-7df9	-	B1_R2_R2	-	请求本身的问题	-
+C	C1	R1	round2/q/C1.tcl	round2/q/C1.tcl	-	20261029-164427-c2-query-C1_R1-R1-d131	-	C1_R1_R1	-	-	-
+C	C2	R1	round2/q/C2.tcl	round2/q/C2.tcl	-	20261029-164441-c2-query-C2_R1-R1-835e	-	C2_R1_R1	-	-	-
+C	C3	R2	round2/q/C3.tcl	round2/q/C3.tcl	-	20261029-164454-c2-query-C3_R2-R2-c620	-	C3_R2_R2	-	-	-
+C	C4	R1	round2/q/C4.tcl	round2/q/C4.tcl	-	20261029-164506-c2-query-C4_R1-R1-18ad	-	C4_R1_R1	-	-	-
+C	C4	R2	round2/q/C4.tcl	round2/q/C4.tcl	-	20261029-164519-c2-query-C4_R2-R2-a9c1	-	C4_R2_R2	-	-	-
+C	C5	R1	round2/q/C5.tcl	round2/q/C5.tcl	-	20261029-164530-c2-query-C5_R1-R1-ce3b	-	C5_R1_R1	-	-	-
+C	C5	R2	round2/q/C5.tcl	round2/q/C5.tcl	-	20261029-164544-c2-query-C5_R2-R2-2ea4	-	C5_R2_R2	-	-	-
+C	C6	R1	round2/q/C6.tcl	round2/q/C6.tcl	-	20261029-164555-c2-query-C6_R1-R1-1c98	-	C6_R1_R1	-	-	-
+C	C6	R2	round2/q/C6.tcl	round2/q/C6.tcl	-	20261029-164652-c2-query-C6_R2-R2-fe2c	-	C6_R2_R2	-	-	-
+C	C7	R1	round2/q/C7.tcl	round2/q/C7.tcl	-	20261029-164735-c2-query-C7_R1-R1-4801	-	C7_R1_R1	-	-	-
+C	C8	R1	round2/q/C8.tcl	round2/q/C8.tcl	-	20261029-164748-c2-query-C8_R1-R1-92d8	-	C8_R1_R1	-	-	-
+C	C9	R1	round2/q/C9.tcl	round2/q/C9.tcl	-	20261029-164802-c2-query-C9_R1-R1-d7ac	-	C9_R1_R1	-	-	-
+C	C9	R2	round2/q/C9.tcl	round2/q/C9.tcl	-	20261029-164816-c2-query-C9_R2-R2-8e36	-	C9_R2_R2	-	-	-

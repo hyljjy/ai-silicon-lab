@@ -1,0 +1,10 @@
+qid	kind	line	file	fixed_code	ctx_requested	priority	over_limit
+C1	line	36	round2/q/C1.tcl	-	R1	1	0
+C2	line	37	round2/q/C2.tcl	-	R1	1	0
+C3	line	41	round2/q/C3.tcl	-	R2	2	0
+C4	line	45	round2/q/C4.tcl	-	both	3	0
+C5	line	49	round2/q/C5.tcl	-	both	4	0
+C6	line	53	round2/q/C6.tcl	-	both	5	0
+C7	line	57	round2/q/C7.tcl	-	R1	6	0
+C8	line	61	round2/q/C8.tcl	-	R1	7	0
+C9	line	65	round2/q/C9.tcl	-	both	8	0
