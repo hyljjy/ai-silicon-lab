@@ -56,6 +56,7 @@ FACT_LABELS = {"证实", "推翻", "无法核对"}
 CITE_LABELS = {"引用正确", "引用错误", "无引用"}
 REVIEW = {"已复核", "未复核", "有分歧"}
 ACTIONS = ("没有再提", "保持", "提高确定程度", "降低确定程度", "修改结论", "明确撤回")
+NON_PROPOSITION_FIELDS = {"F5", "F6", "F7", "F8"}  # r2_action '-' allowed: not model propositions (2026-10-30, R7 M4)
 MAX_FACTS = 10
 MATERIAL = re.compile(r"package/([\w.-]+):(\d+)(?:-(\d+))?")
 TARGET_PORTS = [f"in_b[{i}]" for i in range(64)]                      # the core endpoint (protocol 5.5)
@@ -235,8 +236,10 @@ def problems(rows, evidence_rows=(), case=CASE, expected_rounds=None):
         elif r["field"] != "ROUND":
             out.append(f"{rid}: unknown field {r['field']!r}")
         if r["round"] == "2" and r["field"] in FIELDS + ("fact",):
-            if r["r2_action"] not in ACTIONS:
-                out.append(f"{rid}: r2_action must be one of {list(ACTIONS)}")
+            if r["r2_action"] == "-" and r["field"] in NON_PROPOSITION_FIELDS:
+                pass  # F5–F8 are process fields, not model propositions: no round-2 action (protocol 7.4 "按同一命题判")
+            elif r["r2_action"] not in ACTIONS:
+                out.append(f"{rid}: r2_action must be one of {list(ACTIONS)} ('-' only for {sorted(NON_PROPOSITION_FIELDS)})")
             elif r["r2_action"] not in ("没有再提",) and r["r1_ref"] and by_id.get(r["r1_ref"], {}).get("round") != "1":
                 out.append(f"{rid}: r1_ref must name a round-1 row")
     valid = []
@@ -323,9 +326,9 @@ def stats(rows, evidence_rows=(), names=None, instances=()):
         lines += [f"| {w} | {lvl} × {att} | {n} |" for (lvl, att), n in sorted(c.items())]
     acts = defaultdict(Counter)
     for r in rows:
-        if r["round"] == "2" and r["field"] in FIELDS and r["r2_action"]:
+        if r["round"] == "2" and r["field"] in FIELDS and r["r2_action"] in ACTIONS:
             acts[who(r)][r["r2_action"]] += 1
-    lines += ["", "| 对象 | 第 2 轮动作 | 字段行数 / 第 2 轮字段行 |", "|---|---|---|"]
+    lines += ["", "| 对象 | 第 2 轮动作 | 命题行数 / 第 2 轮命题行（F1、F2、F3×3、F4；F5–F8 不是命题，不记动作） |", "|---|---|---|"]
     for w, c in sorted(acts.items()):
         total = sum(c.values())
         lines += [f"| {w} | {a} | {c.get(a, 0)} / {total} |" for a in ACTIONS]

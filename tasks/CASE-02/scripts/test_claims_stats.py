@@ -290,6 +290,21 @@ class TestR6Evidence(Base):
         self.assertEqual([i["returned_lines"] for i in inst], [67, 2001, 0])
         self.assertEqual(inst[1]["raw_lines"], 39000)
 
+    def test_round2_action_dash_only_for_non_proposition_fields(self):
+        """F5–F8 are process fields, not model propositions: r2_action '-' is accepted there (and not counted),
+        while F1–F4 must carry one of the six actions."""
+        rows = full_round() + full_round(rnd="2")
+        for r in rows:
+            if r["round"] == "2" and r["field"] in ("F5", "F6", "F7", "F8"):
+                r["r2_action"] = "-"
+        self.assertEqual([p for p in cs.problems(rows, [], self.case) if "r2_action" in p], [])
+        text = cs.stats(rows, [], {"A": "模型甲"})
+        self.assertIn("/ 6 |", text)
+        for r in rows:
+            if r["round"] == "2" and r["field"] == "F1":
+                r["r2_action"] = "-"
+        self.assertTrue(any("r2_action" in p for p in cs.problems(rows, [], self.case)))
+
 
 if __name__ == "__main__":
     unittest.main()
