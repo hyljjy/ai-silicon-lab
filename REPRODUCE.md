@@ -2,7 +2,7 @@
 
 [English](REPRODUCE.en.md)
 
-这份说明写给想自己验证文章 1 结论的人：不用作者跑出来的结果，从公开的材料出发重新跑一遍，再和仓库里的记录比对。阶段 B（文章 2）的复现见 [REPRODUCE_stageB.md](REPRODUCE_stageB.md)。
+这份说明写给想自己验证文章 1 结论的人：不用作者跑出来的结果，从公开的材料出发重新跑一遍，再和仓库里的记录比对。阶段 B（文章 2）的复现见 [REPRODUCE_stageB.md](REPRODUCE_stageB.md)。 CASE-02（IO 约束缺失的覆盖诊断）的复现见 [REPRODUCE_case02.md](REPRODUCE_case02.md)。
 
 实验分三层，能复现的程度不同：
 
