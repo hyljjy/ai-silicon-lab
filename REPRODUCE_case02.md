@@ -20,13 +20,18 @@ git tag -l 'case02*'                                  # case02-prereg、case02-p
 git rev-list -n1 case02-prereg && git rev-list -n1 case02-prereg-round
 cd tasks/CASE-02
 grep -v '^#' rules/preregistered.txt                  # 两档清单：每个路径在标签所指提交之后不得改动
-sha256sum -c package/SHA256SUMS                       # 材料包 8 个文件
-sha256sum -c queries/round2/SHA256SUMS                # 31 个第 2 轮实例目录
+(cd package && sha256sum -c SHA256SUMS)               # 材料包 8 个文件（清单里是相对路径，要在目录内跑）
+(cd prevalidation && sed '/^$/q' SHA256SUMS | grep -v '^#' | grep . | sha256sum -c)   # 预验证第一段（仓库内 78 个文件）
+(cd queries/round2 && sha256sum -c SHA256SUMS)        # 31 个第 2 轮实例目录，248 个文件
 for v in correct missing restored; do (cd queries/formal/$v && sha256sum -c SHA256SUMS); done
 sha256sum outputs/mapping.json | cut -c1-64; cut -c1-64 outputs/mapping.sha256     # 揭盲：承诺与对应表一致
 sha256sum outputs/assign.json  | cut -c1-64; cut -c1-64 outputs/assign.sha256
 python3 -B scripts/claims_stats.py --claims claims.tsv --evidence evidence_map.tsv --mapping outputs/mapping.json \
   --codes A,B,C --budgets round2/A_budget.json round2/B_budget.json round2/C_budget.json --out /tmp/stats.md && diff /tmp/stats.md stats.md
+python3 -B scripts/label_check.py package/context.md prompts/round1_user.md prompts/round2/*.md round2/*_results.md   # LABEL OK
+# 不需要 EDA 的测试（Windows 或 WSL 都可以）。两个前提：runs/ 目录不进 git，先建；外壳的隐私自检要求 git user.email 非空
+mkdir -p runs && git config user.email you@example.com
+python3 -B -m unittest scripts.test_claims_stats scripts.test_label_check scripts.test_run_round
 ```
 
 `claims_stats.py` 校验字段取值、引用的调用是否成功完整、交还行号是否在调用范围内、F7 层次与证据行是否相符，并重算 `stats.md`；`diff` 应为空。`outputs/sealed_SHA256SUMS` 列的是作者本机封存目录的 56 个文件（模型调用的原始事件流、元数据、答复），它们**不在仓库里**；`outputs/calls_meta.tsv` 是从其中九个 `*.meta.json` 摘的字段，每行带原件的 sha256。
@@ -74,4 +79,20 @@ diff <(sed 1d runs/<新目录>/query_return.txt) <(sed 1d queries/round2/A2_R1_R
 
 ## 实测记录
 
-**尚未做。** 作者定稿笔记之前，没有从干净克隆按本文件跑过；第 1 节的离线核验命令是作者本机工作区里跑通的，第 2–3 节的命令是实验期间实际用过的调用形式，但"干净克隆 + 本文件"这条路还没有走一遍。做过之后在这里写日期、机器、每一步的结果（`REPLICATION OK` 或未复现项）。
+**2026-10-30，第 1 节（离线核验）已做；第 2–3 节（需要 WSL 与 F1 基线的工具层、第 2 轮查询层）尚未从干净克隆跑过。** 作者的 Windows 机器，Git Bash，`git clone --branch revise-stageB`（本地仓库）到 `D:\study\case02_replication\clone-20261030-091606\`，HEAD `061a4c9`：
+
+| 步骤 | 结果 |
+|---|---|
+| 标签 | `case02-prereg`、`case02-prereg-round` → `f1cf2e6`；`*-old1` → `53a7c75`、`71ffc92` |
+| `rules/preregistered.txt` | 33 条非注释行 |
+| `package/SHA256SUMS` | 8 / 8 OK |
+| `queries/round2/SHA256SUMS` | 248 / 248 OK |
+| `queries/formal/{correct,missing,restored}/SHA256SUMS` | 各 72 / 72 OK |
+| 揭盲承诺 | `mapping.json`、`assign.json`、`mapping_old1.json` 的 sha256 与三份承诺文件一致 |
+| `prevalidation/SHA256SUMS` 第一段 | 78 / 78 OK（第二段是仓库外归档，未核） |
+| `outputs/calls_meta.tsv` | 9 行的 `source_sha256` 与 `outputs/sealed_SHA256SUMS` 一致 |
+| `claims_stats.py` 重算 | rc=0，输出与 `stats.md` 逐字节相同 |
+| `label_check.py` | `LABEL OK` |
+| 不需要 EDA 的测试 | 52 项 OK（第一遍 28 个错误是 `runs/` 不存在，2 个错误是克隆没有 `git user.email`；都是前提，已写进第 1 节的命令） |
+
+这次实测**没有**覆盖的：工具层（mutation 预验证、探针、三组正式运行、验收）和第 2 轮查询层，它们要 WSL Ubuntu-24.04 的 OpenSTA 环境和先重建的 F1 基线；判定层、模型层按定义不是"复现"。总结：**离线核验 REPLICATION OK；工具层与查询层待做。**
