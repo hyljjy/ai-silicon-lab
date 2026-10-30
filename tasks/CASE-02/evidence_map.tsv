@@ -1,0 +1,453 @@
+code	round	port	item	ctx	scene	run_id	call_seq	returned_range	element_row	complete	mapping_rule	review_status	dissent
+A	2	in_b[0]…in_b[63]（64 个）	list	R1	不分 scene（check_setup 不带 scene）	A1_R1_R1	1	1-66	E1	True	E1 check_setup -verbose … 的输出：Warning: There are 64 input ports missing set_input_delay. 加 64 行端口名（恰好 in_b[0]–in_b[63]），返回值 0	已复核	
+A	2	in_b[63]	min,max,clock	R1	ss_n40C_1v60	A2_R1_R1	135	134-135	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+A	2	in_b[62]	min,max,clock	R1	ss_n40C_1v60	A2_R1_R1	137	136-137	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+A	2	in_b[61]	min,max,clock	R1	ss_n40C_1v60	A2_R1_R1	139	138-139	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+A	2	in_b[60]	min,max,clock	R1	ss_n40C_1v60	A2_R1_R1	141	140-141	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+A	2	in_b[59]	min,max,clock	R1	ss_n40C_1v60	A2_R1_R1	143	142-143	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+A	2	in_b[58]	min,max,clock	R1	ss_n40C_1v60	A2_R1_R1	145	144-145	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+A	2	in_b[57]	min,max,clock	R1	ss_n40C_1v60	A2_R1_R1	147	146-147	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+A	2	in_b[56]	min,max,clock	R1	ss_n40C_1v60	A2_R1_R1	149	148-149	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+A	2	in_b[55]	min,max,clock	R1	ss_n40C_1v60	A2_R1_R1	151	150-151	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+A	2	in_b[54]	min,max,clock	R1	ss_n40C_1v60	A2_R1_R1	153	152-153	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+A	2	in_b[53]	min,max,clock	R1	ss_n40C_1v60	A2_R1_R1	155	154-155	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+A	2	in_b[52]	min,max,clock	R1	ss_n40C_1v60	A2_R1_R1	157	156-157	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+A	2	in_b[51]	min,max,clock	R1	ss_n40C_1v60	A2_R1_R1	159	158-159	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+A	2	in_b[50]	min,max,clock	R1	ss_n40C_1v60	A2_R1_R1	161	160-161	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+A	2	in_b[49]	min,max,clock	R1	ss_n40C_1v60	A2_R1_R1	163	162-163	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+A	2	in_b[48]	min,max,clock	R1	ss_n40C_1v60	A2_R1_R1	165	164-165	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+A	2	in_b[47]	min,max,clock	R1	ss_n40C_1v60	A2_R1_R1	167	166-167	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+A	2	in_b[46]	min,max,clock	R1	ss_n40C_1v60	A2_R1_R1	169	168-169	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+A	2	in_b[45]	min,max,clock	R1	ss_n40C_1v60	A2_R1_R1	171	170-171	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+A	2	in_b[44]	min,max,clock	R1	ss_n40C_1v60	A2_R1_R1	173	172-173	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+A	2	in_b[43]	min,max,clock	R1	ss_n40C_1v60	A2_R1_R1	175	174-175	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+A	2	in_b[42]	min,max,clock	R1	ss_n40C_1v60	A2_R1_R1	177	176-177	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+A	2	in_b[41]	min,max,clock	R1	ss_n40C_1v60	A2_R1_R1	179	178-179	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+A	2	in_b[40]	min,max,clock	R1	ss_n40C_1v60	A2_R1_R1	181	180-181	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+A	2	in_b[39]	min,max,clock	R1	ss_n40C_1v60	A2_R1_R1	183	182-183	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+A	2	in_b[38]	min,max,clock	R1	ss_n40C_1v60	A2_R1_R1	185	184-185	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+A	2	in_b[37]	min,max,clock	R1	ss_n40C_1v60	A2_R1_R1	187	186-187	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+A	2	in_b[36]	min,max,clock	R1	ss_n40C_1v60	A2_R1_R1	189	188-189	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+A	2	in_b[35]	min,max,clock	R1	ss_n40C_1v60	A2_R1_R1	191	190-191	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+A	2	in_b[34]	min,max,clock	R1	ss_n40C_1v60	A2_R1_R1	193	192-193	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+A	2	in_b[33]	min,max,clock	R1	ss_n40C_1v60	A2_R1_R1	195	194-195	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+A	2	in_b[32]	min,max,clock	R1	ss_n40C_1v60	A2_R1_R1	197	196-197	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+A	2	in_b[31]	min,max,clock	R1	ss_n40C_1v60	A2_R1_R1	199	198-199	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+A	2	in_b[30]	min,max,clock	R1	ss_n40C_1v60	A2_R1_R1	201	200-201	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+A	2	in_b[29]	min,max,clock	R1	ss_n40C_1v60	A2_R1_R1	203	202-203	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+A	2	in_b[28]	min,max,clock	R1	ss_n40C_1v60	A2_R1_R1	205	204-205	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+A	2	in_b[27]	min,max,clock	R1	ss_n40C_1v60	A2_R1_R1	207	206-207	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+A	2	in_b[26]	min,max,clock	R1	ss_n40C_1v60	A2_R1_R1	209	208-209	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+A	2	in_b[25]	min,max,clock	R1	ss_n40C_1v60	A2_R1_R1	211	210-211	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+A	2	in_b[24]	min,max,clock	R1	ss_n40C_1v60	A2_R1_R1	213	212-213	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+A	2	in_b[23]	min,max,clock	R1	ss_n40C_1v60	A2_R1_R1	215	214-215	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+A	2	in_b[22]	min,max,clock	R1	ss_n40C_1v60	A2_R1_R1	217	216-217	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+A	2	in_b[21]	min,max,clock	R1	ss_n40C_1v60	A2_R1_R1	219	218-219	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+A	2	in_b[20]	min,max,clock	R1	ss_n40C_1v60	A2_R1_R1	221	220-221	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+A	2	in_b[19]	min,max,clock	R1	ss_n40C_1v60	A2_R1_R1	223	222-223	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+A	2	in_b[18]	min,max,clock	R1	ss_n40C_1v60	A2_R1_R1	225	224-225	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+A	2	in_b[17]	min,max,clock	R1	ss_n40C_1v60	A2_R1_R1	227	226-227	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+A	2	in_b[16]	min,max,clock	R1	ss_n40C_1v60	A2_R1_R1	229	228-229	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+A	2	in_b[15]	min,max,clock	R1	ss_n40C_1v60	A2_R1_R1	231	230-231	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+A	2	in_b[14]	min,max,clock	R1	ss_n40C_1v60	A2_R1_R1	233	232-233	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+A	2	in_b[13]	min,max,clock	R1	ss_n40C_1v60	A2_R1_R1	235	234-235	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+A	2	in_b[12]	min,max,clock	R1	ss_n40C_1v60	A2_R1_R1	237	236-237	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+A	2	in_b[11]	min,max,clock	R1	ss_n40C_1v60	A2_R1_R1	239	238-239	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+A	2	in_b[10]	min,max,clock	R1	ss_n40C_1v60	A2_R1_R1	241	240-241	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+A	2	in_b[9]	min,max,clock	R1	ss_n40C_1v60	A2_R1_R1	243	242-243	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+A	2	in_b[8]	min,max,clock	R1	ss_n40C_1v60	A2_R1_R1	245	244-245	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+A	2	in_b[7]	min,max,clock	R1	ss_n40C_1v60	A2_R1_R1	247	246-247	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+A	2	in_b[6]	min,max,clock	R1	ss_n40C_1v60	A2_R1_R1	249	248-249	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+A	2	in_b[5]	min,max,clock	R1	ss_n40C_1v60	A2_R1_R1	251	250-251	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+A	2	in_b[4]	min,max,clock	R1	ss_n40C_1v60	A2_R1_R1	253	252-253	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+A	2	in_b[3]	min,max,clock	R1	ss_n40C_1v60	A2_R1_R1	255	254-255	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+A	2	in_b[2]	min,max,clock	R1	ss_n40C_1v60	A2_R1_R1	257	256-257	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+A	2	in_b[1]	min,max,clock	R1	ss_n40C_1v60	A2_R1_R1	259	258-259	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+A	2	in_b[0]	min,max,clock	R1	ss_n40C_1v60	A2_R1_R1	261	260-261	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+A	2	in_b[63]	max	R1	ss_n40C_1v60	A5_R1_R1	399	133-133	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[63]	min	R1	ss_n40C_1v60	A5_R1_R1	402	134-134	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[62]	max	R1	ss_n40C_1v60	A5_R1_R1	405	135-135	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[62]	min	R1	ss_n40C_1v60	A5_R1_R1	408	136-136	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[61]	max	R1	ss_n40C_1v60	A5_R1_R1	411	137-137	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[61]	min	R1	ss_n40C_1v60	A5_R1_R1	414	138-138	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[60]	max	R1	ss_n40C_1v60	A5_R1_R1	417	139-139	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[60]	min	R1	ss_n40C_1v60	A5_R1_R1	420	140-140	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[59]	max	R1	ss_n40C_1v60	A5_R1_R1	423	141-141	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[59]	min	R1	ss_n40C_1v60	A5_R1_R1	426	142-142	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[58]	max	R1	ss_n40C_1v60	A5_R1_R1	429	143-143	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[58]	min	R1	ss_n40C_1v60	A5_R1_R1	432	144-144	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[57]	max	R1	ss_n40C_1v60	A5_R1_R1	435	145-145	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[57]	min	R1	ss_n40C_1v60	A5_R1_R1	438	146-146	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[56]	max	R1	ss_n40C_1v60	A5_R1_R1	441	147-147	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[56]	min	R1	ss_n40C_1v60	A5_R1_R1	444	148-148	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[55]	max	R1	ss_n40C_1v60	A5_R1_R1	447	149-149	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[55]	min	R1	ss_n40C_1v60	A5_R1_R1	450	150-150	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[54]	max	R1	ss_n40C_1v60	A5_R1_R1	453	151-151	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[54]	min	R1	ss_n40C_1v60	A5_R1_R1	456	152-152	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[53]	max	R1	ss_n40C_1v60	A5_R1_R1	459	153-153	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[53]	min	R1	ss_n40C_1v60	A5_R1_R1	462	154-154	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[52]	max	R1	ss_n40C_1v60	A5_R1_R1	465	155-155	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[52]	min	R1	ss_n40C_1v60	A5_R1_R1	468	156-156	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[51]	max	R1	ss_n40C_1v60	A5_R1_R1	471	157-157	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[51]	min	R1	ss_n40C_1v60	A5_R1_R1	474	158-158	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[50]	max	R1	ss_n40C_1v60	A5_R1_R1	477	159-159	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[50]	min	R1	ss_n40C_1v60	A5_R1_R1	480	160-160	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[49]	max	R1	ss_n40C_1v60	A5_R1_R1	483	161-161	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[49]	min	R1	ss_n40C_1v60	A5_R1_R1	486	162-162	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[48]	max	R1	ss_n40C_1v60	A5_R1_R1	489	163-163	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[48]	min	R1	ss_n40C_1v60	A5_R1_R1	492	164-164	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[47]	max	R1	ss_n40C_1v60	A5_R1_R1	495	165-165	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[47]	min	R1	ss_n40C_1v60	A5_R1_R1	498	166-166	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[46]	max	R1	ss_n40C_1v60	A5_R1_R1	501	167-167	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[46]	min	R1	ss_n40C_1v60	A5_R1_R1	504	168-168	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[45]	max	R1	ss_n40C_1v60	A5_R1_R1	507	169-169	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[45]	min	R1	ss_n40C_1v60	A5_R1_R1	510	170-170	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[44]	max	R1	ss_n40C_1v60	A5_R1_R1	513	171-171	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[44]	min	R1	ss_n40C_1v60	A5_R1_R1	516	172-172	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[43]	max	R1	ss_n40C_1v60	A5_R1_R1	519	173-173	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[43]	min	R1	ss_n40C_1v60	A5_R1_R1	522	174-174	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[42]	max	R1	ss_n40C_1v60	A5_R1_R1	525	175-175	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[42]	min	R1	ss_n40C_1v60	A5_R1_R1	528	176-176	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[41]	max	R1	ss_n40C_1v60	A5_R1_R1	531	177-177	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[41]	min	R1	ss_n40C_1v60	A5_R1_R1	534	178-178	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[40]	max	R1	ss_n40C_1v60	A5_R1_R1	537	179-179	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[40]	min	R1	ss_n40C_1v60	A5_R1_R1	540	180-180	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[39]	max	R1	ss_n40C_1v60	A5_R1_R1	543	181-181	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[39]	min	R1	ss_n40C_1v60	A5_R1_R1	546	182-182	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[38]	max	R1	ss_n40C_1v60	A5_R1_R1	549	183-183	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[38]	min	R1	ss_n40C_1v60	A5_R1_R1	552	184-184	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[37]	max	R1	ss_n40C_1v60	A5_R1_R1	555	185-185	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[37]	min	R1	ss_n40C_1v60	A5_R1_R1	558	186-186	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[36]	max	R1	ss_n40C_1v60	A5_R1_R1	561	187-187	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[36]	min	R1	ss_n40C_1v60	A5_R1_R1	564	188-188	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[35]	max	R1	ss_n40C_1v60	A5_R1_R1	567	189-189	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[35]	min	R1	ss_n40C_1v60	A5_R1_R1	570	190-190	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[34]	max	R1	ss_n40C_1v60	A5_R1_R1	573	191-191	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[34]	min	R1	ss_n40C_1v60	A5_R1_R1	576	192-192	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[33]	max	R1	ss_n40C_1v60	A5_R1_R1	579	193-193	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[33]	min	R1	ss_n40C_1v60	A5_R1_R1	582	194-194	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[32]	max	R1	ss_n40C_1v60	A5_R1_R1	585	195-195	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[32]	min	R1	ss_n40C_1v60	A5_R1_R1	588	196-196	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[31]	max	R1	ss_n40C_1v60	A5_R1_R1	591	197-197	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[31]	min	R1	ss_n40C_1v60	A5_R1_R1	594	198-198	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[30]	max	R1	ss_n40C_1v60	A5_R1_R1	597	199-199	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[30]	min	R1	ss_n40C_1v60	A5_R1_R1	600	200-200	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[29]	max	R1	ss_n40C_1v60	A5_R1_R1	603	201-201	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[29]	min	R1	ss_n40C_1v60	A5_R1_R1	606	202-202	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[28]	max	R1	ss_n40C_1v60	A5_R1_R1	609	203-203	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[28]	min	R1	ss_n40C_1v60	A5_R1_R1	612	204-204	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[27]	max	R1	ss_n40C_1v60	A5_R1_R1	615	205-205	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[27]	min	R1	ss_n40C_1v60	A5_R1_R1	618	206-206	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[26]	max	R1	ss_n40C_1v60	A5_R1_R1	621	207-207	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[26]	min	R1	ss_n40C_1v60	A5_R1_R1	624	208-208	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[25]	max	R1	ss_n40C_1v60	A5_R1_R1	627	209-209	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[25]	min	R1	ss_n40C_1v60	A5_R1_R1	630	210-210	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[24]	max	R1	ss_n40C_1v60	A5_R1_R1	633	211-211	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[24]	min	R1	ss_n40C_1v60	A5_R1_R1	636	212-212	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[23]	max	R1	ss_n40C_1v60	A5_R1_R1	639	213-213	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[23]	min	R1	ss_n40C_1v60	A5_R1_R1	642	214-214	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[22]	max	R1	ss_n40C_1v60	A5_R1_R1	645	215-215	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[22]	min	R1	ss_n40C_1v60	A5_R1_R1	648	216-216	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[21]	max	R1	ss_n40C_1v60	A5_R1_R1	651	217-217	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[21]	min	R1	ss_n40C_1v60	A5_R1_R1	654	218-218	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[20]	max	R1	ss_n40C_1v60	A5_R1_R1	657	219-219	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[20]	min	R1	ss_n40C_1v60	A5_R1_R1	660	220-220	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[19]	max	R1	ss_n40C_1v60	A5_R1_R1	663	221-221	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[19]	min	R1	ss_n40C_1v60	A5_R1_R1	666	222-222	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[18]	max	R1	ss_n40C_1v60	A5_R1_R1	669	223-223	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[18]	min	R1	ss_n40C_1v60	A5_R1_R1	672	224-224	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[17]	max	R1	ss_n40C_1v60	A5_R1_R1	675	225-225	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[17]	min	R1	ss_n40C_1v60	A5_R1_R1	678	226-226	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[16]	max	R1	ss_n40C_1v60	A5_R1_R1	681	227-227	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[16]	min	R1	ss_n40C_1v60	A5_R1_R1	684	228-228	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[15]	max	R1	ss_n40C_1v60	A5_R1_R1	687	229-229	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[15]	min	R1	ss_n40C_1v60	A5_R1_R1	690	230-230	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[14]	max	R1	ss_n40C_1v60	A5_R1_R1	693	231-231	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[14]	min	R1	ss_n40C_1v60	A5_R1_R1	696	232-232	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[13]	max	R1	ss_n40C_1v60	A5_R1_R1	699	233-233	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[13]	min	R1	ss_n40C_1v60	A5_R1_R1	702	234-234	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[12]	max	R1	ss_n40C_1v60	A5_R1_R1	705	235-235	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[12]	min	R1	ss_n40C_1v60	A5_R1_R1	708	236-236	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[11]	max	R1	ss_n40C_1v60	A5_R1_R1	711	237-237	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[11]	min	R1	ss_n40C_1v60	A5_R1_R1	714	238-238	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[10]	max	R1	ss_n40C_1v60	A5_R1_R1	717	239-239	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[10]	min	R1	ss_n40C_1v60	A5_R1_R1	720	240-240	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[9]	max	R1	ss_n40C_1v60	A5_R1_R1	723	241-241	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[9]	min	R1	ss_n40C_1v60	A5_R1_R1	726	242-242	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[8]	max	R1	ss_n40C_1v60	A5_R1_R1	729	243-243	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[8]	min	R1	ss_n40C_1v60	A5_R1_R1	732	244-244	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[7]	max	R1	ss_n40C_1v60	A5_R1_R1	735	245-245	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[7]	min	R1	ss_n40C_1v60	A5_R1_R1	738	246-246	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[6]	max	R1	ss_n40C_1v60	A5_R1_R1	741	247-247	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[6]	min	R1	ss_n40C_1v60	A5_R1_R1	744	248-248	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[5]	max	R1	ss_n40C_1v60	A5_R1_R1	747	249-249	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[5]	min	R1	ss_n40C_1v60	A5_R1_R1	750	250-250	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[4]	max	R1	ss_n40C_1v60	A5_R1_R1	753	251-251	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[4]	min	R1	ss_n40C_1v60	A5_R1_R1	756	252-252	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[3]	max	R1	ss_n40C_1v60	A5_R1_R1	759	253-253	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[3]	min	R1	ss_n40C_1v60	A5_R1_R1	762	254-254	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[2]	max	R1	ss_n40C_1v60	A5_R1_R1	765	255-255	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[2]	min	R1	ss_n40C_1v60	A5_R1_R1	768	256-256	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[1]	max	R1	ss_n40C_1v60	A5_R1_R1	771	257-257	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[1]	min	R1	ss_n40C_1v60	A5_R1_R1	774	258-258	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[0]	max	R1	ss_n40C_1v60	A5_R1_R1	777	259-259	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+A	2	in_b[0]	min	R1	ss_n40C_1v60	A5_R1_R1	780	260-260	E5	True	E5 find_timing_paths -from <port> -path_delay max|min -scene ss_n40C_1v60 为空（constrained=0），加 -unconstrained 非空（with_unconstrained=32）	已复核	
+B	2	in_b[2]	max	R1	ss_n40C_1v60	B1_R1_R1	5	108-112	E5	True	E5（不在 E5 字面之列，作者 2026-10-30 裁定接受为 E5，原话「其余同意」）report_checks -from <port> -to _12026_/D -path_delay max 在 R1 返回 No paths found.（无受约束 max 路径），端口身份按 get_ports 列表顺序并与 R2 同位置的 Startpoint 对照；没有配对的 -unconstrained 输出	已复核	
+B	2	in_b[35]	max	R1	ss_n40C_1v60	B1_R1_R1	9	219-223	E5	True	E5（不在 E5 字面之列，作者 2026-10-30 裁定接受为 E5，原话「其余同意」）report_checks -from <port> -to _12026_/D -path_delay max 在 R1 返回 No paths found.（无受约束 max 路径），端口身份按 get_ports 列表顺序并与 R2 同位置的 Startpoint 对照；没有配对的 -unconstrained 输出	已复核	
+C	2	in_b[63]	min,max,clock	R1	ss_n40C_1v60	C5_R1_R1	135	134-135	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[62]	min,max,clock	R1	ss_n40C_1v60	C5_R1_R1	137	136-137	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[61]	min,max,clock	R1	ss_n40C_1v60	C5_R1_R1	139	138-139	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[60]	min,max,clock	R1	ss_n40C_1v60	C5_R1_R1	141	140-141	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[59]	min,max,clock	R1	ss_n40C_1v60	C5_R1_R1	143	142-143	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[58]	min,max,clock	R1	ss_n40C_1v60	C5_R1_R1	145	144-145	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[57]	min,max,clock	R1	ss_n40C_1v60	C5_R1_R1	147	146-147	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[56]	min,max,clock	R1	ss_n40C_1v60	C5_R1_R1	149	148-149	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[55]	min,max,clock	R1	ss_n40C_1v60	C5_R1_R1	151	150-151	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[54]	min,max,clock	R1	ss_n40C_1v60	C5_R1_R1	153	152-153	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[53]	min,max,clock	R1	ss_n40C_1v60	C5_R1_R1	155	154-155	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[52]	min,max,clock	R1	ss_n40C_1v60	C5_R1_R1	157	156-157	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[51]	min,max,clock	R1	ss_n40C_1v60	C5_R1_R1	159	158-159	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[50]	min,max,clock	R1	ss_n40C_1v60	C5_R1_R1	161	160-161	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[49]	min,max,clock	R1	ss_n40C_1v60	C5_R1_R1	163	162-163	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[48]	min,max,clock	R1	ss_n40C_1v60	C5_R1_R1	165	164-165	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[47]	min,max,clock	R1	ss_n40C_1v60	C5_R1_R1	167	166-167	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[46]	min,max,clock	R1	ss_n40C_1v60	C5_R1_R1	169	168-169	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[45]	min,max,clock	R1	ss_n40C_1v60	C5_R1_R1	171	170-171	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[44]	min,max,clock	R1	ss_n40C_1v60	C5_R1_R1	173	172-173	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[43]	min,max,clock	R1	ss_n40C_1v60	C5_R1_R1	175	174-175	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[42]	min,max,clock	R1	ss_n40C_1v60	C5_R1_R1	177	176-177	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[41]	min,max,clock	R1	ss_n40C_1v60	C5_R1_R1	179	178-179	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[40]	min,max,clock	R1	ss_n40C_1v60	C5_R1_R1	181	180-181	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[39]	min,max,clock	R1	ss_n40C_1v60	C5_R1_R1	183	182-183	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[38]	min,max,clock	R1	ss_n40C_1v60	C5_R1_R1	185	184-185	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[37]	min,max,clock	R1	ss_n40C_1v60	C5_R1_R1	187	186-187	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[36]	min,max,clock	R1	ss_n40C_1v60	C5_R1_R1	189	188-189	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[35]	min,max,clock	R1	ss_n40C_1v60	C5_R1_R1	191	190-191	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[34]	min,max,clock	R1	ss_n40C_1v60	C5_R1_R1	193	192-193	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[33]	min,max,clock	R1	ss_n40C_1v60	C5_R1_R1	195	194-195	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[32]	min,max,clock	R1	ss_n40C_1v60	C5_R1_R1	197	196-197	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[31]	min,max,clock	R1	ss_n40C_1v60	C5_R1_R1	199	198-199	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[30]	min,max,clock	R1	ss_n40C_1v60	C5_R1_R1	201	200-201	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[29]	min,max,clock	R1	ss_n40C_1v60	C5_R1_R1	203	202-203	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[28]	min,max,clock	R1	ss_n40C_1v60	C5_R1_R1	205	204-205	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[27]	min,max,clock	R1	ss_n40C_1v60	C5_R1_R1	207	206-207	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[26]	min,max,clock	R1	ss_n40C_1v60	C5_R1_R1	209	208-209	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[25]	min,max,clock	R1	ss_n40C_1v60	C5_R1_R1	211	210-211	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[24]	min,max,clock	R1	ss_n40C_1v60	C5_R1_R1	213	212-213	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[23]	min,max,clock	R1	ss_n40C_1v60	C5_R1_R1	215	214-215	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[22]	min,max,clock	R1	ss_n40C_1v60	C5_R1_R1	217	216-217	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[21]	min,max,clock	R1	ss_n40C_1v60	C5_R1_R1	219	218-219	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[20]	min,max,clock	R1	ss_n40C_1v60	C5_R1_R1	221	220-221	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[19]	min,max,clock	R1	ss_n40C_1v60	C5_R1_R1	223	222-223	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[18]	min,max,clock	R1	ss_n40C_1v60	C5_R1_R1	225	224-225	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[17]	min,max,clock	R1	ss_n40C_1v60	C5_R1_R1	227	226-227	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[16]	min,max,clock	R1	ss_n40C_1v60	C5_R1_R1	229	228-229	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[15]	min,max,clock	R1	ss_n40C_1v60	C5_R1_R1	231	230-231	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[14]	min,max,clock	R1	ss_n40C_1v60	C5_R1_R1	233	232-233	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[13]	min,max,clock	R1	ss_n40C_1v60	C5_R1_R1	235	234-235	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[12]	min,max,clock	R1	ss_n40C_1v60	C5_R1_R1	237	236-237	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[11]	min,max,clock	R1	ss_n40C_1v60	C5_R1_R1	239	238-239	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[10]	min,max,clock	R1	ss_n40C_1v60	C5_R1_R1	241	240-241	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[9]	min,max,clock	R1	ss_n40C_1v60	C5_R1_R1	243	242-243	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[8]	min,max,clock	R1	ss_n40C_1v60	C5_R1_R1	245	244-245	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[7]	min,max,clock	R1	ss_n40C_1v60	C5_R1_R1	247	246-247	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[6]	min,max,clock	R1	ss_n40C_1v60	C5_R1_R1	249	248-249	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[5]	min,max,clock	R1	ss_n40C_1v60	C5_R1_R1	251	250-251	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[4]	min,max,clock	R1	ss_n40C_1v60	C5_R1_R1	253	252-253	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[3]	min,max,clock	R1	ss_n40C_1v60	C5_R1_R1	255	254-255	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[2]	min,max,clock	R1	ss_n40C_1v60	C5_R1_R1	257	256-257	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[1]	min,max,clock	R1	ss_n40C_1v60	C5_R1_R1	259	258-259	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[0]	min,max,clock	R1	ss_n40C_1v60	C5_R1_R1	261	260-261	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[63]	min,max,clock	R1	tt_025C_1v80	C9_R1_R1	135	134-135	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[62]	min,max,clock	R1	tt_025C_1v80	C9_R1_R1	137	136-137	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[61]	min,max,clock	R1	tt_025C_1v80	C9_R1_R1	139	138-139	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[60]	min,max,clock	R1	tt_025C_1v80	C9_R1_R1	141	140-141	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[59]	min,max,clock	R1	tt_025C_1v80	C9_R1_R1	143	142-143	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[58]	min,max,clock	R1	tt_025C_1v80	C9_R1_R1	145	144-145	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[57]	min,max,clock	R1	tt_025C_1v80	C9_R1_R1	147	146-147	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[56]	min,max,clock	R1	tt_025C_1v80	C9_R1_R1	149	148-149	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[55]	min,max,clock	R1	tt_025C_1v80	C9_R1_R1	151	150-151	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[54]	min,max,clock	R1	tt_025C_1v80	C9_R1_R1	153	152-153	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[53]	min,max,clock	R1	tt_025C_1v80	C9_R1_R1	155	154-155	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[52]	min,max,clock	R1	tt_025C_1v80	C9_R1_R1	157	156-157	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[51]	min,max,clock	R1	tt_025C_1v80	C9_R1_R1	159	158-159	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[50]	min,max,clock	R1	tt_025C_1v80	C9_R1_R1	161	160-161	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[49]	min,max,clock	R1	tt_025C_1v80	C9_R1_R1	163	162-163	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[48]	min,max,clock	R1	tt_025C_1v80	C9_R1_R1	165	164-165	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[47]	min,max,clock	R1	tt_025C_1v80	C9_R1_R1	167	166-167	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[46]	min,max,clock	R1	tt_025C_1v80	C9_R1_R1	169	168-169	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[45]	min,max,clock	R1	tt_025C_1v80	C9_R1_R1	171	170-171	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[44]	min,max,clock	R1	tt_025C_1v80	C9_R1_R1	173	172-173	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[43]	min,max,clock	R1	tt_025C_1v80	C9_R1_R1	175	174-175	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[42]	min,max,clock	R1	tt_025C_1v80	C9_R1_R1	177	176-177	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[41]	min,max,clock	R1	tt_025C_1v80	C9_R1_R1	179	178-179	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[40]	min,max,clock	R1	tt_025C_1v80	C9_R1_R1	181	180-181	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[39]	min,max,clock	R1	tt_025C_1v80	C9_R1_R1	183	182-183	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[38]	min,max,clock	R1	tt_025C_1v80	C9_R1_R1	185	184-185	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[37]	min,max,clock	R1	tt_025C_1v80	C9_R1_R1	187	186-187	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[36]	min,max,clock	R1	tt_025C_1v80	C9_R1_R1	189	188-189	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[35]	min,max,clock	R1	tt_025C_1v80	C9_R1_R1	191	190-191	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[34]	min,max,clock	R1	tt_025C_1v80	C9_R1_R1	193	192-193	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[33]	min,max,clock	R1	tt_025C_1v80	C9_R1_R1	195	194-195	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[32]	min,max,clock	R1	tt_025C_1v80	C9_R1_R1	197	196-197	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[31]	min,max,clock	R1	tt_025C_1v80	C9_R1_R1	199	198-199	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[30]	min,max,clock	R1	tt_025C_1v80	C9_R1_R1	201	200-201	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[29]	min,max,clock	R1	tt_025C_1v80	C9_R1_R1	203	202-203	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[28]	min,max,clock	R1	tt_025C_1v80	C9_R1_R1	205	204-205	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[27]	min,max,clock	R1	tt_025C_1v80	C9_R1_R1	207	206-207	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[26]	min,max,clock	R1	tt_025C_1v80	C9_R1_R1	209	208-209	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[25]	min,max,clock	R1	tt_025C_1v80	C9_R1_R1	211	210-211	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[24]	min,max,clock	R1	tt_025C_1v80	C9_R1_R1	213	212-213	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[23]	min,max,clock	R1	tt_025C_1v80	C9_R1_R1	215	214-215	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[22]	min,max,clock	R1	tt_025C_1v80	C9_R1_R1	217	216-217	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[21]	min,max,clock	R1	tt_025C_1v80	C9_R1_R1	219	218-219	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[20]	min,max,clock	R1	tt_025C_1v80	C9_R1_R1	221	220-221	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[19]	min,max,clock	R1	tt_025C_1v80	C9_R1_R1	223	222-223	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[18]	min,max,clock	R1	tt_025C_1v80	C9_R1_R1	225	224-225	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[17]	min,max,clock	R1	tt_025C_1v80	C9_R1_R1	227	226-227	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[16]	min,max,clock	R1	tt_025C_1v80	C9_R1_R1	229	228-229	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[15]	min,max,clock	R1	tt_025C_1v80	C9_R1_R1	231	230-231	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[14]	min,max,clock	R1	tt_025C_1v80	C9_R1_R1	233	232-233	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[13]	min,max,clock	R1	tt_025C_1v80	C9_R1_R1	235	234-235	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[12]	min,max,clock	R1	tt_025C_1v80	C9_R1_R1	237	236-237	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[11]	min,max,clock	R1	tt_025C_1v80	C9_R1_R1	239	238-239	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[10]	min,max,clock	R1	tt_025C_1v80	C9_R1_R1	241	240-241	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[9]	min,max,clock	R1	tt_025C_1v80	C9_R1_R1	243	242-243	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[8]	min,max,clock	R1	tt_025C_1v80	C9_R1_R1	245	244-245	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[7]	min,max,clock	R1	tt_025C_1v80	C9_R1_R1	247	246-247	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[6]	min,max,clock	R1	tt_025C_1v80	C9_R1_R1	249	248-249	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[5]	min,max,clock	R1	tt_025C_1v80	C9_R1_R1	251	250-251	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[4]	min,max,clock	R1	tt_025C_1v80	C9_R1_R1	253	252-253	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[3]	min,max,clock	R1	tt_025C_1v80	C9_R1_R1	255	254-255	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[2]	min,max,clock	R1	tt_025C_1v80	C9_R1_R1	257	256-257	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[1]	min,max,clock	R1	tt_025C_1v80	C9_R1_R1	259	258-259	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[0]	min,max,clock	R1	tt_025C_1v80	C9_R1_R1	261	260-261	E3	True	E3 report_arrival -scene 一行无 (clk ^) 前缀且 r 0.00:0.00 f 0.00:0.00（min、max 都为 0、无时钟参考）	已复核	
+C	2	in_b[63]	max	R1	ss_n40C_1v60	C6_R1_R1	599	67-67	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[63]	min	R1	ss_n40C_1v60	C6_R1_R1	603	67-67	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[62]	max	R1	ss_n40C_1v60	C6_R1_R1	608	68-68	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[62]	min	R1	ss_n40C_1v60	C6_R1_R1	612	68-68	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[61]	max	R1	ss_n40C_1v60	C6_R1_R1	617	69-69	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[61]	min	R1	ss_n40C_1v60	C6_R1_R1	621	69-69	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[60]	max	R1	ss_n40C_1v60	C6_R1_R1	626	70-70	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[60]	min	R1	ss_n40C_1v60	C6_R1_R1	630	70-70	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[59]	max	R1	ss_n40C_1v60	C6_R1_R1	635	71-71	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[59]	min	R1	ss_n40C_1v60	C6_R1_R1	639	71-71	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[58]	max	R1	ss_n40C_1v60	C6_R1_R1	644	72-72	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[58]	min	R1	ss_n40C_1v60	C6_R1_R1	648	72-72	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[57]	max	R1	ss_n40C_1v60	C6_R1_R1	653	73-73	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[57]	min	R1	ss_n40C_1v60	C6_R1_R1	657	73-73	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[56]	max	R1	ss_n40C_1v60	C6_R1_R1	662	74-74	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[56]	min	R1	ss_n40C_1v60	C6_R1_R1	666	74-74	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[55]	max	R1	ss_n40C_1v60	C6_R1_R1	671	75-75	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[55]	min	R1	ss_n40C_1v60	C6_R1_R1	675	75-75	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[54]	max	R1	ss_n40C_1v60	C6_R1_R1	680	76-76	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[54]	min	R1	ss_n40C_1v60	C6_R1_R1	684	76-76	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[53]	max	R1	ss_n40C_1v60	C6_R1_R1	689	77-77	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[53]	min	R1	ss_n40C_1v60	C6_R1_R1	693	77-77	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[52]	max	R1	ss_n40C_1v60	C6_R1_R1	698	78-78	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[52]	min	R1	ss_n40C_1v60	C6_R1_R1	702	78-78	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[51]	max	R1	ss_n40C_1v60	C6_R1_R1	707	79-79	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[51]	min	R1	ss_n40C_1v60	C6_R1_R1	711	79-79	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[50]	max	R1	ss_n40C_1v60	C6_R1_R1	716	80-80	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[50]	min	R1	ss_n40C_1v60	C6_R1_R1	720	80-80	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[49]	max	R1	ss_n40C_1v60	C6_R1_R1	725	81-81	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[49]	min	R1	ss_n40C_1v60	C6_R1_R1	729	81-81	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[48]	max	R1	ss_n40C_1v60	C6_R1_R1	734	82-82	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[48]	min	R1	ss_n40C_1v60	C6_R1_R1	738	82-82	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[47]	max	R1	ss_n40C_1v60	C6_R1_R1	743	83-83	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[47]	min	R1	ss_n40C_1v60	C6_R1_R1	747	83-83	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[46]	max	R1	ss_n40C_1v60	C6_R1_R1	752	84-84	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[46]	min	R1	ss_n40C_1v60	C6_R1_R1	756	84-84	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[45]	max	R1	ss_n40C_1v60	C6_R1_R1	761	85-85	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[45]	min	R1	ss_n40C_1v60	C6_R1_R1	765	85-85	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[44]	max	R1	ss_n40C_1v60	C6_R1_R1	770	86-86	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[44]	min	R1	ss_n40C_1v60	C6_R1_R1	774	86-86	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[43]	max	R1	ss_n40C_1v60	C6_R1_R1	779	87-87	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[43]	min	R1	ss_n40C_1v60	C6_R1_R1	783	87-87	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[42]	max	R1	ss_n40C_1v60	C6_R1_R1	788	88-88	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[42]	min	R1	ss_n40C_1v60	C6_R1_R1	792	88-88	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[41]	max	R1	ss_n40C_1v60	C6_R1_R1	797	89-89	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[41]	min	R1	ss_n40C_1v60	C6_R1_R1	801	89-89	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[40]	max	R1	ss_n40C_1v60	C6_R1_R1	806	90-90	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[40]	min	R1	ss_n40C_1v60	C6_R1_R1	810	90-90	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[39]	max	R1	ss_n40C_1v60	C6_R1_R1	815	91-91	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[39]	min	R1	ss_n40C_1v60	C6_R1_R1	819	91-91	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[38]	max	R1	ss_n40C_1v60	C6_R1_R1	824	92-92	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[38]	min	R1	ss_n40C_1v60	C6_R1_R1	828	92-92	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[37]	max	R1	ss_n40C_1v60	C6_R1_R1	833	93-93	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[37]	min	R1	ss_n40C_1v60	C6_R1_R1	837	93-93	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[36]	max	R1	ss_n40C_1v60	C6_R1_R1	842	94-94	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[36]	min	R1	ss_n40C_1v60	C6_R1_R1	846	94-94	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[35]	max	R1	ss_n40C_1v60	C6_R1_R1	851	95-95	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[35]	min	R1	ss_n40C_1v60	C6_R1_R1	855	95-95	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[34]	max	R1	ss_n40C_1v60	C6_R1_R1	860	96-96	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[34]	min	R1	ss_n40C_1v60	C6_R1_R1	864	96-96	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[33]	max	R1	ss_n40C_1v60	C6_R1_R1	869	97-97	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[33]	min	R1	ss_n40C_1v60	C6_R1_R1	873	97-97	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[32]	max	R1	ss_n40C_1v60	C6_R1_R1	878	98-98	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[32]	min	R1	ss_n40C_1v60	C6_R1_R1	882	98-98	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[31]	max	R1	ss_n40C_1v60	C6_R1_R1	887	99-99	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[31]	min	R1	ss_n40C_1v60	C6_R1_R1	891	99-99	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[30]	max	R1	ss_n40C_1v60	C6_R1_R1	896	100-100	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[30]	min	R1	ss_n40C_1v60	C6_R1_R1	900	100-100	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[29]	max	R1	ss_n40C_1v60	C6_R1_R1	905	101-101	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[29]	min	R1	ss_n40C_1v60	C6_R1_R1	909	101-101	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[28]	max	R1	ss_n40C_1v60	C6_R1_R1	914	102-102	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[28]	min	R1	ss_n40C_1v60	C6_R1_R1	918	102-102	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[27]	max	R1	ss_n40C_1v60	C6_R1_R1	923	103-103	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[27]	min	R1	ss_n40C_1v60	C6_R1_R1	927	103-103	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[26]	max	R1	ss_n40C_1v60	C6_R1_R1	932	104-104	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[26]	min	R1	ss_n40C_1v60	C6_R1_R1	936	104-104	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[25]	max	R1	ss_n40C_1v60	C6_R1_R1	941	105-105	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[25]	min	R1	ss_n40C_1v60	C6_R1_R1	945	105-105	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[24]	max	R1	ss_n40C_1v60	C6_R1_R1	950	106-106	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[24]	min	R1	ss_n40C_1v60	C6_R1_R1	954	106-106	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[23]	max	R1	ss_n40C_1v60	C6_R1_R1	959	107-107	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[23]	min	R1	ss_n40C_1v60	C6_R1_R1	963	107-107	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[22]	max	R1	ss_n40C_1v60	C6_R1_R1	968	108-108	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[22]	min	R1	ss_n40C_1v60	C6_R1_R1	972	108-108	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[21]	max	R1	ss_n40C_1v60	C6_R1_R1	977	109-109	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[21]	min	R1	ss_n40C_1v60	C6_R1_R1	981	109-109	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[20]	max	R1	ss_n40C_1v60	C6_R1_R1	986	110-110	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[20]	min	R1	ss_n40C_1v60	C6_R1_R1	990	110-110	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[19]	max	R1	ss_n40C_1v60	C6_R1_R1	995	111-111	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[19]	min	R1	ss_n40C_1v60	C6_R1_R1	999	111-111	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[18]	max	R1	ss_n40C_1v60	C6_R1_R1	1004	112-112	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[18]	min	R1	ss_n40C_1v60	C6_R1_R1	1008	112-112	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[17]	max	R1	ss_n40C_1v60	C6_R1_R1	1013	113-113	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[17]	min	R1	ss_n40C_1v60	C6_R1_R1	1017	113-113	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[16]	max	R1	ss_n40C_1v60	C6_R1_R1	1022	114-114	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[16]	min	R1	ss_n40C_1v60	C6_R1_R1	1026	114-114	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[15]	max	R1	ss_n40C_1v60	C6_R1_R1	1031	115-115	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[15]	min	R1	ss_n40C_1v60	C6_R1_R1	1035	115-115	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[14]	max	R1	ss_n40C_1v60	C6_R1_R1	1040	116-116	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[14]	min	R1	ss_n40C_1v60	C6_R1_R1	1044	116-116	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[13]	max	R1	ss_n40C_1v60	C6_R1_R1	1049	117-117	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[13]	min	R1	ss_n40C_1v60	C6_R1_R1	1053	117-117	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[12]	max	R1	ss_n40C_1v60	C6_R1_R1	1058	118-118	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[12]	min	R1	ss_n40C_1v60	C6_R1_R1	1062	118-118	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[11]	max	R1	ss_n40C_1v60	C6_R1_R1	1067	119-119	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[11]	min	R1	ss_n40C_1v60	C6_R1_R1	1071	119-119	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[10]	max	R1	ss_n40C_1v60	C6_R1_R1	1076	120-120	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[10]	min	R1	ss_n40C_1v60	C6_R1_R1	1080	120-120	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[9]	max	R1	ss_n40C_1v60	C6_R1_R1	1085	121-121	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[9]	min	R1	ss_n40C_1v60	C6_R1_R1	1089	121-121	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[8]	max	R1	ss_n40C_1v60	C6_R1_R1	1094	122-122	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[8]	min	R1	ss_n40C_1v60	C6_R1_R1	1098	122-122	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[7]	max	R1	ss_n40C_1v60	C6_R1_R1	1103	123-123	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[7]	min	R1	ss_n40C_1v60	C6_R1_R1	1107	123-123	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[6]	max	R1	ss_n40C_1v60	C6_R1_R1	1112	124-124	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[6]	min	R1	ss_n40C_1v60	C6_R1_R1	1116	124-124	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[5]	max	R1	ss_n40C_1v60	C6_R1_R1	1121	125-125	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[5]	min	R1	ss_n40C_1v60	C6_R1_R1	1125	125-125	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[4]	max	R1	ss_n40C_1v60	C6_R1_R1	1130	126-126	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[4]	min	R1	ss_n40C_1v60	C6_R1_R1	1134	126-126	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[3]	max	R1	ss_n40C_1v60	C6_R1_R1	1139	127-127	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[3]	min	R1	ss_n40C_1v60	C6_R1_R1	1143	127-127	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[2]	max	R1	ss_n40C_1v60	C6_R1_R1	1148	128-128	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[2]	min	R1	ss_n40C_1v60	C6_R1_R1	1152	128-128	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[1]	max	R1	ss_n40C_1v60	C6_R1_R1	1157	129-129	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[1]	min	R1	ss_n40C_1v60	C6_R1_R1	1161	129-129	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[0]	max	R1	ss_n40C_1v60	C6_R1_R1	1166	130-130	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[0]	min	R1	ss_n40C_1v60	C6_R1_R1	1170	130-130	E5	True	E5 find_timing_paths -from <port> -to [all_registers -data_pins] -path_delay max|min -scene ss_n40C_1v60 为空（0），加 -unconstrained 非空（1）	已复核	
+C	2	in_b[0]…in_b[63]（64 个）	list	R1	不分 scene（check_setup 不带 scene）	C4_R1_R1	1	1-2	E2	True	E2 等价名单（作者裁定）：check_setup 不带 -verbose 的输出 Warning: There are 64 input ports missing set_input_delay.（计数 64，返回值 0）+ C5_R1_R1 / C9_R1_R1 的 report_arrival 恰好 64 个端口无时钟 0 到达（名字 in_b[0]–in_b[63]）。计数 64 + 恰好 64 个无时钟 0 到达端口，逻辑上排除了不带时钟的 0 delay；作者 2026-10-30 裁定推理成立视为等价名单，原话「推理正确可以接受裁定」。系事后对规则缝隙的裁定，不改预登记判据，A 不受影响	已复核	
