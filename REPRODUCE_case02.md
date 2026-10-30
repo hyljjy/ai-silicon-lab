@@ -38,7 +38,13 @@ python3 -B -m unittest scripts.test_claims_stats scripts.test_label_check script
 
 ## 2. 工具层（WSL Ubuntu-24.04，OpenSTA 3.1.0 commit 7a034b56，`env/snapshot.sh check` 通过）
 
-前提：F1 基线运行目录 `tasks/CASE-01/runs/20261009-092827-base-T27.91/`（不进 git）先按 `tasks/CASE-01/revise/REPRODUCE.md` 重建。CASE-02 的正确版按哈希引用 F1 冻结的 SDC（`b8d1aab6…`），缺失版是 `tasks/CASE-02/sdc/case02_missing_inb.tcl`。
+前提：**F1 基线归档** `tasks/CASE-01/evidence/F1/archive/20261009-092827-base-T27.91/`（86 个文件：`synth/netlist.v`、`inputs/`、`sta/` 等）**不进 git**，仓库只跟踪它的哈希清单 `tasks/CASE-01/evidence/F1/archive/SHA256SUMS`；三组运行（`run_context.py`）从这里读网表、输入和 F1 的比较基线。干净克隆里没有它，要先按 `REPRODUCE_stageB.md` 重建 F1 基线、把运行目录放到这个路径，再核对：
+
+```bash
+cd tasks/CASE-01/evidence/F1/archive && grep '20261009-092827-base-T27.91/' SHA256SUMS | sha256sum -c   # 86 / 86 OK 才继续
+```
+
+预验证脚本 `prevalidation/run.sh` 另外要 `tasks/CASE-01/runs/20261009-092827-base-T27.91/`（同一份运行目录在 `runs/` 下的位置）。CASE-02 的正确版按哈希引用 F1 冻结的 SDC（`b8d1aab6…`），缺失版是 `tasks/CASE-02/sdc/case02_missing_inb.tcl`。
 
 ```bash
 cd tasks/CASE-02
@@ -51,10 +57,14 @@ for v in correct missing restored; do
   diff <(grep -v '^LIB' queries/selftest/$v/sta_results.tsv) <(grep -v '^LIB' queries/formal/$v/sta_results.tsv)   # LIB 行含绝对路径，按 rules/lib_normalize.txt 规范化后比较
   cmp queries/selftest/$v/expanded.sdc queries/formal/$v/expanded.sdc
 done
-# (c) 执行契约验收（七个样例，约 25 分钟；(v) 会真的跑满 600 s 时限）
+# (c) 自测分配表（固定 R1=正确版、R2=缺失版，与正式分配无关；run_query --selftest 和验收都要它，不进 git）
+python3 -B -c "import sys; sys.path.insert(0,'scripts'); import contexts; print(contexts.commit(selftest=True))"
+# (d) 执行契约验收（七个样例，约 25 分钟；(v) 会真的跑满 600 s 时限）。注意：某个样例没跑成时 report 仍会从已有记录出报告，先看 run 的输出
 python3 -B scripts/acceptance.py run && python3 -B scripts/acceptance.py report && head -3 prevalidation/acceptance/RESULT.md
-# (d) 预演（不需要 EDA）
+# (e) 预演（不需要 EDA）
 python3 -B scripts/rehearse.py run | tail -2
+# (f) WSL 侧单元测试（test_run_round、test_label_check 是 Windows 侧的一对，在 Windows 跑）
+python3 -B -m unittest $(for f in scripts/test_*.py; do b=$(basename $f .py); case $b in test_run_round|test_label_check) ;; *) echo scripts.$b;; esac; done)
 ```
 
 应得到：三个版本的 `valid.json` 都是 `run_valid=true`、`mutation_verified=true`；缺失版 `expanded.sdc` 相对正确版恰好少 `rules/mutation_lines.txt` 的 128 条；`ACCEPTANCE OK`；`RESULT: PASS`。
@@ -63,7 +73,8 @@ python3 -B scripts/rehearse.py run | tail -2
 
 ```bash
 cd tasks/CASE-02
-python3 -B scripts/run_query.py --id A2_R1 --ctx R1 --query round2/q/A2.tcl --selftest --uncommitted-ok   # 任一单位；R2 同理
+# 自测分配里 R2 才是缺失版，所以要和正式的 R1（缺失版）实例比；先做第 2 节 (c)
+python3 -B scripts/run_query.py --id A2_R2 --ctx R2 --query round2/q/A2.tcl --selftest --uncommitted-ok   # 任一单位
 diff <(sed 1d runs/<新目录>/query_return.txt) <(sed 1d queries/round2/A2_R1_R1/query_return.txt)
 ```
 
@@ -79,7 +90,9 @@ diff <(sed 1d runs/<新目录>/query_return.txt) <(sed 1d queries/round2/A2_R1_R
 
 ## 实测记录
 
-**2026-10-30，第 1 节（离线核验）已做；第 2–3 节（需要 WSL 与 F1 基线的工具层、第 2 轮查询层）尚未从干净克隆跑过。** 作者的 Windows 机器，Git Bash，`git clone --branch revise-stageB`（本地仓库）到 `D:\study\case02_replication\clone-20261030-091606\`，HEAD `061a4c9`：
+**2026-10-30，五层里能"复现"的三层（离线核验、工具层、第 2 轮查询层）都已从干净克隆跑过。** 作者的 Windows 机器；`git clone --branch revise-stageB`（本地仓库）到 `D:\study\case02_replication\clone-20261030-091606\`，HEAD `061a4c9`；离线核验在 Git Bash，工具层与查询层在 WSL Ubuntu-24.04（用户 eda，OpenSTA 3.1.0，`env/snapshot.sh check` = `SNAPSHOT OK`）。
+
+离线核验（第 1 节）：
 
 | 步骤 | 结果 |
 |---|---|
@@ -93,6 +106,18 @@ diff <(sed 1d runs/<新目录>/query_return.txt) <(sed 1d queries/round2/A2_R1_R
 | `outputs/calls_meta.tsv` | 9 行的 `source_sha256` 与 `outputs/sealed_SHA256SUMS` 一致 |
 | `claims_stats.py` 重算 | rc=0，输出与 `stats.md` 逐字节相同 |
 | `label_check.py` | `LABEL OK` |
-| 不需要 EDA 的测试 | 52 项 OK（第一遍 28 个错误是 `runs/` 不存在，2 个错误是克隆没有 `git user.email`；都是前提，已写进第 1 节的命令） |
+| Windows 侧测试（`test_claims_stats`、`test_label_check`、`test_run_round`） | 52 项 OK（第一遍 28 个错误是 `runs/` 不存在，2 个是克隆没有 `git user.email`；都是前提，已写进第 1 节的命令） |
 
-这次实测**没有**覆盖的：工具层（mutation 预验证、探针、三组正式运行、验收）和第 2 轮查询层，它们要 WSL Ubuntu-24.04 的 OpenSTA 环境和先重建的 F1 基线；判定层、模型层按定义不是"复现"。总结：**离线核验 REPLICATION OK；工具层与查询层待做。**
+工具层与查询层（第 2–3 节；日志在克隆的 `tasks/CASE-02/runs/replication_wsl.log`、`replication_wsl2.log`，不进 git）：
+
+| 步骤 | 结果 |
+|---|---|
+| F1 基线归档 | 克隆里没有；从作者本机原件复制 86 个文件到 `tasks/CASE-01/evidence/F1/archive/20261009-092827-base-T27.91/`，按跟踪的 `SHA256SUMS` 核对 86 / 86 OK。**第三方要按 `REPRODUCE_stageB.md` 重建**，这一步没有在本次实测里走 |
+| WSL 侧单元测试 | 206 项 OK（1 项 skipped） |
+| 三组运行（`run_context.py` 自测模式） | 三个版本 `run_valid=true`、`mutation_verified=true`；与 `queries/formal/` 比：`sta_results.tsv`（去掉含绝对路径的 LIB 行）、`expanded.sdc` 逐字节相同，`valid.json` 的判定字段相同，24 个 `cat_*`、12 个 `path_*`、12 个 `dcalc_*` 各 48 / 48 逐字节相同；缺失版 `allowed_changes=24` |
+| 预演 | 19 组 PASS，70 个覆盖目标全部命中 |
+| 查询层抽查（自测 R2 = 缺失版，对正式 R1） | A2（130 端口到达，261 行）、C4（`check_setup`，3 行）、C6（130 端口配对计数，131 行）的交还文本与 `queries/round2/{A2,C4,C6}_R1_R1/query_return.txt` 逐字节相同 |
+| 执行契约验收 | 七个样例全部 OK，`ACCEPTANCE OK`；与记录的 `RESULT.md` 比，(i)(ii)(iii)(iv)(ctrl)(vii) 的行数、调用数、结果、归因相同（只有 elapsed 不同），(v) 超时样例 600 s 内跑到 5630 次调用 / 7507 行（记录为 3400 / 4535），(vi) 输出超限样例 132036 行（记录 131365）——这两项按构造随机器速度变化，预期只约束状态、结果代码、归因和交还行数，均一致 |
+| 第一遍的两个坑 | 查询抽查和验收都要 `runs/selftest_assign.json`（第 2 节 (c)），克隆里没有时验收一个样例都没跑、`report` 却照旧从已有记录出报告；自测分配是 R2=缺失版，和正式分配相反 |
+
+这次实测**没有**覆盖的：`prevalidation/` 的预验证重跑与 13 条探针（要 `tasks/CASE-01/runs/` 下的 F1 运行目录，本次没有重建）；F1 基线本身的重建；判定层、模型层按定义不是"复现"。总结：**离线核验、三组运行、预演、查询层抽查、执行契约验收 REPLICATION OK；F1 基线重建与预验证重跑未做。**
