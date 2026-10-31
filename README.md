@@ -54,6 +54,8 @@ Code (scripts, RTL, testbenches, figure generator): Apache-2.0, see [`LICENSE`](
 
 The history was rewritten five times on 2026-10-17 before publication, so every commit id changed. Records written before that cite the original ids; see [`docs/history/HISTORY_REWRITE_2026-10-17.md`](docs/history/HISTORY_REWRITE_2026-10-17.md).
 
+The nine `yosys.log` files under `tasks/CASE-01/evidence/F0_v1.1_synth_recipe/` still contain the local scratch-directory path (a Windows user directory) of the machine they were generated on in 2026-10-09. They are frozen evidence locked by that directory's `SHA256SUMS`, so they are left unchanged; noted here on 2026-10-30.
+
 ---
 
 ## 中文
@@ -108,3 +110,5 @@ CASE-02（IO 约束缺失的覆盖诊断：同一张网表的两次 STA 记录�
 ### 关于提交历史
 
 2026-10-17 公开之前改写过五次历史，提交号全部变了。改写之前写成的记录里引用的是原始提交号，对照表见 [`docs/history/HISTORY_REWRITE_2026-10-17.md`](docs/history/HISTORY_REWRITE_2026-10-17.md)。
+
+`tasks/CASE-01/evidence/F0_v1.1_synth_recipe/` 下的 9 个 `yosys.log` 保留了 2026-10-09 生成时所在机器的本机临时目录路径（一个 Windows 用户目录）。它们是被该目录 `SHA256SUMS` 锁定的冻结证据，不再改动；2026-10-30 在此登记。
