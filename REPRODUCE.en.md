@@ -2,6 +2,8 @@
 
 [中文版](REPRODUCE.md)
 
+Stage B (article 2) is reproduced per [REPRODUCE_stageB.md](REPRODUCE_stageB.md) and CASE-02 per [REPRODUCE_case02.md](REPRODUCE_case02.md); both are in Chinese.
+
 This guide is for readers who want to check the conclusions of article 1 themselves: start from the public material, run everything again without using the author's results, and compare with what is recorded in this repository.
 
 The experiment has three layers, which reproduce to different degrees:
