@@ -86,7 +86,7 @@ diff <(sed 1d runs/<新目录>/query_return.txt) <(sed 1d queries/round2/A2_R1_R
 
 ## 5. 不在仓库里的东西
 
-`interventions.md`（介入与工时）、`impl_plan.md`（实现计划，哈希在 `rules/impl_plan.sha256`）、`runs/`（运行目录、执行日志、复核说明、生成两张表的脚本）、封存目录 `D:\study\diag_sandbox\sealed-case02\`（模型调用原始记录）、归档 `D:\study\eda_archive\case02\`（验收与预验证的完整运行目录，`prevalidation/acceptance/ARCHIVE.md` 和 `prevalidation/SHA256SUMS` 第二段给出哈希）、Codex 外审的原文（处理说明 `docs/review/CASE02_R*_claude.md` 在仓库里）。
+`interventions.md`（介入与工时）、`impl_plan.md`（实现计划，哈希在 `rules/impl_plan.sha256`）、`runs/`（运行目录、执行日志、复核说明、生成两张表的脚本）、封存目录 `D:\study\diag_sandbox\sealed-case02\`（模型调用原始记录）、归档 `D:\study\eda_archive\case02\`（验收与预验证的完整运行目录，`prevalidation/acceptance/ARCHIVE.md` 和 `prevalidation/SHA256SUMS` 第二段给出哈希）、Codex 外审的原文和处理说明（都在本机 `docs/review/`，整个目录不进仓库）。
 
 ## 实测记录
 
