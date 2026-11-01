@@ -18,8 +18,9 @@ Tools: Yosys, OpenSTA, Icarus Verilog; standard cells SkyWater Sky130 `sky130_fd
 |---|---|---|
 | 1. Can LLMs read a timing report? Checking the diagnoses of Claude Opus 5.5, Kimi K3 and DeepSeek V4 Pro with OpenSTA (CASE-01, stage A) | [Summary](docs/posts/article1_summary_en.md) | [WeChat version](docs/posts/article1_public.md) · [Full version, every number sourced](docs/posts/article1_draft.md) |
 | 2. Letting LLMs edit the RTL: Claude Opus 5.5, Kimi K3 and DeepSeek V4 Pro handed in 6 candidates; in the frozen flow only 1 got a valid timing result (CASE-01, stage B) | — | [WeChat version](docs/posts/article2_public.md) · [Full version, every number sourced](docs/posts/article2_draft.md) |
+| 3. 128 constraints missing, yet the slack got better: how Claude Opus 5.5, DeepSeek V4 Pro and Kimi K3 tracked it down (CASE-02) | — | [WeChat version](docs/posts/article3_public.md) · [Full version, every number sourced](docs/posts/article3_draft.md) |
 
-CASE-02 (coverage diagnosis of a missing IO constraint: two STA records of the same netlist, three models, two rounds) has no article yet; its experiment notes are [`tasks/CASE-02/NOTES.md`](tasks/CASE-02/NOTES.md) (Chinese).
+CASE-02 experiment notes: [`tasks/CASE-02/NOTES.md`](tasks/CASE-02/NOTES.md) (Chinese).
 
 ### Reproduce
 
@@ -31,7 +32,7 @@ Stage B (article 2): [`REPRODUCE_stageB.md`](REPRODUCE_stageB.md) (Chinese) re-g
 
 | Path | Content |
 |---|---|
-| `docs/posts/` | Articles and figures (`figs/article1/make_figs.js` and `figs/article2/make_figs.js` draw the figures; `wechat/make_wechat.py` renders the WeChat pages) |
+| `docs/posts/` | Articles and figures (`figs/article{1,2,3}/make_figs.js` draw the figures, `make_cover.js` the covers; `wechat/make_wechat.py` renders the WeChat pages) |
 | `env/` | Environment snapshot: install record, checksums, cell-library kit scripts, smoke test |
 | `tasks/CASE-01/` | Case 1: contract `spec.md`, RTL, reference model, testbench, synthesis and STA scripts, frozen evidence |
 | `tasks/CASE-01/diag/` | Stage A: protocol, the material given to the models, their answers, the claim table `claims.tsv`, raw tool outputs of every check, statistics |
@@ -70,8 +71,9 @@ The nine `yosys.log` files under `tasks/CASE-01/evidence/F0_v1.1_synth_recipe/` 
 |---|---|---|
 | 1. 大模型看时序报告靠谱吗？我用 OpenSTA 核对了 Claude Opus 5.5、Kimi K3、DeepSeek V4 Pro 的诊断（CASE-01 阶段 A） | [`docs/posts/article1_public.md`](docs/posts/article1_public.md) | [`docs/posts/article1_draft.md`](docs/posts/article1_draft.md) |
 | 2. 让大模型动手改 RTL：Claude Opus 5.5、Kimi K3、DeepSeek V4 Pro 交了 6 份，冻结流程里只有 1 份拿到有效时序结果（CASE-01 阶段 B） | [`docs/posts/article2_public.md`](docs/posts/article2_public.md) | [`docs/posts/article2_draft.md`](docs/posts/article2_draft.md) |
+| 3. 约束漏了 128 条，slack 反而变好：Claude Opus 5.5、DeepSeek V4 Pro、Kimi K3 怎么查出来（CASE-02） | [`docs/posts/article3_public.md`](docs/posts/article3_public.md) | [`docs/posts/article3_draft.md`](docs/posts/article3_draft.md) |
 
-CASE-02（IO 约束缺失的覆盖诊断：同一张网表的两次 STA 记录，三个模型，两轮）还没有文章，实验笔记见 [`tasks/CASE-02/NOTES.md`](tasks/CASE-02/NOTES.md)。
+CASE-02 的实验笔记见 [`tasks/CASE-02/NOTES.md`](tasks/CASE-02/NOTES.md)。
 
 ### 复现
 
@@ -83,7 +85,7 @@ CASE-02（IO 约束缺失的覆盖诊断：同一张网表的两次 STA 记录�
 
 | 位置 | 内容 |
 |---|---|
-| `docs/posts/` | 文章和配图（`figs/article1/make_figs.js`、`figs/article2/make_figs.js` 生成配图，`wechat/make_wechat.py` 生成公众号页面） |
+| `docs/posts/` | 文章和配图（`figs/article{1,2,3}/make_figs.js` 生成配图，`make_cover.js` 生成封面，`wechat/make_wechat.py` 生成公众号页面） |
 | `env/` | 开源 EDA 环境的安装记录、校验和、单元库套件、冒烟测试 |
 | `tasks/CASE-01/` | 第一个案例：合同 `spec.md`、RTL、参考模型、测试平台、综合和 STA 脚本、冻结证据 |
 | `tasks/CASE-01/diag/` | 阶段 A：三个模型的诊断规程、材料包、答复、判断记录 `claims.tsv`、工具重查的原始输出、统计 |
