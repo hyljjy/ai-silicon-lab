@@ -19,6 +19,7 @@ Tools: Yosys, OpenSTA, Icarus Verilog; standard cells SkyWater Sky130 `sky130_fd
 | 1. Can LLMs read a timing report? Checking the diagnoses of Claude Opus 5.5, Kimi K3 and DeepSeek V4 Pro with OpenSTA (CASE-01, stage A) | [Summary](docs/posts/article1_summary_en.md) | [WeChat version](docs/posts/article1_public.md) · [Full version, every number sourced](docs/posts/article1_draft.md) |
 | 2. Letting LLMs edit the RTL: Claude Opus 5.5, Kimi K3 and DeepSeek V4 Pro handed in 6 candidates; in the frozen flow only 1 got a valid timing result (CASE-01, stage B) | — | [WeChat version](docs/posts/article2_public.md) · [Full version, every number sourced](docs/posts/article2_draft.md) |
 | 3. 128 constraints missing, yet the slack got better: how Claude Opus 5.5, DeepSeek V4 Pro and Kimi K3 tracked it down (CASE-02) | — | [WeChat version](docs/posts/article3_public.md) · [Full version, every number sourced](docs/posts/article3_draft.md) |
+| 4. Slower when the chip is cold? Running temperature inversion by hand in OpenSTA, and asking three LLMs (STA learning note) | — | [WeChat version](docs/posts/article4_public.md) (single version; raw OpenSTA output and figure scripts in [`docs/posts/figs/article4/`](docs/posts/figs/article4/)) |
 
 CASE-02 experiment notes: [`tasks/CASE-02/NOTES.md`](tasks/CASE-02/NOTES.md) (Chinese).
 
@@ -72,6 +73,7 @@ The nine `yosys.log` files under `tasks/CASE-01/evidence/F0_v1.1_synth_recipe/` 
 | 1. 大模型看时序报告靠谱吗？我用 OpenSTA 核对了 Claude Opus 5.5、Kimi K3、DeepSeek V4 Pro 的诊断（CASE-01 阶段 A） | [`docs/posts/article1_public.md`](docs/posts/article1_public.md) | [`docs/posts/article1_draft.md`](docs/posts/article1_draft.md) |
 | 2. 让大模型动手改 RTL：Claude Opus 5.5、Kimi K3、DeepSeek V4 Pro 交了 6 份，冻结流程里只有 1 份拿到有效时序结果（CASE-01 阶段 B） | [`docs/posts/article2_public.md`](docs/posts/article2_public.md) | [`docs/posts/article2_draft.md`](docs/posts/article2_draft.md) |
 | 3. 约束漏了 128 条，slack 反而变好：Claude Opus 5.5、DeepSeek V4 Pro、Kimi K3 怎么查出来（CASE-02） | [`docs/posts/article3_public.md`](docs/posts/article3_public.md) | [`docs/posts/article3_draft.md`](docs/posts/article3_draft.md) |
+| 4. 芯片冷的时候反而更慢？我用 OpenSTA 亲手跑了一遍温度反转，也问了三个大模型（STA 学习笔记） | [`docs/posts/article4_public.md`](docs/posts/article4_public.md) | 只有一个版本；OpenSTA 原样输出和出图脚本在 [`docs/posts/figs/article4/`](docs/posts/figs/article4/) |
 
 CASE-02 的实验笔记见 [`tasks/CASE-02/NOTES.md`](tasks/CASE-02/NOTES.md)。
 
