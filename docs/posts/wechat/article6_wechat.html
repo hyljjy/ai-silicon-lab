@@ -22,16 +22,16 @@
 <p style="margin:0 0 18px 0;font-size:16px;line-height:1.8;letter-spacing:0.5px;color:#222222;text-align:justify;">上一篇讲怎么出题。这一篇讲题答完了怎么判。</p>
 <p style="margin:0 0 18px 0;font-size:16px;line-height:1.8;letter-spacing:0.5px;color:#222222;text-align:justify;">模型交来一份时序诊断，几页纸里混着三种东西：读报告读出来的数，自己做的算术，还有对原因的猜测。整份打一个"对"或"错"没有意义。阶段 A 的做法是先拆成一条条判断，只拆不改，不替模型补全意思，再一条条判。一共考两轮：第一轮读材料作答，第二轮拿回自己所提查询的结果再答。</p>
 <p style="margin:0 0 18px 0;font-size:16px;line-height:1.8;letter-spacing:0.5px;color:#222222;text-align:justify;">这和看一份 bug report 很像：哪句是波形上读到的，哪句是工程师的推测，要分开看。</p>
-<p style="margin:0 0 18px 0;font-size:16px;line-height:1.8;letter-spacing:0.5px;color:#222222;text-align:justify;">这些规则主要由 Claude 起草，经过 Codex 外审和修改，我负责确认。这次我回头读材料，用自己的话讲，讲错了再改。讲错的地方我留在文中，因为这些也是最容易错的地方。</p>
+<p style="margin:0 0 18px 0;font-size:16px;line-height:1.8;letter-spacing:0.5px;color:#222222;text-align:justify;">这些规则主要由 Claude 起草，经过 Codex 外审和修改，我负责确认。这次我回头读材料，用自己的话重讲一遍。</p>
 <h2 style="margin:36px 0 16px 0;padding:2px 0 2px 12px;border-left:4px solid #2a78d6;font-size:19px;font-weight:bold;line-height:1.5;color:#222222;">2. 先分类：事实和假设</h2>
-<p style="margin:0 0 18px 0;font-size:16px;line-height:1.8;letter-spacing:0.5px;color:#222222;text-align:justify;">我第一次的回答是："输出结论性质的就是假设。"不对。分类不看语气，看判定这句话需要什么：</p>
+<p style="margin:0 0 18px 0;font-size:16px;line-height:1.8;letter-spacing:0.5px;color:#222222;text-align:justify;">分类不看语气，看判定这句话需要什么：</p>
 <ul style="margin:0 0 18px 0;padding-left:22px;"><li style="margin:0 0 8px 0;font-size:16px;line-height:1.8;letter-spacing:0.5px;color:#222222;"><strong style="color:#222222;">事实</strong>：只凭材料原文或做算术，就能判定真假。</li><li style="margin:0 0 8px 0;font-size:16px;line-height:1.8;letter-spacing:0.5px;color:#222222;"><strong style="color:#222222;">假设</strong>：讲原因或反事实，或者要用材料以外的信息才能判定。</li></ul>
 <p style="margin:0 0 18px 0;font-size:16px;line-height:1.8;letter-spacing:0.5px;color:#222222;text-align:justify;">反事实就是"如果当时不是这样，会怎样"，讲的是没发生过的情况。比如"把这个单元换强，最差 slack 会改善 1 ns 以上"，报告里不可能有答案，要真去换。</p>
 <p style="margin:0 0 18px 0;font-size:15px;line-height:1.8;color:#d4541f;font-weight:bold;">【插入图 1：fig1_split.png（判定这句话需要什么），插好后删掉这行】</p>
 <p style="margin:0 0 18px 0;font-size:16px;line-height:1.8;letter-spacing:0.5px;color:#222222;text-align:justify;">图里后两句，模型写的位置和实际类型正好相反。</p>
-<p style="margin:0 0 18px 0;font-size:16px;line-height:1.8;letter-spacing:0.5px;color:#222222;text-align:justify;"><code style="font-family:Menlo,Consolas,monospace;font-size:14px;background:#eef0f3;padding:1px 4px;border-radius:3px;">buf_2</code> 那句写在假设部分，但报告一行就写全了：扇出 19，延迟 0.3091，再比一下大小就行。我一开始判反了，以为要把 19 个负载逐个算出来。</p>
+<p style="margin:0 0 18px 0;font-size:16px;line-height:1.8;letter-spacing:0.5px;color:#222222;text-align:justify;"><code style="font-family:Menlo,Consolas,monospace;font-size:14px;background:#eef0f3;padding:1px 4px;border-radius:3px;">buf_2</code> 那句写在假设部分，但报告一行就写全了：扇出 19，延迟 0.3091，再比一下大小就行，不用逐个负载去算。</p>
 <p style="margin:0 0 18px 0;font-size:16px;line-height:1.8;letter-spacing:0.5px;color:#222222;text-align:justify;"><code style="font-family:Menlo,Consolas,monospace;font-size:14px;background:#eef0f3;padding:1px 4px;border-radius:3px;">_12026_</code> 那句写在事实部分，却要改归假设。材料只能说明它能到这个输出，它是不是就是这一位的寄存器，要看网表。</p>
-<p style="margin:0 0 18px 0;font-size:16px;line-height:1.8;letter-spacing:0.5px;color:#222222;text-align:justify;">我还以为"有数据规律撑着就不算假设"，也错了。Kimi 说"扇出 31 与一个饱和选择信号驱动多个输出位相符"，这确实是从数据推的，但它讲的是这个信号的功能，材料里没有网表到 RTL 的对应，所以仍是假设。</p>
+<p style="margin:0 0 18px 0;font-size:16px;line-height:1.8;letter-spacing:0.5px;color:#222222;text-align:justify;">有数据规律撑着，也不等于事实。Kimi 说"扇出 31 与一个饱和选择信号驱动多个输出位相符"，这确实是从数据推的，但它讲的是这个信号的功能，材料里没有网表到 RTL 的对应，所以仍是假设。</p>
 <p style="margin:0 0 18px 0;font-size:16px;line-height:1.8;letter-spacing:0.5px;color:#222222;text-align:justify;">分类也和对错无关。事实可以被推翻，假设也可以被支持。<code style="font-family:Menlo,Consolas,monospace;font-size:14px;background:#eef0f3;padding:1px 4px;border-radius:3px;">_12026_</code> 这条后来查网表，就得到了支持。</p>
 <h2 style="margin:36px 0 16px 0;padding:2px 0 2px 12px;border-left:4px solid #2a78d6;font-size:19px;font-weight:bold;line-height:1.5;color:#222222;">3. 判假设：先写判定条件</h2>
 <p style="margin:0 0 18px 0;font-size:16px;line-height:1.8;letter-spacing:0.5px;color:#222222;text-align:justify;">每条假设在跑查询之前，先写下用什么命令、什么结果算支持、什么算反对、什么算未判定。模型自己给了可执行的推翻条件，就优先用它的。</p>
@@ -40,13 +40,13 @@
 <p style="margin:0 0 18px 0;font-size:16px;line-height:1.8;letter-spacing:0.5px;color:#222222;text-align:justify;">换完以后，手里有两个数：</p>
 <p style="margin:0 0 18px 0;font-size:15px;line-height:1.8;color:#d4541f;font-weight:bold;">【插入图 2：fig2_x.png（同一次换单元，两个数），插好后删掉这行】</p>
 <p style="margin:0 0 18px 0;font-size:16px;line-height:1.8;letter-spacing:0.5px;color:#222222;text-align:justify;">第一个数只看经过 X 的路径，第二个数是全设计输入到寄存器路径里的最差值。经过 X 的那条路径确实好了很多，但最差路径改走了旁边的另一支。Claude 的原话是"最差 slack"，该看第二个数，所以判反对。只看第一个数，会以为这条假设站住了。</p>
-<p style="margin:0 0 18px 0;font-size:16px;line-height:1.8;letter-spacing:0.5px;color:#222222;text-align:justify;">我复述这段时也出了错：把两个数说反了，还把 0.67 写成 0.6。这种地方确实容易滑过去。项目里揭盲（打开 A、B、C 和模型名字的对应表）之后，更正过 16 条标签，原因之一就是判定条件没照模型的原话写。所以先写判定条件只是第一步，还要照原话写，要有人复核。</p>
+<p style="margin:0 0 18px 0;font-size:16px;line-height:1.8;letter-spacing:0.5px;color:#222222;text-align:justify;">这种地方很容易滑过去。项目里揭盲（打开 A、B、C 和模型名字的对应表）之后，更正过 16 条标签，原因之一就是判定条件没照模型的原话写。所以先写判定条件只是第一步，还要照原话写，要有人复核。</p>
 <h2 style="margin:36px 0 16px 0;padding:2px 0 2px 12px;border-left:4px solid #2a78d6;font-size:19px;font-weight:bold;line-height:1.5;color:#222222;">4. 判事实：线要画死</h2>
 <p style="margin:0 0 18px 0;font-size:16px;line-height:1.8;letter-spacing:0.5px;color:#222222;text-align:justify;">容差分两种：</p>
 <ul style="margin:0 0 18px 0;padding-left:22px;"><li style="margin:0 0 8px 0;font-size:16px;line-height:1.8;letter-spacing:0.5px;color:#222222;"><strong style="color:#222222;">直接引用的数</strong>：必须相等，正确舍入也算。−4.19 算对，−4.18 算错。</li><li style="margin:0 0 8px 0;font-size:16px;line-height:1.8;letter-spacing:0.5px;color:#222222;"><strong style="color:#222222;">算出来的数</strong>：允许舍入误差，每个操作数 0.00005，加上所写精度的半个末位。</li></ul>
 <p style="margin:0 0 18px 0;font-size:16px;line-height:1.8;letter-spacing:0.5px;color:#222222;text-align:justify;">Claude 写的"约 25.6 ns"属于第二种：</p>
 <p style="margin:0 0 18px 0;font-size:15px;line-height:1.8;color:#d4541f;font-weight:bold;">【插入图 3：fig3_tol.png（超了 0.0026，也算超线），插好后删掉这行】</p>
-<p style="margin:0 0 18px 0;font-size:16px;line-height:1.8;letter-spacing:0.5px;color:#222222;text-align:justify;">这样合理吗？我第一次答"事先定好，大家都一样"。这话只说对一半。线必须画死，否则每条都靠判的人临场决定。但"大家都一样"也没有完全做到，那 16 条更正的原因里，就有数值窗口宽严不一。</p>
+<p style="margin:0 0 18px 0;font-size:16px;line-height:1.8;letter-spacing:0.5px;color:#222222;text-align:justify;">这样合理吗？线必须画死，否则每条都靠判的人临场决定。不过一视同仁也没有完全做到，那 16 条更正的原因里，就有数值窗口宽严不一。</p>
 <p style="margin:0 0 18px 0;font-size:16px;line-height:1.8;letter-spacing:0.5px;color:#222222;text-align:justify;">代价要说清楚。"推翻"只说明超了线，错得多严重要另外看。这就像 slack −0.001 也算 fail，但不等于芯片不能用。</p>
 <p style="margin:0 0 18px 0;font-size:16px;line-height:1.8;letter-spacing:0.5px;color:#222222;text-align:justify;">第 1 轮事实被推翻的是 Claude 43 条里 3 条，DeepSeek 13 条里 2 条，Kimi 35 条里 0 条。这些数不能拿来比谁强：答复长短不同，拆出来的条数也不同。</p>
 <h2 style="margin:36px 0 16px 0;padding:2px 0 2px 12px;border-left:4px solid #2a78d6;font-size:19px;font-weight:bold;line-height:1.5;color:#222222;">5. 判不了的：未判定</h2>
@@ -56,14 +56,14 @@
 <p style="margin:0 0 18px 0;font-size:15px;line-height:1.8;color:#d4541f;font-weight:bold;">【插入图 4：fig4_h6.png（先看对照有没有生效），插好后删掉这行】</p>
 <p style="margin:0 0 18px 0;font-size:16px;line-height:1.8;letter-spacing:0.5px;color:#222222;text-align:justify;">这条命令被约束里的 <code style="font-family:Menlo,Consolas,monospace;font-size:14px;background:#eef0f3;padding:1px 4px;border-radius:3px;">set_driving_cell</code> 盖掉了，等于什么也没拿掉。这就像 force 没打上，被 force 的信号没变，下游没变化也说明不了问题。</p>
 <p style="margin:0 0 18px 0;font-size:16px;line-height:1.8;letter-spacing:0.5px;color:#222222;text-align:justify;">这里只看数字会判错：全设计最差 slack 改善为 0、仍违例，正好落在"支持"的范围里。判定条件第一句要先确认对照生效，所以记未判定。模型既没被证明错，也没被证明对。</p>
-<p style="margin:0 0 18px 0;font-size:16px;line-height:1.8;letter-spacing:0.5px;color:#222222;text-align:justify;">我一开始把这说成环境问题，也不对。这次环境核对是通过的，错在对照命令。所以依据工具输出判一条假设，要过两关：</p>
+<p style="margin:0 0 18px 0;font-size:16px;line-height:1.8;letter-spacing:0.5px;color:#222222;text-align:justify;">这也不是环境问题：这次环境核对是通过的，错在对照命令。所以依据工具输出判一条假设，要过两关：</p>
 <p style="margin:0 0 18px 0;font-size:15px;line-height:1.8;color:#d4541f;font-weight:bold;">【插入图 5：fig5_gates.png（依据工具输出判假设，要过两关），插好后删掉这行】</p>
 <p style="margin:0 0 18px 0;font-size:16px;line-height:1.8;letter-spacing:0.5px;color:#222222;text-align:justify;">H6 过了第一关，卡在第二关。</p>
 <h2 style="margin:36px 0 16px 0;padding:2px 0 2px 12px;border-left:4px solid #2a78d6;font-size:19px;font-weight:bold;line-height:1.5;color:#222222;">6. 记住三句话</h2>
 <ul style="margin:0 0 18px 0;padding-left:22px;"><li style="margin:0 0 8px 0;font-size:16px;line-height:1.8;letter-spacing:0.5px;color:#222222;">看判定这句话需要什么，不看它写在哪、语气多肯定。</li><li style="margin:0 0 8px 0;font-size:16px;line-height:1.8;letter-spacing:0.5px;color:#222222;">判定条件要先写，还要照模型原话写，要有人复核。</li><li style="margin:0 0 8px 0;font-size:16px;line-height:1.8;letter-spacing:0.5px;color:#222222;">判不了就写未判定，先查是不是检查方自己没测到。</li></ul>
 <p style="margin:0 0 18px 0;font-size:16px;line-height:1.8;letter-spacing:0.5px;color:#222222;text-align:justify;">这只是一个案例，每个模型每轮只跑了一次，数值只覆盖检查过的六个角，推不到流片后的芯片上。</p>
 <p style="margin:0 0 18px 0;font-size:16px;line-height:1.8;letter-spacing:0.5px;color:#222222;text-align:justify;">下一篇讲 CASE-01 阶段 B：模型预测改完 RTL 会怎样，这种话怎么判。</p>
-<section style="margin:0 0 20px 0;padding:12px 16px;background:#f5f6f8;border-left:3px solid #c9c8c3;font-size:14px;line-height:1.75;color:#555555;">项目仓库：<span style="color:#2a78d6;word-break:break-all;">https://github.com/hyljjy/ai-silicon-lab</span><br>• 本文的数字出处表：<span style="color:#2a78d6;word-break:break-all;">https://github.com/hyljjy/ai-silicon-lab/blob/main/docs/posts/retro/02_judging_a_sentence.md</span><br>• CASE-01 阶段 A 的规程和全部判定记录：<span style="color:#2a78d6;word-break:break-all;">https://github.com/hyljjy/ai-silicon-lab/tree/main/tasks/CASE-01/diag</span></section>
+<section style="margin:0 0 20px 0;padding:12px 16px;background:#f5f6f8;border-left:3px solid #c9c8c3;font-size:14px;line-height:1.75;color:#555555;">项目仓库：<span style="color:#2a78d6;word-break:break-all;">https://github.com/hyljjy/ai-silicon-lab</span><br>• 本文的数字出处表：<span style="color:#2a78d6;word-break:break-all;">https://github.com/hyljjy/ai-silicon-lab/blob/main/docs/posts/retro/02_judging_a_sentence.md</span><br>• CASE-01 阶段 A 的规程和判定记录：<span style="color:#2a78d6;word-break:break-all;">https://github.com/hyljjy/ai-silicon-lab/tree/main/tasks/CASE-01/diag</span></section>
 </section>
 </div>
 </div>
