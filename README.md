@@ -22,6 +22,7 @@ Tools: Yosys, OpenSTA, Icarus Verilog; standard cells SkyWater Sky130 `sky130_fd
 | 4. Slower when the chip is cold? Running temperature inversion by hand in OpenSTA, and asking three LLMs (STA learning note) | — | [WeChat version](docs/posts/article4_public.md) (single version; raw OpenSTA output and figure scripts in [`docs/posts/figs/article4/`](docs/posts/figs/article4/)) |
 | 5. Setting a timing task for AI: how to prove the injected bug is exactly this one (how the tests were built, 1 of 7; CASE-02) | — | [WeChat version](docs/posts/article5_public.md) · [Short version, numbers sourced](docs/posts/retro/01_making_the_task.md) |
 | 6. Judging an AI timing diagnosis: right, wrong, and the ones that cannot be judged (how the tests were built, 2 of 7; CASE-01, stage A) | — | [WeChat version](docs/posts/article6_public.md) · [Short version, numbers sourced](docs/posts/retro/02_judging_a_sentence.md) |
+| 7. How setup slack is really computed: changing six conditions in OpenSTA and checking the account line by line (STA learning note) | — | [WeChat version](docs/posts/article7_public.md) (single version; raw OpenSTA output and figure scripts in [`docs/posts/figs/article7/`](docs/posts/figs/article7/)) |
 
 CASE-02 experiment notes: [`tasks/CASE-02/NOTES.md`](tasks/CASE-02/NOTES.md) (Chinese).
 
@@ -78,6 +79,7 @@ The nine `yosys.log` files under `tasks/CASE-01/evidence/F0_v1.1_synth_recipe/` 
 | 4. 芯片冷的时候反而更慢？我用 OpenSTA 亲手跑了一遍温度反转，也问了三个大模型（STA 学习笔记） | [`docs/posts/article4_public.md`](docs/posts/article4_public.md) | 只有一个版本；OpenSTA 原样输出和出图脚本在 [`docs/posts/figs/article4/`](docs/posts/figs/article4/) |
 | 5. 给 AI 出时序题：怎样证明埋进去的恰好是这一个 bug（测 AI 的方法 1/7，CASE-02） | [`docs/posts/article5_public.md`](docs/posts/article5_public.md) | [`docs/posts/retro/01_making_the_task.md`](docs/posts/retro/01_making_the_task.md)（短文版，文末有数字出处） |
 | 6. AI 的时序诊断怎么判：对、错，和判不了的那些（测 AI 的方法 2/7，CASE-01 阶段 A） | [`docs/posts/article6_public.md`](docs/posts/article6_public.md) | [`docs/posts/retro/02_judging_a_sentence.md`](docs/posts/retro/02_judging_a_sentence.md)（短文版，文末有数字出处） |
+| 7. setup slack 到底是怎么算出来的？我在 OpenSTA 里改了 6 个条件，一笔一笔对账（STA 学习笔记） | [`docs/posts/article7_public.md`](docs/posts/article7_public.md) | 只有一个版本；OpenSTA 原样输出和出图脚本在 [`docs/posts/figs/article7/`](docs/posts/figs/article7/) |
 
 CASE-02 的实验笔记见 [`tasks/CASE-02/NOTES.md`](tasks/CASE-02/NOTES.md)。
 
